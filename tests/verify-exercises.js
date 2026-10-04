@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
     const out = { pass: 0, fail: [], starterPass: [], quiz: 0 };
     for (const id of Object.keys(DJ.modules)) for (const l of DJ.modules[id].lessons) for (const [i, ex] of (l.exercises || []).entries()) {
       if (ex.type === 'quiz') { if (!(ex.answer < ex.options.length)) out.fail.push(l.id + '#' + i + ' bad answer idx'); out.quiz++; continue; }
-      if (ex.type === 'number' || ex.type === 'cmd') { out.quiz++; continue; }
+      if (ex.type === 'number' || ex.type === 'cmd' || ex.type === 'rubric') { out.quiz++; continue; }
       if (ex.type === 'sheet') { const r = DJ.sheet.check(ex, ex.solution); if (r.pass) out.pass++; else out.fail.push(l.id + '#' + i + ' ' + r.msg); continue; }
       const R = DJ.run[ex.type === 'sql' ? 'sql' : 'py'];
       const r = await R.check(ex, ex.solution);

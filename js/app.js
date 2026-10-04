@@ -120,6 +120,15 @@
         <button class="btn" type="submit" id="auth-submit">Тіркеліп, бастау</button>
         <p class="note">Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Сервер нұсқасында олар бұлтқа көшеді.</p>
       </form>
+      ${DJ.cloud && DJ.cloud.enabled ? `<form class="card auth-card" id="cloud-form" novalidate>
+        <h3 style="margin:0">Кіру немесе тіркелу</h3>
+        <button type="button" class="btn" id="g-login">Google арқылы кіру</button>
+        <div class="note" style="text-align:center">немесе email-ге сілтеме аламыз</div>
+        <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
+        <div class="err" id="cloud-err" role="alert"></div>
+        <button class="btn ghost" type="submit">Сілтеме жіберу</button>
+        <p class="note">Прогресс бұлтта сақталады, кез келген құрылғыдан жалғастыра аласыз.</p>
+      </form>` : ''}
     </section>`;
     const setMode = m => {
       mode = m;
@@ -131,6 +140,18 @@
     };
     $$('.tabs button', app).forEach(b => b.onclick = () => setMode(b.dataset.mode));
     setMode(Object.keys(S.users()).length ? 'login' : 'register');
+    if (DJ.cloud && DJ.cloud.enabled) {
+      $('#auth-form').hidden = true;
+      $('#g-login').onclick = async () => { const r = await DJ.cloud.google(); if (r && r.error) $('#cloud-err').textContent = r.error.message; };
+      $('#cloud-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = e.target.email.value.trim();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('#cloud-err').textContent = 'Email дұрыс емес.'; return; }
+        const r = await DJ.cloud.email(email);
+        $('#cloud-err').textContent = r && r.error ? r.error.message : '';
+        if (!(r && r.error)) $('#cloud-form').innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне кіру сілтемесі жіберілді.</p>`;
+      };
+    }
     $('#auth-form').onsubmit = async (e) => {
       e.preventDefault();
       const f = e.target;
@@ -301,6 +322,12 @@
         <div class="fx"><b>fx</b><input type="text" id="fx-in" placeholder="=SUM(H2:H25)" aria-label="Формула" autocomplete="off" spellcheck="false"></div>
         <div class="fx-result" id="fx-out"></div>
         <div class="actions" style="margin-top:12px"><button class="btn ghost" id="fx-run">Есептеу</button><button class="btn" id="q-check">Тексеру</button></div>`;
+    } else if (ex.type === 'rubric') {
+      const saved = (p.rubric || {})[id] || {};
+      inner = `<textarea id="memo" rows="9" placeholder="Қорытынды, дәлелдер, ұсыныс, шектеулер…" aria-label="Memo мәтіні">${esc(saved.text || '')}</textarea>
+        <div class="note" id="memo-count"></div>
+        <div class="rubric">${ex.criteria.map((c, ci) => `<fieldset><legend>${esc(c.name)}</legend>${c.levels.map((lv, li) => `<label><input type="radio" name="rc${ci}" value="${li + 1}" ${saved.scores && saved.scores[ci] === li + 1 ? 'checked' : ''}><b>${li + 1}</b> ${esc(lv)}</label>`).join('')}</fieldset>`).join('')}</div>
+        <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Бағалауды тапсыру</button></div>`;
     } else if (ex.type === 'cmd') {
       inner = `<div class="term"><span>$</span><input type="text" id="cmd-in" placeholder="git ..." aria-label="Команда" autocomplete="off" spellcheck="false" autocapitalize="off"></div>
         <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Тексеру</button></div>`;
@@ -373,6 +400,19 @@
       $('#fx-run').onclick = calc;
       $('#q-check').onclick = check;
       inp.onkeydown = e => { if (e.key === 'Enter') { (e.ctrlKey || e.metaKey) ? check() : calc(); } };
+    } else if (ex.type === 'rubric') {
+      const ta = $('#memo'), words = () => ta.value.trim().split(/\s+/).filter(Boolean).length;
+      const count = () => { $('#memo-count').textContent = `${words()} сөз (кемінде ${ex.minWords || 0})`; };
+      ta.oninput = count; count();
+      $('#q-check').onclick = () => {
+        const scores = ex.criteria.map((_, ci) => { const r = $(`input[name="rc${ci}"]:checked`); return r ? Number(r.value) : 0; });
+        S.saveRubric(id, { text: ta.value, scores });
+        if (words() < (ex.minWords || 0)) { $('#qv').innerHTML = `<div class="verdict bad">Memo тым қысқа: ${words()} сөз, кемінде ${ex.minWords} керек.</div>`; return; }
+        if (scores.some(v => !v)) { $('#qv').innerHTML = '<div class="verdict info">Әр критерийге баға қойыңыз.</div>'; return; }
+        const weak = ex.criteria.filter((_, ci) => scores[ci] < 3);
+        if (weak.length) { $('#qv').innerHTML = `<div class="verdict bad">Әзірге өтпейді. Memo-ны жақсартыңыз:<ul>${weak.map(c => `<li><b>${esc(c.name)}</b>: ${esc(c.levels[3])}</li>`).join('')}</ul></div>`; return; }
+        passed(ex, id, 'rubric', `Орташа баға ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)} / 4. Memo-ны портфолио README-іне салыңыз.`);
+      };
     } else if (ex.type === 'cmd') {
       const inp = $('#cmd-in');
       const check = () => {
@@ -576,7 +616,7 @@
       afterGateStep();
       return;
     }
-    const usedHint = !!(L.hints[id] || (kind !== 'sql' && kind !== 'python' && kind !== 'sheet' && L.fails[id]));
+    const usedHint = !!(L.hints[id] || (kind !== 'sql' && kind !== 'python' && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
     celebrate(r);
     topbar();
@@ -680,13 +720,13 @@
         <div class="tabs" role="tablist">${[['system', 'Жүйелік'], ['light', 'Жарық'], ['dark', 'Қараңғы']].map(([k, n]) => `<button role="tab" data-theme-set="${k}" aria-selected="${theme === k}">${n}</button>`).join('')}</div>
       </div>
       <div class="card" style="display:grid;gap:10px"><h3>Аккаунт</h3>
-        <p class="note" style="margin:0">Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Басқа құрылғыда көрінбейді.</p>
+        <p class="note" style="margin:0">${DJ.cloud && DJ.cloud.user ? `Бұлттағы аккаунт: ${esc(DJ.cloud.user.email || '')}. Прогресс барлық құрылғыда бірдей.` : 'Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Басқа құрылғыда көрінбейді.'}</p>
         <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button></div>
         <div id="confirm"></div>
       </div>
     </div>`;
     $$('[data-theme-set]').forEach(b => b.onclick = () => { const t = b.dataset.themeSet; lsSet('dj.theme', t); applyTheme(t); viewProfile(); });
-    $('#logout').onclick = () => { S.logout(); go('auth'); };
+    $('#logout').onclick = async () => { if (DJ.cloud && DJ.cloud.user) await DJ.cloud.signOut(); S.logout(); go('auth'); };
     $('#reset-p').onclick = () => {
       $('#confirm').innerHTML = `<div class="verdict bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">Барлық XP, сабақтар мен белгілер өшеді. Сенімдісіз бе?<button class="btn" id="yes-reset" style="background:var(--bad)">Иә, нөлдеу</button><button class="btn ghost" id="no-reset">Жоқ</button></div>`;
       $('#no-reset').onclick = () => { $('#confirm').innerHTML = ''; };
@@ -697,5 +737,9 @@
   // ---------- boot ----------
   const start = (location.hash || '').slice(1);
   if (['map', 'diag', 'profile'].includes(start)) route = { view: start };
-  render();
+  // With cloud accounts on, wait for the Supabase session (including a return from Google or an email link).
+  if (DJ.cloud && DJ.cloud.enabled) {
+    $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';
+    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname); render(); });
+  } else render();
 })();

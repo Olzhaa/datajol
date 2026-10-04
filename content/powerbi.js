@@ -90,14 +90,45 @@ dim_customer ── fact_orders ── dim_product
 <tr><td>Қайда сақталады</td><td>Кестеде (жад алады)</td><td>Сақталмайды, формула ғана</td></tr>
 <tr><td>Мысал</td><td><code>Size = IF(orders[amount] &gt; 3000, "Үлкен", "Кіші")</code></td><td><code>Revenue = SUM(orders[amount])</code></td></tr>
 </table>
+<p>Ұқсатсақ: calculated column — кестеге қосылған жаңа баған, әр жолда өз мәні жазылып тұрады. Measure — кестенің үстінде тұрған калькулятор: ол экранда қазір қай жолдар көрініп тұрса, соларды есептейді.</p>
 <p>Ереже: агрегат (қосынды, орташа, үлес) — әрқашан <b>measure</b>. Calculated column — жолды сипаттау үшін, мысалы slicer-ге категория.</p>
+<h3>Мысал: бір кесте, екі тәсіл</h3>
+<table>
+<tr><th>id</th><th>customer_id</th><th>amount</th><th>Size (column)</th></tr>
+<tr><td>1</td><td>1</td><td>2500</td><td>Кіші</td></tr>
+<tr><td>2</td><td>2</td><td>4200</td><td>Үлкен</td></tr>
+<tr><td>3</td><td>1</td><td>1800</td><td>Кіші</td></tr>
+<tr><td>4</td><td>1</td><td>3600</td><td>Үлкен</td></tr>
+</table>
+<p><code>Size</code> бағаны жүктегенде әр жолға бір рет есептелді. Енді матрицаға жолдарға <code>Size</code>, мәндерге төмендегі өлшемдерді қойсақ, әр ұяшық өз жолдарымен есептеледі:</p>
+<table>
+<tr><th>Size</th><th>Revenue</th><th>Orders</th><th>Customers</th><th>AOV</th></tr>
+<tr><td>Кіші</td><td>4300</td><td>2</td><td>1</td><td>2150</td></tr>
+<tr><td>Үлкен</td><td>7800</td><td>2</td><td>2</td><td>3900</td></tr>
+<tr><td><b>Total</b></td><td>12100</td><td>4</td><td>2</td><td>3025</td></tr>
+</table>
+<p>Total жолындағы Customers 2, ал 1 + 2 = 3 емес: measure жиынтық жолда жолдарды қоспайды, барлық деректер бойынша <b>қайта есептейді</b>. 1-клиент екі топта да бар, бірақ бір-ақ рет саналады.</p>
 <h3>Негізгі өлшемдер</h3>
 <pre><code>Revenue   = SUM(orders[amount])
 Orders    = COUNTROWS(orders)
 Customers = DISTINCTCOUNT(orders[customer_id])
 AOV       = DIVIDE([Revenue], [Orders])</code></pre>
 <div class="tip"><code>DIVIDE(a, b)</code> нөлге бөлуде қате бермей, бос мән қайтарады. <code>a / b</code> орнына әрқашан соны қолданыңыз.</div>
-<p>Өлшемдер бір-біріне сілтей алады: <code>AOV</code> ішінде <code>[Revenue]</code> мен <code>[Orders]</code> қолданылды. Бұл кодты қайталамауға көмектеседі.</p>`,
+<p>Өлшемдер бір-біріне сілтей алады: <code>AOV</code> ішінде <code>[Revenue]</code> мен <code>[Orders]</code> қолданылды. Бұл кодты қайталамауға көмектеседі.</p>
+<h3>SQL баламасы</h3>
+<table>
+<tr><th>DAX</th><th>SQL</th></tr>
+<tr><td><code>SUM(orders[amount])</code></td><td><code>SUM(amount)</code></td></tr>
+<tr><td><code>COUNTROWS(orders)</code></td><td><code>COUNT(*)</code></td></tr>
+<tr><td><code>DISTINCTCOUNT(orders[customer_id])</code></td><td><code>COUNT(DISTINCT customer_id)</code></td></tr>
+<tr><td><code>DIVIDE(a, b)</code></td><td><code>a * 1.0 / b</code> (бүтін санды бөлуден сақтану үшін 1.0), дөңгелектеу — <code>ROUND()</code></td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Қосындыны calculated column етіп жасау: ол slicer-ге қарай өзгермейді және жад алады.</li>
+<li>Бірегей клиенттерді <code>COUNT(orders[customer_id])</code> деп санау: бұл тапсырыстар санын береді, ал <code>COUNTROWS(customers)</code> әлі сатып алмағандарды да қосады.</li>
+<li><code>/</code> арқылы бөлу: бос сүзгіде нөлге бөлу қатесі шығады.</li>
+</ul>`,
         exercises: [
           { type: 'quiz', xp: 10, prompt: 'Slicer-де қала таңдағанда өзгеретін «Орташа чек» қалай жасалады?', options: ['Calculated column', 'Measure', 'Power Query қадамы', 'Жаңа кесте'], answer: 1, explain: 'Measure визуал мен сүзгі контекстінде есептеледі, сондықтан таңдауға қарай өзгереді.' },
           { type: 'quiz', xp: 10, prompt: 'Бірегей сатып алушылар санын қай DAX функциясы береді?', options: ['COUNT(orders[customer_id])', 'COUNTROWS(customers)', 'DISTINCTCOUNT(orders[customer_id])', 'SUM(orders[customer_id])'], answer: 2, explain: 'DISTINCTCOUNT — SQL-дегі COUNT(DISTINCT ...). COUNTROWS(customers) тапсырыс бермегендерді де санайды.' },
@@ -115,7 +146,28 @@ AOV       = DIVIDE([Revenue], [Orders])</code></pre>
 <pre><code>Total Revenue = CALCULATE([Revenue], ALL(customers[channel]))
 Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
 <p>Кестеде әр арна жолында <code>[Revenue]</code> сол арнаның табысы, ал <code>[Total Revenue]</code> барлық арналардың табысы. Бөлсек, арнаның үлесі шығады.</p>
-<p>SQL-де бұл window function-ға ұқсайды: <code>SUM(revenue) OVER ()</code> — барлық жолдар бойынша жалпы қосынды.</p>
+<h3>Мысал: әр ұяшықтың сүзгі контексті</h3>
+<p>Таза тапсырыстар: instagram 5000, 2gis 3000, referral 2000, барлығы 10000. Матрицада жолдар — <code>customers[channel]</code>:</p>
+<table>
+<tr><th>channel</th><th>Сүзгі контексті</th><th>Revenue</th><th>Instagram Revenue</th><th>Total Revenue</th><th>Share %</th></tr>
+<tr><td>instagram</td><td>channel = instagram</td><td>5000</td><td>5000</td><td>10000</td><td>50%</td></tr>
+<tr><td>2gis</td><td>channel = 2gis</td><td>3000</td><td>5000</td><td>10000</td><td>30%</td></tr>
+<tr><td>referral</td><td>channel = referral</td><td>2000</td><td>5000</td><td>10000</td><td>20%</td></tr>
+<tr><td><b>Total</b></td><td>сүзгі жоқ</td><td>10000</td><td>5000</td><td>10000</td><td>100%</td></tr>
+</table>
+<ul>
+<li><b>Revenue</b> жолдың сүзгісін сол күйінде қолданады.</li>
+<li><b>Instagram Revenue</b>: CALCULATE ішіндегі <code>channel = "instagram"</code> сол бағандағы жолдың сүзгісін (мысалы 2gis) <b>алмастырады</b>, сондықтан әр жолда 5000.</li>
+<li><b>Total Revenue</b>: <code>ALL(customers[channel])</code> арна сүзгісін алып тастайды, әр жолда 10000.</li>
+</ul>
+<p>Жолдарда қала болса, жалпы соманы алу үшін <code>ALL</code> ішіне сол бағанды, яғни қаланы жазасыз.</p>
+<p>SQL-де бұл window function-ға ұқсайды: <code>SUM(revenue) OVER ()</code> — барлық жолдар бойынша жалпы қосынды. <code>GROUP BY channel</code> бар сұранымда топтардың қосындысын қайта қосу үшін агрегатты window ішіне орау керек: <code>SUM(SUM(amount)) OVER ()</code>. Пайыз үшін <code>* 100.0</code>, дөңгелектеу үшін <code>ROUND(..., 1)</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>ALL</code> ішіне басқа баған жазу: жолдар арна бойынша, ал <code>ALL(customers[city])</code> — арна сүзгісі қалады, үлес әр жолда 100% болады.</li>
+<li>Үлесті <code>/</code> арқылы бөлу: бос жолдарда қате. <code>DIVIDE</code> қолданыңыз.</li>
+<li>CALCULATE сыртқы сүзгіге «қосылады» деп ойлау: сол бағанда ол сыртқы сүзгіні <b>ауыстырады</b>.</li>
+</ul>
 <div class="tip">Сұхбатта жиі сұралады: «Row context пен filter context айырмасы?» Row context — calculated column-да «қазіргі жол». Filter context — визуал мен slicer қойған сүзгілер. CALCULATE row context-ті filter context-ке айналдырады (context transition).</div>`,
         exercises: [
           { type: 'quiz', xp: 10, prompt: 'Матрицада қала жолдары бар. Әр жолда барлық қалалардың жалпы табысын көрсету үшін қай формула керек?', options: ['SUM(orders[amount])', 'CALCULATE([Revenue], ALL(customers[city]))', 'FILTER(orders, orders[amount] > 0)', 'DISTINCTCOUNT(customers[city])'], answer: 1, explain: 'ALL қала бойынша сүзгіні алып тастайды, сондықтан әр жолда жалпы сома шығады.' },
@@ -134,10 +186,31 @@ Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
 <tr><td>Өткен жылдың сол кезеңі</td><td><code>CALCULATE([Revenue], SAMEPERIODLASTYEAR('Date'[Date]))</code></td></tr>
 <tr><td>MoM өсім %</td><td><code>DIVIDE([Revenue] - [Revenue PM], [Revenue PM])</code></td></tr>
 </table>
-<p>SQL-де өткен айды <code>LAG()</code>, жыл басынан жинақты <code>SUM() OVER (ORDER BY month)</code> береді.</p>
+<p>Бұл кассир дәптері сияқты: әр айдың табысының жанына өткен айдың санын көшіріп жазасыз, сосын айырмасын есептейсіз. DAX-та өткен айды <code>DATEADD</code> «табады», ол күн кестесіндегі сүзгіні бір айға артқа жылжытады.</p>
+<pre><code>Revenue PM = CALCULATE([Revenue], DATEADD('Date'[Date], -1, MONTH))
+MoM %      = DIVIDE([Revenue] - [Revenue PM], [Revenue PM])
+Revenue YTD = TOTALYTD([Revenue], 'Date'[Date])</code></pre>
+<h3>Мысал: айлық кесте</h3>
+<table>
+<tr><th>Ай</th><th>Revenue</th><th>Revenue PM</th><th>MoM %</th><th>YTD</th></tr>
+<tr><td>2024-01</td><td>50 000</td><td>(бос)</td><td>(бос)</td><td>50 000</td></tr>
+<tr><td>2024-02</td><td>60 000</td><td>50 000</td><td>20%</td><td>110 000</td></tr>
+<tr><td>2024-03</td><td>45 000</td><td>60 000</td><td>−25%</td><td>155 000</td></tr>
+<tr><td>2024-04</td><td>54 000</td><td>45 000</td><td>20%</td><td>209 000</td></tr>
+</table>
+<p>Ақпан: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Наурыз: (45 000 − 60 000) / 60 000 = −25%. Қаңтарда өткен ай жоқ, сондықтан Revenue PM бос, ал <code>DIVIDE</code> қате емес, бос мән береді. YTD — жыл басынан бергі жинақты қосынды: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> дәл осылай жұмыс істейді, тек бір жылға артқа жылжиды (YoY). Біздің деректер тек 2024 жылы, сондықтан ол бос болады.</p>
+<h3>SQL баламасы</h3>
+<p>SQL-де өткен айды <code>LAG()</code>, жыл басынан жинақты <code>SUM() OVER (ORDER BY month)</code> береді. Алдымен айлық табысты CTE-де есептеп аламыз, сосын window функцияларын қосамыз.</p>
 <pre><code>SELECT month, revenue,
   LAG(revenue) OVER (ORDER BY month) AS prev
-FROM monthly;</code></pre>`,
+FROM monthly;</code></pre>
+<p>Бірнеше жыл болса, YTD жаңа жылда нөлден басталуы үшін <code>PARTITION BY</code> жыл қосылады.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li>MoM-ды ағымдағы айға бөлу: бөлгіш әрқашан <b>өткен</b> ай.</li>
+<li>Күн кестесін <b>Mark as date table</b> деп белгілемеу немесе <code>orders[order_date]</code> бағанын қолдану: тапсырыс жоқ күндер түсіп қалып, нәтиже қате шығады.</li>
+<li>Матрицаға айды күн кестесінен емес, orders-тан қою: сүзгі Date кестесіне жетпейді.</li>
+</ul></div>`,
         exercises: [
           { type: 'quiz', xp: 10, prompt: 'Наурыздағы табыс 90 000 ₸, ақпанда 60 000 ₸. MoM өсім қанша?', options: ['30%', '50%', '33%', '150%'], answer: 1, explain: '(90 000 − 60 000) / 60 000 = 0.5 = 50%.' },
           { type: 'quiz', xp: 10, prompt: 'Өткен жылдың дәл сол кезеңімен салыстыру үшін қай функция?', options: ['TOTALYTD', 'SAMEPERIODLASTYEAR', 'DATEADD(..., -1, MONTH)', 'ALL'], answer: 1, explain: 'SAMEPERIODLASTYEAR күндерді бір жылға артқа жылжытады.' },

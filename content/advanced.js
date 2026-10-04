@@ -24,11 +24,36 @@ SELECT AVG(total) FROM revenue;</code></pre>
     {
       id: 'adv-2', title: 'Window functions: OVER және рейтинг', minutes: 16,
       body: `
-<p>Агрегат функция жолдарды бір жолға жинайды. <b>Window function</b> әр жолды сақтап, оның қасына «терезе» бойынша есеп қосады. Бұл <code>staff</code> дерекқоры: <code>employees(id, name, department, salary, hire_date, manager_id)</code>.</p>
+<p>Сыныптағы бағаларды елестетіңіз. <code>GROUP BY</code> «сыныптың орташасы 4.2» деп бір ғана сан береді, оқушылардың аты жоғалады. Ал <b>window function</b> әр оқушыны орнында қалдырады да, қасына «сенің сыныбыңның орташасы 4.2, сен 3-орындасың» деп жазып қояды.</p>
+<p>Яғни агрегат функция жолдарды бір жолға жинайды, ал window function әр жолды сақтап, оның қасына «терезе» бойынша есеп қосады. Бұл <code>staff</code> дерекқоры: <code>employees(id, name, department, salary, hire_date, manager_id)</code>.</p>
 <pre><code>SELECT name, department, salary,
   AVG(salary) OVER (PARTITION BY department) AS dept_avg
 FROM employees;</code></pre>
-<p><code>PARTITION BY</code> терезені топтарға бөледі, <code>ORDER BY</code> терезе ішіндегі ретті береді.</p>
+<p><code>PARTITION BY</code> терезені топтарға бөледі, <code>ORDER BY</code> терезе ішіндегі ретті береді. <code>PARTITION BY</code> жазылмаса, бүкіл кесте бір терезе болады: <code>OVER (ORDER BY salary DESC)</code> бүкіл компания бойынша рейтинг береді.</p>
+<h3>Қадамдап мысал</h3>
+<p>Кіші кесте:</p>
+<table>
+<tr><th>name</th><th>department</th><th>salary</th></tr>
+<tr><td>Айгүл</td><td>IT</td><td>900</td></tr>
+<tr><td>Болат</td><td>IT</td><td>720</td></tr>
+<tr><td>Дана</td><td>IT</td><td>720</td></tr>
+<tr><td>Ерлан</td><td>Sales</td><td>560</td></tr>
+<tr><td>Жанар</td><td>Sales</td><td>640</td></tr>
+</table>
+<pre><code>SELECT name, department, salary,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg,
+  RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk
+FROM employees;</code></pre>
+<p>SQL алдымен жолдарды бөлімге бөледі (IT: 3 жол, Sales: 2 жол). Әр бөлім ішінде орташаны есептейді: IT = (900 + 720 + 720) / 3 = 780, Sales = (560 + 640) / 2 = 600. Сосын бөлім ішінде жалақыны кемуі бойынша реттеп, орын береді:</p>
+<table>
+<tr><th>name</th><th>department</th><th>salary</th><th>dept_avg</th><th>rnk</th></tr>
+<tr><td>Айгүл</td><td>IT</td><td>900</td><td>780</td><td>1</td></tr>
+<tr><td>Болат</td><td>IT</td><td>720</td><td>780</td><td>2</td></tr>
+<tr><td>Дана</td><td>IT</td><td>720</td><td>780</td><td>2</td></tr>
+<tr><td>Жанар</td><td>Sales</td><td>640</td><td>600</td><td>1</td></tr>
+<tr><td>Ерлан</td><td>Sales</td><td>560</td><td>600</td><td>2</td></tr>
+</table>
+<p>Жолдар саны өзгерген жоқ: 5 жол кірді, 5 жол шықты. Window function нәтижесімен арифметика да жасауға болады, мысалы оны <code>salary</code>-дан алып тастап, «орташадан қаншаға артық» деген баған жасау.</p>
 <h3>Рейтинг функциялары</h3>
 <table>
 <tr><th>Функция</th><th>Тең мәндерде</th><th>Мысал (900, 720, 720, 560)</th></tr>
@@ -37,7 +62,13 @@ FROM employees;</code></pre>
 <tr><td><code>DENSE_RANK()</code></td><td>бірдей орын, секірмейді</td><td>1, 2, 2, 3</td></tr>
 <tr><td><code>NTILE(n)</code></td><td>жолдарды n тең топқа бөледі</td><td>квартильдер үшін</td></tr>
 </table>
-<div class="tip">Window function <code>WHERE</code> орындалғаннан кейін есептеледі, сондықтан оны <code>WHERE</code>-де тікелей қолдануға болмайды. Subquery не CTE ішіне орап, сыртында сүзіңіз.</div>`,
+<div class="tip">Window function <code>WHERE</code> орындалғаннан кейін есептеледі, сондықтан оны <code>WHERE</code>-де тікелей қолдануға болмайды. Subquery не CTE ішіне орап, сыртында сүзіңіз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>DESC</code>-ті ұмыту. <code>ORDER BY</code> әдепкіде өсу ретімен жүреді, сонда ең <b>аз</b> жалақы 1-орын алады.</li>
+<li>Керек жерде <code>PARTITION BY</code>-ды ұмыту: «бөлім ішіндегі» рейтингтің орнына бүкіл компания бойынша рейтинг шығады.</li>
+<li><code>WHERE rnk &lt;= 3</code> деп сол сұраудың ішінде жазу. Қате береді: алдымен ішкі сұрауда рейтингті есептеп, сыртқы сұрауда сүзіңіз.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'staff', xp: 20, prompt: 'Әр қызметкердің аты, бөлімі, жалақысы және бөлім ішіндегі жалақы рейтингін (<code>RANK</code>, жоғарыдан төмен) шығарыңыз.', starter: 'SELECT name, department, salary,\n  RANK() OVER (\n  ) AS rnk\nFROM employees;', solution: 'SELECT name, department, salary, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk FROM employees;', check: { mustInclude: ['OVER'] }, hints: ['<code>PARTITION BY department ORDER BY salary DESC</code>'] },
         { type: 'sql', dataset: 'staff', xp: 20, prompt: 'Әр қызметкердің аты, жалақысы және өз бөлімінің орташа жалақысынан айырмасы (<code>diff</code> = жалақы − бөлім орташасы) шығарыңыз.', starter: 'SELECT name, salary,\n  \nFROM employees;', solution: 'SELECT name, salary, salary - AVG(salary) OVER (PARTITION BY department) AS diff FROM employees;', check: { mustInclude: ['OVER'] }, hints: ['<code>AVG(salary) OVER (PARTITION BY department)</code> бөлім орташасын әр жолға қояды.'] },
@@ -47,21 +78,35 @@ FROM employees;</code></pre>
     {
       id: 'adv-3', title: 'Кумулятивті сома және жылжымалы орташа', minutes: 14,
       body: `
+<p>Қолыңызда жинақ қорабы (копилка) бар деп елестетіңіз. Күн сайын оған ақша саласыз. «Бүгін қанша салдым?» — бұл күндік сан. «Қорапта барлығы қанша жиналды?» — бұл <b>кумулятивті сома</b>. Ол әр күні алдыңғы жиынға бүгінгі санды қосып отырады.</p>
 <p>Терезеге <code>ORDER BY</code> қосылса, агрегат «осы жолға дейінгі» мәндерді ғана көреді. Бұл <b>running total</b> (кумулятивті сома):</p>
 <pre><code>SELECT day, revenue,
   SUM(revenue) OVER (ORDER BY day) AS running
 FROM daily_sales
 WHERE region = 'Алматы';</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>Бір аймақтың 5 күндік табысы (сандар оқу үшін ойдан алынған). <code>running</code> бағаны жиналып отырады, <code>ma3</code> — төмендегі 3 күндік жылжымалы орташа:</p>
+<table>
+<tr><th>day</th><th>revenue</th><th>running</th><th>ma3</th></tr>
+<tr><td>1</td><td>100</td><td>100</td><td>100 / 1 = 100</td></tr>
+<tr><td>2</td><td>120</td><td>100 + 120 = 220</td><td>(100 + 120) / 2 = 110</td></tr>
+<tr><td>3</td><td>90</td><td>220 + 90 = 310</td><td>(100 + 120 + 90) / 3 ≈ 103.33</td></tr>
+<tr><td>4</td><td>150</td><td>310 + 150 = 460</td><td>(120 + 90 + 150) / 3 = 120</td></tr>
+<tr><td>5</td><td>130</td><td>460 + 130 = 590</td><td>(90 + 150 + 130) / 3 ≈ 123.33</td></tr>
+</table>
+<p>Соңғы <code>running</code> (590) барлық күндердің қосындысына тең. Ал <code>ma3</code> 90-нан 150-ге секірудің орнына баяу өзгереді.</p>
 <h3>Терезе шекарасы: ROWS BETWEEN</h3>
 <p>Күнделікті деректер «секіреді». <b>Жылжымалы орташа</b> (moving average) трендті тегістейді. Соңғы 3 күн:</p>
 <pre><code>AVG(revenue) OVER (
   PARTITION BY region ORDER BY day
   ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
 ) AS ma3</code></pre>
-<p><code>2 PRECEDING</code> — алдыңғы 2 жол, <code>CURRENT ROW</code> — осы жол. Алғашқы күндерде терезе толық емес, сондықтан орташа аз жолдан есептеледі.</p>
+<p><code>2 PRECEDING</code> — алдыңғы 2 жол, <code>CURRENT ROW</code> — осы жол. Алғашқы күндерде терезе толық емес, сондықтан орташа аз жолдан есептеледі (кестедегі 1- және 2-күн). <code>PARTITION BY region</code> әр аймақтың терезесін бөлек ұстайды: Астананың орташасына Алматының күндері араласпайды.</p>
 <h3>Үлес (share of total)</h3>
 <pre><code>revenue * 100.0 / SUM(revenue) OVER (PARTITION BY day)</code></pre>
-<p><code>100.0</code> жазу маңызды: бүтін санды бүтінге бөлсе, SQLite бөлшекті тастап жібереді.</p>`,
+<p>Мысалы, бір күні Алматы 300, Астана 200 тапты. Сол күннің жиыны 500, сондықтан үлестер: 300 × 100.0 / 500 = 60.0% және 40.0%. Бұл жерде <code>ORDER BY</code> жоқ: бізге «осы күнге дейін» емес, бүкіл күннің жиыны керек.</p>
+<p><code>100.0</code> жазу маңызды: бүтін санды бүтінге бөлсе, SQLite бөлшекті тастап жібереді.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>OVER</code> ішіндегі <code>ORDER BY</code> тек есептеу ретін береді. Нәтиженің өзі реттелуі үшін сұраудың соңына да <code>ORDER BY</code> жазыңыз. (2) Бірнеше аймақ болса, <code>PARTITION BY region</code>-ды ұмытпаңыз, әйтпесе қосынды мен орташа аймақтарды араластырады. (3) <code>100</code> деп бүтін сан жазсаңыз, бөлшек жоғалады: 33.3% орнына 33 шығады.</div>`,
       exercises: [
         { type: 'sql', dataset: 'metrics', xp: 20, prompt: '<code>daily_sales</code> кестесінен Алматы бойынша <code>day</code>, <code>revenue</code> және кумулятивті сома <code>running</code> бағандарын күн ретімен шығарыңыз.', starter: "SELECT day, revenue,\n  \nFROM daily_sales\nWHERE region = 'Алматы'\nORDER BY day;", solution: "SELECT day, revenue, SUM(revenue) OVER (ORDER BY day) AS running FROM daily_sales WHERE region = 'Алматы' ORDER BY day;", check: { ordered: true, mustInclude: ['OVER'] }, hints: ['<code>SUM(revenue) OVER (ORDER BY day)</code>'] },
         { type: 'sql', dataset: 'metrics', xp: 25, prompt: 'Әр аймақ үшін <code>region</code>, <code>day</code> және 3 күндік жылжымалы орташа <code>ma3</code> шығарыңыз. Ретi: аймақ, сосын күн.', starter: '', solution: 'SELECT region, day, AVG(revenue) OVER (PARTITION BY region ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS ma3 FROM daily_sales ORDER BY region, day;', check: { ordered: true, mustInclude: ['ROWS'] }, hints: ['<code>PARTITION BY region ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code>', 'Соңында <code>ORDER BY region, day</code>.'] },
@@ -71,7 +116,18 @@ WHERE region = 'Алматы';</code></pre>
     {
       id: 'adv-4', title: 'LAG және LEAD: өсімді есептеу', minutes: 14,
       body: `
-<p><code>LAG(col)</code> — алдыңғы жолдың мәні, <code>LEAD(col)</code> — келесі жолдың мәні. Олар айлық өсімді (month-over-month) есептеуге таптырмайды.</p>
+<p>Таразыға күнде тұрасыз дейік. «Кеше 70 кг едім, бүгін 69.5» — бүгінгі санды мағыналы ететін нәрсе <b>алдыңғы</b> күнмен салыстыру. SQL-де жолдар бір-бірін «көрмейді», бірақ <code>LAG</code> мен <code>LEAD</code> көршіге қарауға мүмкіндік береді.</p>
+<p><code>LAG(col)</code> — алдыңғы жолдың мәні, <code>LEAD(col)</code> — келесі жолдың мәні. Олар айлық өсімді (month-over-month) есептеуге таптырмайды. «Алдыңғы» деген ұғым <code>OVER (ORDER BY ...)</code> ішіндегі реттен шығады. Баған кез келген түрде бола алады: сан, мәтін, күн. Мысалы, <code>LAG(order_date)</code> алдыңғы тапсырыстың күнін береді.</p>
+<h3>Қадамдап мысал</h3>
+<p>Айлық тапсырыстар (оқу үшін ойдан алынған сандар) және <code>LAG</code>/<code>LEAD</code> нәтижесі:</p>
+<table>
+<tr><th>month</th><th>orders</th><th>prev (LAG)</th><th>next (LEAD)</th><th>change</th><th>pct</th></tr>
+<tr><td>2024-01</td><td>40</td><td>NULL</td><td>50</td><td>NULL</td><td>NULL</td></tr>
+<tr><td>2024-02</td><td>50</td><td>40</td><td>45</td><td>50 − 40 = 10</td><td>10 × 100.0 / 40 = 25.0</td></tr>
+<tr><td>2024-03</td><td>45</td><td>50</td><td>54</td><td>45 − 50 = −5</td><td>−5 × 100.0 / 50 = −10.0</td></tr>
+<tr><td>2024-04</td><td>54</td><td>45</td><td>NULL</td><td>54 − 45 = 9</td><td>9 × 100.0 / 45 = 20.0</td></tr>
+</table>
+<p>Пайыз әрқашан <b>алдыңғы</b> мәнге бөлінеді: «өткен аймен салыстырғанда қаншаға өстік». Кестені SQL-мен былай аламыз:</p>
 <pre><code>WITH m AS (
   SELECT substr(order_date, 1, 7) AS month, COUNT(*) AS orders
   FROM orders GROUP BY month
@@ -82,7 +138,14 @@ FROM m;</code></pre>
 <p>Бірінші айда алдыңғы ай жоқ, сондықтан <code>LAG</code> <code>NULL</code> қайтарады. Бұл қате емес.</p>
 <h3>Пайыздық өзгеріс</h3>
 <pre><code>ROUND((x - LAG(x) OVER (ORDER BY d)) * 100.0 / LAG(x) OVER (ORDER BY d), 1)</code></pre>
-<div class="tip"><code>LAG(col, 7)</code> 7 жол артқа қарайды: апталық салыстыру (week-over-week) үшін ыңғайлы.</div>`,
+<p>Бұл формулада <code>LAG</code> екі рет жазылады: бір рет айырма үшін, бір рет бөлім үшін. CTE ішінде алдымен <code>prev</code> бағанын есептеп алсаңыз, сыртқы сұрау қысқарады.</p>
+<div class="tip"><code>LAG(col, 7)</code> 7 жол артқа қарайды: апталық салыстыру (week-over-week) үшін ыңғайлы.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>OVER ()</code> ішінде <code>ORDER BY</code>-ды ұмыту. Рет болмаса, «алдыңғы жол» кездейсоқ болады.</li>
+<li>Кестеде бірнеше аймақ не клиент болса, оларды сүзбеу (<code>WHERE</code>) не бөлмеу (<code>PARTITION BY</code>). Сонда Астананың «кешегі» мәні ретінде Алматының соңғы күні алынып кетеді.</li>
+<li>Пайызды ағымдағы мәнге бөлу не <code>100</code> деп бүтін сан жазу. Бөлім — алдыңғы мән, көбейткіш — <code>100.0</code>.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 20, prompt: '1-клиенттің тапсырыстары үшін <code>id</code>, <code>order_date</code> және алдыңғы тапсырыс күнін (<code>prev_date</code>, <code>LAG</code>) уақыт ретімен шығарыңыз.', starter: '', solution: 'SELECT id, order_date, LAG(order_date) OVER (ORDER BY order_date) AS prev_date FROM orders WHERE customer_id = 1 ORDER BY order_date;', check: { ordered: true, mustInclude: ['LAG'] }, hints: ['<code>WHERE customer_id = 1</code> + <code>LAG(order_date) OVER (ORDER BY order_date)</code>'] },
         { type: 'sql', dataset: 'shop', xp: 25, prompt: 'Айлық табысты (<code>month</code>, <code>revenue</code> = quantity × price) CTE-де есептеп, алдыңғы аймен айырмасын <code>change</code> қосып, ай ретімен шығарыңыз. Барлық статустағы тапсырыстар саналады.', starter: 'WITH m AS (\n  \n)\nSELECT ', solution: 'WITH m AS (SELECT substr(o.order_date, 1, 7) AS month, SUM(oi.quantity * p.price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id GROUP BY month) SELECT month, revenue, revenue - LAG(revenue) OVER (ORDER BY month) AS change FROM m ORDER BY month;', check: { ordered: true, mustInclude: ['LAG'] }, hints: ['CTE: orders, order_items, products кестелерін JOIN жасап, <code>substr(o.order_date, 1, 7)</code> бойынша топтаңыз.', '<code>revenue - LAG(revenue) OVER (ORDER BY month)</code>'] },
@@ -138,6 +201,7 @@ FROM orders;</code></pre>
     {
       id: 'adv-7', title: 'Когорттық талдау және retention', minutes: 16,
       body: `
+<p>Мектеп түлектерін елестетіңіз: «2020 жылғы түлектердің қаншасы 5 жылдан кейін де кездесуге келеді?» Бір жылы бітіргендерді бір топ ретінде қадағалаймыз. Өнімде де солай: бір айда тіркелгендерді бірге бақылап, олардың қаншасы қайта оралатынын көреміз.</p>
 <p><b>Когорт</b> — бір уақытта келген пайдаланушылар тобы, мысалы шілдеде тіркелгендер. <b>Retention</b> — когорттың қанша пайызы кейінгі айларда да белсенді.</p>
 <p><code>metrics</code> дерекқоры: <code>users(id, signup_month, channel)</code> және <code>activity(user_id, month)</code> (пайдаланушы белсенді болған айлар).</p>
 <h3>1-қадам: когорт өлшемі</h3>
@@ -148,7 +212,28 @@ FROM users u JOIN activity a ON a.user_id = u.id
 GROUP BY cohort, a.month;</code></pre>
 <h3>3-қадам: пайызға айналдыру</h3>
 <p>Екі нәтижені CTE арқылы біріктіріп, <code>active * 100.0 / size</code> есептейміз. Нәтиже — retention кестесі: жолдар когорттар, бағандар айлар.</p>
-<div class="tip">Retention-ды арна (<code>channel</code>) бойынша бөлсеңіз, қай жарнама «сапалы» клиент әкелетінін көресіз.</div>`,
+<p>Жоспар: 1-қадамды <code>WITH</code> ішіне CTE етіп жазасыз. 2-қадамның сұрауына осы CTE-ді <code>signup_month</code> бойынша <code>JOIN</code> жасайсыз, сонда әр жолда когорт өлшемі де тұрады. Ең соңында <code>ROUND(..., 1)</code> арқылы бір ондық белгіге дейін дөңгелектейсіз.</p>
+<h3>Қадамдап мысал</h3>
+<p>Ойдан алынған екі когорт. 1-қадамның нәтижесі: қаңтар когорты 10 адам, ақпан когорты 5 адам. 2-қадамның нәтижесі (белсенділер саны):</p>
+<table>
+<tr><th>cohort</th><th>size</th><th>2024-01</th><th>2024-02</th><th>2024-03</th></tr>
+<tr><td>2024-01</td><td>10</td><td>10</td><td>6</td><td>4</td></tr>
+<tr><td>2024-02</td><td>5</td><td>—</td><td>5</td><td>2</td></tr>
+</table>
+<p>3-қадам: әр ұяшықты сол когорттың өлшеміне бөлеміз. Мысалы, 6 × 100.0 / 10 = 60.0, ал 2 × 100.0 / 5 = 40.0:</p>
+<table>
+<tr><th>cohort</th><th>2024-01</th><th>2024-02</th><th>2024-03</th></tr>
+<tr><td>2024-01</td><td>100.0</td><td>60.0</td><td>40.0</td></tr>
+<tr><td>2024-02</td><td>—</td><td>100.0</td><td>40.0</td></tr>
+</table>
+<p>Оқу: қаңтарда тіркелгендердің 60%-ы ақпанда, 40%-ы наурызда қайта келді. Ақпан когорты екінші айында-ақ 40%-ға түсті, бұл қаңтар когортынан нашар. SQL нәтижесі «ұзын» форматта шығады (<code>cohort</code>, <code>month</code>, <code>retention</code> — әр ұяшық бір жол), ал жоғарыдағы тор — соны көзге ыңғайлы етіп жайған түрі.</p>
+<div class="tip">Retention-ды арна (<code>channel</code>) бойынша бөлсеңіз, қай жарнама «сапалы» клиент әкелетінін көресіз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>COUNT(*)</code> қолдану. Бір адамның айда бірнеше белсенділік жолы болса, ол бірнеше рет саналады. <code>COUNT(DISTINCT a.user_id)</code> керек.</li>
+<li>Алдыңғы айдың белсенділеріне бөлу. Retention әрқашан когорттың <b>бастапқы өлшеміне</b> бөлінеді.</li>
+<li><code>100</code> деп бүтін сан жазу: <code>2 * 100 / 5</code> дұрыс шыққанымен, <code>1 * 100 / 3</code> 33.3 емес, 33 береді. <code>100.0</code> жазыңыз.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'metrics', xp: 15, prompt: 'Әр когорттың өлшемін шығарыңыз: <code>signup_month</code> және <code>size</code>.', starter: '', solution: 'SELECT signup_month, COUNT(*) AS size FROM users GROUP BY signup_month;', hints: ['<code>GROUP BY signup_month</code>'] },
         { type: 'sql', dataset: 'metrics', xp: 20, prompt: 'Әр когорт пен ай үшін белсенді пайдаланушылар санын шығарыңыз: <code>cohort</code>, <code>month</code>, <code>active</code>. Реті: когорт, сосын ай.', starter: '', solution: 'SELECT u.signup_month AS cohort, a.month, COUNT(DISTINCT a.user_id) AS active FROM users u JOIN activity a ON a.user_id = u.id GROUP BY cohort, a.month ORDER BY cohort, a.month;', check: { ordered: true }, hints: ['Сабақтағы 2-қадам + <code>ORDER BY cohort, a.month</code>.'] },

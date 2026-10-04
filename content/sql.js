@@ -126,7 +126,7 @@ SELECT p.name FROM products p;   -- AS міндетті емес</code></pre>
     {
       id: 'sql-7', title: 'Агрегат функциялар', minutes: 10,
       body: `
-<p>Агрегат функциялар көп жолды бір санға жинақтайды:</p>
+<p>Дүкен кассасын елестетіңіз. Кассир чектегі әр тауарды жеке айтпайды, соңында бір сан айтады: «Барлығы 41 700 ₸». <b>Агрегат функциялар</b> да солай жасайды: көп жолды алып, бір санға жинақтайды. Менеджердің «қанша клиент бар?», «орташа баға қандай?» деген сұрақтарының бәрі осылай шешіледі. Excel-дегі <code>COUNT</code>, <code>SUM</code>, <code>AVERAGE</code> формулаларымен бірдей.</p>
 <table>
 <tr><th>Функция</th><th>Не қайтарады</th></tr>
 <tr><td><code>COUNT(*)</code></td><td>жолдар саны</td></tr>
@@ -135,10 +135,43 @@ SELECT p.name FROM products p;   -- AS міндетті емес</code></pre>
 <tr><td><code>AVG(col)</code></td><td>орташа</td></tr>
 <tr><td><code>MIN(col)</code>, <code>MAX(col)</code></td><td>ең кіші, ең үлкен</td></tr>
 </table>
+<h3>Мысал: бір сұрауда бірнеше функция</h3>
+<p><code>products</code> кестесінде тек 4 тауар бар деп елестетейік:</p>
+<table>
+<tr><th>id</th><th>name</th><th>category</th><th>price</th></tr>
+<tr><td>2</td><td>Құлаққап</td><td>Электроника</td><td>25000</td></tr>
+<tr><td>4</td><td>Кітап: SQL негіздері</td><td>Кітаптар</td><td>6500</td></tr>
+<tr><td>7</td><td>Термос</td><td>Аксессуарлар</td><td>9000</td></tr>
+<tr><td>9</td><td>Блокнот</td><td>Кеңсе</td><td>1200</td></tr>
+</table>
+<pre><code>SELECT COUNT(*)   AS n,
+       SUM(price) AS total,
+       AVG(price) AS avg_price,
+       MAX(price) AS max_price
+FROM products;</code></pre>
+<p>Нәтиже — 4 жол емес, <b>бір жол</b>. Бағандар SELECT-те жазылған ретпен шығады:</p>
+<table>
+<tr><th>n</th><th>total</th><th>avg_price</th><th>max_price</th></tr>
+<tr><td>4</td><td>41700</td><td>10425</td><td>25000</td></tr>
+</table>
+<p>Есептеу: 25000 + 6500 + 9000 + 1200 = 41700, ал 41700 / 4 = 10425. Агрегатты <code>WHERE</code>-пен бірге қолдануға болады: алдымен жолдар сүзіледі, сосын қалғаны жинақталады:</p>
 <pre><code>SELECT COUNT(*) AS n, AVG(price) AS avg_price
 FROM products
 WHERE category = 'Электроника';</code></pre>
-<p><code>COUNT(DISTINCT city)</code> — қайталанбайтын мәндер саны.</p>`,
+<h3>COUNT-тың үш түрі</h3>
+<p>Төрт клиент: Айгерім (Алматы), Ержан (Алматы), Бауыржан (қаласы <code>NULL</code>), Жанар (Ақтөбе).</p>
+<table>
+<tr><th>Өрнек</th><th>Нәтиже</th><th>Неге</th></tr>
+<tr><td><code>COUNT(*)</code></td><td>4</td><td>барлық жол</td></tr>
+<tr><td><code>COUNT(city)</code></td><td>3</td><td>NULL саналмайды</td></tr>
+<tr><td><code>COUNT(DISTINCT city)</code></td><td>2</td><td>Алматы, Ақтөбе</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>COUNT пен SUM-ды шатастыру.</b> <code>COUNT(quantity)</code> — қанша жол бар, ал <code>SUM(quantity)</code> — барлық дананың қосындысы. Бір жолда 5 блокнот болса, COUNT оны 1 деп, SUM 5 деп санайды.</li>
+<li><b>Агрегат пен қарапайым бағанды араластыру:</b> <code>SELECT name, MAX(price)</code>. Мұндай сұрауда <code>name</code> қай жолдан алынатыны түсініксіз. Ең қымбат тауардың атын білу үшін <code>ORDER BY price DESC LIMIT 1</code> жазыңыз, ал «әр топ үшін» есептеу — келесі сабақтағы GROUP BY.</li>
+<li><b>NULL-ды ұмыту.</b> <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> NULL мәндерді елемейді. Сондықтан <code>AVG</code> бос мәндерді нөл деп санамайды.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Дерекқорда қанша клиент бар? Бір санды шығарыңыз.', starter: '', solution: 'SELECT COUNT(*) FROM customers;', hints: ['<code>COUNT(*)</code>'] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Тауарлардың ең арзан бағасын, ең қымбат бағасын және орташа бағасын бір жолда, осы ретпен шығарыңыз.', starter: '', solution: 'SELECT MIN(price), MAX(price), AVG(price) FROM products;', hints: ['Бір SELECT ішінде үш функция: <code>MIN, MAX, AVG</code>.'] },
@@ -148,18 +181,49 @@ WHERE category = 'Электроника';</code></pre>
     {
       id: 'sql-8', title: 'GROUP BY және HAVING', minutes: 12,
       body: `
-<p><code>GROUP BY</code> жолдарды топтарға бөліп, әр топқа агрегат есептейді. «Әр қалада қанша клиент?» деген сұрақ осылай жазылады:</p>
+<p>Өткен сабақта агрегат бүкіл кестеге бір сан берді. Ал «<b>әр</b> қалада қанша клиент?» деген сұраққа бір сан жетпейді. Үстелдегі чектерді қала бойынша үйінділерге бөліп, әр үйіндіні бөлек санайтыныңызды елестетіңіз. <code>GROUP BY</code> дәл осылай жасайды: жолдарды топтарға бөліп, әр топқа агрегат есептейді. Excel-дегі pivot table-мен бірдей.</p>
+<h3>Мысал: әр қаладағы клиенттер</h3>
+<table>
+<tr><th>id</th><th>name</th><th>city</th></tr>
+<tr><td>1</td><td>Айгерім</td><td>Алматы</td></tr>
+<tr><td>2</td><td>Нұрлан</td><td>Астана</td></tr>
+<tr><td>4</td><td>Ержан</td><td>Алматы</td></tr>
+<tr><td>6</td><td>Тимур</td><td>Астана</td></tr>
+<tr><td>7</td><td>Әсем</td><td>Алматы</td></tr>
+</table>
 <pre><code>SELECT city, COUNT(*) AS customers
 FROM customers
 GROUP BY city;</code></pre>
+<p>SQL алдымен екі топ құрады: «Алматы» (Айгерім, Ержан, Әсем) және «Астана» (Нұрлан, Тимур). Сосын әр топтағы жолдарды санайды. Нәтижеде әр топқа <b>бір жол</b>:</p>
+<table>
+<tr><th>city</th><th>customers</th></tr>
+<tr><td>Алматы</td><td>3</td></tr>
+<tr><td>Астана</td><td>2</td></tr>
+</table>
+<p>SELECT-ке бірнеше агрегат қатар жазуға болады, мысалы <code>COUNT(*)</code> пен <code>AVG(price)</code> бірге — әр топ үшін екеуі де есептеледі.</p>
 <p>Ереже: SELECT-тегі агрегат емес әр баған GROUP BY-да да болуы керек.</p>
-<h3>HAVING</h3>
-<p><code>WHERE</code> топтауға дейін жолдарды сүзеді. <code>HAVING</code> топтаудан кейін топтарды сүзеді:</p>
+<h3>HAVING: топтарды сүзу</h3>
+<p><code>WHERE</code> топтауға дейін <b>жолдарды</b> сүзеді. <code>HAVING</code> топтаудан кейін <b>топтарды</b> сүзеді. Сондықтан агрегат бойынша шарт (<code>COUNT(*)</code>, <code>AVG(price)</code>) тек HAVING-те жазылады. Жоғарыдағы кестеден кемінде 3 клиенті бар қалаларды ғана қалдырайық:</p>
+<pre><code>SELECT city, COUNT(*) AS customers
+FROM customers
+GROUP BY city
+HAVING COUNT(*) &gt;= 3;</code></pre>
+<table>
+<tr><th>city</th><th>customers</th></tr>
+<tr><td>Алматы</td><td>3</td></tr>
+</table>
+<p>Астана тобында 2 жол, шарт орындалмады, сондықтан ол алынып тасталды. Тағы бір мысал — орташа бағасы 10 000-нан жоғары санаттар:</p>
 <pre><code>SELECT category, AVG(price) AS avg_price
 FROM products
 GROUP BY category
 HAVING AVG(price) &gt; 10000;</code></pre>
-<p>Толық реті: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>`,
+<p>Толық реті: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Агрегатты WHERE-ге жазу:</b> <code>WHERE COUNT(*) &gt; 1</code> қате береді. WHERE кезінде топтар әлі жоқ — HAVING қолданыңыз.</li>
+<li><b>GROUP BY-ды ұмыту.</b> <code>SELECT city, COUNT(*) FROM customers</code> әр қалаға емес, бүкіл кестеге бір жол қайтарады.</li>
+<li><b>NULL тобын байқамау.</b> <code>city</code> бос жолдар бөлек <code>NULL</code> тобына жиналады. Ол керек болмаса, <code>WHERE city IS NOT NULL</code> қосыңыз.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Әр қала бойынша клиенттер санын шығарыңыз: <code>city</code> және сан.', starter: '', solution: 'SELECT city, COUNT(*) FROM customers GROUP BY city;', hints: ['<code>GROUP BY city</code>'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Әр санат (<code>category</code>) үшін тауарлар саны мен орташа бағасын шығарыңыз.', starter: '', solution: 'SELECT category, COUNT(*), AVG(price) FROM products GROUP BY category;', hints: ['Үш баған: category, COUNT(*), AVG(price).'] },
@@ -169,15 +233,63 @@ HAVING AVG(price) &gt; 10000;</code></pre>
     {
       id: 'sql-9', title: 'CASE WHEN: шартты бағандар', minutes: 10,
       body: `
-<p><code>CASE</code> — SQL-дегі «егер ... онда ...». Ол мәндерді санаттарға бөлуге көмектеседі:</p>
+<p>Мұғалім жұмыстарды тексергенде әр ұпайға баға қояды: 85-тен жоғары болса «5», 70-тен жоғары болса «4», әйтпесе «3». <code>CASE</code> — SQL-дегі дәл осындай «егер ... онда ...». Ол әр жол үшін шартты тексеріп, жаңа баған жасайды. Excel-дегі <code>IF</code> формуласына ұқсайды, бірақ бірнеше шартты қатар жазу оңай.</p>
+<pre><code>CASE
+  WHEN шарт1 THEN мән1
+  WHEN шарт2 THEN мән2
+  ELSE қалғандарына мән
+END AS жаңа_баған</code></pre>
+<p>Шарттар <b>жоғарыдан төмен</b> тексеріледі, бірінші орындалғаны алынады да, қалғандары қаралмайды.</p>
+<h3>Мысал: бағаны деңгейге бөлу</h3>
+<table>
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Ноутбук</td><td>350000</td></tr>
+<tr><td>Құлаққап</td><td>25000</td></tr>
+<tr><td>Термос</td><td>9000</td></tr>
+<tr><td>Үстел шамы</td><td>8000</td></tr>
+<tr><td>Блокнот</td><td>1200</td></tr>
+</table>
 <pre><code>SELECT name, price,
   CASE
-    WHEN price &gt;= 100000 THEN 'қымбат'
-    WHEN price &gt;= 10000 THEN 'орташа'
-    ELSE 'арзан'
-  END AS segment
+    WHEN price &gt;= 20000 THEN 'жоғары'
+    WHEN price &gt;= 5000 THEN 'орта'
+    ELSE 'төмен'
+  END AS level
 FROM products;</code></pre>
-<p>Шарттар жоғарыдан төмен тексеріледі, бірінші орындалғаны алынады. CASE-ті GROUP BY-мен бірге қолданып, өз сегменттеріңіз бойынша санауға болады.</p>`,
+<table>
+<tr><th>name</th><th>price</th><th>level</th></tr>
+<tr><td>Ноутбук</td><td>350000</td><td>жоғары</td></tr>
+<tr><td>Құлаққап</td><td>25000</td><td>жоғары</td></tr>
+<tr><td>Термос</td><td>9000</td><td>орта</td></tr>
+<tr><td>Үстел шамы</td><td>8000</td><td>орта</td></tr>
+<tr><td>Блокнот</td><td>1200</td><td>төмен</td></tr>
+</table>
+<p>Термосты қарайық: 9000 ≥ 20000 емес, бірінші шарт өтпеді. 9000 ≥ 5000 — екінші шарт өтті, сондықтан «орта». Блокнотқа ешбір шарт келмеді, ол <code>ELSE</code>-ке түсті.</p>
+<p>Шарт мәтінмен де жазылады: <code>WHEN city = 'Алматы' THEN 'Алматы' ELSE 'өңірлер'</code>. Мәтін әрқашан жалғыз тырнақшада болады.</p>
+<h3>CASE + GROUP BY</h3>
+<p>CASE-ке alias беріп, сол alias бойынша топтасаңыз, өз сегменттеріңіз бойынша санай аласыз:</p>
+<pre><code>SELECT
+  CASE
+    WHEN price &gt;= 20000 THEN 'жоғары'
+    WHEN price &gt;= 5000 THEN 'орта'
+    ELSE 'төмен'
+  END AS level,
+  COUNT(*) AS n
+FROM products
+GROUP BY level;</code></pre>
+<table>
+<tr><th>level</th><th>n</th></tr>
+<tr><td>жоғары</td><td>2</td></tr>
+<tr><td>орта</td><td>2</td></tr>
+<tr><td>төмен</td><td>1</td></tr>
+</table>
+<p>SQL алдымен әр жолға деңгей береді (жоғарыдағы кесте), сосын бірдей деңгейдегі жолдарды бір топқа жинап, санайды. Шартта бір ғана мәнді тексеріп, қалғанының бәрін <code>ELSE</code>-пен бір топқа жинауға да болады — сонда нәтижеде екі топ қана болады. Alias бойынша GROUP BY SQLite пен PostgreSQL-де жұмыс істейді; кейбір дерекқорларда CASE өрнегін GROUP BY-ға толық қайта жазу керек.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li><b>Шарттардың реті.</b> <code>WHEN price &gt;= 5000</code> бірінші тұрса, Ноутбук та «орта» болып кетеді. Үлкен шекарадан бастаңыз.</li>
+<li><b>ELSE-ті ұмыту.</b> ELSE болмаса, ешбір шартқа келмеген жолдар <code>NULL</code> алады.</li>
+<li><b>END-ті ұмыту</b> немесе үтірді қате қою. CASE ... END — бір баған, одан кейін үтір қойылады.</li>
+</ul></div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Әр тауардың атауын, бағасын және <code>segment</code> бағанын шығарыңыз: 100 000 және жоғары — <code>қымбат</code>, 10 000 және жоғары — <code>орташа</code>, қалғаны — <code>арзан</code>.', starter: "SELECT name, price,\n  CASE\n    WHEN price >= 100000 THEN 'қымбат'\n    \n  END AS segment\nFROM products;", solution: "SELECT name, price, CASE WHEN price >= 100000 THEN 'қымбат' WHEN price >= 10000 THEN 'орташа' ELSE 'арзан' END AS segment FROM products;", hints: ["Екінші шарт: <code>WHEN price >= 10000 THEN 'орташа'</code>", "Соңында: <code>ELSE 'арзан'</code>"] },
         { type: 'sql', dataset: 'shop', xp: 20, prompt: "Тапсырыстарды екі топқа бөліп санаңыз: <code>delivered</code> болса <code>'жеткізілді'</code>, әйтпесе <code>'басқа'</code>. Бағандар: топ атауы және саны.", starter: '', solution: "SELECT CASE WHEN status = 'delivered' THEN 'жеткізілді' ELSE 'басқа' END AS grp, COUNT(*) FROM orders GROUP BY grp;", hints: ['CASE өрнегіне alias беріп, сол alias бойынша GROUP BY жасаңыз.'] }
@@ -186,20 +298,63 @@ FROM products;</code></pre>
     {
       id: 'sql-10', title: 'JOIN: кестелерді біріктіру', minutes: 14,
       body: `
-<p>Деректер бірнеше кестеге бөлінген: тапсырыста тек <code>customer_id</code> бар, ал клиенттің аты <code>customers</code> кестесінде. Оларды <code>JOIN</code> біріктіреді.</p>
+<p>Деректер бірнеше кестеге бөлінген: тапсырыста тек <code>customer_id</code> бар, ал клиенттің аты <code>customers</code> кестесінде. Курьерді елестетіңіз: оның қолында «3-клиентке жеткізу» деген қағаз бар, ал аты-жөнін білу үшін ол клиенттер дәптерінен 3 нөмірін іздейді. <code>JOIN</code> осы іздеуді әр жол үшін автоматты жасайды. Excel-дегі XLOOKUP-қа ұқсайды, бірақ бірден бүкіл кестеге.</p>
+<h3>Мысал: тапсырысқа клиент атын қосу</h3>
+<p><code>orders</code>:</p>
+<table>
+<tr><th>id</th><th>customer_id</th><th>order_date</th></tr>
+<tr><td>101</td><td>1</td><td>2024-08-02</td></tr>
+<tr><td>102</td><td>2</td><td>2024-08-05</td></tr>
+<tr><td>103</td><td>1</td><td>2024-08-19</td></tr>
+</table>
+<p><code>customers</code>:</p>
+<table>
+<tr><th>id</th><th>name</th></tr>
+<tr><td>1</td><td>Айгерім</td></tr>
+<tr><td>2</td><td>Нұрлан</td></tr>
+<tr><td>3</td><td>Дана</td></tr>
+</table>
 <pre><code>SELECT o.id, c.name, o.order_date
 FROM orders o
 JOIN customers c ON o.customer_id = c.id;</code></pre>
+<table>
+<tr><th>id</th><th>name</th><th>order_date</th></tr>
+<tr><td>101</td><td>Айгерім</td><td>2024-08-02</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>2024-08-05</td></tr>
+<tr><td>103</td><td>Айгерім</td><td>2024-08-19</td></tr>
+</table>
+<p>Әр тапсырыс үшін SQL <code>customers</code> ішінен <code>id</code>-і <code>customer_id</code>-ге тең жолды тапты. Айгерімнің екі тапсырысы бар, сондықтан оның аты екі рет шықты.</p>
 <p><code>ON</code> — қай бағандар арқылы байланысатынын көрсетеді. Әдетте бұл <b>foreign key</b> (<code>orders.customer_id</code>) мен <b>primary key</b> (<code>customers.id</code>).</p>
 <h3>INNER JOIN</h3>
-<p><code>JOIN</code> = <code>INNER JOIN</code>: екі кестеде де сәйкесі бар жолдар ғана қалады. Тапсырыс жасамаған клиент нәтижеге кірмейді.</p>
+<p><code>JOIN</code> = <code>INNER JOIN</code>: екі кестеде де сәйкесі бар жолдар ғана қалады. Тапсырыс жасамаған клиент нәтижеге кірмейді — мысалдағы Дана жоқ.</p>
+<p>JOIN-нан кейін әдеттегідей <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code> жаза бересіз. Мысалы, тек Айгерімнің тапсырыстары: <code>... JOIN ... ON ... WHERE c.name = 'Айгерім'</code>.</p>
 <div class="tip">Екі кестеде бірдей атаулы баған болса (мысалы <code>id</code>, <code>name</code>), кесте атауын немесе alias-ты міндетті түрде жазыңыз: <code>c.name</code>, <code>p.name</code>.</div>
 <h3>Табысты есептеу</h3>
-<p>Тапсырыс табысы = дана × баға. Ол үшін <code>order_items</code> мен <code>products</code> біріктіріледі:</p>
+<p>Тапсырыс табысы = дана × баға. Дана саны <code>order_items</code>-та, баға <code>products</code>-та, сондықтан оларды біріктіреміз:</p>
 <pre><code>SELECT oi.order_id, SUM(oi.quantity * p.price) AS revenue
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
-GROUP BY oi.order_id;</code></pre>`,
+GROUP BY oi.order_id;</code></pre>
+<p>JOIN-нан кейін, топтауға дейін аралық кесте былай көрінеді:</p>
+<table>
+<tr><th>order_id</th><th>product</th><th>quantity</th><th>price</th><th>quantity × price</th></tr>
+<tr><td>101</td><td>Ноутбук</td><td>1</td><td>350000</td><td>350000</td></tr>
+<tr><td>101</td><td>Құлаққап</td><td>1</td><td>25000</td><td>25000</td></tr>
+<tr><td>102</td><td>Кітап: SQL негіздері</td><td>2</td><td>6500</td><td>13000</td></tr>
+<tr><td>102</td><td>Блокнот</td><td>5</td><td>1200</td><td>6000</td></tr>
+</table>
+<p>GROUP BY әр тапсырыстың жолдарын қосады:</p>
+<table>
+<tr><th>order_id</th><th>revenue</th></tr>
+<tr><td>101</td><td>375000</td></tr>
+<tr><td>102</td><td>19000</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>ON-ды қате бағанмен жазу:</b> <code>ON o.id = c.id</code>. Тапсырыс нөмірі клиент нөмірі емес! Байланыс әрқашан foreign key → primary key: <code>o.customer_id = c.id</code>.</li>
+<li><b>ON-ды ұмыту.</b> Шартсыз JOIN әр жолды екінші кестенің әр жолымен жұптайды: 15 × 10 = 150 жол шығады.</li>
+<li><b>Ретті шатастыру.</b> <code>WHERE</code> JOIN-нан бұрын емес, кейін жазылады: <code>FROM → JOIN ... ON → WHERE → GROUP BY</code>.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Әр тапсырыстың <code>id</code>, клиенттің атын және тапсырыс күнін шығарыңыз.', starter: 'SELECT o.id, c.name, o.order_date\nFROM orders o\nJOIN ', solution: 'SELECT o.id, c.name, o.order_date FROM orders o JOIN customers c ON o.customer_id = c.id;', check: { mustInclude: ['JOIN'] }, hints: ['<code>JOIN customers c ON o.customer_id = c.id</code>'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: '105-тапсырыстағы тауарлардың атауы мен санын (<code>quantity</code>) шығарыңыз.', starter: '', solution: 'SELECT p.name, oi.quantity FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = 105;', check: { mustInclude: ['JOIN'] }, hints: ['<code>order_items</code> мен <code>products</code> біріктіріңіз.', 'Сүзгі: <code>WHERE oi.order_id = 105</code>'] },
@@ -209,11 +364,30 @@ GROUP BY oi.order_id;</code></pre>`,
     {
       id: 'sql-11', title: 'LEFT JOIN және бірнеше JOIN', minutes: 14,
       body: `
-<p><code>LEFT JOIN</code> сол жақ кестенің <b>барлық</b> жолын сақтайды. Оң жақта сәйкесі болмаса, оның бағандары <code>NULL</code> болады.</p>
+<p>Сынып журналын елестетіңіз: оқушылардың тізімі толық тұрады, ал сабаққа келмеген оқушының бағасы бос қалады. Оны тізімнен ешкім өшірмейді. <code>LEFT JOIN</code> дәл осылай жұмыс істейді: сол жақ кестенің <b>барлық</b> жолын сақтайды. Оң жақта сәйкесі болмаса, оның бағандары <code>NULL</code> болады. Ал INNER JOIN мұндай «келмеген оқушыны» тізімнен алып тастар еді.</p>
+<h3>Мысал: клиенттер мен олардың тапсырыстары</h3>
+<p><code>customers</code>: 1 Айгерім, 2 Нұрлан, 8 Бауыржан. <code>orders</code>: 101 (клиент 1), 102 (клиент 2), 103 (клиент 1).</p>
 <pre><code>SELECT c.name, o.id AS order_id
 FROM customers c
 LEFT JOIN orders o ON o.customer_id = c.id;</code></pre>
-<p>Бұл «ешқашан тапсырыс бермеген клиенттер» сияқты сұрақтарға жауап береді: <code>WHERE o.id IS NULL</code>.</p>
+<table>
+<tr><th>name</th><th>order_id</th></tr>
+<tr><td>Айгерім</td><td>101</td></tr>
+<tr><td>Айгерім</td><td>103</td></tr>
+<tr><td>Нұрлан</td><td>102</td></tr>
+<tr><td>Бауыржан</td><td>NULL</td></tr>
+</table>
+<p>Бауыржанның тапсырысы жоқ, бірақ ол нәтижеде қалды, ал <code>order_id</code> бос. INNER JOIN болса, бұл жол мүлдем болмас еді.</p>
+<p>Бұл «ешқашан тапсырыс бермеген клиенттер» сияқты сұрақтарға жауап береді: <code>NULL</code> қалған жолдарды <code>WHERE o.id IS NULL</code> арқылы сүземіз. Жоғарыдағы мысалда тек Бауыржан қалады.</p>
+<h3>LEFT JOIN-нан кейін санау</h3>
+<p>Әр клиенттің тапсырыс санын GROUP BY арқылы есептесек, екі әдістің айырмашылығы көрінеді:</p>
+<table>
+<tr><th>name</th><th>COUNT(*)</th><th>COUNT(o.id)</th></tr>
+<tr><td>Айгерім</td><td>2</td><td>2</td></tr>
+<tr><td>Нұрлан</td><td>1</td><td>1</td></tr>
+<tr><td>Бауыржан</td><td>1 (қате)</td><td>0 (дұрыс)</td></tr>
+</table>
+<p><code>COUNT(*)</code> Бауыржанның NULL жолын да санайды. <code>COUNT(o.id)</code> NULL-ды санамайды, сондықтан дұрыс 0 береді. Топтағанда <code>c.id</code>-ді де қосыңыз: аттары бірдей екі клиент бір топқа бірігіп кетпейді.</p>
 <h3>JOIN түрлері</h3>
 <table>
 <tr><th>Түрі</th><th>Не қалады</th></tr>
@@ -223,8 +397,26 @@ LEFT JOIN orders o ON o.customer_id = c.id;</code></pre>
 <tr><td>FULL JOIN</td><td>екі жақтың да бәрі</td></tr>
 </table>
 <h3>Бірнеше JOIN</h3>
-<p>JOIN-дарды тізбектеп жазуға болады: тапсырыс → клиент, тапсырыс → позициялар → тауар.</p>
-<div class="tip">LEFT JOIN-нан кейін санағанда <code>COUNT(*)</code> емес, <code>COUNT(o.id)</code> жазыңыз. Әйтпесе тапсырысы жоқ клиент 0 емес, 1 болып саналады.</div>`,
+<p>JOIN-дарды тізбектеп жазуға болады: тапсырыс → клиент, тапсырыс → позициялар → тауар. Әр жаңа JOIN өз <code>ON</code> шартымен бұрын қосылған кестеге жалғанады:</p>
+<pre><code>SELECT o.id, c.name, p.name AS product, oi.quantity
+FROM orders o
+JOIN customers c    ON c.id = o.customer_id
+JOIN order_items oi ON oi.order_id = o.id
+JOIN products p     ON p.id = oi.product_id;</code></pre>
+<table>
+<tr><th>id</th><th>name</th><th>product</th><th>quantity</th></tr>
+<tr><td>101</td><td>Айгерім</td><td>Ноутбук</td><td>1</td></tr>
+<tr><td>101</td><td>Айгерім</td><td>Құлаққап</td><td>1</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>Кітап: SQL негіздері</td><td>2</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>Блокнот</td><td>5</td></tr>
+</table>
+<p>Енді бір жолда клиенттің қаласы да, тауардың бағасы да, тапсырыс статусы да бар. Осыдан кейін әдеттегідей <code>WHERE</code>, <code>GROUP BY</code>, <code>ORDER BY</code> жазып, кез келген бағанмен сүзуге, топтауға, сұрыптауға болады.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li>LEFT JOIN-нан кейін санағанда <code>COUNT(*)</code> емес, <code>COUNT(o.id)</code> жазыңыз. Әйтпесе тапсырысы жоқ клиент 0 емес, 1 болып саналады.</li>
+<li>LEFT JOIN-нан кейін оң жақ кесте бойынша WHERE жазсаңыз (мысалы <code>WHERE o.status = 'delivered'</code>), NULL жолдар өшіп, LEFT JOIN жай INNER JOIN-ға айналады. Мұндай шартты <code>ON ... AND o.status = 'delivered'</code> ішіне жазыңыз.</li>
+<li>Бірнеше JOIN-да <code>ON</code> әлі қосылмаған кестеге сілтесе, қате шығады. Кестелерді байланыс ретімен қосыңыз.</li>
+</ul></div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Бірде-бір тапсырыс бермеген клиенттердің атын шығарыңыз.', starter: '', solution: 'SELECT c.name FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL;', check: { mustInclude: ['LEFT JOIN'] }, hints: ['LEFT JOIN, сосын <code>WHERE o.id IS NULL</code>.'] },
         { type: 'sql', dataset: 'shop', xp: 20, prompt: 'Әр клиенттің аты мен тапсырыс санын шығарыңыз. Тапсырысы жоқтар 0 болып көрінуі керек.', starter: '', solution: 'SELECT c.name, COUNT(o.id) FROM customers c LEFT JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.name;', check: { mustInclude: ['LEFT JOIN'] }, hints: ['<code>COUNT(o.id)</code> қолданыңыз.', 'GROUP BY: <code>c.id, c.name</code>'] },
@@ -234,19 +426,35 @@ LEFT JOIN orders o ON o.customer_id = c.id;</code></pre>
     {
       id: 'sql-12', title: 'Subquery, EXISTS, ANY және ALL', minutes: 14,
       body: `
-<p><b>Subquery</b> — сұрау ішіндегі сұрау. Ол жақшаға алынады.</p>
+<p>«Орташадан қымбат тауарлар қайсы?» деген сұрақты екі қадаммен шешесіз: алдымен орташаны есептеп, қағазға жазып қоясыз, сосын сол санмен салыстырасыз. <b>Subquery</b> — сұрау ішіндегі сұрау. Ол осы «қағаздағы санды» SQL-дің өзіне есептетеді. Subquery әрқашан жақшаға алынады, ал SQL алдымен ішкі сұрауды орындайды.</p>
 <h3>Бір мән қайтаратын subquery</h3>
+<p>Төрт тауар: Құлаққап 25000, Рюкзак 15000, Термос 9000, Блокнот 1200.</p>
 <pre><code>SELECT name, price FROM products
 WHERE price &gt; (SELECT AVG(price) FROM products);</code></pre>
+<p>1-қадам: ішкі сұрау (25000 + 15000 + 9000 + 1200) / 4 = 12550 береді. 2-қадам: сұрау <code>WHERE price &gt; 12550</code> болып орындалады:</p>
+<table>
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Құлаққап</td><td>25000</td></tr>
+<tr><td>Рюкзак</td><td>15000</td></tr>
+</table>
+<p>Неге 12550 санын қолмен жазбаймыз? Деректер өзгергенде орташа да өзгереді, ал subquery әр жолы жаңадан есептейді.</p>
 <h3>Тізім қайтаратын subquery + IN</h3>
 <pre><code>SELECT name FROM customers
 WHERE id IN (SELECT customer_id FROM orders WHERE status = 'cancelled');</code></pre>
+<p>Ішкі сұрау бас тартылған тапсырыстардың клиенттерін береді: <code>(3, 10)</code>. Сыртқы сұрау <code>WHERE id IN (3, 10)</code> болып, Дана мен Арманды шығарады. Ішкі сұраудағы WHERE кез келген шарт бола алады: <code>=</code>, <code>BETWEEN</code>, күн бойынша <code>LIKE</code> т.б.</p>
 <h3>EXISTS</h3>
 <p><code>EXISTS</code> ішкі сұрау кемінде бір жол тапса, ақиқат болады. <code>NOT EXISTS</code> — керісінше:</p>
 <pre><code>SELECT p.name FROM products p
 WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id);</code></pre>
+<p>Мұнда ішкі сұрау <b>әр тауар үшін</b> қайта орындалады, өйткені ол сыртқы <code>p.id</code>-ге сілтейді. Ноутбук (id 1) үшін <code>order_items</code>-та жол табылады → EXISTS ақиқат → NOT EXISTS жалған, Ноутбук шықпайды. Үстел шамы (id 11) ешбір тапсырыста жоқ → ол нәтижеге кіреді. <code>SELECT 1</code> — «не қайтарғаны маңызды емес, тек жол бар ма» дегенді білдіреді.</p>
 <h3>ANY және ALL</h3>
-<p>PostgreSQL сияқты дерекқорларда <code>price &gt; ALL (SELECT ...)</code> «барлығынан үлкен», <code>price &gt; ANY (...)</code> «кемінде біреуінен үлкен» дегенді білдіреді. Біздің браузердегі SQLite оларды қолдамайды, бірақ мағынасы бірдей жазу бар: <code>&gt; ALL</code> = <code>&gt; (SELECT MAX(...))</code>, <code>&gt; ANY</code> = <code>&gt; (SELECT MIN(...))</code>.</p>`,
+<p>PostgreSQL сияқты дерекқорларда <code>price &gt; ALL (SELECT ...)</code> «барлығынан үлкен», <code>price &gt; ANY (...)</code> «кемінде біреуінен үлкен» дегенді білдіреді. Біздің браузердегі SQLite оларды қолдамайды, бірақ мағынасы бірдей жазу бар: <code>&gt; ALL</code> = <code>&gt; (SELECT MAX(...))</code>, <code>&gt; ANY</code> = <code>&gt; (SELECT MIN(...))</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Көп мәнді <code>&gt;</code> немесе <code>=</code>-мен салыстыру.</b> Ішкі сұрау тізім қайтарса, <code>IN</code> керек. SQLite бұл жағдайда қате бермей, жай бірінші мәнді алады — нәтиже үнсіз бұрыс болады.</li>
+<li><b>NOT IN және NULL.</b> Ішкі тізімде бір <code>NULL</code> болса, <code>NOT IN</code> бос нәтиже береді. Мұндайда <code>NOT EXISTS</code> қауіпсізірек.</li>
+<li><b>IN ішінде бірнеше баған.</b> <code>id IN (SELECT customer_id, order_date ...)</code> қате — IN үшін ішкі сұрау бір баған қайтаруы керек.</li>
+</ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Бағасы орташа бағадан жоғары тауарлардың атауы мен бағасын шығарыңыз.', starter: '', solution: 'SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products);', check: { mustInclude: ['SELECT AVG'] }, hints: ['Орташаны subquery-мен есептеңіз: <code>(SELECT AVG(price) FROM products)</code>.'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: '2024 жылғы қарашада тапсырыс берген клиенттердің атын шығарыңыз. <code>IN</code> және subquery қолданыңыз.', starter: '', solution: "SELECT name FROM customers WHERE id IN (SELECT customer_id FROM orders WHERE order_date LIKE '2024-11%');", check: { mustInclude: ['IN'] }, hints: ["Қараша: <code>order_date LIKE '2024-11%'</code>"] },

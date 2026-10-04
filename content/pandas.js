@@ -61,15 +61,47 @@ two  = orders[orders['customer_id'].isin([1, 2])]</code></pre>
       {
         id: 'pd-3', title: 'Жаңа бағандар және сұрыптау', minutes: 12,
         body: `
-<p>Жаңа баған барлық жолға бірден есептеледі (цикл керек емес, бұл <b>векторлау</b>):</p>
+<p>Excel-де жаңа баған қосу үшін формуланы бір ұяшыққа жазып, төмен қарай созасыз. pandas-та созудың керегі жоқ: формуланы бүкіл бағанға бір рет жазасыз, ол барлық жолға бірден есептеледі. Мұны <b>векторлау</b> дейді, Python циклы керек емес.</p>
 <pre><code>orders['amount_k'] = orders['amount'] / 1000
 orders['month'] = orders['order_date'].str[:7]        # '2024-03-05' → '2024-03'
 orders['size'] = orders['amount'].apply(lambda x: 'big' if x &gt; 3000 else 'small')</code></pre>
+<p><code>.str[:7]</code> мәтіннің алғашқы 7 таңбасын алады (Python-дағы кесінді сияқты). <code>order_date</code> CSV-ден мәтін болып оқылады, сондықтан бұл жұмыс істейді.</p>
+<h3>Мысал: кіріс → код → нәтиже</h3>
+<table>
+<tr><th>id</th><th>order_date</th><th>amount</th><th>status</th></tr>
+<tr><td>1</td><td>2024-01-05</td><td>2500</td><td>paid</td></tr>
+<tr><td>2</td><td>2024-01-20</td><td>4200</td><td>paid</td></tr>
+<tr><td>3</td><td>2024-02-03</td><td>1800</td><td>refund</td></tr>
+<tr><td>4</td><td>2024-02-11</td><td>3600</td><td>paid</td></tr>
+</table>
+<pre><code>orders['month'] = orders['order_date'].str[:7]
+res = orders.sort_values('amount', ascending=False)
+print(res[['id', 'month', 'amount']])</code></pre>
+<table>
+<tr><th>id</th><th>month</th><th>amount</th></tr>
+<tr><td>2</td><td>2024-01</td><td>4200</td></tr>
+<tr><td>4</td><td>2024-02</td><td>3600</td></tr>
+<tr><td>1</td><td>2024-01</td><td>2500</td></tr>
+<tr><td>3</td><td>2024-02</td><td>1800</td></tr>
+</table>
+<p>Ең үлкен N жолды алу үшін сұрыптаудан кейін <code>.head(N)</code> жазыңыз. Тек бір статусты керек болса, <b>алдымен сүзіп</b> (өткен сабақтағыдай), сосын сұрыптаңыз.</p>
 <h3>Сұрыптау (ORDER BY)</h3>
 <pre><code>orders.sort_values('amount', ascending=False).head(5)   # ең үлкен 5
 orders.nlargest(5, 'amount')                            # дәл сол
-orders.sort_values(['customer_id', 'order_date'])</code></pre>
-<p>Атауын өзгерту: <code>df.rename(columns={'amount': 'sum'})</code>. Бағанды жою: <code>df.drop(columns=['size'])</code>.</p>`,
+orders.sort_values(['customer_id', 'order_date'])       # екі баған бойынша</code></pre>
+<table>
+<tr><th>SQL</th><th>pandas</th></tr>
+<tr><td><code>SELECT amount / 1000 AS amount_k</code></td><td><code>df['amount_k'] = df['amount'] / 1000</code></td></tr>
+<tr><td><code>substr(order_date, 1, 7)</code></td><td><code>df['order_date'].str[:7]</code></td></tr>
+<tr><td><code>ORDER BY amount DESC LIMIT 5</code></td><td><code>df.sort_values('amount', ascending=False).head(5)</code></td></tr>
+</table>
+<p>Атауын өзгерту: <code>df.rename(columns={'amount': 'sum'})</code>. Бағанды жою: <code>df.drop(columns=['size'])</code>.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li><code>ascending=False</code> ұмытылса, ең <b>кіші</b> мәндер жоғарыда тұрады (әдепкі — өсу реті).</li>
+<li><code>sort_values</code> кестені орнында өзгертпейді, жаңа кесте қайтарады. Нәтижені айнымалыға жазыңыз: <code>res = df.sort_values(...)</code>.</li>
+<li>Сүзілген кестеге баған қосқанда ескерту шықса, сүзгіден кейін <code>.copy()</code> жазыңыз.</li>
+</ul></div>`,
         exercises: [
           { type: 'python', xp: 15, prompt: '<code>orders</code>-ке <code>month</code> бағанын қосыңыз: <code>order_date</code>-тың алғашқы 7 таңбасы (мысалы <code>2024-03</code>).', starter: LOAD + '\n', solution: LOAD + "orders['month'] = orders['order_date'].str[:7]\nprint(orders.head())", check: { tests: "assert 'month' in orders.columns, 'month бағаны жоқ'\nassert (orders['month'] == orders['order_date'].str[:7]).all(), 'month = order_date-тың алғашқы 7 таңбасы'" }, hints: ["<code>orders['order_date'].str[:7]</code>"] },
           { type: 'python', xp: 20, prompt: 'Төленген тапсырыстардың ішінен сомасы ең үлкен 5 тапсырысты кему ретімен <code>top5</code> айнымалысына жазыңыз.', starter: LOAD + '\n', solution: LOAD + "paid = orders[orders['status'] == 'paid']\ntop5 = paid.sort_values('amount', ascending=False).head(5)\nprint(top5)", check: { tests: REF + "_t = _o[_o['status'] == 'paid'].sort_values('amount', ascending=False).head(5)\nassert len(top5) == 5, 'top5 ішінде 5 жол болуы керек'\nassert top5['amount'].tolist() == _t['amount'].tolist(), 'Сомалар кему ретімен болуы керек'\nassert set(top5['status']) == {'paid'}, 'Тек paid тапсырыстар'" }, hints: ["<code>sort_values('amount', ascending=False).head(5)</code>"] }
@@ -78,7 +110,35 @@ orders.sort_values(['customer_id', 'order_date'])</code></pre>
       {
         id: 'pd-4', title: 'groupby: топтау және агрегат', minutes: 15,
         body: `
-<p><code>groupby</code> — SQL-дегі <code>GROUP BY</code>. Үш қадам: бөлу (split) → есептеу (apply) → біріктіру (combine).</p>
+<p>Кассадағы чектерді клиенттер бойынша бөлек үйінділерге бөліп, әр үйіндіні калькулятормен қосып, нәтижелерді бір парақшаға жазып шықтыңыз делік. <code>groupby</code> дәл осыны істейді. Бұл SQL-дегі <code>GROUP BY</code>. Үш қадам: бөлу (split) → есептеу (apply) → біріктіру (combine).</p>
+<h3>Мысал: қадам-қадаммен</h3>
+<table>
+<tr><th>id</th><th>customer_id</th><th>amount</th></tr>
+<tr><td>1</td><td>1</td><td>2000</td></tr>
+<tr><td>2</td><td>2</td><td>3000</td></tr>
+<tr><td>3</td><td>1</td><td>2500</td></tr>
+<tr><td>4</td><td>3</td><td>1500</td></tr>
+<tr><td>5</td><td>2</td><td>4000</td></tr>
+</table>
+<pre><code>orders.groupby('customer_id')['amount'].sum()</code></pre>
+<ol>
+<li><b>Split:</b> 1-клиент → [2000, 2500]; 2-клиент → [3000, 4000]; 3-клиент → [1500].</li>
+<li><b>Apply:</b> әр топқа <code>sum</code>: 4500; 7000; 1500.</li>
+<li><b>Combine:</b> бір Series, индексі — <code>customer_id</code>:</li>
+</ol>
+<pre><code>customer_id
+1    4500
+2    7000
+3    1500
+Name: amount, dtype: int64</code></pre>
+<p>Бірнеше агрегат керек болса, <code>.agg()</code> ішінде <code>жаңа_атау=('баған', 'функция')</code> жазамыз. Сол кестеде <code>.agg(orders=('id', 'count'), revenue=('amount', 'sum')).reset_index()</code> мынаны береді:</p>
+<table>
+<tr><th>customer_id</th><th>orders</th><th>revenue</th></tr>
+<tr><td>1</td><td>2</td><td>4500</td></tr>
+<tr><td>2</td><td>2</td><td>7000</td></tr>
+<tr><td>3</td><td>1</td><td>1500</td></tr>
+</table>
+<p>Топтау кілті кестеде болуы керек. Мысалы, ай бойынша топтау үшін алдымен <code>month</code> бағанын қосыңыз (өткен сабақ), сосын <code>groupby('month')</code>. Нәтижені сұрыптау үшін <code>sort_values</code> соңына тіркеледі.</p>
 <pre><code># бір агрегат → Series
 orders.groupby('status')['amount'].sum()
 
@@ -92,9 +152,17 @@ orders.groupby('customer_id').agg(
 <tr><th>SQL</th><th>pandas</th></tr>
 <tr><td><code>COUNT(*)</code></td><td><code>'count'</code> немесе <code>.size()</code></td></tr>
 <tr><td><code>COUNT(DISTINCT x)</code></td><td><code>'nunique'</code></td></tr>
-<tr><td><code>HAVING SUM(a) &gt; 10</code></td><td>агрегаттан кейін сүзгі: <code>res[res['revenue'] &gt; 10]</code></td></tr>
+<tr><td><code>WHERE status = 'paid'</code></td><td>топтауға <b>дейін</b> сүзгі: <code>orders[orders['status'] == 'paid'].groupby(...)</code></td></tr>
+<tr><td><code>HAVING SUM(a) &gt; 10</code></td><td>агрегаттан <b>кейін</b> сүзгі: <code>res[res['revenue'] &gt; 10]</code></td></tr>
+<tr><td><code>ORDER BY revenue DESC</code></td><td><code>.sort_values('revenue', ascending=False)</code></td></tr>
 </table>
-<div class="tip"><code>reset_index()</code> топтау бағанын индекстен қайтадан кәдімгі бағанға айналдырады. Нәтижені әрі қарай біріктіру үшін ыңғайлы.</div>`,
+<div class="tip"><code>reset_index()</code> топтау бағанын индекстен қайтадан кәдімгі бағанға айналдырады. Нәтижені әрі қарай біріктіру үшін ыңғайлы.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>reset_index()</code> ұмытылады: <code>customer_id</code> индексте қалады, <code>df['customer_id']</code> қате береді.</li>
+<li>Сүзгіні ұмыту: refund тапсырыстар да табысқа қосылып кетеді. Алдымен <code>paid</code> қалдырыңыз.</li>
+<li><code>'count'</code> бос емес мәндерді ғана санайды: <code>('amount', 'count')</code> бос сомаларды есептемейді, ал <code>('id', 'count')</code> барлық тапсырысты санайды.</li>
+</ul>`,
         exercises: [
           { type: 'python', xp: 20, prompt: 'Төленген тапсырыстар бойынша әр айдың табысын есептеңіз: <code>monthly</code> — индексі ай (<code>order_date</code>-тың алғашқы 7 таңбасы), мәні <code>amount</code> қосындысы болатын Series.', starter: LOAD + '\n', solution: LOAD + "paid = orders[orders['status'] == 'paid'].copy()\npaid['month'] = paid['order_date'].str[:7]\nmonthly = paid.groupby('month')['amount'].sum()\nprint(monthly)", check: { tests: REF + "_p = _o[_o['status'] == 'paid']\n_m = _p.groupby(_p['order_date'].str[:7])['amount'].sum()\nassert len(monthly) == 6, 'Алты ай болуы керек'\nassert [round(float(v)) for v in monthly.values] == [round(float(v)) for v in _m.values], 'Айлық сомалар сәйкес емес: тек paid тапсырыстарды алдыңыз ба?'" }, hints: ["Алдымен <code>month</code> бағанын қосыңыз.", "<code>paid.groupby('month')['amount'].sum()</code>"] },
           { type: 'python', xp: 25, prompt: 'Төленген тапсырыстар бойынша әр клиентке <code>orders</code> (тапсырыс саны) және <code>revenue</code> (сома) есептеп, <code>by_cust</code> DataFrame-ін жасаңыз (<code>customer_id</code> кәдімгі баған болсын). Табыс бойынша кему ретімен сұрыптаңыз.', starter: LOAD + '\n', solution: LOAD + "paid = orders[orders['status'] == 'paid']\nby_cust = paid.groupby('customer_id').agg(orders=('id', 'count'), revenue=('amount', 'sum')).reset_index().sort_values('revenue', ascending=False)\nprint(by_cust.head())", check: { tests: REF + "_g = _o[_o['status'] == 'paid'].groupby('customer_id').agg(orders=('id', 'count'), revenue=('amount', 'sum')).reset_index().sort_values('revenue', ascending=False)\nassert 'customer_id' in by_cust.columns, 'customer_id баған болуы керек: reset_index() қолданыңыз'\nassert {'orders', 'revenue'} <= set(by_cust.columns), 'orders және revenue бағандары керек'\nassert len(by_cust) == len(_g), 'Клиенттер саны дұрыс емес'\nassert by_cust['revenue'].round().tolist() == _g['revenue'].round().tolist(), 'revenue мәндері немесе реті дұрыс емес'" }, hints: ["<code>.agg(orders=('id', 'count'), revenue=('amount', 'sum'))</code>", "<code>.reset_index().sort_values('revenue', ascending=False)</code>"] }
@@ -121,7 +189,34 @@ outliers = orders[orders['amount'] &gt; q3 + 1.5 * iqr]</code></pre>
       {
         id: 'pd-6', title: 'merge: кестелерді біріктіру', minutes: 14,
         body: `
-<p><code>merge</code> — SQL-дегі <code>JOIN</code>.</p>
+<p>Бір парақта тапсырыстар бар, бірақ клиенттің қаласы мен арнасы жоқ. Екінші парақта клиенттер тізімі бар. Excel-де VLOOKUP арқылы әр тапсырысқа клиенттің деректерін «тартып аласыз». pandas-та бұл <code>merge</code>, SQL-дегі <code>JOIN</code>.</p>
+<h3>Мысал: қай жолдар сәйкес келеді</h3>
+<p><b>orders</b>:</p>
+<table>
+<tr><th>id</th><th>customer_id</th><th>amount</th></tr>
+<tr><td>10</td><td>1</td><td>2000</td></tr>
+<tr><td>11</td><td>2</td><td>3000</td></tr>
+<tr><td>12</td><td>1</td><td>1500</td></tr>
+<tr><td>13</td><td>4</td><td>2500</td></tr>
+</table>
+<p><b>customers</b>:</p>
+<table>
+<tr><th>id</th><th>city</th><th>channel</th></tr>
+<tr><td>1</td><td>Алматы</td><td>instagram</td></tr>
+<tr><td>2</td><td>Астана</td><td>2gis</td></tr>
+<tr><td>3</td><td>Шымкент</td><td>referral</td></tr>
+</table>
+<pre><code>df = orders.merge(customers, left_on='customer_id', right_on='id',
+                  how='left', suffixes=('_order', '_customer'))</code></pre>
+<table>
+<tr><th>id_order</th><th>customer_id</th><th>amount</th><th>id_customer</th><th>city</th><th>channel</th></tr>
+<tr><td>10</td><td>1</td><td>2000</td><td>1</td><td>Алматы</td><td>instagram</td></tr>
+<tr><td>11</td><td>2</td><td>3000</td><td>2</td><td>Астана</td><td>2gis</td></tr>
+<tr><td>12</td><td>1</td><td>1500</td><td>1</td><td>Алматы</td><td>instagram</td></tr>
+<tr><td>13</td><td>4</td><td>2500</td><td>NaN</td><td>NaN</td><td>NaN</td></tr>
+</table>
+<p>1-клиенттің екі тапсырысы бар, сондықтан оның қаласы екі жолға көшірілді. 4-клиент customers-та жоқ: <code>left</code> жолды сақтайды, бірақ мәндері бос (NaN). <code>how='inner'</code> болса, 13-тапсырыс жойылып, 3 жол қалар еді. 3-клиенттің тапсырысы жоқ, ол тек <code>'outer'</code>-де шығады.</p>
+<p>Біріктіргеннен кейін кез келген бағанмен топтай аласыз: <code>df.groupby('channel')['amount'].sum()</code> → instagram 3500, 2gis 3000.</p>
 <pre><code>customers = pd.read_csv('customers.csv')
 
 df = orders.merge(customers, left_on='customer_id', right_on='id',
@@ -132,8 +227,18 @@ df = orders.merge(customers, left_on='customer_id', right_on='id',
 <tr><td><code>'left'</code></td><td><code>LEFT JOIN</code></td></tr>
 <tr><td><code>'outer'</code></td><td><code>FULL OUTER JOIN</code></td></tr>
 </table>
-<p>Кілт атаулары бірдей болса: <code>on='customer_id'</code>. Екі кестеде де <code>id</code> бағаны болғандықтан, <code>suffixes</code> атауларды ажыратады.</p>
-<div class="tip">Біріктіргеннен кейін жолдар санын тексеріңіз: <code>len(df)</code> күткеннен көп болса, кілт қайталанып тұр.</div>`,
+<p>Кілт атаулары бірдей болса: <code>on='customer_id'</code>. Атаулары әртүрлі болса (мұнда <code>customer_id</code> және <code>id</code>), <code>left_on</code> мен <code>right_on</code> жазылады. Екі кестеде де <code>id</code> бағаны болғандықтан, <code>suffixes</code> атауларды ажыратады (әйтпесе <code>id_x</code>, <code>id_y</code> болады).</p>
+<p>SQL баламасы:</p>
+<pre><code>SELECT o.*, c.city, c.channel
+FROM orders o
+LEFT JOIN customers c ON c.id = o.customer_id;</code></pre>
+<div class="tip">Біріктіргеннен кейін жолдар санын тексеріңіз: <code>len(df)</code> күткеннен көп болса, кілт қайталанып тұр.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>on='id'</code> жазу: тапсырыс id-і клиент id-імен салыстырылады, нәтиже қате, бірақ қате хабары шықпайды.</li>
+<li>Оң жақ кестеде кілт қайталанса, жолдар көбейіп, сомалар екі есе өседі.</li>
+<li><code>left</code>-тен кейін сәйкес келмеген жолдарда NaN болады. <code>groupby</code> NaN кілтті әдепкіде тастап кетеді, сондықтан ол сома топтарда көрінбейді.</li>
+</ul>`,
         exercises: [
           { type: 'python', xp: 25, prompt: 'Таза тапсырыстарды (<code>clean</code> дайын) <code>customers.csv</code>-мен біріктіріп, әр арнаның (<code>channel</code>) табысын есептеңіз. Нәтиже: <code>by_channel</code> Series, кему ретімен.', starter: LOAD + "clean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)]\ncustomers = pd.read_csv('customers.csv')\n\n", solution: LOAD + "clean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)]\ncustomers = pd.read_csv('customers.csv')\n\ndf = clean.merge(customers, left_on='customer_id', right_on='id', how='left')\nby_channel = df.groupby('channel')['amount'].sum().sort_values(ascending=False)\nprint(by_channel)", check: { tests: REF + "_m = _clean.merge(_c, left_on='customer_id', right_on='id').groupby('channel')['amount'].sum().sort_values(ascending=False)\nassert list(by_channel.index) == list(_m.index), 'Арналар реті дұрыс емес: кему ретімен сұрыптаңыз'\nassert [round(float(v)) for v in by_channel.values] == [round(float(v)) for v in _m.values], 'Сомалар сәйкес емес'" }, hints: ["<code>clean.merge(customers, left_on='customer_id', right_on='id')</code>", "<code>.groupby('channel')['amount'].sum().sort_values(ascending=False)</code>"] },
           { type: 'quiz', xp: 10, prompt: '150 тапсырысты 40 клиентпен <code>how=\'left\'</code> біріктірдік, нәтижеде 150 жол. Ал 300 жол шықса, бұл нені білдіреді?', options: ['Бәрі дұрыс', 'customers кестесінде бір клиент id-і қайталанады', 'orders кестесі бос', 'how=\'inner\' керек еді'], answer: 1, explain: 'Кілт оң жақ кестеде қайталанса, әр тапсырыс бірнеше рет көшіріледі. Біріктіруден кейін жолдар санын әрқашан тексеріңіз.' }
@@ -142,17 +247,41 @@ df = orders.merge(customers, left_on='customer_id', right_on='id',
       {
         id: 'pd-7', title: 'Күндер және pivot_table', minutes: 15,
         body: `
+<p>CSV-ден оқылған күн — жай мәтін, мысалы <code>'2024-03-05'</code>. Мәтінмен күнді салыстыру, апта күнін табу қиын. <code>pd.to_datetime</code> оны нағыз күнге айналдырады, сосын <code>.dt</code> арқылы оның бөліктерін аламыз.</p>
 <pre><code>orders['order_date'] = pd.to_datetime(orders['order_date'])
-orders['month'] = orders['order_date'].dt.to_period('M')
-orders['weekday'] = orders['order_date'].dt.day_name()</code></pre>
+orders['month'] = orders['order_date'].dt.to_period('M')   # 2024-03
+orders['weekday'] = orders['order_date'].dt.day_name()      # 'Tuesday'</code></pre>
+<p>Тек айды алу керек болса, мәтін күйінде <code>.str[:7]</code> де жеткілікті (pd-3 сабағы).</p>
 <h3>pivot_table: жиынтық кесте</h3>
-<p>Excel-дегі PivotTable сияқты: жолдар, бағандар және мәндер.</p>
+<p>Excel-дегі PivotTable сияқты: бір баған жолдарға (<code>index</code>), екіншісі бағандарға (<code>columns</code>) жайылады, қиылысында мәндердің агрегаты (<code>values</code> + <code>aggfunc</code>) тұрады. Бұл «екі өлшемді groupby».</p>
+<p>Мысал: тапсырыстар клиенттермен біріктірілген <code>df</code>:</p>
+<table>
+<tr><th>city</th><th>month</th><th>amount</th></tr>
+<tr><td>Алматы</td><td>2024-01</td><td>2000</td></tr>
+<tr><td>Алматы</td><td>2024-01</td><td>1500</td></tr>
+<tr><td>Алматы</td><td>2024-02</td><td>3000</td></tr>
+<tr><td>Астана</td><td>2024-02</td><td>2500</td></tr>
+</table>
 <pre><code>pd.pivot_table(df, index='city', columns='month',
                values='amount', aggfunc='sum', fill_value=0)</code></pre>
+<table>
+<tr><th>city</th><th>2024-01</th><th>2024-02</th></tr>
+<tr><td>Алматы</td><td>3500</td><td>3000</td></tr>
+<tr><td>Астана</td><td>0</td><td>2500</td></tr>
+</table>
+<p>Астанада қаңтарда тапсырыс жоқ. <code>fill_value=0</code> болмаса, ол ұяшықта NaN тұрар еді. Дәл осыны <code>df.groupby(['city', 'month'])['amount'].sum().unstack(fill_value=0)</code> да береді. SQL-де: <code>GROUP BY city, month</code>, ал айларды бағанға жаю үшін <code>SUM(CASE WHEN month = '2024-01' THEN amount END)</code> сияқты әр айға бөлек өрнек керек.</p>
 <h3>Уақыт қатары</h3>
+<p><code>daily_sales.csv</code> — әр аймақтың күндік табысы (<code>day</code>, <code>region</code>, <code>revenue</code>). Аймақ бойынша жиынтық — сол баяғы <code>groupby</code>, тек агрегатты таңдайсыз: <code>sum</code> (жалпы), <code>mean</code> (күніне орташа), <code>max</code>.</p>
 <pre><code>daily = pd.read_csv('daily_sales.csv', parse_dates=['day'])
 daily.groupby('region')['revenue'].sum()
-daily.set_index('day').groupby('region')['revenue'].rolling(3).mean()  # 3 күндік жылжымалы орташа</code></pre>`,
+daily.set_index('day').groupby('region')['revenue'].rolling(3).mean()  # 3 күндік жылжымалы орташа</code></pre>
+<p>Мысалы, Алматыда 100 және 120, Астанада 80 және 90 болса, күндік орташа: Алматы 110, Астана 85.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li>Мәтін бағанына <code>.dt</code> қолдану қате береді: алдымен <code>pd.to_datetime</code>.</li>
+<li><code>pivot_table</code>-ге біріктірілмеген <code>orders</code> берілсе, <code>city</code> бағаны табылмайды: алдымен <code>merge</code>.</li>
+<li><code>aggfunc</code> әдепкіде <code>'mean'</code>: қосынды керек болса, <code>'sum'</code> деп нақты жазыңыз.</li>
+</ul></div>`,
         exercises: [
           { type: 'python', xp: 25, prompt: 'Таза тапсырыстар мен клиенттерді біріктіріп, <code>pt</code> жиынтық кестесін жасаңыз: жолдар — <code>city</code>, бағандар — ай (<code>month</code>, мысалы <code>2024-01</code>), мәндер — <code>amount</code> қосындысы, бос орындар 0.', starter: LOAD + "clean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\nclean['month'] = clean['order_date'].str[:7]\ncustomers = pd.read_csv('customers.csv')\n\n", solution: LOAD + "clean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\nclean['month'] = clean['order_date'].str[:7]\ncustomers = pd.read_csv('customers.csv')\n\ndf = clean.merge(customers, left_on='customer_id', right_on='id')\npt = pd.pivot_table(df, index='city', columns='month', values='amount', aggfunc='sum', fill_value=0)\nprint(pt)", check: { tests: REF + "_d = _clean.merge(_c, left_on='customer_id', right_on='id')\n_d['month'] = _d['order_date'].str[:7]\n_p = _pd.pivot_table(_d, index='city', columns='month', values='amount', aggfunc='sum', fill_value=0)\nassert list(pt.index) == list(_p.index), 'Жолдар қалалар болуы керек'\nassert [str(c) for c in pt.columns] == [str(c) for c in _p.columns], 'Бағандар айлар болуы керек'\nassert (pt.values.round() == _p.values.round()).all(), 'Мәндер сәйкес емес'" }, hints: ["<code>pd.pivot_table(df, index='city', columns='month', values='amount', aggfunc='sum', fill_value=0)</code>"] },
           { type: 'python', xp: 20, prompt: '<code>daily_sales.csv</code> файлын оқып, әр аймақтың (<code>region</code>) орташа күндік табысын <code>avg_by_region</code> Series-іне жазыңыз.', starter: 'import pandas as pd\n\n', solution: "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\navg_by_region = daily.groupby('region')['revenue'].mean()\nprint(avg_by_region)", check: { tests: "_d = __import__('pandas').read_csv('daily_sales.csv').groupby('region')['revenue'].mean()\nassert list(avg_by_region.index) == list(_d.index), 'Индекс аймақтар болуы керек'\nassert [round(float(v), 2) for v in avg_by_region.values] == [round(float(v), 2) for v in _d.values], 'Орташа мәндер сәйкес емес'" }, hints: ["<code>daily.groupby('region')['revenue'].mean()</code>"] }

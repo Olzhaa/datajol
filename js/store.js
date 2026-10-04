@@ -1,4 +1,5 @@
-// Accounts and progress. MVP keeps everything in this browser's storage (swap for Supabase later: same shape).
+// Accounts and progress, kept in this browser's storage. With cloud keys set (js/config.js), js/cloud.js signs
+// learners in with Supabase and syncs this same progress object to the cloud.
 (function () {
   const mem = {};
   const ls = {
@@ -66,7 +67,14 @@
     progress() {
       return read(this.key(), { xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {} });
     },
-    save(p) { write(this.key(), p); },
+    // fromCloud: the write came from a cloud pull, so it is not pushed straight back.
+    save(p, fromCloud) { write(this.key(), p); if (!fromCloud && DJ.cloud && DJ.cloud.user) DJ.cloud.schedule(p); },
+    adoptCloudUser(username, name, email) {
+      const users = this.users();
+      if (!users[username]) users[username] = { name: name || username, email: email || '', cloud: true, created: today() };
+      write('dj.users', users);
+      ls.set('dj.session', username);
+    },
     level(xp) {
       let lv = 1; for (let i = 0; i < XP_LEVELS.length; i++) if (xp >= XP_LEVELS[i]) lv = i + 1;
       const cur = XP_LEVELS[lv - 1] || 0, next = XP_LEVELS[lv] || (cur + 1000);
@@ -122,6 +130,7 @@
     gate(lessonId) { const p = this.progress(); const g = (p.gates || {})[lessonId]; return g ? JSON.parse(JSON.stringify(g)) : { attempt: 1, res: {}, tries: {}, best: 0 }; },
     setGate(lessonId, st) { const p = this.progress(); p.gates = p.gates || {}; p.gates[lessonId] = st; this.save(p); },
     setDiag(result) { const p = this.progress(); p.diag = result; if (!p.badges.diagnostic) p.badges.diagnostic = today(); this.save(p); },
+    saveRubric(exId, r) { const p = this.progress(); p.rubric = p.rubric || {}; p.rubric[exId] = r; this.save(p); },
     saveCode(exId, code) { const p = this.progress(); p.code = p.code || {}; p.code[exId] = code; this.save(p); },
     moduleState(mod, p) {
       if (!mod.lessons) return { state: 'soon', pct: 0 };

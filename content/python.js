@@ -108,18 +108,47 @@ print(segment)   # орташа</code></pre>
     {
       id: 'py-6', title: 'Тізімдер (list)', minutes: 11,
       body: `
-<p><b>Тізім</b> — реттелген мәндер жиыны. Data-да ол бағанның немесе бірнеше жазбаның қарапайым түрі.</p>
+<p>Бір айнымалыда бір ғана мән сақталады. Ал аптаның 7 күнінің сатылымын 7 айнымалыға бөлу ыңғайсыз. <b>Тізім</b> — реттелген мәндер жиыны: нөмірленген сөрелері бар шкаф сияқты, әр сөреде бір мән тұрады. Data-да ол бағанның немесе бірнеше жазбаның қарапайым түрі. Тізім тік жақшамен жазылады, мәндер үтірмен бөлінеді.</p>
+<h3>Индекс: сөренің нөмірі</h3>
+<p><code>sales = [120, 95, 140, 80]</code> тізімі ішінде былай орналасқан:</p>
+<table>
+<tr><th>Индекс</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+<tr><td>Мән</td><td>120</td><td>95</td><td>140</td><td>80</td></tr>
+<tr><td>Теріс индекс</td><td>-4</td><td>-3</td><td>-2</td><td>-1</td></tr>
+</table>
+<p>Санау <b>0-ден</b> басталады. Теріс индекс соңынан санайды: <code>-1</code> — әрқашан соңғы элемент.</p>
 <pre><code>sales = [120, 95, 140, 80]
 print(sales[0])        # 120 (бірінші)
 print(sales[-1])       # 80 (соңғы)
 print(sales[1:3])      # [95, 140]
 print(len(sales))      # 4
-print(sum(sales), max(sales), min(sales))
+print(sum(sales), max(sales), min(sales))   # 435 140 80
+print(sum(sales) / len(sales))              # 108.75</code></pre>
+<p>Кесінді <code>sales[1:3]</code> 1-индекстен бастап, 3-индекске <b>дейін</b> алады (3 кірмейді). <code>print</code>-ке бірнеше мәнді үтірмен берсеңіз, олар бір жолда бос орынмен шығады.</p>
+<h3>Өзгерту және сұрыптау</h3>
+<pre><code>sales.append(110)      # соңына қосу → [120, 95, 140, 80, 110]
+sales.sort()           # орнында сұрыптау → [80, 95, 110, 120, 140]
+print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
 
-sales.append(110)      # соңына қосу
-sales.sort()           # орнында сұрыптау
-print(sorted(sales, reverse=True))</code></pre>
-<div class="tip">Тізімнің орташасы: <code>sum(xs) / len(xs)</code>. Python-да бөлек <code>avg()</code> жоқ, бірақ <code>statistics.mean()</code> бар.</div>`,
+items = ["Термос", "Блокнот", "Рюкзак"]
+items.sort()
+print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
+<p>Мәтіндер әліпби бойынша сұрыпталады. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
+<h3>SQL-мен салыстыру</h3>
+<table>
+<tr><th>SQL</th><th>Python list</th></tr>
+<tr><td><code>COUNT(*)</code></td><td><code>len(xs)</code></td></tr>
+<tr><td><code>SUM</code>, <code>MAX</code>, <code>MIN</code></td><td><code>sum(xs)</code>, <code>max(xs)</code>, <code>min(xs)</code></td></tr>
+<tr><td><code>AVG</code></td><td><code>sum(xs) / len(xs)</code></td></tr>
+<tr><td><code>ORDER BY ... DESC</code></td><td><code>sorted(xs, reverse=True)</code></td></tr>
+</table>
+<div class="tip">Тізімнің орташасы: <code>sum(xs) / len(xs)</code>. Python-да бөлек <code>avg()</code> жоқ, бірақ <code>statistics.mean()</code> бар. Дөңгелектеу: <code>round(x, 2)</code>.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Индексті 1-ден бастау.</b> 4 элементті тізімде <code>sales[4]</code> жоқ — <code>IndexError</code>. Соңғысы <code>sales[3]</code> немесе <code>sales[-1]</code>.</li>
+<li><b><code>xs = xs.sort()</code> жазу.</b> <code>.sort()</code> ештеңе қайтармайды (<code>None</code>), сондықтан тізім жоғалады. Жай <code>xs.sort()</code> жазыңыз.</li>
+<li><b>Қазақ әріптерінің реті.</b> Python әріптерді код нөмірі бойынша салыстырады, сондықтан Ә, Қ, Ө, Ү сияқты әріптер кейде күткен орнында тұрмайды.</li>
+</ul>`,
       exercises: [
         { type: 'python', xp: 10, prompt: 'Апталық сатылым берілген. Ең үлкен мәнді, ең кіші мәнді және орташаны (2 белгіге дөңгелектеп) бір жолда шығарыңыз: <code>print(max_v, min_v, avg)</code>.', starter: 'sales = [120, 95, 140, 80, 110, 160, 72]\n', solution: 'sales = [120, 95, 140, 80, 110, 160, 72]\nmax_v = max(sales)\nmin_v = min(sales)\navg = round(sum(sales) / len(sales), 2)\nprint(max_v, min_v, avg)', hints: ['<code>round(sum(sales) / len(sales), 2)</code>'] },
         { type: 'python', xp: 15, prompt: '<code>cities</code> тізіміне <code>"Ақтөбе"</code> қосып, тізімді әліпби бойынша сұрыптап, шығарыңыз.', starter: 'cities = ["Шымкент", "Алматы", "Астана"]\n', solution: 'cities = ["Шымкент", "Алматы", "Астана"]\ncities.append("Ақтөбе")\ncities.sort()\nprint(cities)', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе тізімде болуы керек"\nassert cities == sorted(cities), "Тізім сұрыпталмаған"', stdout: true }, hints: ['<code>.append()</code>, сосын <code>.sort()</code>.'] }
@@ -128,19 +157,38 @@ print(sorted(sales, reverse=True))</code></pre>
     {
       id: 'py-7', title: 'for циклі және range', minutes: 12,
       body: `
-<p><code>for</code> циклі тізімнің әр элементі үшін бірдей әрекет жасайды:</p>
+<p>Кассирді елестетіңіз: ол себеттегі тауарларды бір-бірлеп алып, әрқайсысын сканерлейді. Әрекет бірдей, тек тауар ауысады. <code>for</code> циклі де тізімнің әр элементі үшін бірдей әрекет жасайды. 3 тауар болса да, 3000 тауар болса да, код өзгермейді.</p>
 <pre><code>prices = [6500, 7200, 15000]
 for p in prices:
-    print(p * 1.12)</code></pre>
-<p><code>range(n)</code> — 0-ден n−1-ге дейінгі сандар: <code>for i in range(3)</code> → 0, 1, 2. <code>range(1, 4)</code> → 1, 2, 3.</p>
+    print(round(p * 1.12))</code></pre>
+<pre><code>7280
+8064
+16800</code></pre>
+<p>Әр айналымда <code>p</code> айнымалысы келесі мәнді алады: алдымен 6500, сосын 7200, сосын 15000. Шегініспен (4 бос орын) жазылған жолдар — циклдің денесі, олар әр элемент үшін қайталанады. <code>round()</code> бөлшек сандардағы <code>7280.000000000001</code> сияқты «қоқысты» алып тастайды.</p>
+<h3>range: сандар тізбегі</h3>
+<p><code>range(n)</code> — 0-ден n−1-ге дейінгі сандар: <code>for i in range(3)</code> → 0, 1, 2. <code>range(1, 4)</code> → 1, 2, 3. Соңғы сан ешқашан кірмейді, сондықтан «1-ден N-ге дейін қоса» үшін <code>range(1, N + 1)</code> жазылады. Цикл ішінде f-string-пен әдемі жол құруға болады: <code>print(f"{i}-күн")</code>.</p>
 <h3>Жинақтаушы (accumulator)</h3>
-<p>Цикл ішінде мәнді біртіндеп жинау — ең жиі үлгі:</p>
+<p>Цикл ішінде мәнді біртіндеп жинау — ең жиі үлгі. Цикл <b>алдында</b> <code>total = 0</code> қоямыз, ішінде қосамыз, соңында шығарамыз:</p>
 <pre><code>total = 0
 for p in prices:
     if p &gt; 7000:
         total += p
 print(total)   # 22200</code></pre>
-<p><code>enumerate()</code> индекс пен мәнді бірге береді: <code>for i, p in enumerate(prices):</code></p>`,
+<p>Қадам-қадаммен:</p>
+<table>
+<tr><th>Айналым</th><th>p</th><th>p &gt; 7000?</th><th>total кейін</th></tr>
+<tr><td>1</td><td>6500</td><td>жоқ</td><td>0</td></tr>
+<tr><td>2</td><td>7200</td><td>иә</td><td>7200</td></tr>
+<tr><td>3</td><td>15000</td><td>иә</td><td>22200</td></tr>
+</table>
+<p>Бұл SQL-дегі <code>SELECT SUM(price) FROM products WHERE price &gt; 7000</code> сұрауымен бірдей. Шартты кез келген етіп өзгертуге болады. Мысалы, <code>%</code> — бөліндінің қалдығы: <code>p % 1000 == 0</code> «1000-ға қалдықсыз бөлінеді» дегенді білдіреді.</p>
+<p><code>enumerate()</code> индекс пен мәнді бірге береді: <code>for i, p in enumerate(prices):</code> → (0, 6500), (1, 7200), (2, 15000).</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b><code>total = 0</code>-ді цикл ішіне жазу.</b> Онда ол әр айналымда нөлденеді де, соңында тек соңғы мән қалады.</li>
+<li><b><code>print</code>-тің шегінісі.</b> <code>print(total)</code> цикл ішінде тұрса (шегініспен), ол әр қадамда шығады. Тек қорытынды керек болса, оны шегініссіз жазыңыз.</li>
+<li><b>range-тің соңын ұмыту.</b> <code>range(1, 5)</code> — 1, 2, 3, 4. Бес жоқ!</li>
+</ul>`,
       exercises: [
         { type: 'python', xp: 15, prompt: 'Тізімдегі тек жұп сандардың қосындысын цикл арқылы есептеп, шығарыңыз.', starter: 'nums = [3, 8, 12, 5, 6, 7, 10]\n', solution: 'nums = [3, 8, 12, 5, 6, 7, 10]\ntotal = 0\nfor n in nums:\n    if n % 2 == 0:\n        total += n\nprint(total)', check: { mustInclude: ['for'] }, hints: ['Жұп сан: <code>n % 2 == 0</code>'] },
         { type: 'python', xp: 15, prompt: '1-ден 5-ке дейінгі (қоса) әр сан үшін <code>i x 10 = нәтиже</code> форматында жол шығарыңыз. Мысалы бірінші жол: <code>1 x 10 = 10</code>.', starter: '', solution: 'for i in range(1, 6):\n    print(f"{i} x 10 = {i * 10}")', check: { mustInclude: ['range'] }, hints: ['<code>range(1, 6)</code> 1-ден 5-ке дейін береді.'] }
@@ -166,18 +214,46 @@ print(months)   # 9</code></pre>
     {
       id: 'py-9', title: 'Функциялар', minutes: 13,
       body: `
-<p><b>Функция</b> — атауы бар, қайта қолданылатын код бөлігі. Ол <code>def</code> арқылы анықталады, <code>return</code> нәтижені қайтарады:</p>
+<p>Кофе аппаратын елестетіңіз: оған су мен дәнді саласыз (кіріс), батырманы басасыз, ол кофе береді (шығыс). Ішінде не болатынын әр жолы ойлаудың қажеті жоқ. <b>Функция</b> — атауы бар, қайта қолданылатын код бөлігі. Бір формуланы 10 жерде қайта жазудың орнына, оны бір рет функцияға саламыз. Ол <code>def</code> арқылы анықталады, жақшадағы атаулар — <b>параметрлер</b> (кіріс), <code>return</code> нәтижені қайтарады (шығыс):</p>
 <pre><code>def growth_pct(old, new):
     return (new - old) / old * 100
 
 print(growth_pct(80, 100))   # 25.0</code></pre>
+<p>Бір функцияны әртүрлі мәндермен шақырамыз. Шақырғанда <code>old</code> бірінші мәнді, <code>new</code> екінші мәнді алады:</p>
+<table>
+<tr><th>Шақыру</th><th>Есептеу</th><th>Қайтарады</th></tr>
+<tr><td><code>growth_pct(80, 100)</code></td><td>(100 − 80) / 80 × 100</td><td>25.0</td></tr>
+<tr><td><code>growth_pct(100, 80)</code></td><td>(80 − 100) / 100 × 100</td><td>-20.0</td></tr>
+<tr><td><code>growth_pct(200, 230)</code></td><td>(230 − 200) / 200 × 100</td><td>15.0</td></tr>
+</table>
+<p>SQL-де <code>ROUND</code>, <code>SUM</code> сияқты дайын функцияларды қолдандыңыз. <code>def</code> — өз функцияңызды жасау тәсілі.</p>
+<h3>Бірнеше return және if</h3>
+<p><code>return</code> орындалған сәтте функция <b>бірден тоқтайды</b>. Сондықтан if/elif ішінде әр тармаққа өз return-ін жазуға болады — SQL-дегі CASE WHEN-нің функция түрі. Сол сияқты қате жағдайды алдын ала тексеруге болады:</p>
+<pre><code>def delivery_fee(amount):
+    if amount &lt;= 0:
+        return 0           # қате сома — бірден шығамыз
+    if amount &gt;= 20000:
+        return 0
+    elif amount &gt;= 10000:
+        return 1000
+    return 1500
+
+print(delivery_fee(25000), delivery_fee(12000), delivery_fee(5000))   # 0 1000 1500</code></pre>
+<p>Нөлге бөлу қаупі болса да, дәл осылай бөлуден бұрын тексеріп, бірден return жасаймыз.</p>
 <h3>Әдепкі мән</h3>
 <pre><code>def with_vat(price, rate=0.12):
     return price * (1 + rate)
 
 with_vat(1000)          # 1120.0
 with_vat(1000, 0.2)     # 1200.0</code></pre>
-<p><code>print</code> мен <code>return</code> әртүрлі: print тек экранға шығарады, ал return мәнді кейін қолдануға болатындай қайтарады. Тексеру тесттері функцияның <b>қайтарған</b> мәнін тексереді.</p>`,
+<p>Екінші мән берілмесе, <code>rate</code> 0.12 болады.</p>
+<p><code>print</code> мен <code>return</code> әртүрлі: print тек экранға шығарады, ал return мәнді кейін қолдануға болатындай қайтарады. Тексеру тесттері функцияның <b>қайтарған</b> мәнін тексереді.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>return орнына print жазу.</b> Функция экранға санды шығарады, бірақ <code>x = f(...)</code> жазсаңыз, <code>x</code> <code>None</code> болады.</li>
+<li><b>return-ді ұмыту.</b> return жоқ функция әрқашан <code>None</code> қайтарады.</li>
+<li><b>return-нен кейінгі код.</b> Ол ешқашан орындалмайды. Мысалы, return-нен кейін <code>x = round(x, 2)</code> жазсаңыз, дөңгелектеу болмайды. Оны return жолының өзінде жасаңыз: <code>return round(x, 2)</code>.</li>
+</ul>`,
       exercises: [
         { type: 'python', xp: 20, prompt: '<code>conversion(visitors, buyers)</code> функциясын жазыңыз: ол конверсияны пайызбен, 2 белгіге дөңгелектеп қайтарсын. <code>visitors</code> 0 болса, 0 қайтарсын.', starter: 'def conversion(visitors, buyers):\n    pass\n', solution: 'def conversion(visitors, buyers):\n    if visitors == 0:\n        return 0\n    return round(buyers / visitors * 100, 2)', check: { tests: 'assert conversion(400, 60) == 15.0, "conversion(400, 60) 15.0 болуы керек"\nassert conversion(1840, 46) == 2.5, "conversion(1840, 46) 2.5 болуы керек"\nassert conversion(0, 0) == 0, "visitors 0 болса, 0 қайтару керек"' }, hints: ['Алдымен <code>if visitors == 0: return 0</code>.', '<code>return round(buyers / visitors * 100, 2)</code>'] },
         { type: 'python', xp: 20, prompt: '<code>segment(price)</code> функциясы: 100 000 және жоғары — <code>"қымбат"</code>, 10 000 және жоғары — <code>"орташа"</code>, әйтпесе <code>"арзан"</code> қайтарсын.', starter: 'def segment(price):\n    pass\n', solution: 'def segment(price):\n    if price >= 100000:\n        return "қымбат"\n    elif price >= 10000:\n        return "орташа"\n    return "арзан"', check: { tests: 'assert segment(350000) == "қымбат", "350000 → қымбат"\nassert segment(100000) == "қымбат", "100000 → қымбат (шекара)"\nassert segment(25000) == "орташа", "25000 → орташа"\nassert segment(9999) == "арзан", "9999 → арзан"' }, hints: ['SQL сабағындағы CASE WHEN-ді еске түсіріңіз.'] }

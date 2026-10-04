@@ -357,6 +357,7 @@ span.CodeMirror-selectedtext { background: none; }
 </style>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
 :root {
   --bg: #FFFFFF;
   --surface: #FFFFFF;
@@ -668,6 +669,15 @@ div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { backgroun
 .term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
 .term input[type="text"]:focus { outline: none; }
 
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -699,7 +709,9 @@ div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { backgroun
 <script src="content/business.js"></script>
 <script src="content/capstone.js"></script>
 <script src="content/diagnostic.js"></script>
+<script src="js/config.js"></script>
 <script src="js/store.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/runners.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/app.js"></script>

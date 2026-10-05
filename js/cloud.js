@@ -1,4 +1,4 @@
-// Optional cloud accounts: Google or email-link sign-in via Supabase, with progress synced to public.progress.
+// Optional cloud accounts: Google, email + password, or email-link sign-in via Supabase, with progress synced to public.progress.
 // When DJ.config has no keys (or the host is not listed), DJ.cloud.enabled is false and the app stays local-only.
 (function () {
   const cfg = DJ.config || {};
@@ -7,6 +7,7 @@
   // Read before supabase-js cleans the URL.
   const q = new URLSearchParams((location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, ''));
   const initialError = q.get('error_description') || q.get('error') || '';
+  const recovery = q.get('type') === 'recovery';   // arrived from a password-reset email
 
   // XP log: entries with an exercise id are kept once per id. Older entries have no id, so the same one seen on
   // both sides is kept once (per day and amount, the larger count wins).
@@ -105,9 +106,15 @@
     },
     // An error Supabase sent back in the URL after a failed Google or email-link sign-in.
     returnError() { return initialError; },
+    recovery,
     explain(msg) {
       const m = String(msg || '');
       if (/provider is not enabled|Unsupported provider/i.test(m)) return 'Google арқылы кіру әлі қосылмаған. Email сілтемесін немесе аккаунтсыз режимді қолданыңыз.';
+      if (/Invalid login credentials/i.test(m)) return 'Email немесе пароль қате. Бұрын тек email сілтемесімен кірген болсаңыз, пароль әлі қойылмаған: «Парольді ұмыттым» арқылы пароль қойыңыз.';
+      if (/Email not confirmed/i.test(m)) return 'Email әлі расталмаған. Тіркелгенде келген хаттағы сілтемені бір рет басыңыз.';
+      if (/already registered|already been registered/i.test(m)) return 'Бұл email тіркелген. «Кіру» батырмасын басыңыз немесе парольді қалпына келтіріңіз.';
+      if (/Password should|weak password|weak_password/i.test(m)) return 'Пароль тым әлсіз: кемінде 8 таңба, әріп пен сан араластырыңыз.';
+      if (/should be different|same_password/i.test(m)) return 'Жаңа пароль бұрынғысынан өзгеше болсын.';
       if (/rate limit/i.test(m)) return 'Хат жіберу шегіне жеттік. Бір сағаттан кейін қайталаңыз немесе аккаунтсыз жалғастырыңыз.';
       if (/expired|invalid/i.test(m)) return 'Сілтеменің мерзімі өтіп кеткен немесе ол бұрын қолданылған. Жаңа сілтеме сұраңыз.';
       if (/not authorized|Email address .* is invalid/i.test(m)) return 'Бұл адреске хат жіберу мүмкін болмады. Басқа email-ді байқап көріңіз.';
@@ -116,6 +123,22 @@
     },
     async google() { return (await this.need()).auth.signInWithOAuth({ provider: 'google', options: { redirectTo: this.redirect() } }); },
     async email(address) { return (await this.need()).auth.signInWithOtp({ email: address, options: { emailRedirectTo: this.redirect() } }); },
+    // Email + password. Only sign-up sends a confirmation email (once); later sign-ins need no email at all.
+    async password(address, pw) {
+      const r = await (await this.need()).auth.signInWithPassword({ email: address, password: pw });
+      if (!r.error && r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
+      return r;
+    },
+    async signUp(address, pw) {
+      const r = await (await this.need()).auth.signUp({ email: address, password: pw, options: { emailRedirectTo: this.redirect() } });
+      if (r.error) return r;
+      // Supabase answers a sign-up for an existing email with a user that has no identities (and sends nothing).
+      if (r.data && r.data.user && Array.isArray(r.data.user.identities) && !r.data.user.identities.length) return { error: { message: 'User already registered' } };
+      if (r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
+      return r;
+    },
+    async resetPassword(address) { return (await this.need()).auth.resetPasswordForEmail(address, { redirectTo: this.redirect() }); },
+    async setPassword(pw) { return (await this.need()).auth.updateUser({ password: pw }); },
     // Makes the Supabase user the current local account. The display name is never taken from the email.
     adopt(user) {
       this.user = user;

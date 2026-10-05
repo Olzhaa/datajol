@@ -159,11 +159,14 @@
       ${DJ.cloud && DJ.cloud.enabled ? `<form class="card auth-card" id="cloud-form" novalidate>
         <h3 style="margin:0">Кіру немесе тіркелу</h3>
         <button type="button" class="btn" id="g-login">Google арқылы кіру</button>
-        <div class="note" style="text-align:center">немесе email-ге сілтеме аламыз</div>
+        <div class="note" style="text-align:center">немесе email мен пароль</div>
         <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
+        <label class="field">Пароль<input type="password" name="cpw" autocomplete="current-password" minlength="8"></label>
         <div class="err" id="cloud-err" role="alert"></div>
-        <button class="btn ghost" type="submit">Сілтеме жіберу</button>
-        <p class="note">Прогресс бұлтта сақталады, кез келген құрылғыдан жалғастыра аласыз.</p>
+        <button class="btn" type="submit" id="c-login">Кіру</button>
+        <button class="btn ghost" type="button" id="c-signup">Тіркелу</button>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap"><button type="button" class="linkbtn" id="c-forgot">Парольді ұмыттым</button><button type="button" class="linkbtn" id="c-link">Парольсіз, сілтемемен кіру</button></div>
+        <p class="note">Тіркелгенде email-ді бір рет растайсыз, кейін email мен парольмен бірден кіресіз. Прогресс бұлтта сақталады.</p>
         <button type="button" class="linkbtn" id="local-mode">Аккаунтсыз жалғастыру (прогресс осы браузерде)</button>
       </form>` : ''}
     </section>`;
@@ -184,13 +187,36 @@
       C.providers().then(pv => { if (pv && !pv.google && $('#g-login')) { $('#g-login').hidden = true; $('#g-login').nextElementSibling.hidden = true; } });
       $('#local-mode').onclick = () => { $('#cloud-form').hidden = true; $('#auth-form').hidden = false; };
       $('#g-login').onclick = async () => { try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
-      $('#cloud-form').onsubmit = async (e) => {
+      const form = $('#cloud-form');
+      const sent = (email, what) => { form.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне ${what}</p>`; };
+      const getEmail = () => { const v = form.email.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { cerr.textContent = 'Email дұрыс емес.'; return null; } return v; };
+      const getPw = () => { const v = form.cpw.value; if (v.length < 8) { cerr.textContent = 'Пароль кемінде 8 таңба болсын.'; return null; } return v; };
+      // Runs one auth call with the buttons locked; returns the result, or null after showing the error.
+      const busy = async fn => {
+        const bs = $$('button', form); bs.forEach(b => b.disabled = true); cerr.textContent = '';
+        let r; try { r = await fn(); } catch (er) { r = { error: er }; }
+        bs.forEach(b => b.disabled = false);
+        if (r && r.error) { cerr.textContent = C.explain(r.error.message); return null; }
+        return r || {};
+      };
+      form.onsubmit = async (e) => {
         e.preventDefault();
-        const email = e.target.email.value.trim();
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('#cloud-err').textContent = 'Email дұрыс емес.'; return; }
-        let r; try { r = await DJ.cloud.email(email); } catch (er) { r = { error: er }; }
-        $('#cloud-err').textContent = r && r.error ? DJ.cloud.explain(r.error.message) : '';
-        if (!(r && r.error)) $('#cloud-form').innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне кіру сілтемесі жіберілді.</p>`;
+        const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
+        if (await busy(() => C.password(email, pw))) afterAuth();
+      };
+      $('#c-signup').onclick = async () => {
+        const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
+        const r = await busy(() => C.signUp(email, pw)); if (!r) return;
+        if (r.data && r.data.session) afterAuth();
+        else sent(email, 'тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.');
+      };
+      $('#c-forgot').onclick = async () => {
+        const email = getEmail(); if (!email) return;
+        if (await busy(() => C.resetPassword(email))) sent(email, 'парольді қалпына келтіру сілтемесі жіберілді. Сілтемені басқан соң профильде жаңа пароль қоясыз.');
+      };
+      $('#c-link').onclick = async () => {
+        const email = getEmail(); if (!email) return;
+        if (await busy(() => C.email(email))) sent(email, 'кіру сілтемесі жіберілді.');
       };
     }
     $('#auth-form').onsubmit = async (e) => {
@@ -936,6 +962,7 @@
       <div class="card" style="display:grid;gap:10px"><h3>Аккаунт</h3>
         <p class="note" style="margin:0">${DJ.cloud && DJ.cloud.user ? `Бұлттағы аккаунт: ${esc(DJ.cloud.user.email || '')}. Прогресс барлық құрылғыда бірдей.` : 'Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Басқа құрылғыда көрінбейді.'}</p>
         <form id="rename" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Көрсетілетін аты (рейтинг, сертификат)<input type="text" name="nm" maxlength="40" value="${esc(u.name)}"></label><button class="btn ghost" type="submit">Сақтау</button></form>
+        ${DJ.cloud && DJ.cloud.user ? `<form id="set-pw" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Жаңа пароль (email мен парольмен кіру үшін)<input type="password" name="npw" autocomplete="new-password" minlength="8"></label><button class="btn ghost" type="submit">Парольді сақтау</button></form><div class="err" id="pw-err" role="alert"></div>` : ''}
         ${DJ.cloud && DJ.cloud.user ? `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="hide-lb" ${(p.prefs || {}).hideLb ? 'checked' : ''}> Мені рейтингте көрсетпеу</label>` : ''}
         <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button></div>
         <div id="confirm"></div>
@@ -943,6 +970,15 @@
     </div>`;
     $$('[data-theme-set]').forEach(b => b.onclick = () => { const t = b.dataset.themeSet; lsSet('dj.theme', t); applyTheme(t); viewProfile(); });
     $('#rename').onsubmit = e => { e.preventDefault(); const v = e.target.nm.value.trim(); if (v) { S.rename(v); topbar(); toast('Аты сақталды', 'star'); viewProfile(); } };
+    const sp = $('#set-pw');
+    if (sp) sp.onsubmit = async e => {
+      e.preventDefault(); const v = e.target.npw.value, perr = $('#pw-err');
+      if (v.length < 8) { perr.textContent = 'Пароль кемінде 8 таңба болсын.'; return; }
+      let r; try { r = await DJ.cloud.setPassword(v); } catch (er) { r = { error: er }; }
+      if (r && r.error) { perr.textContent = DJ.cloud.explain(r.error.message); return; }
+      perr.textContent = ''; e.target.reset(); toast('Пароль сақталды. Енді email мен парольмен кіре аласыз.', 'star');
+    };
+    if (DJ.cloud && DJ.cloud.recovery && sp) { DJ.cloud.recovery = false; sp.npw.focus(); toast('Жаңа пароль қойыңыз', 'bolt'); }
     const hl = $('#hide-lb'); if (hl) hl.onchange = () => S.setPref('hideLb', hl.checked);
     $('#logout').onclick = async () => { if (DJ.cloud && DJ.cloud.user) await DJ.cloud.signOut(); S.logout(); go('auth'); };
     $('#reset-p').onclick = () => {
@@ -960,6 +996,6 @@
   // With cloud accounts on, wait for the Supabase session (including a return from Google or an email link).
   if (DJ.cloud && DJ.cloud.enabled) {
     $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';
-    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (/access_token|error_description/.test(location.hash)) history.replaceState(null, '', location.pathname); if (route.view === 'auth' && S.current()) route = pendingRoute || { view: 'dash' }; render(); });
+    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (/access_token|error_description/.test(location.hash)) history.replaceState(null, '', location.pathname); if (route.view === 'auth' && S.current()) route = pendingRoute || { view: 'dash' }; if (DJ.cloud.recovery && DJ.cloud.user) route = { view: 'profile' }; render(); });
   } else render();
 })();

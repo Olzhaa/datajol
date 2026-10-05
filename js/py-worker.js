@@ -18,7 +18,13 @@ const WHEELS = {
   'pandas-2.2.3-cp312-cp312-pyodide_2024_0_wasm32.whl': 'pkgs/pandas.js',
   'python_dateutil-2.9.0.post0-py2.py3-none-any.whl': 'pkgs/python_dateutil.js',
   'pytz-2024.1-py2.py3-none-any.whl': 'pkgs/pytz.js',
-  'six-1.16.0-py2.py3-none-any.whl': 'pkgs/six.js'
+  'six-1.16.0-py2.py3-none-any.whl': 'pkgs/six.js',
+  // scikit-learn and its deps; scipy is split in two because some hosts cap a single file at 16 MB.
+  'scikit_learn-1.6.1-cp312-cp312-pyodide_2024_0_wasm32.whl': 'pkgs/scikit_learn.js',
+  'scipy-1.14.1-cp312-cp312-pyodide_2024_0_wasm32.whl': ['pkgs/scipy.1.js', 'pkgs/scipy.2.js'],
+  'joblib-1.4.0-py3-none-any.whl': 'pkgs/joblib.js',
+  'threadpoolctl-3.5.0-py3-none-any.whl': 'pkgs/threadpoolctl.js',
+  'openblas-0.3.26.zip': 'pkgs/openblas.js'
 };
 const realFetch = self.fetch.bind(self);
 self.fetch = (input, init) => {
@@ -26,7 +32,7 @@ self.fetch = (input, init) => {
   const name = url.split('/').pop().split('?')[0];
   if (WHEELS[name]) {
     try {
-      importScripts(base + WHEELS[name]);
+      [].concat(WHEELS[name]).forEach(f => importScripts(base + f));
       const raw = atob(self.PY_WHEEL[name]), bin = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
       delete self.PY_WHEEL[name];
@@ -35,7 +41,7 @@ self.fetch = (input, init) => {
   }
   return realFetch(input, init);
 };
-let pandasReady = null;
+let pandasReady = null, sklearnReady = null;
 const filesWritten = new Set();
 
 let pyReady = loadPyodide({ indexURL: base, stdLibURL }).then(py => { self.postMessage({ type: 'ready' }); return py; })
@@ -49,6 +55,10 @@ self.onmessage = async (e) => {
     if (filesWritten.has(name)) continue;
     py.FS.writeFile('/home/pyodide/' + name, text);
     filesWritten.add(name);
+  }
+  if (/\bsklearn\b/.test(code + (tests || ''))) {
+    if (!sklearnReady) sklearnReady = py.loadPackage(['pandas', 'scikit-learn'], { messageCallback: () => {}, checkIntegrity: false });
+    try { await sklearnReady; } catch (err) { sklearnReady = null; self.postMessage({ id, ok: false, stdout: '', error: 'scikit-learn жүктелмеді: ' + err }); return; }
   }
   if (/\b(pandas|numpy)\b/.test(code + (tests || ''))) {
     if (!pandasReady) pandasReady = py.loadPackage(['pandas'], { messageCallback: () => {}, checkIntegrity: false });

@@ -510,7 +510,9 @@
   }
 
   function pandasNote(code) {
-    return DJ.run.py.needsPandas(code) && !DJ.run.py.pandas ? 'pandas кітапханасы жүктелуде. Бұл тек бірінші рет біраз уақыт алады…' : '';
+    const R = DJ.run.py;
+    if (R.needsSklearn(code) && !R.sklearn) return 'scikit-learn жүктелуде (шамамен 40 МБ). Бұл тек бірінші рет бір-екі минут алуы мүмкін…';
+    return R.needsPandas(code) && !R.pandas ? 'pandas кітапханасы жүктелуде. Бұл тек бірінші рет біраз уақыт алады…' : '';
   }
 
   async function doRun(ex) {

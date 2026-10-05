@@ -105,19 +105,22 @@
       this.ready.catch(() => {});
       return this.ready;
     },
-    restart() { if (this.worker) this.worker.terminate(); this.worker = null; this.pandas = false; this.pending.forEach(p => p.resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' })); this.pending.clear(); return this.start(); },
-    pandas: false,
+    restart() { if (this.worker) this.worker.terminate(); this.worker = null; this.pandas = false; this.sklearn = false; this.pending.forEach(p => p.resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' })); this.pending.clear(); return this.start(); },
+    pandas: false, sklearn: false,
     needsPandas(code) { return /\b(pandas|numpy)\b/.test(code || ''); },
+    needsSklearn(code) { return /\bsklearn\b/.test(code || ''); },
     async exec(code, tests) {
       await this.start();
       const id = ++this.seq;
       const all = code + (tests || '');
       // The first pandas import loads ~10 MB of packages, so it gets a longer budget than user code.
+      // scikit-learn (with scipy) is ~35 MB more, and model training itself can take longer than plain code.
       const firstPandas = this.needsPandas(all) && !this.pandas;
+      const sk = this.needsSklearn(all), firstSk = sk && !this.sklearn;
       const files = /\.csv/.test(all) && DJ.csv ? DJ.csv : null;
       return new Promise(resolve => {
-        const timer = setTimeout(() => { this.pending.delete(id); this.restart(); resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' }); }, firstPandas ? 90000 : 8000);
-        this.pending.set(id, { resolve: d => { if (firstPandas && !/pandas жүктелмеді/.test(d.error || '')) this.pandas = true; resolve(d); }, timer });
+        const timer = setTimeout(() => { this.pending.delete(id); this.restart(); resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' }); }, firstSk ? 180000 : firstPandas ? 90000 : sk ? 25000 : 8000);
+        this.pending.set(id, { resolve: d => { if (firstPandas && !/pandas жүктелмеді/.test(d.error || '')) this.pandas = true; if (firstSk && !/scikit-learn жүктелмеді/.test(d.error || '')) this.sklearn = this.pandas = true; resolve(d); }, timer });
         this.worker.postMessage({ id, code, tests, files });
       });
     },

@@ -82,7 +82,46 @@
   // Editor autosave: the pending write is bound to its own exercise and flushed before any navigation.
   let pendingSave = null;
   function flushSave() { if (pendingSave) { clearTimeout(pendingSave.t); pendingSave.fn(); pendingSave = null; } }
+  // ---------- feedback ----------
+  const FB_KINDS = [['bug', 'Қате таптым'], ['unclear', 'Түсініксіз'], ['idea', 'Ұсыныс'], ['other', 'Басқа']];
+  function openFeedback() {
+    const where = route.view === 'lesson' && L ? `${location.hash} · ${L.lesson.title} · тапсырма ${L.ei + 1}` : (location.hash || '#dash');
+    const dlg = document.createElement('dialog');
+    dlg.className = 'fb-dialog';
+    dlg.setAttribute('aria-labelledby', 'fb-h');
+    dlg.innerHTML = `<form method="dialog" id="fb-form" novalidate>
+      <h2 id="fb-h">Пікір қалдыру</h2>
+      <div class="fb-kinds" role="group" aria-label="Пікір түрі">${FB_KINDS.map(([k, n], i) => `<button type="button" class="chip" data-kind="${k}" aria-pressed="${i === 0}">${n}</button>`).join('')}</div>
+      <label class="field">Не болды? Не жақсартуға болады?<textarea name="msg" rows="5" maxlength="2000" required></textarea></label>
+      ${DJ.cloud.user ? '' : '<label class="field">Email (міндетті емес, жауап керек болса)<input type="email" name="contact" maxlength="200" autocomplete="email"></label>'}
+      <p class="note" style="margin:0">Бет: ${esc(where)}</p>
+      <div class="err" id="fb-err" role="alert"></div>
+      <div class="actions"><button class="btn" type="submit" id="fb-send">Жіберу</button><button class="btn ghost" type="button" id="fb-cancel">Болдырмау</button></div>
+    </form>`;
+    document.body.appendChild(dlg);
+    let kind = 'bug';
+    $$('[data-kind]', dlg).forEach(b => b.onclick = () => { kind = b.dataset.kind; $$('[data-kind]', dlg).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+    dlg.addEventListener('close', () => dlg.remove());
+    $('#fb-cancel', dlg).onclick = () => dlg.close();
+    $('#fb-form', dlg).onsubmit = async (e) => {
+      e.preventDefault();
+      const f = e.target, msg = f.msg.value.trim(), err = $('#fb-err', dlg);
+      if (msg.length < 3) { err.textContent = 'Бірнеше сөз жазыңыз.'; return; }
+      // At most 5 messages an hour from one browser.
+      let sent = []; try { sent = JSON.parse(lsGet('dj.fb') || '[]').filter(t => Date.now() - t < 3600000); } catch (x) {}
+      if (sent.length >= 5) { err.textContent = 'Бір сағатта 5 пікірден көп жіберуге болмайды. Кейінірек қайталаңыз.'; return; }
+      const btn = $('#fb-send', dlg); btn.disabled = true; err.textContent = '';
+      let r; try { r = await DJ.cloud.feedback({ kind, message: msg, page: where.slice(0, 300), contact: f.contact ? f.contact.value.trim().slice(0, 200) || null : null }); } catch (x) { r = { error: x }; }
+      btn.disabled = false;
+      if (r && r.error) { err.textContent = DJ.cloud.explain(r.error.message); return; }
+      sent.push(Date.now()); lsSet('dj.fb', JSON.stringify(sent));
+      dlg.close(); toast('Рақмет! Пікіріңіз жіберілді.', 'star');
+    };
+    dlg.showModal();
+    $('textarea', dlg).focus();
+  }
   document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-feedback]')) { e.preventDefault(); openFeedback(); return; }
     const b = e.target.closest('[data-go]');
     if (!b) return;
     e.preventDefault();
@@ -100,6 +139,7 @@
       : route.view === 'module' && m ? `${m.code} ${m.title}` : TITLES[route.view];
     document.title = t ? `${t} · DataJol` : 'DataJol';
     // After a screen change, move keyboard and screen-reader focus to the new heading.
+    if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Пікір қалдыру немесе қате туралы хабарлау</button></p>');
     if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
   }
   function afterAuth() { const r = pendingRoute; pendingRoute = null; if (r) go(r.view, r); else go('dash'); }
@@ -341,6 +381,7 @@
           <div class="prose">${lesson.body || ''}</div>
           <section class="task" id="task"></section>
           <div class="lesson-nav">${prev}<span id="next-slot"></span></div>
+          ${DJ.cloud && DJ.cloud.enabled ? '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Осы сабақ туралы пікір немесе қате туралы хабарлау</button></p>' : ''}
         </article>
         <aside class="workbench" id="wb"></aside>
       </div>`;

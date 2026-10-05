@@ -63,7 +63,7 @@ node tests/verify-exercises.js   # BASE_URL, CHROMIUM_PATH айнымалыла�
 
 Бұлтсыз прогресс браузердің localStorage-інде сақталады. Аккаунт, синхрондау және көшбасшылар кестесі үшін:
 
-1. Supabase жобасының SQL Editor-ында алдымен `supabase/schema.sql`, сосын `supabase/leaderboard.sql` іске қосыңыз.
+1. Supabase жобасының SQL Editor-ында алдымен `supabase/schema.sql`, сосын `supabase/leaderboard.sql` және `supabase/feedback.sql` іске қосыңыз. Пікірлер Table Editor → `feedback` кестесінде көрінеді.
 2. Authentication → URL Configuration: Site URL және Redirect URLs ішіне `https://olzhaa.github.io/datajol/**` қосыңыз.
 3. `js/config.js` ішінде Supabase URL/кілтін және `cloudHosts` тізімін (бұлт қосылатын домендер) тексеріңіз.
 

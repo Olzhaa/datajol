@@ -737,6 +737,17 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+/* feedback dialog */
+.fb-foot { text-align: center; margin: 24px 0 8px; }
+.fb-dialog { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--bg); color: var(--ink); }
+.fb-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.fb-dialog form { display: grid; gap: 12px; padding: 20px; }
+.fb-dialog h2 { margin: 0; font-size: 1.2rem; }
+.fb-dialog textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; }
+.fb-kinds { display: flex; gap: 8px; flex-wrap: wrap; }
+.fb-kinds .chip { background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; }
+.fb-kinds .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
 </style>
 </head>
 <body>
@@ -767,48 +778,48 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = '581326fcab';</script>
-<script src="vendor/codemirror/codemirror.js?v=581326fcab"></script>
-<script src="vendor/codemirror/sql.js?v=581326fcab"></script>
-<script src="vendor/codemirror/python.js?v=581326fcab"></script>
-<script src="vendor/codemirror/closebrackets.js?v=581326fcab"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=581326fcab"></script>
-<script src="content/curriculum.js?v=581326fcab"></script>
-<script src="content/datasets.js?v=581326fcab"></script>
-<script src="content/csv.js?v=581326fcab"></script>
-<script src="content/mldata.js?v=581326fcab"></script>
-<script src="content/m0.js?v=581326fcab"></script>
-<script src="content/sheets.js?v=581326fcab"></script>
-<script src="content/spreadsheets.js?v=581326fcab"></script>
-<script src="content/sql.js?v=581326fcab"></script>
-<script src="content/python.js?v=581326fcab"></script>
-<script src="content/pandas.js?v=581326fcab"></script>
-<script src="content/git.js?v=581326fcab"></script>
-<script src="content/stats.js?v=581326fcab"></script>
-<script src="content/cleaning.js?v=581326fcab"></script>
-<script src="content/viz.js?v=581326fcab"></script>
-<script src="content/advanced.js?v=581326fcab"></script>
-<script src="content/powerbi.js?v=581326fcab"></script>
-<script src="content/business.js?v=581326fcab"></script>
-<script src="content/capstone.js?v=581326fcab"></script>
-<script src="content/probability.js?v=581326fcab"></script>
-<script src="content/inference.js?v=581326fcab"></script>
-<script src="content/mathml.js?v=581326fcab"></script>
-<script src="content/ml.js?v=581326fcab"></script>
-<script src="content/mlpractice.js?v=581326fcab"></script>
-<script src="content/dscapstone.js?v=581326fcab"></script>
-<script src="content/swe.js?v=581326fcab"></script>
-<script src="content/mlops.js?v=581326fcab"></script>
-<script src="content/deeplearning.js?v=581326fcab"></script>
-<script src="content/genai.js?v=581326fcab"></script>
-<script src="content/career.js?v=581326fcab"></script>
-<script src="content/diagnostic.js?v=581326fcab"></script>
-<script src="js/config.js?v=581326fcab"></script>
-<script src="js/store.js?v=581326fcab"></script>
-<script src="js/cloud.js?v=581326fcab"></script>
-<script src="js/runners.js?v=581326fcab"></script>
-<script src="js/sheet.js?v=581326fcab"></script>
-<script src="js/app.js?v=581326fcab"></script>
+<script>window.DJ_VERSION = '17646878da';</script>
+<script src="vendor/codemirror/codemirror.js?v=17646878da"></script>
+<script src="vendor/codemirror/sql.js?v=17646878da"></script>
+<script src="vendor/codemirror/python.js?v=17646878da"></script>
+<script src="vendor/codemirror/closebrackets.js?v=17646878da"></script>
+<script src="vendor/codemirror/matchbrackets.js?v=17646878da"></script>
+<script src="content/curriculum.js?v=17646878da"></script>
+<script src="content/datasets.js?v=17646878da"></script>
+<script src="content/csv.js?v=17646878da"></script>
+<script src="content/mldata.js?v=17646878da"></script>
+<script src="content/m0.js?v=17646878da"></script>
+<script src="content/sheets.js?v=17646878da"></script>
+<script src="content/spreadsheets.js?v=17646878da"></script>
+<script src="content/sql.js?v=17646878da"></script>
+<script src="content/python.js?v=17646878da"></script>
+<script src="content/pandas.js?v=17646878da"></script>
+<script src="content/git.js?v=17646878da"></script>
+<script src="content/stats.js?v=17646878da"></script>
+<script src="content/cleaning.js?v=17646878da"></script>
+<script src="content/viz.js?v=17646878da"></script>
+<script src="content/advanced.js?v=17646878da"></script>
+<script src="content/powerbi.js?v=17646878da"></script>
+<script src="content/business.js?v=17646878da"></script>
+<script src="content/capstone.js?v=17646878da"></script>
+<script src="content/probability.js?v=17646878da"></script>
+<script src="content/inference.js?v=17646878da"></script>
+<script src="content/mathml.js?v=17646878da"></script>
+<script src="content/ml.js?v=17646878da"></script>
+<script src="content/mlpractice.js?v=17646878da"></script>
+<script src="content/dscapstone.js?v=17646878da"></script>
+<script src="content/swe.js?v=17646878da"></script>
+<script src="content/mlops.js?v=17646878da"></script>
+<script src="content/deeplearning.js?v=17646878da"></script>
+<script src="content/genai.js?v=17646878da"></script>
+<script src="content/career.js?v=17646878da"></script>
+<script src="content/diagnostic.js?v=17646878da"></script>
+<script src="js/config.js?v=17646878da"></script>
+<script src="js/store.js?v=17646878da"></script>
+<script src="js/cloud.js?v=17646878da"></script>
+<script src="js/runners.js?v=17646878da"></script>
+<script src="js/sheet.js?v=17646878da"></script>
+<script src="js/app.js?v=17646878da"></script>
 
 </body>
 </html>

@@ -137,6 +137,8 @@
       if (r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
       return r;
     },
+    // Learner feedback goes to public.feedback (insert-only for learners; see supabase/feedback.sql).
+    async feedback(row) { return (await this.need()).from('feedback').insert(row); },
     async resetPassword(address) { return (await this.need()).auth.resetPasswordForEmail(address, { redirectTo: this.redirect() }); },
     async setPassword(pw) { return (await this.need()).auth.updateUser({ password: pw }); },
     // Makes the Supabase user the current local account. The display name is never taken from the email.

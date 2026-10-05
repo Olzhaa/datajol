@@ -20,11 +20,10 @@ page = (root / 'src/index.html').read_text()
 page = page.replace('/*APP_CSS*/', (root / 'src/app.css').read_text())
 page = page.replace('/*CODEMIRROR_CSS*/', (root / 'vendor/codemirror/codemirror.css').read_text())
 page = page.replace('<!--MODULE_LIST-->', modules_html)
+# The artifact host serves files by exact path, so ?v= (and DJ_VERSION, which versions the Python worker URL) is only added to the GitHub Pages build.
+(root / 'artifact.html').write_text(page)
 first_script = page.index('<script src=')
 page = page[:first_script] + f"<script>window.DJ_VERSION = '{version}';</script>\n" + page[first_script:]
-
-# The artifact host serves files by exact path, so ?v= is only added to the GitHub Pages build.
-(root / 'artifact.html').write_text(page)
 page = re.sub(r'<script src="((?:js|content|vendor)/[^"?]+)"', rf'<script src="\1?v={version}"', page)
 
 title = 'DataJol — дата аналитика, SQL және Python қазақша'

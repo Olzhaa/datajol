@@ -411,7 +411,7 @@
         if (scores.some(v => !v)) { $('#qv').innerHTML = '<div class="verdict info">Әр критерийге баға қойыңыз.</div>'; return; }
         const weak = ex.criteria.filter((_, ci) => scores[ci] < 3);
         if (weak.length) { $('#qv').innerHTML = `<div class="verdict bad">Әзірге өтпейді. Memo-ны жақсартыңыз:<ul>${weak.map(c => `<li><b>${esc(c.name)}</b>: ${esc(c.levels[3])}</li>`).join('')}</ul></div>`; return; }
-        passed(ex, id, 'rubric', `Орташа баға ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)} / 4. Memo-ны портфолио README-іне салыңыз.`);
+        passed(ex, id, 'rubric', `Орташа баға ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)} / 4. ${ex.done || 'Мәтінді портфолиоңызда сақтап қойыңыз.'}`);
       };
     } else if (ex.type === 'cmd') {
       const inp = $('#cmd-in');

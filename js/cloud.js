@@ -3,10 +3,10 @@
 (function () {
   const cfg = DJ.config || {};
   const enabled = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && (cfg.cloudHosts || []).includes(location.hostname));
-  const LIB = 'vendor/supabase.js';
+  const LIB = 'vendor/supabase.js';   // @supabase/supabase-js 2.117.2 UMD build
   // Read before supabase-js cleans the URL.
   const q = new URLSearchParams((location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, ''));
-  const initialError = q.get('error_description') || q.get('error') || '';   // @supabase/supabase-js 2.117.2 UMD build
+  const initialError = q.get('error_description') || q.get('error') || '';
 
   // XP log entries have no ids, so the same entry seen on both sides is kept once (per day and amount, the larger count wins).
   function mergeLog(x, y) {

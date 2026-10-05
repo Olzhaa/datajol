@@ -9,9 +9,11 @@ const { chromium } = require('playwright');
   await pg.goto((process.env.BASE_URL || 'http://localhost:8765/') + 'index.html');
   await pg.fill('[name=name]', 'Т'); await pg.fill('[name=username]', 'user' + Date.now() % 100000); await pg.fill('[name=pw]', 'secret12');
   await pg.click('#auth-submit'); await pg.waitForSelector('.continue');
-  const res = await pg.evaluate(async () => {
+  // MODULES=m6-1,m6-2 limits the run to those modules.
+  const only = (process.env.MODULES || '').split(',').filter(Boolean);
+  const res = await pg.evaluate(async (only) => {
     const out = { pass: 0, fail: [], starterPass: [], quiz: 0 };
-    for (const id of Object.keys(DJ.modules)) for (const l of DJ.modules[id].lessons) for (const [i, ex] of (l.exercises || []).entries()) {
+    for (const id of Object.keys(DJ.modules).filter(m => !only.length || only.includes(m))) for (const l of DJ.modules[id].lessons) for (const [i, ex] of (l.exercises || []).entries()) {
       if (ex.type === 'quiz') { if (!(ex.answer < ex.options.length)) out.fail.push(l.id + '#' + i + ' bad answer idx'); out.quiz++; continue; }
       if (ex.type === 'number' || ex.type === 'cmd' || ex.type === 'rubric') { out.quiz++; continue; }
       if (ex.type === 'sheet') { const r = DJ.sheet.check(ex, ex.solution); if (r.pass) out.pass++; else out.fail.push(l.id + '#' + i + ' ' + r.msg); continue; }
@@ -22,7 +24,7 @@ const { chromium } = require('playwright');
       if (s.pass) out.starterPass.push(l.id + '#' + i);
     }
     return out;
-  });
+  }, only);
   console.log(JSON.stringify(res));
   console.log('errors', errs);
   await b.close();

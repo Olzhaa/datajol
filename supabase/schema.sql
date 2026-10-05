@@ -7,10 +7,10 @@ create table if not exists public.progress (
   xp integer generated always as (coalesce((data->>'xp')::integer, 0)) stored,
   updated_at timestamptz not null default now(),
   -- Same limits as leaderboard.sql (which re-adds them on databases created before they existed).
-  -- XP cap: the curriculum gives 10 005 XP in total, so 15 000 is about 1.5x that.
+  -- XP cap: the curriculum gives 14 835 XP in total (Stage 6 included), so 25 000 leaves room to grow.
   constraint progress_name_len check (name is null or char_length(name) <= 40),
   constraint progress_data_size check (pg_column_size(data) < 300000),
-  constraint progress_xp_range check (data->>'xp' is null or (data->>'xp' ~ '^\d{1,6}$' and (data->>'xp')::integer <= 15000))
+  constraint progress_xp_range check (data->>'xp' is null or (data->>'xp' ~ '^\d{1,6}$' and (data->>'xp')::integer <= 25000))
 );
 
 alter table public.progress enable row level security;

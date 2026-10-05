@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data engineering негіздері: warehouse, ETL, dbt, Spark — M6.5 Cloud &amp; Data Eng Basics | DataJol</title>
+<meta name="description" content="Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake /…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m6-5/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data engineering негіздері: warehouse, ETL, dbt, Spark — M6.5 Cloud &amp; Data Eng Basics | DataJol">
+<meta property="og:description" content="Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake /…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m6-5/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M6.5 Cloud & Data Eng Basics","description":"Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake /…","url":"https://olzhaa.github.io/datajol/m/m6-5/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 6: ML инженерия","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M6.5 Cloud & Data Eng Basics","item":"https://olzhaa.github.io/datajol/m/m6-5/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 6: ML инженерия / M6.5</nav>
+<article class="reading">
+<p class="eyebrow">M6.5 · 20–30 сағат · 9 сабақ</p>
+<h1>M6.5 Cloud &amp; Data Eng Basics: Data engineering негіздері: warehouse, ETL, dbt, Spark</h1>
+<p class="prose">Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake / lakehouse, star schema, ETL vs ELT, batch vs streaming, Airflow, dbt, Spark және cloud сервистердің негізін үйренесіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m6-5">Тапсырмаларды орындау</a></p>
+<section id="deng-1">
+<h2>1. OLTP vs OLAP: екі түрлі дүние</h2>
+<div class="prose">
+<p>Kaspi-стиліндегі дүкеннің екі дерекқоры бар. Біреуі тапсырыс қабылдайды, екіншісі есеп жасайды. Бұлар бір-біріне мүлде ұқсамайды.</p>
+<table>
+<tr><th></th><th>OLTP (transactional)</th><th>OLAP (analytical)</th></tr>
+<tr><td>Мақсаты</td><td>Жеке операцияларды жазу</td><td>Көп жолды жинақтап талдау</td></tr>
+<tr><td>Типтік сұрау</td><td><code>SELECT * FROM orders WHERE order_id = 101</code></td><td><code>SELECT city, SUM(amount) ... GROUP BY city</code></td></tr>
+<tr><td>Жол саны</td><td>Бір сұрауда 1–100</td><td>Миллиондаған</td></tr>
+<tr><td>Жазу / оқу</td><td>Көп жазу, кіші транзакциялар</td><td>Негізінен оқу, batch жүктеу</td></tr>
+<tr><td>Сақтау форматы</td><td><b>Row-oriented</b> (жол бойынша)</td><td><b>Column-oriented</b> (баған бойынша)</td></tr>
+<tr><td>Мысалдар</td><td>PostgreSQL, MySQL</td><td>BigQuery, Snowflake, ClickHouse, Redshift</td></tr>
+</table>
+<h3>Неге columnar жылдам</h3>
+<p>Кестеде 200 баған, 500 млн жол. Сізге тек <code>city</code> мен <code>amount</code> керек. Row-store дискіден әр жолды <b>толық</b> оқиды (200 баған), ал column-store тек екі бағанның файлдарын оқиды — 100 есе аз дерек. Қосымша: бір бағандағы мәндер ұқсас болғандықтан, сығу (compression) керемет жұмыс істейді.</p>
+<h3>Неге analytics-ті production базасында жүргізбейді</h3>
+<p>Сіз <code>GROUP BY</code>-мен 300 млн жолды сканерлеген кезде сол база клиенттің тапсырысын да жазып отыр. Ауыр сұрау базаны бұғаттап, дүкеннің жұмысын тоқтатуы мүмкін. Сондықтан дерек OLTP-ден OLAP-қа көшіріледі: түнде немесе әр 15 минутта.</p>
+<pre><code>-- OLTP: бір клиенттің соңғы тапсырысы (индекс бойынша, 1 мс)
+SELECT * FROM orders WHERE customer_id = 7 ORDER BY order_date DESC LIMIT 1;
+
+-- OLAP: қала бойынша айлық түсім (сканерлеу, 2 с)
+SELECT city, DATE_TRUNC('month', order_date) AS m, SUM(amount_tg)
+FROM fact_orders JOIN dim_customer USING (customer_id)
+GROUP BY 1, 2;</code></pre>
+<div class="tip">Read replica — ортадағы шешім: OLTP базаның көшірмесі, оған ауыр оқу сұрауларын жіберуге болады. Бірақ ол әлі де row-store, сондықтан шынайы analytics үшін warehouse керек.</div></div>
+<p><a href="../../#lesson/m6-5/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-2">
+<h2>2. Warehouse, lake, lakehouse</h2>
+<div class="prose">
+<p>Деректерді сақтаудың үш архитектурасы бар. Олар бір-бірін ауыстырмайды, бірін-бірі толықтырады.</p>
+<h3>Data warehouse</h3>
+<p>Құрылымы бекітілген (schema-on-write) кестелер. Дерек жүктелместен бұрын тазаланып, схемаға келтіріледі. SQL жылдам, дерек сапасы жоғары. BI есептері үшін ең қолайлы. Мысалдар: BigQuery, Snowflake, Redshift.</p>
+<h3>Data lake</h3>
+<p>Файл қоймасы: Parquet, CSV, JSON, суреттер, логтар — қалай келсе, солай сақталады (schema-on-read). Арзан, икемді, ML үшін шикі дерек керек болғанда таптырмайды. Мысалдар: Amazon S3, Google Cloud Storage.</p>
+<p>Тәртіп болмаса lake «data swamp»-қа айналады: мыңдаған файл бар, бірақ қайсысы дұрыс екенін ешкім білмейді. Сондықтан lake-те де каталог, атау конвенциясы және бөлу (partitioning) керек: <code>s3://dala/events/dt=2024-03-01/part-000.parquet</code>.</p>
+<h3>Lakehouse</h3>
+<p>Lake-тің файлдары үстіне кесте қабаты (Delta Lake, Apache Iceberg) қойылады. Сонда lake-тің арзандығы мен икемділігі warehouse-тың мүмкіндіктерімен қосылады: ACID транзакциялар, schema evolution, time travel («кестені өткен аптадағы күйінде оқы»). Мысалдар: Databricks, Iceberg + Trino.</p>
+<table>
+<tr><th></th><th>Warehouse</th><th>Lake</th><th>Lakehouse</th></tr>
+<tr><td>Схема</td><td>Жазуда</td><td>Оқуда</td><td>Кесте қабаты арқылы</td></tr>
+<tr><td>Дерек түрі</td><td>Структуралық</td><td>Кез келген</td><td>Кез келген + кестелер</td></tr>
+<tr><td>Құны</td><td>Қымбатырақ</td><td>Ең арзан</td><td>Арзан + қабат</td></tr>
+<tr><td>Кім қолданады</td><td>BI, analytics</td><td>Data engineer, ML</td><td>Екеуі де</td></tr>
+</table>
+<h3>Medallion қабаттары</h3>
+<p>Тәжірибеде деректі үш қабатқа бөледі: <b>bronze</b> (шикі, өзгертілмеген), <b>silver</b> (тазаланған, типтелген), <b>gold</b> (бизнес кестелері, агрегаттар). Қате болса, bronze-тан қайта есептеуге болады, ал BI тек gold-пен жұмыс істейді.</p>
+<div class="tip">Шикі деректі әрқашан сақтап қалыңыз. Тазалау логикасында қате табылса, bronze қабаты болмаса, өткенді қайта есептей алмайсыз.</div></div>
+<p><a href="../../#lesson/m6-5/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-3">
+<h2>3. Star schema: fact және dimension</h2>
+<div class="prose">
+<p>Warehouse-та дерек әдетте <b>star schema</b> (жұлдыз схемасы) бойынша ұйымдастырылады: ортада бір <b>fact</b> кестесі, айналасында <b>dimension</b> кестелері.</p>
+<h3>Fact кестесі</h3>
+<p>Оқиғалар мен өлшемдер: әр жол — бір тапсырыс жолы. Ішінде сандар (<b>measures</b>: <code>qty</code>, <code>amount_tg</code>) және dimension-дарға сілтейтін кілттер (<code>customer_id</code>, <code>product_id</code>, <code>date</code>). Көп жолды, жіңішке.</p>
+<h3>Dimension кестелері</h3>
+<p>Контекст: кім, не, қайда. <code>dim_customer</code> (аты, қала, сегмент), <code>dim_product</code> (атауы, категория, бағасы), <code>dim_date</code> (күн, апта, ай, мереке ме). Аз жолды, кең.</p>
+<pre><code>fact_orders(order_id, order_date, customer_id, product_id, qty)
+    → dim_customer(customer_id, customer_name, city, segment)
+    → dim_product(product_id, product_name, category, price_tg)</code></pre>
+<h3>Неге бөлек</h3>
+<p>Қала атауы әр жолда қайталанбайды: ол dim_customer-де бір рет жазылады. Қала атын өзгерту керек болса — бір жол түзетіледі. Сұраулар да оңай оқылады: <code>GROUP BY city</code> деп жазу үшін fact-ты dim-мен қосамыз.</p>
+<h3>pandas-пен star schema</h3>
+<p>Dataset-терде <code>deng_orders.csv</code> (fact), <code>deng_customers.csv</code> және <code>deng_products.csv</code> (dimensions) бар. Қосу — <code>merge</code> арқылы:</p>
+<pre><code>m = orders.merge(customers, on='customer_id').merge(products, on='product_id')
+m['revenue'] = m['qty'] * m['price_tg']
+by_city = m.groupby('city')['revenue'].sum()</code></pre>
+<p>Бұл SQL-дегі <code>JOIN ... GROUP BY</code>-дың дәл баламасы. Snowflake schema деген де вариант бар: онда dimension-дар өз ішінде қосымша кестелерге бөлінеді (<code>dim_product → dim_category</code>). Ол сақтауды аз ғана ұтады, бірақ сұрауды қиындатады, сондықтан BI үшін көбіне star таңдалады.</p>
+<div class="tip">Fact кестесінде мәтін қайталамаңыз. 500 млн жолда «Алматы» деген сөз 500 млн рет сақталса, бұл бос шығын. Кілт (id) жеткілікті.</div></div>
+<p><a href="../../#lesson/m6-5/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-4">
+<h2>4. ETL vs ELT</h2>
+<div class="prose">
+<p>Дерек көзден warehouse-қа үш қадаммен жетеді: <b>E</b>xtract (алу), <b>T</b>ransform (өңдеу), <b>L</b>oad (жүктеу). Қадамдардың <b>реті</b> екі архитектураны ажыратады.</p>
+<h3>ETL — ескі тәртіп</h3>
+<p>Дерек бөлек серверде (Python, Informatica, Spark) өңделіп, сосын warehouse-қа дайын күйде жүктеледі. Warehouse-та тек таза дерек жатады. Қымбат warehouse-та есептеу аз. Кемшілігі: шикі дерек сақталмайды, логика өзгерсе қайта есептеу қиын, pipeline «қара жәшік» болып кетеді.</p>
+<h3>ELT — қазіргі тәртіп</h3>
+<p>Шикі дерек бірден warehouse-қа (немесе lake-ке) құйылады, бүкіл transform SQL арқылы warehouse-тың өз ішінде жүреді. BigQuery мен Snowflake арзандағандықтан бұл тиімді болды.</p>
+<ul>
+<li>Шикі дерек <code>raw</code> схемасында қалады: логика өзгерсе, қайта есептеу — бір <code>CREATE TABLE AS SELECT</code>.</li>
+<li>Transform логикасы SQL-де, Git-те, оны барлық аналитик оқи алады (dbt осылай жұмыс істейді).</li>
+<li>Қауіп: warehouse-тың есеп шоты. Әр сұрау сканерленген дерек үшін ақша алады.</li>
+</ul>
+<h3>Python-дағы кішкентай ETL</h3>
+<pre><code>def extract(path):
+    return pd.read_csv(path)
+
+def transform(df):
+    df = df.copy()
+    df['city'] = df['city'].str.strip().str.capitalize()   # ' алматы ' → 'Алматы'
+    df = df[df['status'] == 'paid']
+    return df.groupby('city', as_index=False)['amount_tg'].sum()
+
+def load(df, target):
+    df.to_csv(target, index=False)                         # нақты жобада: to_sql / BigQuery</code></pre>
+<p>Үш функцияны бөлек ұстаудың пайдасы — әрқайсысын жеке тестілеуге болады, ал <code>transform</code> таза функция болғандықтан, оны деректер базасы жоқ жерде де тексересіз.</p>
+<h3>Idempotency</h3>
+<p>Pipeline екі рет жүрсе, нәтиже бірдей болуы керек. Сондықтан <code>INSERT</code> орнына <code>DELETE WHERE dt = '2024-03-02'</code> + <code>INSERT</code> (немесе <code>MERGE</code>) қолданылады. Әйтпесе қайта іске қосу дерегі екі есе болып кетеді.</p>
+<div class="tip">«Full refresh» (бәрін қайта есептеу) — кішкентай деректе ең сенімді тәсіл. Incremental жүктеуге дерек шынымен үлкен болғанда ғана көшіңіз: ол күрделі және қателері жасырын.</div></div>
+<p><a href="../../#lesson/m6-5/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-5">
+<h2>5. Batch vs streaming және orchestration</h2>
+<div class="prose">
+<p><b>Batch</b> — дерек топтап, белгілі мерзімде өңделеді: түнгі 03:00-де кешегі тапсырыстар. <b>Streaming</b> — әр оқиға келген бойда өңделеді: төлем жасалған секундта fraud моделі тексереді.</p>
+<table>
+<tr><th></th><th>Batch</th><th>Streaming</th></tr>
+<tr><td>Кешігу</td><td>Сағаттар</td><td>Секундтар</td></tr>
+<tr><td>Құралдар</td><td>Airflow + SQL / Spark</td><td>Kafka, Flink, Spark Streaming</td></tr>
+<tr><td>Қиындығы</td><td>Төмен</td><td>Жоғары (кешіккен оқиғалар, қайталану, state)</td></tr>
+<tr><td>Қашан</td><td>Есептер, dashboard, ML үйрету</td><td>Fraud, ұсыныстар, alert</td></tr>
+</table>
+<p>Ереже қарапайым: <b>кешігу бизнеске шынымен маңызды болмаса, batch таңдаңыз</b>. Streaming инфрақұрылымы бірнеше есе қымбат және күрделі.</p>
+<h3>Orchestration: Airflow</h3>
+<p>Pipeline-да ондаған қадам бар және олардың реті маңызды: fact кестесін dimension-дардан кейін жүктеу керек. Осыны басқаратын — orchestrator. Ең танымалы — <b>Apache Airflow</b>.</p>
+<ul>
+<li><b>DAG</b> (directed acyclic graph) — бүкіл pipeline, циклсіз граф.</li>
+<li><b>Task</b> — бір қадам (SQL жүргізу, файл көшіру).</li>
+<li><b>Dependency</b> — <code>a &gt;&gt; b</code>: b тек a бітсе ғана басталады.</li>
+<li><b>Schedule</b> — cron: <code>'0 3 * * *'</code> — күн сайын 03:00.</li>
+<li><b>Backfill</b> — өткен күндерді қайта есептеу.</li>
+<li><b>Retry</b> — қате болса, қайталап көру.</li>
+</ul>
+<pre><code>from airflow import DAG
+from airflow.operators.python import PythonOperator
+import pendulum
+
+with DAG('daily_sales', start_date=pendulum.datetime(2024, 3, 1),
+         schedule='0 3 * * *', catchup=True, default_args={'retries': 2}) as dag:
+    extract_t = PythonOperator(task_id='extract', python_callable=extract)
+    dim_t     = PythonOperator(task_id='load_dims', python_callable=load_dims)
+    fact_t    = PythonOperator(task_id='load_fact', python_callable=load_fact)
+    report_t  = PythonOperator(task_id='report', python_callable=build_report)
+
+    extract_t >> dim_t >> fact_t >> report_t</code></pre>
+<p>DAG-тың «acyclic» бөлігі маңызды: цикл болса (a → b → a), қадамдардың реті анықталмайды және Airflow қате береді.</p>
+<div class="tip">Әр task кішкентай және <b>қайта іске қосуға жарамды</b> (idempotent) болсын. Сонда түнде бір қадам құласа, тек оны қайталайсыз, бүкіл pipeline-ды емес.</div></div>
+<p><a href="../../#lesson/m6-5/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-6">
+<h2>6. dbt идеясы: SQL модельдер және тестілер</h2>
+<div class="prose">
+<p><b>dbt</b> (data build tool) — ELT-тің «T» бөлігін тәртіпке келтіретін құрал. Негізгі идея: <b>әр кесте — бір SQL файл</b>, ал файлдар Git-те жатады.</p>
+<h3>Model</h3>
+<p><code>models/gold/city_revenue.sql</code> файлы: тек <code>SELECT</code>. <code>CREATE TABLE</code> жазудың қажеті жоқ — dbt оны өзі орап қояды.</p>
+<pre><code>-- models/silver/paid_orders.sql
+select
+    order_id,
+    cast(order_date as date) as order_date,
+    initcap(trim(city))      as city,
+    amount_tg
+from {{ source('raw', 'sales') }}
+where status = 'paid'</code></pre>
+<pre><code>-- models/gold/city_revenue.sql
+select city, sum(amount_tg) as revenue_tg, count(*) as orders
+from {{ ref('paid_orders') }}
+group by city</code></pre>
+<p><code>ref()</code> — dbt-тің жүрегі. Ол модельдердің арасындағы тәуелділікті көрсетеді, сондықтан dbt DAG-ты өзі құрып, кестелерді дұрыс ретпен жасайды. Бір модельдің атын өзгертсеңіз, SQL-де бір жерде түзетесіз.</p>
+<h3>Tests</h3>
+<p>dbt-те дерек тестілері YAML-де жазылады және әр жүгіруде тексеріледі:</p>
+<pre><code># models/gold/schema.yml
+models:
+  - name: city_revenue
+    columns:
+      - name: city
+        tests: [not_null, unique]
+      - name: revenue_tg
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0}</code></pre>
+<p>Негізгі дайын тестілер: <code>not_null</code>, <code>unique</code>, <code>accepted_values</code>, <code>relationships</code> (fact-тағы кілт dimension-да бар ма). Бұл CI-дағы data тестілердің дәл өзі, тек декларативті жазылған.</p>
+<h3>Тағы екі пайда</h3>
+<ul>
+<li><b>Documentation</b>: <code>dbt docs generate</code> модельдердің графын және бағандардың сипаттамасын сайт ретінде шығарады.</li>
+<li><b>Materialization</b>: бір жолмен модельді <code>view</code>, <code>table</code> немесе <code>incremental</code> етіп өзгертуге болады.</li>
+</ul>
+<div class="tip">dbt-тің ең үлкен пайдасы — техникалық емес: SQL логикасы Git-ке, code review-ге және тестілерге түседі. «Бұл есеп неден есептелді?» деген сұраққа жауап бір файлда тұрады.</div></div>
+<p><a href="../../#lesson/m6-5/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-7">
+<h2>7. Spark: дерек жадқа сыймағанда</h2>
+<div class="prose">
+<p>pandas бір компьютердің <b>жадында</b> (RAM) жұмыс істейді. 16 GB RAM-да шамамен 2–5 GB CSV-ды өңдеуге болады (pandas деректі жадта 2–5 есе кеңейтеді). 500 GB дерек келгенде екі жол бар: деректі бөліп-бөліп оқу немесе <b>Apache Spark</b> сияқты кластерлік қозғалтқыш қолдану.</p>
+<h3>Spark-тың моделі</h3>
+<ul>
+<li>Дерек <b>partition</b>-дарға бөлінеді, әр partition-ды кластердің бір worker-і өңдейді.</li>
+<li><b>Transformations</b> (<code>filter</code>, <code>groupBy</code>, <code>join</code>) — <b>lazy</b>: бірден есептелмейді, жоспар құрылады.</li>
+<li><b>Action</b> (<code>count()</code>, <code>collect()</code>, <code>write</code>) — нақты есептеуді іске қосады.</li>
+<li>Оптимизатор (Catalyst) жоспарды қайта құрып, керексіз бағандарды оқымайды.</li>
+</ul>
+<pre><code>from pyspark.sql import functions as F
+df = spark.read.parquet('s3://dala/events/')     # lazy
+daily = (df.filter(F.col('status') == 'paid')
+           .groupBy('city')
+           .agg(F.sum('amount_tg').alias('revenue')))
+daily.write.mode('overwrite').parquet('s3://dala/gold/city_revenue/')   # action</code></pre>
+<p>Жазылуы pandas-қа ұқсас, бірақ астында жүздеген машина жұмыс істеуі мүмкін. Көп жағдайда дәл сол логиканы SQL-де де жазуға болады: <code>spark.sql('select city, sum(amount_tg) ... group by city')</code>.</p>
+<h3>pandas-тағы chunked groupby — сол идея</h3>
+<p>Spark-тың groupBy-ы мәні бойынша <b>map → combine</b>: әр partition өз ішінде жинақтайды, сосын жартылай нәтижелер қосылады. Мұны pandas-та <code>chunksize</code>-пен қайталауға болады:</p>
+<pre><code>totals = {}
+for chunk in pd.read_csv('big.csv', chunksize=100_000):
+    part = chunk.groupby('city')['amount_tg'].sum()
+    for city, v in part.items():
+        totals[city] = totals.get(city, 0) + v</code></pre>
+<p>Бұл тәсіл <code>sum</code>, <code>count</code>, <code>min</code>, <code>max</code> үшін жұмыс істейді, себебі олар бөліктеп есептелуге жарайды. Ал <b>median</b> жарамайды: бөліктердің медианаларының орташасы жалпы медиана емес. Орташа (<code>mean</code>) үшін сома мен санды бөлек жинап, соңында бөлу керек.</p>
+<div class="tip">Spark-қа асықпаңыз. Кластер қымбат және күрделі. Алдымен: керек бағандарды ғана оқу (<code>usecols</code>), Parquet-ке көшу, типтерді кішірейту (<code>float32</code>, <code>category</code>), <code>chunksize</code>, DuckDB. Көп «үлкен дерек» мәселесі осы қадамдардан кейін жоғалады.</div></div>
+<p><a href="../../#lesson/m6-5/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-8">
+<h2>8. Cloud сервистер және cost awareness</h2>
+<div class="prose">
+<p>Үлкен дерек инфрақұрылымы әдетте cloud-та тұрады. Үш провайдердің сервистері бір-біріне сәйкес келеді:</p>
+<table>
+<tr><th>Қызметі</th><th>AWS</th><th>Google Cloud</th><th>Azure</th></tr>
+<tr><td>Файл қоймасы (lake)</td><td>S3</td><td>GCS</td><td>Blob Storage</td></tr>
+<tr><td>Warehouse</td><td>Redshift</td><td>BigQuery</td><td>Synapse</td></tr>
+<tr><td>Виртуалды машина</td><td>EC2</td><td>Compute Engine</td><td>VM</td></tr>
+<tr><td>Serverless функция</td><td>Lambda</td><td>Cloud Functions</td><td>Functions</td></tr>
+<tr><td>Managed Spark</td><td>EMR</td><td>Dataproc</td><td>HDInsight</td></tr>
+</table>
+<p><b>Snowflake</b> — бөлек компания, үш cloud-тың бәрінде жұмыс істейді. Оның ерекшелігі: сақтау мен есептеу толық бөлінген, әр команда өз «warehouse»-ын (есептеу кластерін) алады.</p>
+<h3>Нарықтың екі баға моделі</h3>
+<ul>
+<li><b>Сканерленген дерек бойынша</b> (BigQuery on-demand): сұрау қанша байт оқыса, сонша ақша. <code>SELECT *</code> — ең қымбат әдет.</li>
+<li><b>Жұмыс уақыты бойынша</b> (Snowflake, Redshift, Databricks): кластер қанша минут қосулы тұрса, сонша ақша. Ұмыт қалған кластер түнде де ақша жейді.</li>
+</ul>
+<h3>Cost awareness: нақты әдеттер</h3>
+<ol>
+<li><b>Керек бағандарды ғана сұраңыз.</b> Columnar қоймада <code>SELECT *</code> барлық бағанды оқиды.</li>
+<li><b>Partition сүзгісін қойыңыз</b>: <code>WHERE dt &gt;= '2024-03-01'</code>. Партицияланған кестеде бұл сканерді 100 есе азайтады.</li>
+<li><b>Dashboard-ты кэштеңіз немесе агрегат кесте жасаңыз.</b> Әр ашылғанда 2 TB сканерлейтін дашборд — айлық бюджеттің негізгі шығыны.</li>
+<li><b>Parquet қолданыңыз</b>: CSV-мен салыстырғанда 5–10 есе кіші және бағандап оқылады.</li>
+<li><b>Dev ортада <code>LIMIT</code> немесе sample.</b> Логиканы 1% деректе тексеріп, сосын толық жүргізіңіз (бірақ есіңізде болсын: <code>LIMIT</code> BigQuery-де сканерді азайтпайды, партиция сүзгісі азайтады).</li>
+<li><b>Lifecycle policy</b>: lake-тегі ескі файлдарды арзан архивке (Glacier / Coldline) көшіру.</li>
+<li><b>Budget alert</b> қосыңыз: айлық шек асса, хат келеді.</li>
+</ol>
+<h3>Есептеп көрейік</h3>
+<p>BigQuery on-demand бағасы — сканерленген 1 TB үшін шамамен $6.25. Дашборд әр ашылғанда 2 TB сканерлейді, күніне 40 рет ашылады: 80 TB × $6.25 = $500 күніне, айына $15 000. Ал күнде бір рет 2 TB-дан агрегат кесте (1 GB) жасап, дашбордты оған қоссаңыз: сканер күніне ~2 TB + 40 GB, айлық шот $400-ға жетеді. Бір архитектуралық шешім — 97% экономия.</p>
+<div class="tip">Data engineer-дің сұхбатында «cost» туралы сұрақ жиі қойылады. Жауапта екі нәрсені айтыңыз: партиция/баған сүзгісі және агрегат қабаты (gold кестелері).</div></div>
+<p><a href="../../#lesson/m6-5/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="deng-gate">
+<h2>9. Модуль емтиханы: Cloud &amp; Data Eng Basics</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: star schema, ETL, DAG, dbt тестілері және cost. Кеңестер жоқ. Өту шегі — 75%.</p></div>
+<p><a href="../../#lesson/m6-5/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m6-5">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

@@ -4,7 +4,7 @@
 -- but they return only a display name, XP and completed lessons, never emails.
 
 -- Limits on what a learner can store in their own row (they write it directly with the anon key).
--- XP cap: the whole curriculum gives 10 005 XP (569 exercises in content/*.js), so 15 000 is about 1.5x that.
+-- XP cap: the whole curriculum gives 14 835 XP (Stage 6 included), so 25 000 leaves room to grow.
 -- Raise it here, in leaderboard() below and in schema.sql if the curriculum grows past that.
 alter table public.progress drop constraint if exists progress_name_len;
 alter table public.progress drop constraint if exists progress_data_size;
@@ -12,7 +12,7 @@ alter table public.progress drop constraint if exists progress_xp_range;
 alter table public.progress add constraint progress_name_len check (name is null or char_length(name) <= 40) not valid;
 alter table public.progress add constraint progress_data_size check (pg_column_size(data) < 300000) not valid;
 alter table public.progress add constraint progress_xp_range
-  check (data->>'xp' is null or (data->>'xp' ~ '^\d{1,6}$' and (data->>'xp')::integer <= 15000)) not valid;
+  check (data->>'xp' is null or (data->>'xp' ~ '^\d{1,6}$' and (data->>'xp')::integer <= 25000)) not valid;
 -- New writes are always checked. Existing rows are validated here; an old row that breaks a limit only gives a notice.
 do $$
 declare c text;
@@ -35,13 +35,13 @@ language sql stable security definer set search_path = public as $$
     select p.user_id,
            coalesce(nullif(trim(p.name), ''), 'Оқушы') as name,
            case when period = 'week' then (
-             select least(coalesce(sum(case when e->>'xp' ~ '^\d{1,4}$' then (e->>'xp')::bigint end), 0), 15000)::integer
+             select least(coalesce(sum(case when e->>'xp' ~ '^\d{1,4}$' then (e->>'xp')::bigint end), 0), 25000)::integer
              from jsonb_array_elements(case when jsonb_typeof(p.data->'xpLog') = 'array' then p.data->'xpLog' else '[]'::jsonb end) e
              -- d is the learner's local day: from 6 days ago up to the latest "today" anywhere (UTC+14), never later
              where jsonb_typeof(e) = 'object'
                and e->>'d' between to_char(current_date - 6, 'YYYY-MM-DD')
                                and to_char(now() at time zone 'UTC' + interval '14 hours', 'YYYY-MM-DD'))
-           else least(p.xp, 15000) end as xp
+           else least(p.xp, 25000) end as xp
     from progress p
     where (p.data->'prefs'->>'hideLb') is distinct from 'true'
   )

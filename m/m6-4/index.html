@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep learning негіздері: нейрон желілер, PyTorch, CNN — M6.4 Deep Learning Intro | DataJol</title>
+<meta name="description" content="Нейрон желілері қалай «үйренетінін» ішінен көресіз: numpy арқылы нейрон, forward pass, loss, gradient descent және backpropagation жазып, XOR-ды шешетін…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m6-4/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Deep learning негіздері: нейрон желілер, PyTorch, CNN — M6.4 Deep Learning Intro | DataJol">
+<meta property="og:description" content="Нейрон желілері қалай «үйренетінін» ішінен көресіз: numpy арқылы нейрон, forward pass, loss, gradient descent және backpropagation жазып, XOR-ды шешетін…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m6-4/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M6.4 Deep Learning Intro","description":"Нейрон желілері қалай «үйренетінін» ішінен көресіз: numpy арқылы нейрон, forward pass, loss, gradient descent және backpropagation жазып, XOR-ды шешетін…","url":"https://olzhaa.github.io/datajol/m/m6-4/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT50H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 6: ML инженерия","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M6.4 Deep Learning Intro","item":"https://olzhaa.github.io/datajol/m/m6-4/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 6: ML инженерия / M6.4</nav>
+<article class="reading">
+<p class="eyebrow">M6.4 · 50–70 сағат · 10 сабақ</p>
+<h1>M6.4 Deep Learning Intro: Deep learning негіздері: нейрон желілер, PyTorch, CNN</h1>
+<p class="prose">Нейрон желілері қалай «үйренетінін» ішінен көресіз: numpy арқылы нейрон, forward pass, loss, gradient descent және backpropagation жазып, XOR-ды шешетін кішкентай желіні өзіңіз үйретесіз. Сосын сол қадамдарды PyTorch-қа аударып, CNN мен transfer learning идеясын түсінесіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m6-4">Тапсырмаларды орындау</a></p>
+<section id="dl-1">
+<h2>1. Нейрон және activation функциялары</h2>
+<div class="prose">
+<p>Deep learning-тің кірпіші — <b>нейрон</b>. Ол өте қарапайым есеп жасайды: кірістерді салмақтарға көбейтіп қосады, bias қосады, сосын нәтижені <b>activation функциясынан</b> өткізеді.</p>
+<pre><code>z = w1·x1 + w2·x2 + ... + b      # сызықтық бөлік
+a = f(z)                          # activation</code></pre>
+<p>Бұл сізге таныс: logistic regression — дәл осындай бір нейрон, мұндағы <code>f</code> — sigmoid. Нейрон желісі — осындай нейрондарды қабат-қабат етіп қосу.</p>
+<h3>Негізгі activation функциялары</h3>
+<table>
+<tr><th>Атауы</th><th>Формула</th><th>Қайда</th></tr>
+<tr><td>sigmoid</td><td>1 / (1 + e<sup>−z</sup>), мәні 0…1</td><td>екі класты шығыс (ықтималдық)</td></tr>
+<tr><td>tanh</td><td>мәні −1…1, нөлге қатысты симметриялы</td><td>жасырын қабаттар, RNN</td></tr>
+<tr><td>ReLU</td><td>max(0, z)</td><td>жасырын қабаттардағы әдепкі таңдау</td></tr>
+<tr><td>softmax</td><td>e<sup>z_i</sup> / Σ e<sup>z_j</sup></td><td>көп класты шығыс, қосындысы 1</td></tr>
+</table>
+<h3>Қадамдап мысал</h3>
+<p>Kaspi-стильдегі дүкен клиенттің сатып алатынын болжайды. Екі белгі: сайтта өткізген минут <code>x1 = 3</code> және себеттегі тауар саны <code>x2 = 2</code>. Салмақтар <code>w = [0.4, 0.5]</code>, <code>b = −1.5</code>.</p>
+<ol>
+<li>z = 0.4·3 + 0.5·2 − 1.5 = 1.2 + 1.0 − 1.5 = 0.7</li>
+<li>sigmoid(0.7) ≈ 0.668 — сатып алу ықтималдығы шамамен 67%.</li>
+<li>ReLU(0.7) = 0.7, ал ReLU(−0.7) = 0.</li>
+</ol>
+<pre><code>import numpy as np
+x = np.array([3.0, 2.0])
+w = np.array([0.4, 0.5])
+b = -1.5
+z = x @ w + b          # 0.7
+print(1 / (1 + np.exp(-z)))   # 0.668</code></pre>
+<h3>Неге activation міндетті?</h3>
+<p>Егер activation болмаса, екі сызықтық қабат қатар тұрса да, нәтиже бәрібір бір сызықтық функция: W2(W1·x) = (W2·W1)·x. Яғни 100 қабат та бір logistic regression-нан күшті болмайды. Сызықтық емес функция (ReLU, tanh) желіге қисық шекараларды үйренуге мүмкіндік береді.</p>
+<div class="tip">ReLU-ды жасырын қабаттарда әдепкі ретінде алыңыз: ол жылдам есептеледі және терең желілерде градиенттің «өшіп» қалуы (vanishing gradient) sigmoid-тағыдан әлдеқайда сирек болады.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Шығыс қабатқа ReLU қою, ал керегі ықтималдық болса: sigmoid немесе softmax керек.</li>
+<li><code>np.exp</code> орнына <code>math.exp</code>-ты массивке қолдану: <code>math</code> тек жалғыз санмен жұмыс істейді.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-4/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-2">
+<h2>2. MLP: forward pass numpy-мен</h2>
+<div class="prose">
+<p><b>MLP</b> (multi-layer perceptron) — бірнеше толық байланысқан (fully connected, PyTorch-та <code>Linear</code>) қабаттан тұратын желі. Әр қабат бір матрицалық көбейту: бір мезгілде барлық мысалдар мен барлық нейрондар үшін есептейді.</p>
+<pre><code>H = relu(X @ W1 + b1)      # жасырын қабат
+P = sigmoid(H @ W2 + b2)   # шығыс</code></pre>
+<h3>Пішіндер — ең маңызды тексеріс</h3>
+<table>
+<tr><th>Массив</th><th>Пішін</th><th>Мағынасы</th></tr>
+<tr><td>X</td><td>(n, 3)</td><td>n мысал, 3 белгі</td></tr>
+<tr><td>W1</td><td>(3, 4)</td><td>3 кіріс → 4 жасырын нейрон</td></tr>
+<tr><td>b1</td><td>(4,)</td><td>әр жасырын нейронға бір bias</td></tr>
+<tr><td>H</td><td>(n, 4)</td><td>әр мысалдың жасырын көрінісі</td></tr>
+<tr><td>W2</td><td>(4, 1)</td><td>4 жасырын → 1 шығыс</td></tr>
+<tr><td>P</td><td>(n, 1)</td><td>әр мысалға бір ықтималдық</td></tr>
+</table>
+<p>Ереже: <code>(n, a) @ (a, b) → (n, b)</code>. Ортадағы өлшемдер сәйкес келмесе, numpy <i>shapes not aligned</i> қатесін береді. Bias broadcasting арқылы әр жолға қосылады.</p>
+<h3>Параметрлер саны</h3>
+<p>Бір <code>Linear(a, b)</code> қабатында <code>a·b</code> салмақ және <code>b</code> bias бар. Жоғарыдағы 3 → 4 → 1 желіде: 3·4 + 4 = 16 және 4·1 + 1 = 5, барлығы 21 параметр. ImageNet-тегі ResNet-50-де шамамен 25 миллион — бірақ принцип бірдей.</p>
+<h3>Қадамдап мысал</h3>
+<pre><code>import numpy as np
+X = np.array([[1.0, 0.0, 2.0]])          # (1, 3)
+W1 = np.array([[ 0.2, -0.5, 0.1, 0.0],
+               [ 0.4,  0.3, 0.0, 0.1],
+               [-0.1,  0.2, 0.3, 0.5]])  # (3, 4)
+b1 = np.zeros(4)
+H = np.maximum(0, X @ W1 + b1)
+print(H)   # [[0.  0.  0.7 1. ]]</code></pre>
+<p>Бірінші нейрон: 1·0.2 + 0·0.4 + 2·(−0.1) = 0 → ReLU → 0. Үшінші: 0.1 + 0.6 = 0.7. Бұл есепті қолмен бір рет жасау матрицалық көбейтудің не істейтінін түсінуге көмектеседі.</p>
+<div class="tip">Forward pass жазғанда әр қадамнан кейін <code>print(H.shape)</code> қойыңыз. Deep learning-тегі қателердің жартысы — пішін қатесі.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>W1 @ X</code> деп ретін ауыстыру: біздің келісімде мысалдар жолдарда, сондықтан <code>X @ W1</code>.</li>
+<li><code>*</code> (элемент бойынша) мен <code>@</code> (матрицалық) көбейтуді шатастыру.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-4/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-3">
+<h2>3. Loss функциялары</h2>
+<div class="prose">
+<p>Желі үйренуі үшін оның қаншалықты қателескенін бір санмен өлшеу керек. Бұл сан — <b>loss</b>. Үйрету — loss-ты азайтатын салмақтарды іздеу.</p>
+<h3>Тапсырмаға қарай loss</h3>
+<table>
+<tr><th>Тапсырма</th><th>Шығыс activation</th><th>Loss</th><th>PyTorch</th></tr>
+<tr><td>Regression (пәтер бағасы)</td><td>жоқ (сызықтық)</td><td>MSE</td><td><code>nn.MSELoss</code></td></tr>
+<tr><td>Екі класс (churn)</td><td>sigmoid</td><td>binary cross-entropy</td><td><code>nn.BCEWithLogitsLoss</code></td></tr>
+<tr><td>Көп класс (сурет: мысық/ит/құс)</td><td>softmax</td><td>cross-entropy</td><td><code>nn.CrossEntropyLoss</code></td></tr>
+</table>
+<h3>Binary cross-entropy</h3>
+<pre><code>BCE = −mean( y·log(p) + (1 − y)·log(1 − p) )</code></pre>
+<p>Мағынасы: егер нақты жауап y = 1 болса, тек −log(p) қалады. Модель p = 0.9 десе, loss = 0.105 (кішкентай). p = 0.1 десе, loss = 2.303 (үлкен). Яғни сенімді түрде қате болжам қатты жазаланады. Accuracy мұны көрмейді: 0.51 мен 0.99 оған бірдей «дұрыс».</p>
+<h3>Қадамдап мысал</h3>
+<p>Үш абонент: y = [1, 0, 1], модель ықтималдықтары p = [0.8, 0.3, 0.6].</p>
+<ol>
+<li>1-абонент: −log(0.8) = 0.223</li>
+<li>2-абонент: −log(1 − 0.3) = −log(0.7) = 0.357</li>
+<li>3-абонент: −log(0.6) = 0.511</li>
+<li>Орташасы: (0.223 + 0.357 + 0.511) / 3 ≈ 0.364</li>
+</ol>
+<pre><code>import numpy as np
+y = np.array([1, 0, 1]); p = np.array([0.8, 0.3, 0.6])
+print(-np.mean(y*np.log(p) + (1-y)*np.log(1-p)))   # 0.364</code></pre>
+<h3>Неге accuracy-ді тікелей азайтпаймыз?</h3>
+<p>Gradient descent-ке loss-тың <b>тегіс</b> өзгеруі керек: салмақты сәл өзгерткенде loss та сәл өзгеруі тиіс. Accuracy баспалдақ сияқты секіреді, оның градиенті барлық жерде нөл. Сондықтан үйретуде cross-entropy, ал есепте бизнеске accuracy, recall, ₸ көрсетеміз.</p>
+<div class="tip">p = 0 немесе 1 болғанда log(0) = −∞. Практикада p-ны <code>np.clip(p, 1e-7, 1 - 1e-7)</code> арқылы шектейді. PyTorch-та <code>BCEWithLogitsLoss</code> мұны ішінде өзі шешеді, сондықтан оған sigmoid-қа дейінгі сан (logit) беріледі.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Классификацияға MSE қолдану: жұмыс істейді, бірақ баяу үйренеді.</li>
+<li><code>CrossEntropyLoss</code>-қа softmax-тан өткен ықтималдық беру: ол logit күтеді, softmax ішінде бар.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-4/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-4">
+<h2>4. Gradient descent және backpropagation</h2>
+<div class="prose">
+<p>Loss бар, енді оны азайту керек. <b>Gradient descent</b>: әр салмақ үшін «оны сәл үлкейтсем, loss қалай өзгереді?» деген сұрақтың жауабын (туынды, градиент) табамыз да, салмақты қарсы бағытқа жылжытамыз.</p>
+<pre><code>w = w − lr · ∂loss/∂w</code></pre>
+<p><code>lr</code> (learning rate) — қадам өлшемі. Тым кіші болса, үйрету өте баяу; тым үлкен болса, loss секіріп, тіпті өсіп кетеді.</p>
+<h3>Backpropagation — chain rule</h3>
+<p>Желіде loss салмаққа тікелей емес, бірнеше қадам арқылы байланысты: w → z → p → loss. Туындыны <b>chain rule</b> бойынша көбейтіп табамыз:</p>
+<pre><code>∂loss/∂w = ∂loss/∂p · ∂p/∂z · ∂z/∂w</code></pre>
+<p>Backpropagation — осы көбейтінділерді шығыстан кіріске қарай, қабат-қабатымен есептеу. Әр қабат келесі қабаттан келген градиентті алып, оны өз туындысына көбейтеді де, артқа жібереді.</p>
+<h3>Қадамдап мысал: бір sigmoid нейрон + BCE</h3>
+<p>Sigmoid пен BCE бірге өте әдемі қысқарады: <code>∂loss/∂z = p − y</code>. Сондықтан n мысал үшін:</p>
+<pre><code>p  = sigmoid(X @ w + b)
+dz = (p - y) / n          # әр мысалдың «қатесі»
+dw = X.T @ dz             # әр салмаққа
+db = dz.sum()
+w -= lr * dw;  b -= lr * db</code></pre>
+<p>Мысал: бір абонент x = [1, 2], y = 1, w = [0, 0], b = 0. Онда z = 0, p = 0.5, dz = −0.5, dw = [−0.5, −1.0]. lr = 0.1 болса, жаңа w = [0.05, 0.1]: модель осы абонентке жоғарырақ ықтималдық бере бастайды.</p>
+<h3>Градиентті тексеру</h3>
+<p>Backprop-та қате жіберу оңай. Оны <b>сандық градиентпен</b> тексереді: салмақты ε-ға өзгертіп, loss айырмасын бөлеміз:</p>
+<pre><code>(loss(w + ε) − loss(w − ε)) / (2ε)</code></pre>
+<p>Бұл баяу (әр салмақ үшін екі forward), бірақ сенімді. Екі нәтиже 1e-6 дәлдікпен сәйкес келсе, backprop дұрыс. PyTorch-та мұны <code>autograd</code> автоматты жасайды, бірақ идеяны білу дебагқа көмектеседі.</p>
+<div class="tip">Туынды көп қолданылатын үш функция: sigmoid′ = p(1 − p), tanh′ = 1 − h², ReLU′ = 1 (z &gt; 0 болса), әйтпесе 0.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Градиентті <code>n</code>-ге бөлмеу: batch үлкейген сайын қадам да үлкейіп, үйрету шашырайды.</li>
+<li>Салмақты градиент бағытымен жылжыту (<code>+=</code>): loss өседі.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-4/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-5">
+<h2>5. Практика: XOR-ды шешетін желіні үйрету</h2>
+<div class="prose">
+<p>XOR — классикалық тест: кірістер бірдей болса 0, әртүрлі болса 1. Төрт нүктені бір түзумен бөлу мүмкін емес, сондықтан logistic regression оны шеше алмайды. Бір жасырын қабат жеткілікті — енді мұны өз көзімізбен көреміз.</p>
+<table>
+<tr><th>x1</th><th>x2</th><th>y</th></tr>
+<tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td>0</td></tr>
+</table>
+<h3>Желі: 2 → 4 (tanh) → 1 (sigmoid)</h3>
+<p>Толық training loop төрт қадамнан тұрады, және бұл қадамдар PyTorch-та да дәл осындай:</p>
+<ol>
+<li><b>Forward</b>: <code>h = tanh(X @ W1 + b1)</code>, <code>p = sigmoid(h @ W2 + b2)</code>.</li>
+<li><b>Loss</b>: BCE.</li>
+<li><b>Backward</b> (шығыстан кіріске):
+<pre><code>dz2 = (p - y) / n                 # шығыс қабат
+dW2 = h.T @ dz2;  db2 = dz2.sum(axis=0, keepdims=True)
+dh  = dz2 @ W2.T                  # градиент жасырын қабатқа өтеді
+dz1 = dh * (1 - h**2)             # tanh туындысы
+dW1 = X.T @ dz1;  db1 = dz1.sum(axis=0, keepdims=True)</code></pre></li>
+<li><b>Update</b>: <code>W1 -= lr * dW1</code> және қалғандары.</li>
+</ol>
+<p>Назар аударыңыз: <code>dW2</code> формуласы бір нейрондағы <code>X.T @ dz</code>-пен бірдей, тек X-тің орнында жасырын қабат <code>h</code>. Әр қабат «кірісі.T @ өз градиенті».</p>
+<h3>Неге кездейсоқ бастапқы салмақ?</h3>
+<p>Барлық салмақ 0 болса, жасырын нейрондардың бәрі бірдей есептеп, бірдей градиент алады да, мәңгі бірдей болып қалады. Кездейсоқ инициализация симметрияны бұзады. Seed-ті бекітсек (<code>default_rng(42)</code>), нәтиже қайталанады. Кейде нашар seed-те желі «жергілікті» шешімге тұрып қалады (мысалы, 0.5 болжап): бұл кішкентай желілерде қалыпты жағдай.</p>
+<div class="tip">Loss-ты тізімге жинап, басы мен соңын салыстырыңыз. Loss азаймаса, ең алдымен backward-тағы таңбаларды және пішіндерді тексеріңіз.</div>
+<h3>Нәтиже</h3>
+<p>2000 эпохадан кейін желі шамамен [0.00, 1.00, 1.00, 0.00] береді: XOR шешілді. Жасырын қабат кірістерді жаңа кеңістікке «бүктеп», ол жерде нүктелер бір түзумен бөлінетін болды. Deep learning-тің бүкіл идеясы осы: <b>қабаттар пайдалы белгілерді өздері үйренеді</b>.</p></div>
+<p><a href="../../#lesson/m6-4/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-6">
+<h2>6. Training loop: epochs, batches, overfitting</h2>
+<div class="prose">
+<p>XOR-да 4 мысал болды, әр қадамда бәрін қолдандық. Нақты деректе мыңдаған, миллиондаған мысал бар, сондықтан training loop бірнеше ұғымға сүйенеді.</p>
+<h3>Негізгі терминдер</h3>
+<ul>
+<li><b>Batch</b> (mini-batch) — бір gradient қадамына алынатын мысалдар тобы, әдетте 32–256. Шағын batch градиентті «шулы» етеді, бірақ жадқа сыяды және жиі жаңартады.</li>
+<li><b>Step</b> (iteration) — бір batch бойынша бір жаңарту.</li>
+<li><b>Epoch</b> — бүкіл train деректі бір рет толық өту. Бір эпохадағы қадам саны = ceil(N / batch_size).</li>
+<li><b>Learning rate</b> — қадам өлшемі; көбіне 1e-3 (Adam) немесе 0.01–0.1 (SGD). Кейде уақыт өте азайтады (scheduler).</li>
+</ul>
+<h3>Қадамдап мысал</h3>
+<p>Алматыдағы дүкеннің 10 000 тауар суреті, batch_size = 64:</p>
+<ol>
+<li>Бір эпохада ceil(10000 / 64) = 157 қадам (соңғы batch-та 16 сурет).</li>
+<li>20 эпоха — 3 140 қадам.</li>
+<li>Әр эпохаға дейін дерек араластырылады (shuffle), әйтпесе batch-тар әр жолы бірдей болып, модель реттілікті жаттап алуы мүмкін.</li>
+</ol>
+<h3>Overfitting және early stopping</h3>
+<p>Желіде параметр көп, сондықтан ол train деректі жаттап алуы оңай. Белгісі: train loss төмендей береді, ал validation loss белгілі бір эпохадан кейін <b>өсе бастайды</b>. Қарсы құралдар:</p>
+<ul>
+<li><b>Early stopping</b>: validation loss <code>patience</code> эпоха бойы жақсармаса, тоқтап, ең жақсы эпохадағы салмақтарды қайтарамыз.</li>
+<li><b>Dropout</b>: үйретуде нейрондардың бір бөлігін кездейсоқ өшіру.</li>
+<li><b>Weight decay</b> (L2), көбірек дерек, <b>data augmentation</b> (суретті бұру, қию).</li>
+</ul>
+<pre><code>val = [0.70, 0.52, 0.45, 0.43, 0.44, 0.46, 0.47]
+# ең жақсысы 3-эпохада (0-ден санағанда), patience = 3:
+# 4, 5, 6 эпохаларда жақсару жоқ → 6-эпохадан кейін тоқтаймыз</code></pre>
+<div class="tip">Validation жиынын тек тоқтау мен hyperparameter таңдауға қолданыңыз. Соңғы бағаны бөлек test жиынында бір рет есептеңіз — M5 модуліндегі ереже deep learning-те де өзгермейді.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Соңғы эпохадағы модельді сақтау, ал ең жақсысы ертерек болған.</li>
+<li>Validation деректі де араластырып, train-ге қосып жіберу.</li>
+<li>Эпохалар санын көбейте беру: overfitting-ке тура жол.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-4/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-7">
+<h2>7. PyTorch: numpy қадамдарынан torch-қа</h2>
+<div class="prose">
+<p><b>PyTorch</b> — deep learning-тің ең танымал кітапханасы. Ол біз numpy-мен қолмен жазғанның бәрін жасайды, бірақ екі артықшылығы бар: <b>autograd</b> (backward-ты өзі есептейді) және <b>GPU</b>. Браузердегі Python-да torch жоқ, сондықтан кодты оқып, numpy аналогтарымен салыстырамыз. Өз компьютеріңізде <code>pip install torch</code> арқылы іске қосуға болады.</p>
+<h3>Tensor</h3>
+<pre><code>import torch
+x = torch.tensor([[0., 1.], [1., 0.]])   # numpy array сияқты
+x.shape, x @ x.T, x.mean()               # бірдей операциялар
+w = torch.randn(2, 4, requires_grad=True) # градиентін бақылау керек
+x.numpy(); torch.from_numpy(arr)          # numpy ↔ torch</code></pre>
+<h3>Модель: nn.Module</h3>
+<pre><code>import torch.nn as nn
+
+class XorNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.hidden = nn.Linear(2, 4)    # W1, b1
+        self.out = nn.Linear(4, 1)       # W2, b2
+
+    def forward(self, x):
+        h = torch.tanh(self.hidden(x))
+        return self.out(h)               # logit, sigmoid жоқ
+
+model = XorNet()
+loss_fn = nn.BCEWithLogitsLoss()         # sigmoid + BCE бірге
+optimizer = torch.optim.SGD(model.parameters(), lr=1.0)</code></pre>
+<h3>Стандарт training loop</h3>
+<pre><code>for epoch in range(2000):
+    for xb, yb in train_loader:          # DataLoader batch береді
+        optimizer.zero_grad()            # ескі градиенттерді тазалау
+        logits = model(xb)               # forward
+        loss = loss_fn(logits, yb)       # loss
+        loss.backward()                  # backprop: барлық .grad толады
+        optimizer.step()                 # W -= lr * W.grad
+
+model.eval()                             # dropout/batchnorm инференс режимі
+with torch.no_grad():                    # градиент есептемейміз
+    probs = torch.sigmoid(model(X_test))</code></pre>
+<h3>numpy ↔ PyTorch сәйкестігі</h3>
+<table>
+<tr><th>numpy (dl-5)</th><th>PyTorch</th></tr>
+<tr><td><code>W1 = rng.normal(...)</code></td><td><code>nn.Linear(2, 4)</code></td></tr>
+<tr><td><code>h = np.tanh(X @ W1 + b1)</code></td><td><code>model(x)</code> → <code>forward</code></td></tr>
+<tr><td>BCE формуласы</td><td><code>nn.BCEWithLogitsLoss()</code></td></tr>
+<tr><td><code>dz2 … dW1, db1</code> (бүкіл backward)</td><td><code>loss.backward()</code></td></tr>
+<tr><td><code>W1 -= lr * dW1</code> …</td><td><code>optimizer.step()</code></td></tr>
+<tr><td>әр эпохада градиентті қайта есептеу</td><td><code>optimizer.zero_grad()</code></td></tr>
+</table>
+<div class="tip">PyTorch-та градиенттер <b>жинақталады</b> (<code>+=</code>): <code>zero_grad()</code>-ты ұмытсаңыз, әр қадам алдыңғылардың градиентін қосып, үйрету бұзылады. Бұл — жаңадан бастағандардың №1 қатесі.</div>
+<h3>Optimizer-лер</h3>
+<p><code>SGD</code> — біз қолмен жазған ереже. <code>Adam</code> — әр параметрге бейімделетін қадам; көп жағдайда <code>lr=1e-3</code>-пен бірден жақсы жұмыс істейді, сондықтан әдепкі таңдау.</p></div>
+<p><a href="../../#lesson/m6-4/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-8">
+<h2>8. CNN интуициясы: convolution және pooling</h2>
+<div class="prose">
+<p>Сурет — сандар кестесі: сұр түсті 28×28 сурет — 784 пиксель. Оны MLP-ге жай тізім етіп берсек, екі мәселе бар: параметр тым көп болады және модель «көрші пикселдер байланысты» екенін білмейді. <b>Convolutional neural network</b> (CNN) осы екеуін шешеді.</p>
+<h3>Convolution</h3>
+<p>Кішкентай <b>kernel</b> (сүзгі, мысалы 3×3) суреттің үстімен жылжиды. Әр орында kernel мен астындағы бөліктің элементтерін көбейтіп қосамыз — бір сан шығады. Нәтиже — <b>feature map</b>.</p>
+<pre><code>img (5×5)            kernel (3×3)
+0 0 0 9 9            1 0 -1
+0 0 0 9 9            1 0 -1
+0 0 0 9 9     *      1 0 -1
+0 0 0 9 9
+0 0 0 9 9
+                     нәтиже (3×3):
+                     0 -27 -27   ← тік шекара табылды
+                     ...</code></pre>
+<p>Сол жақ жоғарғы орын: барлық пиксель 0, нәтиже 0. Бір қадам оңға: бөліктің оң бағанында 9-дар, kernel оларды −1-ге көбейтеді: 3·(−9) = −27. Бұл kernel <b>тік шекараларды</b> табады. CNN-де kernel мәндерін біз жазбаймыз — желі оларды backprop арқылы өзі үйренеді: алғашқы қабаттар шекаралар мен түстерді, тереңдегілері көз, дөңгелек, әріп сияқты пішіндерді.</p>
+<h3>Нәтиже өлшемі</h3>
+<pre><code>out = (n − k + 2·padding) / stride + 1
+5×5, k=3, padding=0, stride=1 → 3×3
+28×28, k=3, padding=1 → 28×28 («same»)</code></pre>
+<h3>Pooling</h3>
+<p><b>Max pooling 2×2</b> feature map-ты 2×2 блоктарға бөліп, әр блоктан ең үлкенін алады. Өлшем екі есе кішірейеді, ал «белгі осы маңда бар ма?» деген ақпарат сақталады. Бұл есептеуді азайтады және кішкене жылжуларға төзімділік береді.</p>
+<h3>Неге параметр аз?</h3>
+<p>Бір kernel бүкіл суретте <b>ортақ</b> қолданылады (weight sharing). <code>nn.Conv2d(3, 16, kernel_size=3)</code>: 16 сүзгі, әрқайсысы 3 арна × 3 × 3 = 27 салмақ + 1 bias → 16·28 = 448 параметр. Ал 32×32×3 суретті 16 нейронды Linear қабатқа берсек: 3072·16 + 16 = 49 168.</p>
+<pre><code>nn.Sequential(
+    nn.Conv2d(1, 8, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),   # 28→14
+    nn.Conv2d(8, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),  # 14→7
+    nn.Flatten(), nn.Linear(16 * 7 * 7, 10))                     # 10 цифр</code></pre>
+<div class="tip">Deep learning кітапханаларындағы «convolution» шын мәнінде cross-correlation: kernel аударылмайды. Біз де солай есептейміз.</div></div>
+<p><a href="../../#lesson/m6-4/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-9">
+<h2>9. Transfer learning және deep learning-ті қашан таңдау</h2>
+<div class="prose">
+<p>ImageNet-те (14 млн сурет) ResNet-ті нөлден үйрету GPU-да бірнеше күн алады. Ал сізде, мысалы, қазақ тағамдарының 300 суреті (бешбармақ, бауырсақ, қуырдақ, манты, самса) бар. Нөлден үйретсек, желі бірден overfitting болады. Шешім — <b>transfer learning</b>: басқа үлкен деректе үйретілген желінің білімін қайта қолдану.</p>
+<h3>Идея</h3>
+<p>Үйретілген CNN-нің алғашқы қабаттары шекаралар, текстуралар, пішіндер сияқты <b>жалпы</b> белгілерді таниды — олар кез келген суретке пайдалы. Тек соңғы қабат (head) нақты 1000 ImageNet класына арналған. Сондықтан:</p>
+<ol>
+<li><b>Feature extraction</b>: backbone-ды «мұздатамыз» (freeze), тек жаңа head үйретеміз. Дерек аз болса (жүздеген мысал) — осы.</li>
+<li><b>Fine-tuning</b>: head-тен кейін соңғы бір-екі блокты да кіші learning rate-пен үйретеміз. Дерек көбірек болса (мыңдаған) немесе домен алыс болса (рентген суреттері).</li>
+</ol>
+<pre><code>import torch.nn as nn
+from torchvision import models
+
+model = models.resnet18(weights='IMAGENET1K_V1')   # дайын салмақтар
+for p in model.parameters():
+    p.requires_grad = False                         # backbone мұздатылды
+model.fc = nn.Linear(model.fc.in_features, 5)      # жаңа head: 5 тағам
+optimizer = torch.optim.Adam(model.fc.parameters(), lr=1e-3)
+# training loop dl-7-дегідей; суреттерді ImageNet сияқты нормалау керек</code></pre>
+<p>Жаңа head-те тек 512·5 + 5 = 2 565 параметр үйретіледі, ал 11 млн-ның қалғаны өзгермейді. Сондықтан 300 сурет жеткілікті болады, ал үйрету CPU-да да бірнеше минут.</p>
+<h3>Мәтінде де солай</h3>
+<p>BERT, LLM сияқты тілдік модельдер — үлкен мәтін корпусында үйретілген backbone. Пікірлерді (мысалы, Kaspi-дегі тауар пікірлерін) жіктеу үшін олардың embedding-ін алып, үстіне кішкентай классификатор қою — сол transfer learning. Бұл GenAI модулінде толығырақ.</p>
+<h3>Deep learning қашан керек емес</h3>
+<table>
+<tr><th>Дерек</th><th>Әдетте ең жақсы таңдау</th></tr>
+<tr><td>Кесте (churn, пәтер бағасы), мыңдаған жол</td><td>Gradient boosting, logistic regression</td></tr>
+<tr><td>Сурет, дыбыс, видео</td><td>CNN / pretrained модель</td></tr>
+<tr><td>Мәтін</td><td>Pretrained тілдік модель, embeddings</td></tr>
+</table>
+<div class="tip">Кестелік деректе алдымен M5-тегі sklearn baseline-ды жасаңыз. Нейрон желісі оны жеңсе ғана, қосымша күрделілікке (GPU, ұзақ үйрету, түсіндіру қиындығы) тұрарлық.</div></div>
+<p><a href="../../#lesson/m6-4/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dl-gate">
+<h2>10. Модуль емтиханы: Deep Learning Intro</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: forward pass, softmax және cross-entropy, толық training loop, convolution, PyTorch. Torch қолданылмайды, тек numpy. Кеңестер жоқ, өту шегі — 75%.</p></div>
+<p><a href="../../#lesson/m6-4/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m6-4">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

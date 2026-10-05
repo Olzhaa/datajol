@@ -2,374 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ML қорытынды жобасы: end-to-end ML сервисі — M6.6 ML Capstone | DataJol</title>
+<meta name="description" content="M5-те ноутбукта жасаған churn моделін енді нағыз сервиске айналдырасыз: мәселені және табыс метрикасын анықтау, дерек пен baseline, сақталатын модель…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m6-6/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ML қорытынды жобасы: end-to-end ML сервисі — M6.6 ML Capstone | DataJol">
+<meta property="og:description" content="M5-те ноутбукта жасаған churn моделін енді нағыз сервиске айналдырасыз: мәселені және табыс метрикасын анықтау, дерек пен baseline, сақталатын модель…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m6-6/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<meta name="google-site-verification" content="l_U-4sfewaJLofvtbXVWj0JbSObWigipLcgbEoYuwRo">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M6.6 ML Capstone","description":"M5-те ноутбукта жасаған churn моделін енді нағыз сервиске айналдырасыз: мәселені және табыс метрикасын анықтау, дерек пен baseline, сақталатын модель…","url":"https://olzhaa.github.io/datajol/m/m6-6/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT40H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 6: ML инженерия","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M6.6 ML Capstone","item":"https://olzhaa.github.io/datajol/m/m6-6/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -737,78 +384,219 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m6-1/"><b>M6.1 Software Eng for Data</b></a> — OOP, тесттер, venv, REST API</li><li><a href="m/m6-2/"><b>M6.2 Deployment</b></a> — FastAPI, Docker, бұлтқа деплой</li><li><a href="m/m6-3/"><b>M6.3 MLOps Basics</b></a> — MLflow, CI, мониторинг, drift</li><li><a href="m/m6-4/"><b>M6.4 Deep Learning Intro</b></a> — PyTorch, training loop, CNN</li><li><a href="m/m6-5/"><b>M6.5 Cloud &amp; Data Eng Basics</b></a> — Warehouse, ETL, Spark/dbt шолуы</li><li><a href="m/m6-6/"><b>M6.6 ML Capstone</b></a> — End-to-end ML сервисі</li><li><a href="m/m6-g/"><b>GenAI GenAI Specialization</b></a> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 6: ML инженерия / M6.6</nav>
+<article class="reading">
+<p class="eyebrow">M6.6 · 40–60 сағат · 6 сабақ</p>
+<h1>M6.6 ML Capstone: ML қорытынды жобасы: end-to-end ML сервисі</h1>
+<p class="prose">M5-те ноутбукта жасаған churn моделін енді нағыз сервиске айналдырасыз: мәселені және табыс метрикасын анықтау, дерек пен baseline, сақталатын модель artifact-ы, валидациясы бар predict endpoint, тесттер, drift мониторингі және README. M6.1–M6.3 модульдеріндегі идеялардың бәрі бір жобада тоғысады.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m6-6">Тапсырмаларды орындау</a></p>
+<section id="cap6-1">
+<h2>1. Мәселені анықтау және табыс метрикасы</h2>
+<div class="prose">
+<p>Бұл capstone-да «Дала Мобайл» телеком компаниясы үшін <b>churn prediction сервисін</b> құрамыз. M5 capstone-да сіз модель жасап, memo жаздыңыз. Енді сұрақ басқа: модельді басқа жүйелер күн сайын қолдана алатындай қалай <b>өнімге</b> айналдырамыз?</p>
+<h3>1. Кім, қашан, қалай қолданады?</h3>
+<ul>
+<li><b>Тұтынушы</b>: CRM жүйесі. Call-центр операторы абонентпен сөйлескенде экранда «кету қаупі жоғары» белгісі шығады.</li>
+<li><b>Режим</b>: online — бір абонентке бір сұрау (REST API, M6.2). Түнгі batch скоринг — екінші кезең.</li>
+<li><b>Шешім</b>: ықтималдық шектен (threshold) жоғары болса, оператор 2 000 ₸ жеңілдік ұсынады.</li>
+</ul>
+<h3>2. Үш деңгейлі табыс метрикасы</h3>
+<table>
+<tr><th>Деңгей</th><th>Метрика</th><th>Мақсат</th></tr>
+<tr><td>Offline (модель)</td><td>ROC-AUC, кетушілер бойынша recall</td><td>AUC ≥ 0.78, baseline-дан жоғары</td></tr>
+<tr><td>Бизнес</td><td>Науқан пайдасы, ₸</td><td>«ешкімге ұсынбау» және «барлығына ұсыну»-дан жоғары</td></tr>
+<tr><td>Сервис (SLO)</td><td>p95 latency, қате үлесі</td><td>p95 &lt; 200 ms, 5xx &lt; 0.1%</td></tr>
+</table>
+<h3>Қадамдап мысал: пайда формуласы</h3>
+<p>Болжамдар: кеткен абонент компанияға 40 000 ₸ табыс әкелетін еді; жеңілдік оның 30%-ын сақтап қалады; ұсыныс құны 2 000 ₸ (кімге ұсынсақ та).</p>
+<pre><code>пайда = 0.3 · 40 000 · TP − 2 000 · (ұсыныс алғандар саны)</code></pre>
+<p>Модель 55 адамға ұсыныс берді, олардың 29-ы шынымен кететін еді (TP = 29): 0.3 · 40 000 · 29 − 2 000 · 55 = 348 000 − 110 000 = <b>238 000 ₸</b>. Бұл санды модельдің «нөлдік» нұсқаларымен салыстыру керек: ешкімге ұсынбау (0 ₸) және барлығына ұсыну.</p>
+<h3>3. Шектеулер мен тәуекелдер</h3>
+<ul>
+<li>Дерек: 600 абонент, кейбір бағандарда бос мәндер бар.</li>
+<li>Әділдік: модель бір қаланы жүйелі түрде кемсітпеуі керек.</li>
+<li>Құпиялылық: API-ге аты-жөні, ЖСН жіберілмейді, тек белгілер.</li>
+</ul>
+<div class="tip">Жобаны кодтан емес, бір беттік «problem framing» құжатынан бастаңыз. Ол README-дің бірінші бөлімі болады және сұхбатта «бұл жобаны неге жасадыңыз?» деген сұраққа жауап береді.</div></div>
+<p><a href="../../#lesson/m6-6/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="cap6-2">
+<h2>2. Дерек, data contract және baseline</h2>
+<div class="prose">
+<p>Сервис деректі «бір рет» емес, күн сайын алады. Сондықтан деректі жай қарап шықпаймыз, <b>data contract</b> жазамыз: қандай бағандар, қандай типтер, қандай мән аралығы күтіледі. Бұл contract кейін API валидациясы мен drift мониторингінің негізі болады.</p>
+<h3>churn.csv: не бар</h3>
+<table>
+<tr><th>Баған</th><th>Тип</th><th>Ескерту</th></tr>
+<tr><td><code>customer_id</code></td><td>int</td><td>белгі емес, тек кілт; қайталанбауы керек</td></tr>
+<tr><td><code>city</code>, <code>plan</code></td><td>категория</td><td>5 қала, 3 тариф</td></tr>
+<tr><td><code>age</code>, <code>data_gb</code></td><td>сан</td><td>бос мәндер бар</td></tr>
+<tr><td><code>tenure_months</code>, <code>monthly_fee</code>, <code>support_calls</code>, <code>has_contract</code></td><td>сан</td><td>толық</td></tr>
+<tr><td><code>churned</code></td><td>0/1</td><td>target, шамамен 26%</td></tr>
+</table>
+<h3>Қадамдап мысал: деректі тексеру</h3>
+<pre><code>churn = pd.read_csv('churn.csv')
+print(len(churn))                              # 600
+na = churn.isna().sum()
+print(na[na > 0].to_dict())                    # {'age': 25, 'data_gb': 17}
+print(churn['customer_id'].duplicated().sum()) # 0
+print(churn['churned'].mean())                 # 0.258</code></pre>
+<p>Бұл сандар — жобаның «паспорты». Оларды README-ге жазамыз, ал жаңа дерек келгенде дәл осы тексерістерді автоматты қайталаймыз (M6.3-тегі CI).</p>
+<h3>Baseline-сыз модель жоқ</h3>
+<p>Baseline — «модель жасамасақ не болар еді?» деген сұрақтың жауабы. Екеуін өлшейміз:</p>
+<ol>
+<li><b>DummyClassifier</b> — бәріне бірдей жауап. ROC-AUC = 0.5: кездейсоқ деңгей.</li>
+<li><b>Қарапайым модель</b> — 4 сандық белгідегі logistic regression. Осыдан кейінгі әр күрделілік оны жеңуі керек.</li>
+</ol>
+<pre><code>from sklearn.model_selection import cross_val_score
+pipe = make_pipeline(SimpleImputer(strategy='median'), StandardScaler(),
+                     LogisticRegression(max_iter=1000))
+cross_val_score(pipe, X_train[FEATURES], y_train, cv=5, scoring='roc_auc').mean()</code></pre>
+<div class="tip">Test жиынын осы кезеңде бір рет бөліп, «сейфке» салыңыз (<code>random_state=42</code>, <code>stratify</code>). Модель таңдау тек train ішіндегі cross-validation арқылы. Test-ті соңында бір рет ашамыз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>customer_id</code>-ді белгі ретінде қалдыру.</li>
+<li>Бос мәндерді бүкіл дерекке орташамен толтырып, сосын бөлу: test туралы ақпарат train-ге өтеді (leakage). Imputer pipeline ішінде болуы керек.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-6/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="cap6-3">
+<h2>3. Модель таңдау және artifact сақтау</h2>
+<div class="prose">
+<p>Енді baseline-ды жеңуге тырысамыз және жеңген модельді сервис жүктей алатын <b>artifact</b> ретінде сақтаймыз.</p>
+<h3>Екі кандидат</h3>
+<ol>
+<li><b>Compact</b>: 4 сандық белгі, imputer + scaler + logistic regression.</li>
+<li><b>Full</b>: барлық белгі. Сандықтарға imputer + scaler, <code>city</code> мен <code>plan</code>-ға <code>OneHotEncoder(handle_unknown='ignore')</code> — <code>ColumnTransformer</code> арқылы.</li>
+</ol>
+<pre><code>NUM = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']
+CAT = ['city', 'plan']
+pre = ColumnTransformer([
+    ('num', make_pipeline(SimpleImputer(strategy='median'), StandardScaler()), NUM),
+    ('cat', OneHotEncoder(handle_unknown='ignore'), CAT)])
+full = make_pipeline(pre, LogisticRegression(max_iter=1000))</code></pre>
+<p>Бұл деректе CV ROC-AUC шамамен: compact ≈ 0.813, full ≈ 0.811. Көп белгі жеңбеді. Мұндайда <b>қарапайымын</b> таңдаймыз: API-ге 4 өріс жеткілікті, валидация оңай, drift бақылайтын баған аз, түсіндіру жеңіл. Бұл — нағыз инженерлік шешім, оны README-де негіздейміз.</p>
+<h3>Artifact: модель + метадеректер</h3>
+<p>Сервис ноутбукты емес, файлды жүктейді. Бір модельге екі файл:</p>
+<pre><code>import pickle, json
+with open('churn_model.pkl', 'wb') as f:
+    pickle.dump(model, f)               # бүкіл pipeline: imputer + scaler + модель
+meta = {'version': 'churn-lr-1.0.0', 'features': FEATURES, 'threshold': 0.3,
+        'metrics': {'cv_auc': 0.813, 'test_auc': 0.816}, 'sklearn_version': sklearn.__version__}
+with open('model_meta.json', 'w') as f:
+    json.dump(meta, f, ensure_ascii=False, indent=2)</code></pre>
+<p>Неге метадеректер? Сервис қай белгілерді күтетінін, қай шекті қолданатынын осы файлдан оқиды; ал мониторингте «қай нұсқа жауап берді?» сұрағына <code>version</code> жауап береді. M6.3-те MLflow бұл істі жүйелі жасайды: <code>mlflow.log_params</code>, <code>mlflow.log_metric('test_auc', ...)</code>, <code>mlflow.sklearn.log_model(model, 'model')</code> және Model Registry-де нұсқа.</p>
+<div class="tip">Pickle-ды тек өзіңіз жасаған файлдан жүктеңіз: бөтен pickle кез келген кодты орындай алады. Және sklearn нұсқасын бекітіңіз (<code>requirements.txt</code>): басқа нұсқада сақталған модель жүктелмеуі немесе басқаша жұмыс істеуі мүмкін.</div>
+<h3>Training-serving skew</h3>
+<p>Ең қауіпті қате: үйретуде бір өңдеу, сервисте басқа өңдеу. Мысалы, ноутбукта <code>monthly_fee</code>-ді мың теңгеге бөлдіңіз, ал API теңгемен келеді. Модель қате жауап береді, бірақ ешқандай exception болмайды. Шешімі — барлық өңдеуді pipeline ішіне салып, бір artifact етіп сақтау.</p></div>
+<p><a href="../../#lesson/m6-6/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="cap6-4">
+<h2>4. Predict endpoint және input validation</h2>
+<div class="prose">
+<p>Модель дайын, енді оны CRM шақыра алатын <b>endpoint</b> етеміз. M6.2-де мұны FastAPI-мен жасадыңыз. Production-да код шамамен былай болады:</p>
+<pre><code>from fastapi import FastAPI
+from pydantic import BaseModel, Field
+import pickle, json, pandas as pd
+
+class Customer(BaseModel):
+    tenure_months: int = Field(ge=0, le=600)
+    monthly_fee: float = Field(ge=1, le=100000)
+    support_calls: int = Field(ge=0, le=100)
+    has_contract: int = Field(ge=0, le=1)
+
+app = FastAPI()
+model = pickle.load(open('churn_model.pkl', 'rb'))
+meta = json.load(open('model_meta.json'))
+
+@app.get('/health')
+def health():
+    return {'status': 'ok', 'model_version': meta['version']}
+
+@app.post('/predict')
+def predict(c: Customer):
+    proba = float(model.predict_proba(pd.DataFrame([c.model_dump()]))[0, 1])
+    return {'churn_proba': round(proba, 4),
+            'will_churn': proba >= meta['threshold'],
+            'model_version': meta['version']}</code></pre>
+<p>Pydantic сұрауды модельге жібермей тұрып тексереді: өріс жоқ болса, типі қате болса немесе аралықтан тыс болса, FastAPI өзі <b>422 Unprocessable Entity</b> қайтарады. Браузерде FastAPI жоқ, сондықтан дәл осы логиканы қарапайым Python функциясымен модельдейміз: <code>predict_endpoint(payload) → (status, body)</code>.</p>
+<h3>Валидация ережелері (data contract-тан)</h3>
+<table>
+<tr><th>Өріс</th><th>Тип</th><th>Аралық</th></tr>
+<tr><td><code>tenure_months</code></td><td>сан</td><td>0…600</td></tr>
+<tr><td><code>monthly_fee</code></td><td>сан</td><td>1…100 000 ₸</td></tr>
+<tr><td><code>support_calls</code></td><td>сан</td><td>0…100</td></tr>
+<tr><td><code>has_contract</code></td><td>сан</td><td>0 немесе 1</td></tr>
+</table>
+<h3>Қадамдап мысал</h3>
+<pre><code>predict_endpoint({'tenure_months': 5, 'monthly_fee': 6500, 'support_calls': 3, 'has_contract': 0})
+# (200, {'churn_proba': 0.8427, 'will_churn': True, 'model_version': 'churn-lr-1.0.0'})
+
+predict_endpoint({'tenure_months': '5', 'monthly_fee': 6500, 'support_calls': -1})
+# (422, {'errors': ['tenure_months: сан болуы керек',
+#                   'support_calls: out of range [0, 100]', 'has_contract: missing']})</code></pre>
+<p>Барлық қатені бірден қайтарамыз — клиент оларды бір рет түзетеді. Артық өрістер (<code>customer_id</code>) еленбейді.</p>
+<div class="tip">Python-да <code>True</code> — <code>int</code>-тің ішкі класы: <code>isinstance(True, int)</code> → <code>True</code>. Сондықтан bool-ды бөлек тексеріп, сан ретінде қабылдамаймыз. Кодтар: <b>200</b> — сәтті, <b>422</b> — клиент деректі қате жіберді, <b>500</b> — сервистің өз қатесі (оны ешқашан клиент кінәсі деп көрсетпеңіз).</div></div>
+<p><a href="../../#lesson/m6-6/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="cap6-5">
+<h2>5. Тесттер, мониторинг және drift</h2>
+<div class="prose">
+<p>Сервис іске қосылғаннан кейін екі сұрақ қалады: «өзгеріс енгізгенде ештеңе бұзылмады ма?» (тесттер, M6.1) және «модель уақыт өте нашарламай ма?» (мониторинг, M6.3).</p>
+<h3>Тест түрлері</h3>
+<table>
+<tr><th>Түрі</th><th>Мысал</th></tr>
+<tr><td>Unit</td><td><code>validate</code> missing өрісті табады</td></tr>
+<tr><td>Contract</td><td>жауапта <code>churn_proba</code>, <code>will_churn</code>, <code>model_version</code> бар, proba ∈ [0, 1]</td></tr>
+<tr><td>Directional (бағыт)</td><td>support_calls көбейсе, қауіп өспеуі мүмкін емес</td></tr>
+<tr><td>Quality gate</td><td>CI-да бекітілген test жиынында AUC ≥ 0.78, әйтпесе merge жоқ</td></tr>
+</table>
+<pre><code># tests/test_api.py — pytest оны өзі тауып, іске қосады
+def test_missing_field_422():
+    status, body = predict_endpoint({'tenure_months': 5})
+    assert status == 422
+    assert any('monthly_fee' in e for e in body['errors'])</code></pre>
+<p>Жақсы тест қателікті <b>ұстай алады</b>. Тексерудің бір тәсілі — әдейі бұзылған нұсқаны (mutant) беріп, тест құлай ма, соны қарау.</p>
+<h3>Мониторинг: үш қабат</h3>
+<ol>
+<li><b>Сервис</b>: сұрау саны, p95 latency, 4xx/5xx үлесі.</li>
+<li><b>Дерек</b>: кіріс белгілерінің таралуы үйретудегіден ауытқыды ма (<b>data drift</b>)? Болжамдар таралуы (proba орташасы, will_churn үлесі) өзгерді ме?</li>
+<li><b>Модель сапасы</b>: шын жауап (кетті/кетпеді) 1–3 айдан кейін ғана белгілі. Сол кезде AUC мен науқан пайдасын қайта есептейміз.</li>
+</ol>
+<h3>PSI — Population Stability Index</h3>
+<p>Үйрету дерегінің квантильдері бойынша bin-дер жасаймыз, әр bin-дегі үлесті «бұрын» (e) және «қазір» (a) салыстырамыз:</p>
+<pre><code>PSI = Σ (a − e) · ln(a / e)
+&lt; 0.1 — тұрақты · 0.1–0.25 — бақылау · &gt; 0.25 — alert</code></pre>
+<p>Мысал: маркетинг науқаны көп жаңа абонент әкелді, жаңа айда <code>tenure_months</code> үйретудегіден әлдеқайда аз. PSI ≈ 3.6 — айқын drift: модель мұндай абоненттерді аз көрген, болжамдарды тексеру керек. Train мен test арасындағы PSI ≈ 0.07 — бұл жай кездейсоқ ауытқу.</p>
+<div class="tip">Drift — автоматты түрде «модельді қайта үйрет» дегенді білдірмейді. Алдымен себебін табыңыз: дерек pipeline-ы бұзылды ма (мысалы, теңге тиынға айналды), бизнес өзгерді ме (жаңа тариф), әлде шын мінез-құлық өзгерді ме.</div></div>
+<p><a href="../../#lesson/m6-6/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="cap6-gate">
+<h2>6. Қорытынды жоба: Churn ML сервисі</h2>
+<div class="prose">
+<p>Соңғы кезең: шекті бизнес бойынша таңдау, толық endpoint пен batch endpoint, drift есебі және портфолиоға арналған README. Кеңестер жоқ, өту шегі — 75%. Дайын болғанда жобаны GitHub-қа салыңыз: <code>src/</code> (train.py, service.py), <code>tests/</code>, <code>models/</code> (artifact + meta), <code>Dockerfile</code>, <code>README.md</code>.</p>
+<h3>Ұсынылатын репозиторий құрылымы</h3>
+<pre><code>churn-service/
+├── src/train.py          # дерек → pipeline → churn_model.pkl + model_meta.json
+├── src/service.py        # FastAPI: /health, /predict, /predict_batch
+├── tests/test_api.py     # unit, contract, directional, quality gate
+├── monitoring/drift.py   # PSI есебі, cron немесе Airflow
+├── Dockerfile            # python:3.11-slim, requirements.txt, uvicorn
+├── .github/workflows/ci.yml   # pytest + quality gate
+└── README.md</code></pre></div>
+<p><a href="../../#lesson/m6-6/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m6-6">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = '581326fcab';</script>
-<script src="vendor/codemirror/codemirror.js?v=581326fcab"></script>
-<script src="vendor/codemirror/sql.js?v=581326fcab"></script>
-<script src="vendor/codemirror/python.js?v=581326fcab"></script>
-<script src="vendor/codemirror/closebrackets.js?v=581326fcab"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=581326fcab"></script>
-<script src="content/curriculum.js?v=581326fcab"></script>
-<script src="content/datasets.js?v=581326fcab"></script>
-<script src="content/csv.js?v=581326fcab"></script>
-<script src="content/mldata.js?v=581326fcab"></script>
-<script src="content/m0.js?v=581326fcab"></script>
-<script src="content/sheets.js?v=581326fcab"></script>
-<script src="content/spreadsheets.js?v=581326fcab"></script>
-<script src="content/sql.js?v=581326fcab"></script>
-<script src="content/python.js?v=581326fcab"></script>
-<script src="content/pandas.js?v=581326fcab"></script>
-<script src="content/git.js?v=581326fcab"></script>
-<script src="content/stats.js?v=581326fcab"></script>
-<script src="content/cleaning.js?v=581326fcab"></script>
-<script src="content/viz.js?v=581326fcab"></script>
-<script src="content/advanced.js?v=581326fcab"></script>
-<script src="content/powerbi.js?v=581326fcab"></script>
-<script src="content/business.js?v=581326fcab"></script>
-<script src="content/capstone.js?v=581326fcab"></script>
-<script src="content/probability.js?v=581326fcab"></script>
-<script src="content/inference.js?v=581326fcab"></script>
-<script src="content/mathml.js?v=581326fcab"></script>
-<script src="content/ml.js?v=581326fcab"></script>
-<script src="content/mlpractice.js?v=581326fcab"></script>
-<script src="content/dscapstone.js?v=581326fcab"></script>
-<script src="content/swe.js?v=581326fcab"></script>
-<script src="content/mlops.js?v=581326fcab"></script>
-<script src="content/deeplearning.js?v=581326fcab"></script>
-<script src="content/genai.js?v=581326fcab"></script>
-<script src="content/career.js?v=581326fcab"></script>
-<script src="content/diagnostic.js?v=581326fcab"></script>
-<script src="js/config.js?v=581326fcab"></script>
-<script src="js/store.js?v=581326fcab"></script>
-<script src="js/cloud.js?v=581326fcab"></script>
-<script src="js/runners.js?v=581326fcab"></script>
-<script src="js/sheet.js?v=581326fcab"></script>
-<script src="js/app.js?v=581326fcab"></script>
-
 </body>
 </html>

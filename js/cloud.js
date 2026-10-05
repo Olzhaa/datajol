@@ -3,7 +3,10 @@
 (function () {
   const cfg = DJ.config || {};
   const enabled = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && (cfg.cloudHosts || []).includes(location.hostname));
-  const LIB = 'vendor/supabase.js';   // @supabase/supabase-js 2.117.2 UMD build
+  const LIB = 'vendor/supabase.js';
+  // Read before supabase-js cleans the URL.
+  const q = new URLSearchParams((location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, ''));
+  const initialError = q.get('error_description') || q.get('error') || '';   // @supabase/supabase-js 2.117.2 UMD build
 
   // Combines two progress objects so nothing earned on either device is lost.
   function merge(a, b) {
@@ -49,6 +52,25 @@
       return this.ready;
     },
     redirect() { return location.origin + location.pathname; },
+    // Public auth settings: tells which sign-in providers are switched on in the Supabase project.
+    async providers() {
+      try {
+        const r = await fetch(cfg.supabaseUrl + '/auth/v1/settings', { headers: { apikey: cfg.supabaseAnonKey } });
+        const j = await r.json();
+        return { google: !!(j.external && j.external.google), email: !!(j.external && j.external.email) };
+      } catch (e) { return null; }
+    },
+    // An error Supabase sent back in the URL after a failed Google or email-link sign-in.
+    returnError() { return initialError; },
+    explain(msg) {
+      const m = String(msg || '');
+      if (/provider is not enabled|Unsupported provider/i.test(m)) return 'Google арқылы кіру әлі қосылмаған. Email сілтемесін немесе аккаунтсыз режимді қолданыңыз.';
+      if (/rate limit/i.test(m)) return 'Хат жіберу шегіне жеттік. Бір сағаттан кейін қайталаңыз немесе аккаунтсыз жалғастырыңыз.';
+      if (/expired|invalid/i.test(m)) return 'Сілтеменің мерзімі өтіп кеткен немесе ол бұрын қолданылған. Жаңа сілтеме сұраңыз.';
+      if (/not authorized|Email address .* is invalid/i.test(m)) return 'Бұл адреске хат жіберу мүмкін болмады. Басқа email-ді байқап көріңіз.';
+      if (/Failed to fetch|NetworkError/i.test(m)) return 'Серверге қосыла алмадық. Интернетті тексеріңіз.';
+      return m;
+    },
     async google() { await this.load(); return this.client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: this.redirect() } }); },
     async email(address) { await this.load(); return this.client.auth.signInWithOtp({ email: address, options: { emailRedirectTo: this.redirect() } }); },
     // Makes the Supabase user the current local account, then pulls and merges their cloud progress.

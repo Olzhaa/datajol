@@ -128,6 +128,7 @@
         <div class="err" id="cloud-err" role="alert"></div>
         <button class="btn ghost" type="submit">Сілтеме жіберу</button>
         <p class="note">Прогресс бұлтта сақталады, кез келген құрылғыдан жалғастыра аласыз.</p>
+        <button type="button" class="linkbtn" id="local-mode">Аккаунтсыз жалғастыру (прогресс осы браузерде)</button>
       </form>` : ''}
     </section>`;
     const setMode = m => {
@@ -141,14 +142,18 @@
     $$('.tabs button', app).forEach(b => b.onclick = () => setMode(b.dataset.mode));
     setMode(Object.keys(S.users()).length ? 'login' : 'register');
     if (DJ.cloud && DJ.cloud.enabled) {
+      const C = DJ.cloud, cerr = $('#cloud-err');
       $('#auth-form').hidden = true;
-      $('#g-login').onclick = async () => { const r = await DJ.cloud.google(); if (r && r.error) $('#cloud-err').textContent = r.error.message; };
+      if (C.returnError()) { cerr.textContent = C.explain(C.returnError()); history.replaceState(null, '', location.pathname); }
+      C.providers().then(pv => { if (pv && !pv.google && $('#g-login')) { $('#g-login').hidden = true; $('#g-login').nextElementSibling.hidden = true; } });
+      $('#local-mode').onclick = () => { $('#cloud-form').hidden = true; $('#auth-form').hidden = false; };
+      $('#g-login').onclick = async () => { try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
       $('#cloud-form').onsubmit = async (e) => {
         e.preventDefault();
         const email = e.target.email.value.trim();
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('#cloud-err').textContent = 'Email дұрыс емес.'; return; }
-        const r = await DJ.cloud.email(email);
-        $('#cloud-err').textContent = r && r.error ? r.error.message : '';
+        let r; try { r = await DJ.cloud.email(email); } catch (er) { r = { error: er }; }
+        $('#cloud-err').textContent = r && r.error ? DJ.cloud.explain(r.error.message) : '';
         if (!(r && r.error)) $('#cloud-form').innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне кіру сілтемесі жіберілді.</p>`;
       };
     }

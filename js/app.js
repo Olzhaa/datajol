@@ -219,7 +219,7 @@
     $('#app').innerHTML = `
       <div class="hello">
         <div><div class="eyebrow">${esc(career.id)} · ${esc(career.name)}</div><h1>Сәлем, ${esc(u.name)}</h1></div>
-        ${p.diag ? '' : `<button class="btn ghost" data-go="diag">Деңгейді анықтау тесті</button>`}
+        ${p.diag && p.diag.v === 2 ? '' : `<button class="btn ghost" data-go="diag">Деңгейді анықтау тесті</button>`}
       </div>
       <div class="kpis">
         <div class="kpi"><span class="v flame">${ICON.flame}${st}</span><span class="l">күн қатарынан</span></div>
@@ -656,54 +656,129 @@
   }
 
   // ---------- diagnostic ----------
+  // Adaptive placement: one block per module (easy, medium, hard item). Two misses on the first two items end the
+  // block early; a block is skipped when a module it builds on came out weak. The start is the first module
+  // on the chosen path that is not already known.
+  const DIAG_STATUS = {
+    known: ['Білесіз', 'done'], partial: ['Қайталау керек', 'part'], learn: ['Үйрену керек', 'todo'], skip: ['Тексерілмеді', 'skip']
+  };
   function viewDiag() {
     const D = DJ.diagnostic, p = S.progress();
-    const answers = {};
+    const pathOrder = track => {
+      const path = DJ.paths.find(x => x.id === track) || DJ.paths[0];
+      return DJ.phases.filter(ph => path.phases.includes(ph.n)).flatMap(ph => ph.modules.map(m => m.id));
+    };
     const resultHtml = res => {
       const mod = DJ.findModule(res.start);
+      const rows = D.blocks.filter(b => res.mods[b.mod]).map(b => {
+        const m = DJ.findModule(b.mod), st = res.mods[b.mod], [label, cls] = DIAG_STATUS[st];
+        const gi = m.lessons ? m.lessons.findIndex(l => l.gate) : -1;
+        const act = st === 'known' && gi >= 0 && !p.lessons[m.lessons[gi].id] ? `<button class="btn ghost sm" data-go="lesson" data-mod="${m.id}" data-li="${gi}">Емтиханмен жабу</button>` : '';
+        return `<div class="diag-row"><div><b>${esc(m.code)}</b> ${esc(m.title)}<div class="muted" style="font-size:.85rem">${esc(b.area)}</div></div><span class="chip ${cls}">${label}</span>${act}</div>`;
+      }).join('');
       return `<div class="card" style="display:grid;gap:12px">
-        <div class="eyebrow">Нәтиже · ${res.correct} / ${res.total} дұрыс</div>
-        <h2>Ұсыныс: ${esc(mod.code)} ${esc(mod.title)}</h2>
+        <div class="eyebrow">Нәтиже · ${res.correct} / ${res.total} дұрыс · ${esc((DJ.paths.find(x => x.id === res.track) || {}).title || '')}</div>
+        <h2 style="margin:0">Ұсыныс: ${esc(mod.code)} ${esc(mod.title)}</h2>
         <p style="margin:0">${esc(res.text)}</p>
-        <div style="display:grid;gap:8px">${Object.entries(D.areas).map(([k, name]) => `<div><div style="display:flex;justify-content:space-between;font-size:.9rem"><span>${esc(name)}</span><b>${Math.round(res.scores[k] * 100)}%</b></div><div class="bar"><i style="width:${res.scores[k] * 100}%"></i></div></div>`).join('')}</div>
         <div class="actions"><button class="btn" data-go="module" data-mod="${mod.id}">Осыдан бастау</button><button class="btn ghost" id="redo">Қайта тапсыру</button></div>
-      </div>`;
+      </div>
+      <div class="card" style="display:grid;gap:4px"><h3 style="margin:0 0 6px">Модульдер бойынша</h3>${rows}
+        <p class="note" style="margin:8px 0 0">«Білесіз» деген модульдің емтиханын бірден тапсырып, оны жабуға болады. Емтихан 75%-дан өтеді.</p></div>`;
     };
-    const draw = () => {
+    const showResult = res => {
+      $('#app').innerHTML = `<div class="diag">${resultHtml(res)}</div>`;
+      $('#redo').onclick = intro;
+      window.scrollTo(0, 0);
+    };
+
+    function intro() {
       $('#app').innerHTML = `<div class="diag">
-        <div><div class="eyebrow">Диагностика · ${D.questions.length} сұрақ · шамамен 5 мин</div><h1 style="margin:6px 0 8px">Қай жерден бастау керек?</h1>
-        <p class="muted" style="margin:0">Білмейтін сұрақты бос қалдырыңыз: бұл баға емес, бастау нүктесін табу ғана.</p></div>
-        ${D.questions.map((q, qi) => `<div class="card"><div class="eyebrow">${qi + 1}. ${esc(D.areas[q.area])}</div><div class="prose" style="margin-top:6px">${q.prompt}</div>
-          ${q.type === 'quiz' ? `<div class="options">${q.options.map((o, i) => `<button class="opt" data-q="${qi}" data-o="${i}">${o}</button>`).join('')}</div>`
-            : `<div style="display:flex;gap:8px;align-items:center;max-width:240px;margin-top:8px"><input type="text" inputmode="decimal" data-qn="${qi}" aria-label="Жауап">${q.unit ? `<b>${esc(q.unit)}</b>` : ''}</div>`}
-        </div>`).join('')}
-        <button class="btn" id="diag-done">Нәтижені көру</button>
+        <div><div class="eyebrow">Диагностика · бейімделетін тест · 10–25 мин</div><h1 style="margin:6px 0 8px">Қай жерден бастау керек?</h1>
+        <p class="muted" style="margin:0">Әр модуль бойынша оңайдан қиынға қарай 2–3 сұрақ беріледі. Бір тақырыпты білмесеңіз, тест оған сүйенетін тақырыптарды өткізіп жібереді, сондықтан ұзаққа созылмайды. Кейбір сұрақта SQL не Python кодын жазасыз.</p></div>
+        <div class="card" style="display:grid;gap:10px"><b>Мақсатыңыз қандай?</b>
+          ${DJ.paths.filter(x => x.id !== 'mle').map(x => `<button class="opt" data-track="${x.id}"><b>${esc(x.title)}</b><div class="muted" style="font-size:.9rem">${esc(x.desc)}</div></button>`).join('')}
+        </div>
+        <p class="note" style="margin:0">Білмесеңіз, «Білмеймін» басыңыз. Болжап жауап беру нәтижені бұзады: сіз білмейтін модульден өтіп кетесіз.</p>
       </div>`;
-      $$('.opt[data-q]').forEach(b => b.onclick = () => { const q = b.dataset.q; answers[q] = Number(b.dataset.o); $$(`.opt[data-q="${q}"]`).forEach(x => x.classList.toggle('sel', x === b)); });
-      $('#diag-done').onclick = () => {
-        $$('[data-qn]').forEach(i => { const v = parseFloat(i.value.replace(',', '.').replace(/\s|%/g, '')); if (!isNaN(v)) answers[i.dataset.qn] = v; });
-        const tot = {}, ok = {};
-        let correct = 0;
-        D.questions.forEach((q, i) => {
-          tot[q.area] = (tot[q.area] || 0) + 1;
-          const a = answers[i];
-          const right = q.type === 'quiz' ? a === q.answer : (a != null && Math.abs(a - q.answer) <= (q.tol || 0.001) + 1e-9);
-          if (right) { ok[q.area] = (ok[q.area] || 0) + 1; correct++; }
-        });
-        const scores = {}; for (const k of Object.keys(D.areas)) scores[k] = (ok[k] || 0) / (tot[k] || 1);
-        const place = D.place(scores);
-        const res = Object.assign({ scores, correct, total: D.questions.length, date: S.today() }, place);
+      $$('[data-track]').forEach(b => b.onclick = () => run(b.dataset.track));
+    }
+
+    function run(track) {
+      const order = pathOrder(track);
+      const blocks = D.blocks.filter(b => order.includes(b.mod));
+      const mods = {}; let bi = -1, block = null, step = 0, marks = [], correct = 0, total = 0;
+      const nextBlock = () => {
+        for (bi++; bi < blocks.length; bi++) {
+          const b = blocks[bi];
+          if ((b.needs || []).some(n => mods[n] === 'learn' || mods[n] === 'skip')) { mods[b.mod] = 'skip'; continue; }
+          block = b; step = 0; marks = []; return ask();
+        }
+        finish();
+      };
+      const record = ok => {
+        marks.push(ok); total++; if (ok) correct++;
+        const got = marks.filter(Boolean).length;
+        if (marks.length === 2 && got === 0) { mods[block.mod] = 'learn'; return nextBlock(); }
+        if (marks.length < 3) { step++; return ask(); }
+        mods[block.mod] = got === 3 ? 'known' : got === 2 ? 'partial' : 'learn';
+        nextBlock();
+      };
+      const ask = () => {
+        const q = block.items[step], code = q.type === 'sql' || q.type === 'python';
+        const pct = Math.round(bi / blocks.length * 100);
+        $('#app').innerHTML = `<div class="diag">
+          <div><div style="display:flex;justify-content:space-between" class="eyebrow"><span>${esc(block.area)} · ${['оңай', 'орташа', 'қиын'][step]} сұрақ</span><span>${bi + 1} / ${blocks.length}</span></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div></div>
+          <div class="card">
+            <div class="prose">${q.prompt}</div>
+            ${q.type === 'quiz' ? `<div class="options">${q.options.map((o, i) => `<button class="opt" data-o="${i}">${o}</button>`).join('')}</div>` : ''}
+            ${q.type === 'number' ? `<div style="display:flex;gap:8px;align-items:center;max-width:240px;margin-top:12px"><input type="text" inputmode="decimal" id="dq-num" aria-label="Жауап">${q.unit ? `<b>${esc(q.unit)}</b>` : ''}</div>` : ''}
+            ${code ? `${q.type === 'sql' ? `<p class="note">Кестелер: ${Object.entries(DJ.datasets[q.dataset].tables).map(([t, c]) => `<code>${esc(t)}</code> (${esc(c)})`).join(', ')}</p>` : ''}<textarea id="dq-code" class="code-area" spellcheck="false" rows="8">${esc(q.starter || '')}</textarea><div class="err" id="dq-err" role="alert"></div>` : ''}
+          </div>
+          <div class="actions"><button class="btn" id="dq-go" ${q.type === 'quiz' ? 'disabled' : ''}>${code ? 'Тексеріп, жалғастыру' : 'Жауап беру'}</button><button class="btn ghost" id="dq-skip">Білмеймін</button></div>
+        </div>`;
+        let pick = null;
+        $$('.opt[data-o]').forEach(b => b.onclick = () => { pick = Number(b.dataset.o); $$('.opt[data-o]').forEach(x => x.classList.toggle('sel', x === b)); $('#dq-go').disabled = false; });
+        const ta = $('#dq-code');
+        if (ta) ta.onkeydown = e => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end'); } };
+        $('#dq-skip').onclick = () => record(false);
+        $('#dq-go').onclick = async () => {
+          if (q.type === 'quiz') return record(pick === q.answer);
+          if (q.type === 'number') {
+            const v = parseFloat($('#dq-num').value.replace(',', '.').replace(/\s|%|₸/g, ''));
+            if (isNaN(v)) { $('#dq-num').focus(); return; }
+            return record(Math.abs(v - q.answer) <= (q.tol || 0.001) + 1e-9);
+          }
+          const src = $('#dq-code').value;
+          if (!src.trim() || src.trim() === (q.starter || '').trim()) { $('#dq-err').textContent = 'Код жазыңыз немесе «Білмеймін» басыңыз.'; return; }
+          const btn = $('#dq-go'); btn.disabled = true; btn.textContent = 'Тексерілуде…';
+          let r;
+          try {
+            if (q.type === 'sql') r = await DJ.run.sql.check({ dataset: q.dataset, solution: q.solution }, src);
+            else { await DJ.run.py.start(); r = await DJ.run.py.check({ solution: q.solution, check: { tests: q.tests } }, src); }
+          } catch (e) { r = { pass: false }; }
+          record(!!(r && r.pass));
+        };
+        window.scrollTo(0, 0);
+      };
+      const finish = () => {
+        const start = order.find(id => { const m = DJ.findModule(id); return m && m.lessons && mods[id] !== 'known'; }) || order[order.length - 1];
+        const n = k => Object.values(mods).filter(v => v === k).length;
+        const sm = DJ.findModule(start);
+        const text = n('known') === 0
+          ? 'Негізден бастаған дұрыс. Алғашқы модульдер тез өтеді, бірақ кейінгі тақырыптардың іргетасы солар.'
+          : `${n('known')} модульді білесіз${n('partial') ? `, ${n('partial')} модульді қайталау керек` : ''}. ${sm.code} ${sm.title} — сіз әлі толық меңгермеген алғашқы модуль. Білетін модульдердің емтиханын тапсырып, оларды жабуға болады.`;
+        const res = { v: 2, track, mods, start, text, correct, total, date: S.today() };
         const hadBadge = !!S.progress().badges.diagnostic;
         S.setDiag(res);
         if (!hadBadge) toast('Жаңа белгі: Өзін білген', 'compass');
         topbar();
-        $('#app').innerHTML = `<div class="diag">${resultHtml(res)}</div>`;
-        $('#redo').onclick = draw;
-        window.scrollTo(0, 0);
+        showResult(res);
       };
-    };
-    if (p.diag) { $('#app').innerHTML = `<div class="diag">${resultHtml(p.diag)}</div>`; $('#redo').onclick = draw; }
-    else draw();
+      nextBlock();
+    }
+
+    if (p.diag && p.diag.v === 2) showResult(p.diag);
+    else intro();
   }
 
   // ---------- profile ----------

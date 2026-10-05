@@ -55,6 +55,7 @@ head = f'''<!doctype html>
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
+<meta name="google-site-verification" content="l_U-4sfewaJLofvtbXVWj0JbSObWigipLcgbEoYuwRo">
 <link rel="icon" href="{favicon_uri}" type="image/svg+xml">
 <script type="application/ld+json">{ld}</script>
 '''

@@ -1,5 +1,3 @@
-<title>DataJol</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті нөлден үйренетін қазақша интерактивті платформа">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -11,8 +9,15 @@
 </style>
 
 <header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app" aria-live="polite"></main>
-<div id="toast-root"></div>
+<main class="wrap" id="app">
+<section class="landing" style="padding:40px 0 64px">
+<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
+<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
+<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
+<!--MODULE_LIST-->
+</section>
+</main>
+<div id="toast-root" role="status" aria-live="polite"></div>
 
 <script src="vendor/codemirror/codemirror.js"></script>
 <script src="vendor/codemirror/sql.js"></script>

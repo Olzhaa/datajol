@@ -1,10 +1,17 @@
 // Accounts and progress, kept in this browser's storage. With cloud keys set (js/config.js), js/cloud.js signs
 // learners in with Supabase and syncs this same progress object to the cloud.
 (function () {
+  // mem holds only values the browser refused to store (full or blocked), so they win over the older stored copy.
   const mem = {};
+  let fullWarned = false;
   const ls = {
-    get(k) { try { const v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : null) : v; } catch (e) { return k in mem ? mem[k] : null; } },
-    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) { /* storage blocked: keep in memory */ } },
+    get(k) { if (k in mem) return mem[k]; try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) {
+      try { localStorage.setItem(k, v); delete mem[k]; } catch (e) {
+        mem[k] = v;   // storage full or blocked: keep in memory for this visit and tell the app once
+        if (!fullWarned) { fullWarned = true; try { window.dispatchEvent(new CustomEvent('dj:storage-full')); } catch (_) {} }
+      }
+    },
     del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
   };
   const read = (k, d) => { try { const v = ls.get(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
@@ -64,14 +71,16 @@
     profile() { const u = this.current(); return u ? Object.assign({ username: u }, this.users()[u]) : null; },
 
     key() { return 'dj.p.' + this.current(); },
-    progress() {
-      return read(this.key(), { xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {} });
-    },
-    // fromCloud: the write came from a cloud pull, so it is not pushed straight back.
-    save(p, fromCloud) { write(this.key(), p); if (!fromCloud && DJ.cloud && DJ.cloud.user) DJ.cloud.schedule(p); },
+    fresh() { return { xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {} }; },
+    progress() { return read(this.key(), this.fresh()); },
+    // local: write to this browser only (a cloud pull, or saved editor code), without pushing to the cloud.
+    save(p, local) { write(this.key(), p); if (!local && DJ.cloud && DJ.cloud.user) DJ.cloud.schedule(p); },
+    // Clears progress but keeps settings. resetAt makes the reset win over older copies on other devices.
+    resetProgress() { const p = this.progress(); this.save(Object.assign(this.fresh(), { prefs: p.prefs || {}, resetAt: new Date().toISOString() })); },
     adoptCloudUser(username, name, email) {
-      const users = this.users();
-      if (!users[username]) users[username] = { name: name || username, email: email || '', cloud: true, created: today() };
+      const users = this.users(), old = users[username];
+      if (!old) users[username] = { name: name || username, email: email || '', cloud: true, created: today() };
+      else if (email && old.name === email.split('@')[0]) old.name = name || username;   // older builds showed the email prefix
       write('dj.users', users);
       ls.set('dj.session', username);
     },
@@ -94,12 +103,13 @@
     complete(exId, xp, usedHint, kind) {
       const p = this.progress();
       const fresh = !p.done[exId];
+      usedHint = usedHint || !!(p.hinted || {})[exId];   // a hint opened before a reload still counts
       const gained = fresh ? (usedHint ? Math.ceil(xp / 2) : xp) : 0;
       const before = this.level(p.xp).level;
       if (fresh) {
-        p.done[exId] = { d: today(), hint: !!usedHint };
+        p.done[exId] = { d: today(), hint: !!usedHint, xp: gained };   // xp per task lets two devices' totals be merged
         p.xp += gained;
-        p.xpLog = (p.xpLog || []).concat([{ d: today(), xp: gained }]).slice(-300);
+        p.xpLog = (p.xpLog || []).concat([{ d: today(), xp: gained, id: exId }]).slice(-300);
         if (!usedHint) p.noHint = (p.noHint || 0) + 1;
       }
       this.touchDay(p);
@@ -137,7 +147,9 @@
     },
     setPref(k, v) { const p = this.progress(); p.prefs = Object.assign({}, p.prefs, { [k]: v }); this.save(p); },
     saveRubric(exId, r) { const p = this.progress(); p.rubric = p.rubric || {}; p.rubric[exId] = r; this.save(p); },
-    saveCode(exId, code) { const p = this.progress(); p.code = p.code || {}; p.code[exId] = code; this.save(p); },
+    saveCode(exId, code) { const p = this.progress(); p.code = p.code || {}; p.code[exId] = code; this.save(p, true); },   // goes up with the next real save
+    markHinted(exId) { const p = this.progress(); p.hinted = p.hinted || {}; if (p.hinted[exId]) return; p.hinted[exId] = true; this.save(p); },
+    hinted(exId) { return !!(this.progress().hinted || {})[exId]; },
     moduleState(mod, p) {
       if (!mod.lessons) return { state: 'soon', pct: 0 };
       const n = mod.lessons.length, d = mod.lessons.filter(l => p.lessons[l.id]).length;

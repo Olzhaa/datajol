@@ -37,7 +37,7 @@
       try {
         let userRes;
         try { userRes = userDb.exec(code); }
-        catch (err) { return { pass: false, msg: 'Сұрауда қате бар: ' + translateSqlError(String(err.message || err)) }; }
+        catch (err) { return { pass: false, msg: 'Сұрауда қате бар: ' + escHtml(translateSqlError(String(err.message || err))) }; }
         const refRes = refDb.exec(ex.solution);
         const c = ex.check || {};
         if (c.mustInclude) {
@@ -46,7 +46,7 @@
         }
         let mine, ref;
         if (c.after) {
-          try { mine = last(userDb.exec(c.after)); } catch (err) { return { pass: false, msg: 'Кестенің күйін тексеру мүмкін болмады: ' + translateSqlError(String(err.message || err)) }; }
+          try { mine = last(userDb.exec(c.after)); } catch (err) { return { pass: false, msg: 'Кестенің күйін тексеру мүмкін болмады: ' + escHtml(translateSqlError(String(err.message || err))) }; }
           ref = last(refDb.exec(c.after));
         } else { mine = last(userRes); ref = last(refRes); }
         const cmp = compareResults(mine, ref, c.ordered);
@@ -76,6 +76,7 @@
     }
     return { same: true };
   }
+  const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function translateSqlError(m) {
     return m
       .replace(/no such table: (\S+)/, 'мұндай кесте жоқ: $1')
@@ -91,7 +92,7 @@
     start() {
       if (this.worker) return this.ready;
       this.status = 'loading';
-      this.worker = new Worker('js/py-worker.js');
+      this.worker = new Worker('js/py-worker.js' + (window.DJ_VERSION ? '?v=' + window.DJ_VERSION : ''));
       this.ready = new Promise((resolve, reject) => {
         this.worker.onmessage = (e) => {
           const d = e.data;
@@ -101,6 +102,8 @@
           if (p) { clearTimeout(p.timer); this.pending.delete(d.id); p.resolve(d); }
         };
         this.worker.onerror = (e) => { this.status = 'error'; reject(new Error(e.message || 'worker қатесі')); };
+        // Python itself is a ~10 MB download; on a stalled connection fail with a clear message instead of hanging.
+        setTimeout(() => { if (this.status === 'loading') { this.status = 'error'; reject(new Error('Python жүктелмеді: интернет баяу немесе үзілді. Бетті жаңартып, қайталап көріңіз.')); } }, 120000);
       });
       this.ready.catch(() => {});
       return this.ready;
@@ -118,8 +121,10 @@
       const firstPandas = this.needsPandas(all) && !this.pandas;
       const sk = this.needsSklearn(all), firstSk = sk && !this.sklearn;
       const files = /\.csv/.test(all) && DJ.csv ? DJ.csv : null;
+      const slow = 'Кітапханалар әлі жүктеліп жатқан кезде уақыт бітті: интернет баяу болуы мүмкін. Қайта іске қосып көріңіз.';
+      const loop = sk ? 'Код 25 секундтан артық орындалды. Деректер көлемін немесе модель параметрлерін (мысалы n_estimators) азайтып көріңіз.' : 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.';
       return new Promise(resolve => {
-        const timer = setTimeout(() => { this.pending.delete(id); this.restart(); resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' }); }, firstSk ? 180000 : firstPandas ? 90000 : sk ? 25000 : 8000);
+        const timer = setTimeout(() => { this.pending.delete(id); this.restart(); resolve({ ok: false, stdout: '', error: firstSk || firstPandas ? slow : loop }); }, firstSk ? 180000 : firstPandas ? 90000 : sk ? 25000 : 8000);
         this.pending.set(id, { resolve: d => { if (firstPandas && !/pandas жүктелмеді/.test(d.error || '')) this.pandas = true; if (firstSk && !/scikit-learn жүктелмеді/.test(d.error || '')) this.sklearn = this.pandas = true; resolve(d); }, timer });
         this.worker.postMessage({ id, code, tests, files });
       });

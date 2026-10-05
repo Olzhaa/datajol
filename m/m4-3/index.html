@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Машиналық оқытуға арналған математика — M4.3 Math for ML | DataJol</title>
+<meta name="description" content="Машиналық оқытудың артында төрт идея тұр: вектор, матрица, туынды және gradient descent. Олардың бәрін алдымен қарапайым Python тізімдерімен қолмен жазасыз…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m4-3/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Машиналық оқытуға арналған математика — M4.3 Math for ML | DataJol">
+<meta property="og:description" content="Машиналық оқытудың артында төрт идея тұр: вектор, матрица, туынды және gradient descent. Олардың бәрін алдымен қарапайым Python тізімдерімен қолмен жазасыз…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m4-3/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M4.3 Math for ML","description":"Машиналық оқытудың артында төрт идея тұр: вектор, матрица, туынды және gradient descent. Олардың бәрін алдымен қарапайым Python тізімдерімен қолмен жазасыз…","url":"https://olzhaa.github.io/datajol/m/m4-3/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT25H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 4: DS негізі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M4.3 Math for ML","item":"https://olzhaa.github.io/datajol/m/m4-3/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 4: DS негізі / M4.3</nav>
+<article class="reading">
+<p class="eyebrow">M4.3 · 25–35 сағат · 11 сабақ</p>
+<h1>M4.3 Math for ML: Машиналық оқытуға арналған математика</h1>
+<p class="prose">Машиналық оқытудың артында төрт идея тұр: вектор, матрица, туынды және gradient descent. Олардың бәрін алдымен қарапайым Python тізімдерімен қолмен жазасыз, соңында NumPy неге керек екенін көресіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m4-3">Тапсырмаларды орындау</a></p>
+<section id="mm-1">
+<h2>1. Вектор: сандар тізімі</h2>
+<div class="prose">
+<p>ML-де әр объект (клиент, пәтер, фильм) <b>вектормен</b> сипатталады — ол жай ғана ретті сандар тізімі. Мысалы, пәтер: <code>[ауданы, бөлме саны, қабат]</code> = <code>[54, 2, 7]</code>. Тізімдегі әр сан — бір <b>белгі</b> (feature), ал тізімнің ұзындығы — вектордың <b>өлшемі</b> (dimension).</p>
+<h3>Үш негізгі амал</h3>
+<ul>
+<li><b>Қосу</b>: бірдей ұзындықтағы екі векторды элемент бойынша қосамыз: <code>[1, 2] + [3, 4] = [4, 6]</code>.</li>
+<li><b>Скалярға көбейту</b> (scale): әр элементті бір санға көбейтеміз: <code>3 · [1, 2] = [3, 6]</code>.</li>
+<li><b>Ұзындық</b> (норма, norm): Пифагор теоремасы: <code>‖v‖ = √(v₁² + v₂² + …)</code>.</li>
+</ul>
+<pre><code>def add(u, v):
+    return [a + b for a, b in zip(u, v)]
+
+def scale(c, v):
+    return [c * a for a in v]
+
+def norm(v):
+    return sum(a * a for a in v) ** 0.5</code></pre>
+<p>Python-да <code>[1, 2] + [3, 4]</code> жазсаңыз, <code>[1, 2, 3, 4]</code> шығады — бұл тізімдерді жалғау, вектор қосу емес. Сондықтан элемент бойынша амалды <code>zip</code> арқылы өзіміз жазамыз.</p>
+<h3>Қадамдап мысал</h3>
+<p>v = [3, 4] векторының ұзындығы:</p>
+<ol>
+<li>Квадраттар: 3² = 9, 4² = 16.</li>
+<li>Қосынды: 9 + 16 = 25.</li>
+<li>Түбір: √25 = 5. Демек ‖v‖ = 5.</li>
+</ol>
+<p>Енді 2 · v = [6, 8], оның ұзындығы √(36 + 64) = 10. Векторды 2-ге көбейтсек, ұзындығы да 2 есе өседі. Ал <b>бірлік вектор</b> (unit vector) алу үшін векторды өз ұзындығына бөлеміз: [3, 4] / 5 = [0.6, 0.8], оның ұзындығы 1. Бұл «бағытты сақтап, масштабты алып тастау» деген сөз, келесі сабақта cosine similarity осыған сүйенеді.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>u + v</code> арқылы тізімдерді «қосу» — бұл жалғау. (2) <code>2 * [1, 2]</code> Python-да <code>[1, 2, 1, 2]</code> береді, вектор көбейту емес. (3) Ұзындығы әртүрлі векторларды қосу: <code>zip</code> қысқасына дейін ғана жүреді де, қатені үнсіз жасырады.</div></div>
+<p><a href="../../#lesson/m4-3/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-2">
+<h2>2. Скаляр көбейтінді және cosine similarity</h2>
+<div class="prose">
+<p><b>Скаляр көбейтінді</b> (dot product) — екі векторды бір санға айналдырады: сәйкес элементтерді көбейтіп, қосамыз.</p>
+<pre><code>def dot(u, v):
+    return sum(a * b for a, b in zip(u, v))
+
+dot([1, 2, 3], [4, 5, 6])   # 1·4 + 2·5 + 3·6 = 32</code></pre>
+<p>Dot product ML-дің ең жиі кездесетін амалы: сызықтық модельдің болжамы <code>w · x</code>, нейрон желісінің әр нейроны да dot product есептейді.</p>
+<h3>Cosine similarity</h3>
+<p>Dot product векторлардың ұзындығына тәуелді. Тек <b>бағытты</b> салыстыру үшін оны ұзындықтарға бөлеміз:</p>
+<pre><code>cos(u, v) = dot(u, v) / (‖u‖ · ‖v‖)</code></pre>
+<ul>
+<li>1 — бағыттары бірдей (өте ұқсас);</li>
+<li>0 — перпендикуляр (байланыс жоқ);</li>
+<li>−1 — қарама-қарсы.</li>
+</ul>
+<h3>Қадамдап мысал: ұсыныс жүйесі</h3>
+<p>Пайдаланушылар 3 фильм жанрына (комедия, драма, экшн) неше сағат жұмсағанын алайық:</p>
+<table>
+<tr><th>Пайдаланушы</th><th>Комедия</th><th>Драма</th><th>Экшн</th></tr>
+<tr><td>Айгүл</td><td>4</td><td>0</td><td>2</td></tr>
+<tr><td>Дәулет</td><td>8</td><td>1</td><td>4</td></tr>
+<tr><td>Сәуле</td><td>0</td><td>5</td><td>1</td></tr>
+</table>
+<ol>
+<li>dot(Айгүл, Дәулет) = 4·8 + 0·1 + 2·4 = 40.</li>
+<li>‖Айгүл‖ = √(16 + 0 + 4) = √20 ≈ 4.47; ‖Дәулет‖ = √(64 + 1 + 16) = 9.</li>
+<li>cos = 40 / (4.47 · 9) ≈ 0.99 — талғамы өте ұқсас.</li>
+<li>dot(Айгүл, Сәуле) = 0 + 0 + 2 = 2; cos = 2 / (4.47 · 5.10) ≈ 0.09 — ұқсас емес.</li>
+</ol>
+<p>Дәулет Айгүлден 2 есе көп көреді, бірақ cosine оны елемейді: тек «қандай жанрды жақсы көреді» деген бағыт маңызды. Сондықтан Дәулетке ұнаған жаңа комедияны Айгүлге ұсынуға болады.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Нөл векторда ұзындық 0, бөлу мүмкін емес — оны бөлек тексеріңіз. (2) Dot product пен cosine-ды шатастыру: үлкен dot product «ұқсас» дегенді емес, жай «үлкен сандар» дегенді білдіруі мүмкін.</div></div>
+<p><a href="../../#lesson/m4-3/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-3">
+<h2>3. Қашықтық және ең жақын көрші</h2>
+<div class="prose">
+<p>Екі объектінің қаншалықты «алыс» екенін өлшеу — kNN, кластерлеу және іздеу жүйелерінің негізі.</p>
+<h3>Евклид қашықтығы (Euclidean)</h3>
+<p>Түзу сызықпен өлшенген қашықтық, яғни айырма векторының ұзындығы:</p>
+<pre><code>d(u, v) = √((u₁ − v₁)² + (u₂ − v₂)² + …)</code></pre>
+<h3>Манхэттен қашықтығы (Manhattan)</h3>
+<p>Қала кварталдары бойынша жүргендей: тек көлденең және тік. Абсолют айырмалардың қосындысы:</p>
+<pre><code>d(u, v) = |u₁ − v₁| + |u₂ − v₂| + …</code></pre>
+<pre><code>def euclidean(u, v):
+    return sum((a - b) ** 2 for a, b in zip(u, v)) ** 0.5
+
+def manhattan(u, v):
+    return sum(abs(a - b) for a, b in zip(u, v))</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>A = [1, 2], B = [4, 6].</p>
+<ol>
+<li>Айырмалар: 4 − 1 = 3, 6 − 2 = 4.</li>
+<li>Евклид: √(3² + 4²) = √25 = 5.</li>
+<li>Манхэттен: |3| + |4| = 7.</li>
+</ol>
+<p>Манхэттен әрқашан Евклидтен кем емес, себебі «бұрыштан айналып» жүреміз. Қайсысын таңдау есепке байланысты: Евклид — жалпы әдепкі таңдау, Манхэттен көп өлшемді және шеткі мәндері бар деректерде тұрақтырақ болады, себебі айырманы квадратқа шығармайды.</p>
+<h3>Ең жақын көрші (nearest neighbour)</h3>
+<p>Жаңа пәтердің бағасын білмейміз, бірақ белгілері бар. Ең қарапайым болжам: белгілері ең жақын пәтердің бағасын алу. Алгоритм: барлық нүктеге дейінгі қашықтықты есептеп, ең кішісін таңдаймыз.</p>
+<pre><code>points = [[50, 2], [80, 3], [35, 1]]
+new = [52, 2]
+best = min(range(len(points)), key=lambda i: euclidean(points[i], new))
+print(best)   # 0</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) Масштаб: ауданы (50–120 м²) мен бөлме саны (1–4) бір векторда болса, қашықтықты ауданы толық басып кетеді. Сондықтан алдымен белгілерді стандарттайды (z-score). (2) Квадраттан кейін түбір алуды ұмыту. (3) <code>min(points, key=...)</code> нүктенің өзін береді, ал индекс керек болса — <code>range(len(points))</code>.</div></div>
+<p><a href="../../#lesson/m4-3/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-4">
+<h2>4. Матрица және көбейту</h2>
+<div class="prose">
+<p><b>Матрица</b> — сандар кестесі. Python-да оны тізімдер тізімі (list of lists) ретінде сақтаймыз: әр ішкі тізім — бір жол (row).</p>
+<pre><code>A = [[1, 2, 3],
+     [4, 5, 6]]      # пішіні (shape): 2 × 3 (2 жол, 3 баған)
+A[1][2]              # 6: 2-жол, 3-баған (индекс 0-ден)</code></pre>
+<p>ML-де деректер кестесі дәл осындай: әр жол — бір объект (пәтер), әр баған — бір белгі.</p>
+<h3>Матрицаны векторға көбейту</h3>
+<p>A (m × n) · x (ұзындығы n) = ұзындығы m вектор. Әр нәтиже — A-ның бір жолы мен x-тің dot product-ы.</p>
+<pre><code>def matvec(A, x):
+    return [sum(a * b for a, b in zip(row, x)) for row in A]</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>A = [[1, 2], [3, 4]], x = [5, 6].</p>
+<ol>
+<li>1-жол: 1·5 + 2·6 = 17.</li>
+<li>2-жол: 3·5 + 4·6 = 39.</li>
+<li>Нәтиже: [17, 39].</li>
+</ol>
+<h3>Матрицаны матрицаға көбейту</h3>
+<p>A (m × n) · B (n × p) = C (m × p). C[i][j] = A-ның i-жолы мен B-ның j-бағанының dot product-ы. Шарт: A-ның баған саны B-ның жол санына тең болуы керек.</p>
+<pre><code>def matmul(A, B):
+    n, p = len(B), len(B[0])
+    return [[sum(A[i][k] * B[k][j] for k in range(n))
+             for j in range(p)]
+            for i in range(len(A))]
+
+matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]])
+# [[1·5+2·7, 1·6+2·8], [3·5+4·7, 3·6+4·8]] = [[19, 22], [43, 50]]</code></pre>
+<p>Матрица көбейтуі <b>коммутативті емес</b>: әдетте A · B ≠ B · A. Ал <b>бірлік матрица</b> I (диагоналында 1, қалғаны 0) сандардағы 1 сияқты: A · I = A.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Пішіндердің сәйкес келмеуі: (2 × 3) · (2 × 3) көбейтілмейді. Әрқашан ішкі өлшемдерді тексеріңіз. (2) <code>[[0] * n] * m</code> арқылы нөл матрица құру: барлық жол бір тізімге сілтейді, бірін өзгертсеңіз, бәрі өзгереді. Оның орнына <code>[[0] * n for _ in range(m)]</code>.</div></div>
+<p><a href="../../#lesson/m4-3/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-5">
+<h2>5. Transpose және сызықтық модель y = Xw</h2>
+<div class="prose">
+<p><b>Транспонирлеу</b> (transpose) — жолдар мен бағандарды ауыстыру. Aᵀ[i][j] = A[j][i]. (2 × 3) матрица (3 × 2)-ге айналады.</p>
+<pre><code>A = [[1, 2, 3],
+     [4, 5, 6]]
+At = [list(col) for col in zip(*A)]
+# [[1, 4], [2, 5], [3, 6]]</code></pre>
+<p><code>zip(*A)</code> — Python трюгі: жолдарды «ашып», әр бағанды бір кортеж етіп береді.</p>
+<h3>Сызықтық модель</h3>
+<p>Пәтер бағасын белгілердің салмақты қосындысы ретінде болжайық:</p>
+<pre><code>баға = w₀·1 + w₁·ауданы + w₂·бөлме</code></pre>
+<p>Әр пәтерді жол етіп, X матрицасына жинаймыз. Бірінші баған әрқашан 1 — ол бос мүше (intercept) w₀ үшін. Сонда барлық болжам бір амалмен шығады: <b>ŷ = X · w</b>.</p>
+<h3>Қадамдап мысал</h3>
+<p>w = [5, 0.4, 2] (млн ₸): негізгі 5, әр м² үшін 0.4, әр бөлме үшін 2.</p>
+<table>
+<tr><th>1</th><th>Ауданы</th><th>Бөлме</th><th>Болжам</th></tr>
+<tr><td>1</td><td>50</td><td>2</td><td>5 + 20 + 4 = 29</td></tr>
+<tr><td>1</td><td>70</td><td>3</td><td>5 + 28 + 6 = 39</td></tr>
+<tr><td>1</td><td>40</td><td>1</td><td>5 + 16 + 2 = 23</td></tr>
+</table>
+<ol>
+<li>X = [[1, 50, 2], [1, 70, 3], [1, 40, 1]] — пішіні 3 × 3.</li>
+<li>w ұзындығы 3 — X-тің баған санына тең.</li>
+<li>ŷ = matvec(X, w) = [29, 39, 23].</li>
+</ol>
+<p>Модельді «оқыту» дегеніміз — ŷ нақты бағаларға ең жақын болатын w-ны табу. Мұны 8–9 сабақтарда gradient descent арқылы жасаймыз. Ал Xᵀ градиент формуласында пайда болады: барлық белгі бойынша қатені бір амалмен жинау үшін.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) 1-ден тұратын бағанды ұмыту: модель түзу әрқашан нөлден өтеді деп болжайды. (2) Пішінді тексермеу: X (n × d) болса, w ұзындығы d болуы керек, ал ŷ ұзындығы n. (3) <code>zip(*A)</code> кортеж береді; тізім керек болса, <code>list(...)</code>.</div></div>
+<p><a href="../../#lesson/m4-3/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-6">
+<h2>6. Функция, көлбеулік және туынды</h2>
+<div class="prose">
+<p><b>Функция</b> — кіріске шығыс сәйкестендіретін ереже: f(x) = 2x + 1. Түзудің <b>көлбеулігі</b> (slope) — x бір бірлікке өскенде y қаншаға өзгереді:</p>
+<pre><code>slope = (y₂ − y₁) / (x₂ − x₁)</code></pre>
+<p>f(x) = 2x + 1 үшін кез келген екі нүктеде slope = 2. Ал қисық сызықта (мысалы, f(x) = x²) көлбеулік әр нүктеде әртүрлі: x = 1 маңында баяу, x = 5 маңында тез өседі.</p>
+<h3>Туынды — лездік өзгеру жылдамдығы</h3>
+<p><b>Туынды</b> (derivative) f′(x) — нүктенің дәл өзіндегі көлбеулік. Оны екі нүктені бір-біріне өте жақын алып табамыз. ML-де формуланы жиі білмейміз, сондықтан <b>сандық туынды</b> (numerical derivative) қолданамыз:</p>
+<pre><code>def derivative(f, x, h=1e-5):
+    return (f(x + h) - f(x - h)) / (2 * h)</code></pre>
+<p>Бұл <b>орталық айырма</b>: x-тің екі жағынан бірдей қашықтықта алып, симметриялы бағалаймыз. Бір жақты (f(x + h) − f(x)) / h нұсқасынан әлдеқайда дәл.</p>
+<h3>Қадамдап мысал</h3>
+<p>f(x) = x², x = 3, h = 0.01.</p>
+<ol>
+<li>f(3.01) = 9.0601.</li>
+<li>f(2.99) = 8.9401.</li>
+<li>Айырма: 0.12. Бөлгіш: 2 · 0.01 = 0.02.</li>
+<li>0.12 / 0.02 = 6. Формула бойынша (x²)′ = 2x = 6. Дәл сәйкес!</li>
+</ol>
+<p>Мағынасы: x = 3 нүктесінде x-ті аздап өсірсек, f шамамен 6 есе тез өседі. Туынды оң болса — функция өсуде, теріс болса — кемуде, нөл болса — шың немесе шұңқыр (минимум) болуы мүмкін. Gradient descent дәл осы ақпаратты қолданады: «қай жаққа жүрсем, қате азаяды?»</p>
+<table>
+<tr><th>f(x)</th><th>f′(x)</th></tr>
+<tr><td>c (тұрақты)</td><td>0</td></tr>
+<tr><td>a·x + b</td><td>a</td></tr>
+<tr><td>x²</td><td>2x</td></tr>
+<tr><td>xⁿ</td><td>n·xⁿ⁻¹</td></tr>
+</table>
+<div class="tip"><b>Жиі қателер:</b> (1) 2h-ге емес, h-қа бөлу — нәтиже 2 есе үлкен шығады. (2) h-ты тым кіші алу (1e-15): компьютердің дөңгелектеу қатесі басым болады. 1e-5 шамасы әдетте жақсы. (3) Жақшаларды ұмыту: <code>f(x + h) - f(x - h) / 2 * h</code> мүлде басқа нәрсе есептейді.</div></div>
+<p><a href="../../#lesson/m4-3/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-7">
+<h2>7. Дербес туынды және градиент</h2>
+<div class="prose">
+<p>ML модельдерінде параметр біреу емес, көп: w₀, w₁, w₂, … Қате (loss) олардың бәріне тәуелді функция. Мысалы, f(a, b) = a² + 3b.</p>
+<h3>Дербес туынды</h3>
+<p><b>Дербес туынды</b> (partial derivative) ∂f/∂a — тек a-ны өзгертіп, қалғандарын тұрақты ұстағандағы туынды.</p>
+<ul>
+<li>∂f/∂a: b тұрақты, сондықтан 3b жоғалады: ∂f/∂a = 2a.</li>
+<li>∂f/∂b: a² тұрақты: ∂f/∂b = 3.</li>
+</ul>
+<h3>Градиент</h3>
+<p><b>Градиент</b> (gradient) ∇f — барлық дербес туындылардан құралған вектор: ∇f = [∂f/∂a, ∂f/∂b]. Оның маңызды қасиеті: градиент функция <b>ең тез өсетін</b> бағытты көрсетеді. Демек −∇f ең тез <b>кемитін</b> бағыт. Gradient descent осыған сүйенеді.</p>
+<h3>Сандық градиент</h3>
+<p>Әр параметрді кезекпен h-қа жылжытып, қалғандарын орнында қалдырамыз:</p>
+<pre><code>def gradient(f, p, h=1e-5):
+    g = []
+    for i in range(len(p)):
+        up = p[:]          # көшірме!
+        down = p[:]
+        up[i] += h
+        down[i] -= h
+        g.append((f(up) - f(down)) / (2 * h))
+    return g</code></pre>
+<p>Мұнда f бір тізім қабылдайды: f([a, b]).</p>
+<h3>Қадамдап мысал</h3>
+<p>f(a, b) = a² + 3b, нүкте (2, 5).</p>
+<ol>
+<li>∂f/∂a = 2a = 2 · 2 = 4.</li>
+<li>∂f/∂b = 3.</li>
+<li>∇f(2, 5) = [4, 3].</li>
+<li>Тексеру: a-ны 0.01-ге өсірсек, f шамамен 4 · 0.01 = 0.04-ке өседі; b-ны 0.01-ге өсірсек — 0.03-ке.</li>
+</ol>
+<p>Демек f-ті азайту үшін a мен b-ны [−4, −3] бағытында сәл жылжыту керек. Келесі сабақта f орнына модельдің қатесін қоямыз: параметрлер — w мен b, ал функция — олардың қаншалықты нашар болжайтынын көрсететін сан. Нейрон желісінде параметр миллиондаған болуы мүмкін, бірақ идея бірдей: әр параметр үшін «оны аздап өзгертсем, қате қаншаға өзгереді?» деген сұраққа жауап беретін вектор.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>up = p</code> жазу — көшірме емес, сол тізімге сілтеме. <code>up[i] += h</code> бастапқы p-ны да бұзады. <code>p[:]</code> немесе <code>list(p)</code> қолданыңыз. (2) Бір параметрді жылжытқаннан кейін келесісіне өткенде оны қайтармау. Әр i үшін жаңа көшірме алу мұны шешеді.</div></div>
+<p><a href="../../#lesson/m4-3/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-8">
+<h2>8. Loss функциясы: MSE</h2>
+<div class="prose">
+<p>Модельді жақсарту үшін алдымен оның қаншалықты <b>нашар</b> екенін бір санмен өлшеу керек. Бұл сан — <b>loss</b> (қате функциясы). Регрессияда ең жиісі <b>MSE</b> (mean squared error):</p>
+<pre><code>MSE = (1/n) · Σ (ŷᵢ − yᵢ)²</code></pre>
+<p>Бір белгілі түзу үшін ŷ = w · x + b. Сонда MSE тек w мен b-ға тәуелді: деректер тұрақты, біз тек параметрлерді өзгертеміз.</p>
+<pre><code>def mse(w, b, xs, ys):
+    n = len(xs)
+    return sum((w * x + b - y) ** 2 for x, y in zip(xs, ys)) / n</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>Деректер: x = [1, 2, 3], y = [3, 5, 7]. Модель: w = 1, b = 2.</p>
+<table>
+<tr><th>x</th><th>y</th><th>ŷ = x + 2</th><th>ŷ − y</th><th>(ŷ − y)²</th></tr>
+<tr><td>1</td><td>3</td><td>3</td><td>0</td><td>0</td></tr>
+<tr><td>2</td><td>5</td><td>4</td><td>−1</td><td>1</td></tr>
+<tr><td>3</td><td>7</td><td>5</td><td>−2</td><td>4</td></tr>
+</table>
+<p>MSE = (0 + 1 + 4) / 3 ≈ 1.67. Ал w = 2, b = 1 болса, ŷ = [3, 5, 7] — қате 0. Бұл ең жақсы түзу.</p>
+<h3>Неге квадрат?</h3>
+<ul>
+<li>Оң және теріс қателер бірін-бірі жоймайды.</li>
+<li>Үлкен қатеге қатаң «айып» салады: 10-ға қателесу 1-ге қателесуден 100 есе қымбат.</li>
+<li>Функция тегіс (параболаға ұқсас), туындысы оңай: gradient descent үшін ыңғайлы.</li>
+</ul>
+<p>MSE-дің түбірі <b>RMSE</b> — бірлігі y-пен бірдей, сондықтан бизнеске түсіндіру оңай: «болжам орта есеппен ~2 млн ₸ қателеседі». Абсолют қателердің орташасы <b>MAE</b> — шеткі мәндерге төзімдірек.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) n-ге бөлуді ұмыту — бұл SSE (қосынды), деректер көбейген сайын өседі. (2) Квадрат алмай, жай айырманы қосу: ±қателер жойылып, «керемет» 0 шығуы мүмкін. (3) MSE бірлігі y²-та (млн ₸²) екенін ұмытып, оны тікелей түсіндіру.</div></div>
+<p><a href="../../#lesson/m4-3/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-9">
+<h2>9. Gradient descent нөлден</h2>
+<div class="prose">
+<p>Енді бәрін біріктіреміз: MSE-ді w және b бойынша азайту үшін градиентке қарама-қарсы кішкене қадамдар жасаймыз. Бұл — <b>gradient descent</b>.</p>
+<h3>Формулалар</h3>
+<p>MSE = (1/n) Σ (w·xᵢ + b − yᵢ)². Қатені eᵢ = w·xᵢ + b − yᵢ деп белгілесек, дербес туындылар:</p>
+<pre><code>∂MSE/∂w = (2/n) · Σ eᵢ · xᵢ
+∂MSE/∂b = (2/n) · Σ eᵢ</code></pre>
+<p>Жаңарту ережесі (lr — learning rate, оқу жылдамдығы):</p>
+<pre><code>w = w − lr · ∂MSE/∂w
+b = b − lr · ∂MSE/∂b</code></pre>
+<pre><code>def fit(xs, ys, lr=0.05, epochs=2000):
+    w, b = 0.0, 0.0
+    n = len(xs)
+    for _ in range(epochs):
+        errs = [w * x + b - y for x, y in zip(xs, ys)]
+        dw = 2 / n * sum(e * x for e, x in zip(errs, xs))
+        db = 2 / n * sum(errs)
+        w -= lr * dw
+        b -= lr * db
+    return w, b</code></pre>
+<h3>Қадамдап мысал: бірінші қадам</h3>
+<p>x = [1, 2, 3], y = [3, 5, 7], бастау w = 0, b = 0, lr = 0.1.</p>
+<ol>
+<li>Болжам ŷ = [0, 0, 0], қателер e = [−3, −5, −7].</li>
+<li>dw = (2/3)·(−3·1 − 5·2 − 7·3) = (2/3)·(−34) ≈ −22.67.</li>
+<li>db = (2/3)·(−15) = −10.</li>
+<li>w = 0 − 0.1·(−22.67) ≈ 2.27; b = 0 − 0.1·(−10) = 1.</li>
+</ol>
+<p>Градиент теріс, сондықтан параметрлер өсті — дұрыс бағыт, себебі шын жауап w = 2, b = 1. Қадамды мыңдаған рет қайталасақ, w мен b осы мәндерге жақындайды.</p>
+<h3>Learning rate әсері</h3>
+<ul>
+<li><b>Тым кіші</b> (0.0001): дұрыс бағытта, бірақ өте баяу. x = [1..5] деректерінде 2000 қадамнан кейін b ≈ 0.6, ал керегі 1.</li>
+<li><b>Қолайлы</b> (0.01–0.05): loss тұрақты кемиді.</li>
+<li><b>Тым үлкен</b>: минимумнан «секіріп» өтіп кетеді, loss өседі, сандар шексіздікке кетеді (divergence). x = [1..5] деректерінде lr = 0.1 жеткілікті «үлкен».</li>
+</ul>
+<div class="tip"><b>Жиі қателер:</b> (1) Таңбаны шатастыру: <code>w += lr * dw</code> — loss-ты өсіреді. (2) w-ны жаңартып, b-ның градиентін жаңа w-мен есептеу: екі градиентті де бір қателер тізімінен алыңыз. (3) Белгілер масштабы әртүрлі болса (ауданы 50–120), lr-ды таңдау қиындайды — алдымен стандарттаңыз. (4) Loss-ты бақыламау: әр 100 қадам сайын MSE-ді басып шығарыңыз.</div></div>
+<p><a href="../../#lesson/m4-3/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-10">
+<h2>10. NumPy: векторланған нұсқа</h2>
+<div class="prose">
+<p>Тізімдер мен циклдармен бәрін түсіндік. Бірақ нақты жұмыста 1 000 000 жол болғанда Python циклі баяу. <b>NumPy</b> массивтерімен амалдар бүкіл массивке бірден, C тілінде жасалады — бұл <b>векторлау</b> (vectorization).</p>
+<table>
+<tr><th>Тізімдер (қолмен)</th><th>NumPy</th></tr>
+<tr><td><code>[a + b for a, b in zip(u, v)]</code></td><td><code>u + v</code></td></tr>
+<tr><td><code>[c * a for a in v]</code></td><td><code>c * v</code></td></tr>
+<tr><td><code>sum(a * b for ...)</code></td><td><code>u @ v</code> немесе <code>np.dot(u, v)</code></td></tr>
+<tr><td><code>sum(a * a ...) ** 0.5</code></td><td><code>np.linalg.norm(v)</code></td></tr>
+<tr><td><code>matvec(A, x)</code></td><td><code>A @ x</code></td></tr>
+<tr><td><code>matmul(A, B)</code></td><td><code>A @ B</code></td></tr>
+<tr><td><code>transpose(A)</code></td><td><code>A.T</code></td></tr>
+</table>
+<pre><code>import numpy as np
+u = np.array([1, 2, 3])
+v = np.array([4, 5, 6])
+u + v          # array([5, 7, 9])  — енді бұл жалғау емес!
+u @ v          # 32
+X = np.array([[1, 50, 2], [1, 70, 3]])
+X.shape        # (2, 3)</code></pre>
+<h3>Қадамдап мысал: векторланған gradient descent</h3>
+<p>mm-9 циклінің ішкі бөлігі NumPy-да үш жол:</p>
+<pre><code>x = np.array([1, 2, 3, 4, 5], dtype=float)
+y = np.array([3, 5, 7, 9, 11], dtype=float)
+w, b, lr = 0.0, 0.0, 0.05
+for _ in range(2000):
+    e = w * x + b - y              # барлық қате бірден
+    w -= lr * 2 * (e @ x) / len(x)  # Σ e·x = e @ x
+    b -= lr * 2 * e.mean()
+print(round(w, 3), round(b, 3))    # 2.0 1.0</code></pre>
+<ol>
+<li><code>w * x + b</code> — әр элементке бірден (broadcasting: скаляр b әр элементке қосылады).</li>
+<li><code>e @ x</code> — dot product, Σ eᵢ·xᵢ.</li>
+<li><code>e.mean()</code> — Σ eᵢ / n.</li>
+</ol>
+<p>Көп белгілі модельде градиент бір формулаға сыяды: <code>grad = 2 / n * X.T @ (X @ w - y)</code>. Міне, mm-5-тегі transpose осында керек.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>*</code> мен <code>@</code>-ті шатастыру: <code>A * B</code> элемент бойынша көбейту, <code>A @ B</code> матрица көбейтуі. (2) Пішінді тексермеу: күмән болса, <code>.shape</code> басып шығарыңыз. (3) Бүтін сан массивіне float жазу: <code>dtype=float</code> қойыңыз.</div></div>
+<p><a href="../../#lesson/m4-3/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="mm-gate">
+<h2>11. Модуль емтиханы: Math for ML</h2>
+<div class="prose">
+<p>Қорытынды тексеріс. Python тапсырмаларында тек стандарт кітапхана мен тізімдер (NumPy жоқ).</p></div>
+<p><a href="../../#lesson/m4-3/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m4-3">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

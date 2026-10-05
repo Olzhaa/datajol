@@ -310,7 +310,7 @@
   function check(ex, formula) {
     const book = DJ.sheets;
     const mine = run(formula, book, ex.sheet);
-    if (!mine.ok) return { pass: false, msg: mine.error };
+    if (!mine.ok) return { pass: false, msg: String(mine.error).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) };
     if (mine.isError) return { pass: false, msg: `Формула қате қайтарды: <b>${mine.value.code}</b>. ${ERRHELP[mine.value.code] || ''}`, value: show(mine.value) };
     const c = ex.check || {};
     for (const fn of c.fns || []) if (!mine.fns.includes(fn)) return { pass: false, msg: `Бұл тапсырмада <code>${fn}</code> функциясын қолданыңыз.`, value: show(mine.value) };

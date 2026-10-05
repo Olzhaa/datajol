@@ -2,373 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power BI қазақша — M3.5 Power BI | DataJol</title>
+<meta name="description" content="Power BI — Қазақстандағы аналитик вакансияларында ең жиі сұралатын BI құралы. Бұл модульде жұмыс ағынын, Power Query, деректер моделін (star schema), DAX…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m3-5/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Power BI қазақша — M3.5 Power BI | DataJol">
+<meta property="og:description" content="Power BI — Қазақстандағы аналитик вакансияларында ең жиі сұралатын BI құралы. Бұл модульде жұмыс ағынын, Power Query, деректер моделін (star schema), DAX…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m3-5/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.5 Power BI","description":"Power BI — Қазақстандағы аналитик вакансияларында ең жиі сұралатын BI құралы. Бұл модульде жұмыс ағынын, Power Query, деректер моделін (star schema), DAX…","url":"https://olzhaa.github.io/datajol/m/m3-5/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT30H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.5 Power BI","item":"https://olzhaa.github.io/datajol/m/m3-5/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -736,74 +384,267 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 3: Дерек аналитигі / M3.5</nav>
+<article class="reading">
+<p class="eyebrow">M3.5 · 30–40 сағат · 9 сабақ</p>
+<h1>M3.5 Power BI: Power BI қазақша</h1>
+<p class="prose">Power BI — Қазақстандағы аналитик вакансияларында ең жиі сұралатын BI құралы. Бұл модульде жұмыс ағынын, Power Query, деректер моделін (star schema), DAX өлшемдерін, time intelligence, визуал дизайнын және жариялауды үйренесіз. Power BI браузерде іске қосылмайды, сондықтан сабақтар мәтін мен тесттен тұрады, ал DAX өлшемдерінің логикасын SQL-де тексереміз. Тегін Power BI Desktop-ты (Windows) орнатып, әр сабақты қатар қайталаңыз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m3-5">Тапсырмаларды орындау</a></p>
+<section id="pbi-1">
+<h2>1. Power BI деген не: жұмыс ағыны</h2>
+<div class="prose">
+<p><b>Power BI</b> — Microsoft-тың деректерді жүктеп, тазалап, модельдеп, интерактивті есеп (report) жасайтын құралы. Негізгі бөліктері:</p>
+<table>
+<tr><th>Бөлік</th><th>Не үшін</th></tr>
+<tr><td><b>Power BI Desktop</b></td><td>Компьютерде есеп жасау (тегін, Windows)</td></tr>
+<tr><td><b>Power BI Service</b></td><td>Браузерде есепті жариялау, бөлісу, жаңарту</td></tr>
+<tr><td><b>Power BI Mobile</b></td><td>Есепті телефоннан қарау</td></tr>
+</table>
+<h3>Жұмыс ағыны</h3>
+<pre><code>Get Data → Power Query (тазалау) → Model (байланыстар)
+        → DAX (өлшемдер) → Visuals (есеп) → Publish (бөлісу)</code></pre>
+<p>Бұл ағын SQL мен Python-да істегеніңізбен бірдей: тазалау, біріктіру, агрегаттау, көрсету. Тек мұнда көбі тышқанмен жасалады, ал логика <b>Power Query (M тілі)</b> мен <b>DAX</b> формулаларында сақталады.</p>
+<div class="tip">Excel-ді білсеңіз, Power Query мен Power Pivot таныс болады: Power BI солардың үстіне салынған.</div></div>
+<p><a href="../../#lesson/m3-5/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="pbi-2">
+<h2>2. Power Query: деректерді тазалау</h2>
+<div class="prose">
+<p><b>Power Query</b> — деректерді жүктеп, түрлендіретін редактор. Әр әрекет <b>Applied Steps</b> тізіміне қадам болып жазылады, ал деректер жаңарғанда барлық қадам автоматты түрде қайта орындалады. Артында <b>M тілі</b> тұрады.</p>
+<h3>Жиі қолданылатын қадамдар</h3>
+<table>
+<tr><th>Power Query</th><th>SQL баламасы</th></tr>
+<tr><td>Change Type (типті өзгерту)</td><td><code>CAST(amount AS INTEGER)</code></td></tr>
+<tr><td>Filter Rows</td><td><code>WHERE status = 'paid'</code></td></tr>
+<tr><td>Remove Duplicates</td><td><code>SELECT DISTINCT</code></td></tr>
+<tr><td>Replace Values / Fill Down</td><td><code>COALESCE</code>, <code>CASE</code></td></tr>
+<tr><td>Merge Queries</td><td><code>JOIN</code></td></tr>
+<tr><td>Append Queries</td><td><code>UNION ALL</code></td></tr>
+<tr><td>Group By</td><td><code>GROUP BY</code></td></tr>
+<tr><td>Unpivot Columns</td><td>кең кестені ұзын кестеге айналдыру</td></tr>
+</table>
+<p>Мысал M коды (Power Query өзі жазады):</p>
+<pre><code>= Table.SelectRows(Orders, each [status] = "paid" and [amount] &lt;&gt; null)</code></pre>
+<div class="tip">Ереже: тазалауды мүмкіндігінше Power Query-де (немесе дереккөздегі SQL-де) жасаңыз, DAX-та емес. Модельге тек таза деректер кірсін.</div></div>
+<p><a href="../../#lesson/m3-5/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-3">
+<h2>3. Деректер моделі: star schema</h2>
+<div class="prose">
+<p>Power BI-да бір үлкен кесте емес, бір-бірімен байланысқан бірнеше кесте болғаны дұрыс. Ең жақсы құрылым — <b>star schema</b> (жұлдыз схемасы).</p>
+<pre><code>        dim_date
+            │
+dim_customer ── fact_orders ── dim_product
+            │
+        dim_city</code></pre>
+<table>
+<tr><th>Кесте түрі</th><th>Не сақтайды</th><th>Мысал</th></tr>
+<tr><td><b>Fact</b> (факт)</td><td>Оқиғалар мен сандар, жолдары көп</td><td>тапсырыстар: күн, клиент, сома</td></tr>
+<tr><td><b>Dimension</b> (өлшем)</td><td>Сипаттамалар, «кім, не, қашан, қайда»</td><td>клиент: қала, арна</td></tr>
+</table>
+<h3>Байланыстар (relationships)</h3>
+<ul>
+<li>Әдетте <b>бір-көпке (1:*)</b>: бір клиентте көп тапсырыс.</li>
+<li><b>Сүзгі бағыты</b> (filter direction) dimension-нан fact-қа қарай жүреді. Slicer-де «Алматы» таңдасаңыз, сүзгі customers → orders бойымен ағады.</li>
+<li>Екі жақты (both) сүзгіні тек қажет болғанда ғана қосыңыз: ол модельді баяулатып, күтпеген нәтиже береді.</li>
+</ul>
+<h3>Күн кестесі (Date table)</h3>
+<p>Time intelligence функциялары жұмыс істеуі үшін үзіліссіз күндері бар бөлек күн кестесі керек. Оны <b>Mark as date table</b> деп белгілейміз.</p>
+<pre><code>Date = CALENDAR(DATE(2024,1,1), DATE(2024,12,31))</code></pre></div>
+<p><a href="../../#lesson/m3-5/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-4">
+<h2>4. DAX негіздері: өлшем мен есептелген баған</h2>
+<div class="prose">
+<p><b>DAX</b> (Data Analysis Expressions) — Power BI-дың формула тілі. Excel формулаларына ұқсайды, бірақ ұяшықтармен емес, <b>бағандар мен кестелермен</b> жұмыс істейді.</p>
+<h3>Measure мен calculated column</h3>
+<table>
+<tr><th></th><th>Calculated column</th><th>Measure (өлшем)</th></tr>
+<tr><td>Қашан есептеледі</td><td>Жүктегенде, әр жол үшін</td><td>Визуалда, сүзгіге қарай</td></tr>
+<tr><td>Қайда сақталады</td><td>Кестеде (жад алады)</td><td>Сақталмайды, формула ғана</td></tr>
+<tr><td>Мысал</td><td><code>Size = IF(orders[amount] &gt; 3000, "Үлкен", "Кіші")</code></td><td><code>Revenue = SUM(orders[amount])</code></td></tr>
+</table>
+<p>Ұқсатсақ: calculated column — кестеге қосылған жаңа баған, әр жолда өз мәні жазылып тұрады. Measure — кестенің үстінде тұрған калькулятор: ол экранда қазір қай жолдар көрініп тұрса, соларды есептейді.</p>
+<p>Ереже: агрегат (қосынды, орташа, үлес) — әрқашан <b>measure</b>. Calculated column — жолды сипаттау үшін, мысалы slicer-ге категория.</p>
+<h3>Мысал: бір кесте, екі тәсіл</h3>
+<table>
+<tr><th>id</th><th>customer_id</th><th>amount</th><th>Size (column)</th></tr>
+<tr><td>1</td><td>1</td><td>2500</td><td>Кіші</td></tr>
+<tr><td>2</td><td>2</td><td>4200</td><td>Үлкен</td></tr>
+<tr><td>3</td><td>1</td><td>1800</td><td>Кіші</td></tr>
+<tr><td>4</td><td>1</td><td>3600</td><td>Үлкен</td></tr>
+</table>
+<p><code>Size</code> бағаны жүктегенде әр жолға бір рет есептелді. Енді матрицаға жолдарға <code>Size</code>, мәндерге төмендегі өлшемдерді қойсақ, әр ұяшық өз жолдарымен есептеледі:</p>
+<table>
+<tr><th>Size</th><th>Revenue</th><th>Orders</th><th>Customers</th><th>AOV</th></tr>
+<tr><td>Кіші</td><td>4300</td><td>2</td><td>1</td><td>2150</td></tr>
+<tr><td>Үлкен</td><td>7800</td><td>2</td><td>2</td><td>3900</td></tr>
+<tr><td><b>Total</b></td><td>12100</td><td>4</td><td>2</td><td>3025</td></tr>
+</table>
+<p>Total жолындағы Customers 2, ал 1 + 2 = 3 емес: measure жиынтық жолда жолдарды қоспайды, барлық деректер бойынша <b>қайта есептейді</b>. 1-клиент екі топта да бар, бірақ бір-ақ рет саналады.</p>
+<h3>Негізгі өлшемдер</h3>
+<pre><code>Revenue   = SUM(orders[amount])
+Orders    = COUNTROWS(orders)
+Customers = DISTINCTCOUNT(orders[customer_id])
+AOV       = DIVIDE([Revenue], [Orders])</code></pre>
+<div class="tip"><code>DIVIDE(a, b)</code> нөлге бөлуде қате бермей, бос мән қайтарады. <code>a / b</code> орнына әрқашан соны қолданыңыз.</div>
+<p>Өлшемдер бір-біріне сілтей алады: <code>AOV</code> ішінде <code>[Revenue]</code> мен <code>[Orders]</code> қолданылды. Бұл кодты қайталамауға көмектеседі.</p>
+<h3>SQL баламасы</h3>
+<table>
+<tr><th>DAX</th><th>SQL</th></tr>
+<tr><td><code>SUM(orders[amount])</code></td><td><code>SUM(amount)</code></td></tr>
+<tr><td><code>COUNTROWS(orders)</code></td><td><code>COUNT(*)</code></td></tr>
+<tr><td><code>DISTINCTCOUNT(orders[customer_id])</code></td><td><code>COUNT(DISTINCT customer_id)</code></td></tr>
+<tr><td><code>DIVIDE(a, b)</code></td><td><code>a * 1.0 / b</code> (бүтін санды бөлуден сақтану үшін 1.0), дөңгелектеу — <code>ROUND()</code></td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Қосындыны calculated column етіп жасау: ол slicer-ге қарай өзгермейді және жад алады.</li>
+<li>Бірегей клиенттерді <code>COUNT(orders[customer_id])</code> деп санау: бұл тапсырыстар санын береді, ал <code>COUNTROWS(customers)</code> әлі сатып алмағандарды да қосады.</li>
+<li><code>/</code> арқылы бөлу: бос сүзгіде нөлге бөлу қатесі шығады.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-5/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-5">
+<h2>5. CALCULATE және сүзгі контексті</h2>
+<div class="prose">
+<p>DAX-тың ең маңызды ұғымы — <b>сүзгі контексті</b> (filter context). Визуалдағы әр ұяшық өз сүзгілерімен есептеледі: «Алматы» жолындағы <code>[Revenue]</code> тек Алматы тапсырыстарын қосады.</p>
+<h3>CALCULATE</h3>
+<p><code>CALCULATE</code> өлшемді <b>өзгертілген</b> сүзгімен есептейді:</p>
+<pre><code>Instagram Revenue = CALCULATE([Revenue], customers[channel] = "instagram")</code></pre>
+<h3>ALL: сүзгіні алып тастау және үлес</h3>
+<pre><code>Total Revenue = CALCULATE([Revenue], ALL(customers[channel]))
+Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
+<p>Кестеде әр арна жолында <code>[Revenue]</code> сол арнаның табысы, ал <code>[Total Revenue]</code> барлық арналардың табысы. Бөлсек, арнаның үлесі шығады.</p>
+<h3>Мысал: әр ұяшықтың сүзгі контексті</h3>
+<p>Таза тапсырыстар: instagram 5000, 2gis 3000, referral 2000, барлығы 10000. Матрицада жолдар — <code>customers[channel]</code>:</p>
+<table>
+<tr><th>channel</th><th>Сүзгі контексті</th><th>Revenue</th><th>Instagram Revenue</th><th>Total Revenue</th><th>Share %</th></tr>
+<tr><td>instagram</td><td>channel = instagram</td><td>5000</td><td>5000</td><td>10000</td><td>50%</td></tr>
+<tr><td>2gis</td><td>channel = 2gis</td><td>3000</td><td>5000</td><td>10000</td><td>30%</td></tr>
+<tr><td>referral</td><td>channel = referral</td><td>2000</td><td>5000</td><td>10000</td><td>20%</td></tr>
+<tr><td><b>Total</b></td><td>сүзгі жоқ</td><td>10000</td><td>5000</td><td>10000</td><td>100%</td></tr>
+</table>
+<ul>
+<li><b>Revenue</b> жолдың сүзгісін сол күйінде қолданады.</li>
+<li><b>Instagram Revenue</b>: CALCULATE ішіндегі <code>channel = "instagram"</code> сол бағандағы жолдың сүзгісін (мысалы 2gis) <b>алмастырады</b>, сондықтан әр жолда 5000.</li>
+<li><b>Total Revenue</b>: <code>ALL(customers[channel])</code> арна сүзгісін алып тастайды, әр жолда 10000.</li>
+</ul>
+<p>Жолдарда қала болса, жалпы соманы алу үшін <code>ALL</code> ішіне сол бағанды, яғни қаланы жазасыз.</p>
+<p>SQL-де бұл window function-ға ұқсайды: <code>SUM(revenue) OVER ()</code> — барлық жолдар бойынша жалпы қосынды. <code>GROUP BY channel</code> бар сұранымда топтардың қосындысын қайта қосу үшін агрегатты window ішіне орау керек: <code>SUM(SUM(amount)) OVER ()</code>. Пайыз үшін <code>* 100.0</code>, дөңгелектеу үшін <code>ROUND(..., 1)</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>ALL</code> ішіне басқа баған жазу: жолдар арна бойынша, ал <code>ALL(customers[city])</code> — арна сүзгісі қалады, үлес әр жолда 100% болады.</li>
+<li>Үлесті <code>/</code> арқылы бөлу: бос жолдарда қате. <code>DIVIDE</code> қолданыңыз.</li>
+<li>CALCULATE сыртқы сүзгіге «қосылады» деп ойлау: сол бағанда ол сыртқы сүзгіні <b>ауыстырады</b>.</li>
+</ul>
+<div class="tip">Сұхбатта жиі сұралады: «Row context пен filter context айырмасы?» Row context — calculated column-да «қазіргі жол». Filter context — визуал мен slicer қойған сүзгілер. CALCULATE row context-ті filter context-ке айналдырады (context transition).</div></div>
+<p><a href="../../#lesson/m3-5/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-6">
+<h2>6. Time intelligence: YTD, MoM, YoY</h2>
+<div class="prose">
+<p>Бизнес әрқашан «өткен кезеңмен салыстырғанда қалай?» деп сұрайды. DAX-та бұған дайын функциялар бар (күн кестесі қажет):</p>
+<table>
+<tr><th>Өлшем</th><th>DAX</th></tr>
+<tr><td>Жыл басынан (YTD)</td><td><code>TOTALYTD([Revenue], 'Date'[Date])</code></td></tr>
+<tr><td>Өткен ай</td><td><code>CALCULATE([Revenue], DATEADD('Date'[Date], -1, MONTH))</code></td></tr>
+<tr><td>Өткен жылдың сол кезеңі</td><td><code>CALCULATE([Revenue], SAMEPERIODLASTYEAR('Date'[Date]))</code></td></tr>
+<tr><td>MoM өсім %</td><td><code>DIVIDE([Revenue] - [Revenue PM], [Revenue PM])</code></td></tr>
+</table>
+<p>Бұл кассир дәптері сияқты: әр айдың табысының жанына өткен айдың санын көшіріп жазасыз, сосын айырмасын есептейсіз. DAX-та өткен айды <code>DATEADD</code> «табады», ол күн кестесіндегі сүзгіні бір айға артқа жылжытады.</p>
+<pre><code>Revenue PM = CALCULATE([Revenue], DATEADD('Date'[Date], -1, MONTH))
+MoM %      = DIVIDE([Revenue] - [Revenue PM], [Revenue PM])
+Revenue YTD = TOTALYTD([Revenue], 'Date'[Date])</code></pre>
+<h3>Мысал: айлық кесте</h3>
+<table>
+<tr><th>Ай</th><th>Revenue</th><th>Revenue PM</th><th>MoM %</th><th>YTD</th></tr>
+<tr><td>2024-01</td><td>50 000</td><td>(бос)</td><td>(бос)</td><td>50 000</td></tr>
+<tr><td>2024-02</td><td>60 000</td><td>50 000</td><td>20%</td><td>110 000</td></tr>
+<tr><td>2024-03</td><td>45 000</td><td>60 000</td><td>−25%</td><td>155 000</td></tr>
+<tr><td>2024-04</td><td>54 000</td><td>45 000</td><td>20%</td><td>209 000</td></tr>
+</table>
+<p>Ақпан: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Наурыз: (45 000 − 60 000) / 60 000 = −25%. Қаңтарда өткен ай жоқ, сондықтан Revenue PM бос, ал <code>DIVIDE</code> қате емес, бос мән береді. YTD — жыл басынан бергі жинақты қосынды: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> дәл осылай жұмыс істейді, тек бір жылға артқа жылжиды (YoY). Біздің деректер тек 2024 жылы, сондықтан ол бос болады.</p>
+<h3>SQL баламасы</h3>
+<p>SQL-де өткен айды <code>LAG()</code>, жыл басынан жинақты <code>SUM() OVER (ORDER BY month)</code> береді. Алдымен айлық табысты CTE-де есептеп аламыз, сосын window функцияларын қосамыз.</p>
+<pre><code>SELECT month, revenue,
+  LAG(revenue) OVER (ORDER BY month) AS prev
+FROM monthly;</code></pre>
+<p>Бірнеше жыл болса, YTD жаңа жылда нөлден басталуы үшін <code>PARTITION BY</code> жыл қосылады.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li>MoM-ды ағымдағы айға бөлу: бөлгіш әрқашан <b>өткен</b> ай.</li>
+<li>Күн кестесін <b>Mark as date table</b> деп белгілемеу немесе <code>orders[order_date]</code> бағанын қолдану: тапсырыс жоқ күндер түсіп қалып, нәтиже қате шығады.</li>
+<li>Матрицаға айды күн кестесінен емес, orders-тан қою: сүзгі Date кестесіне жетпейді.</li>
+</ul></div></div>
+<p><a href="../../#lesson/m3-5/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-7">
+<h2>7. Визуалдар және есеп дизайны</h2>
+<div class="prose">
+<p>Жақсы есеп 5 секундта басты сұраққа жауап береді. Құрылымы:</p>
+<ol>
+<li><b>Жоғарыда KPI карталары</b> (Card): табыс, тапсырыстар, AOV, өзгеріс %.</li>
+<li><b>Ортада тренд</b>: Line chart, айлар бойынша.</li>
+<li><b>Төменде бөлшектеу</b>: Bar chart (арна, қала), Matrix (кесте).</li>
+<li><b>Сол жақта немесе жоғарыда slicer-лер</b>: күн, қала, арна.</li>
+</ol>
+<h3>Қай визуал?</h3>
+<table>
+<tr><th>Сұрақ</th><th>Визуал</th></tr>
+<tr><td>Уақыт бойынша қалай өзгерді?</td><td>Line chart</td></tr>
+<tr><td>Категорияларды салыстыру</td><td>Bar chart (сұрыпталған)</td></tr>
+<tr><td>Бір негізгі сан</td><td>Card / KPI</td></tr>
+<tr><td>Нақты сандар, көп өлшем</td><td>Matrix</td></tr>
+<tr><td>Бөліктің үлесі (2–4 бөлік)</td><td>Stacked bar, сирек pie</td></tr>
+</table>
+<h3>Интерактивтілік</h3>
+<ul>
+<li><b>Slicer</b> — пайдаланушы сүзгісі.</li>
+<li><b>Cross-filtering</b> — бір визуалды басқанда басқалары сүзіледі.</li>
+<li><b>Drill-down</b> — жыл → ай → күн иерархиясымен тереңдеу.</li>
+<li><b>Drill-through</b> — бір жолдан бөлек егжей-тегжейлі бетке өту (мысалы, клиент картасы).</li>
+<li><b>Tooltip</b> — курсорды апарғанда қосымша ақпарат.</li>
+</ul>
+<div class="tip">Бір бетте 6–8 визуалдан артық қоймаңыз. Түсті тек мағына үшін (жақсы/жаман, таңдалған) қолданыңыз.</div></div>
+<p><a href="../../#lesson/m3-5/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-8">
+<h2>8. Жариялау, жаңарту және қауіпсіздік</h2>
+<div class="prose">
+<p>Есеп дайын болған соң оны <b>Power BI Service</b>-ке жариялаймыз (Publish).</p>
+<table>
+<tr><th>Ұғым</th><th>Мағынасы</th></tr>
+<tr><td><b>Workspace</b></td><td>Команданың есептері мен деректер жиынтықтары тұратын орын</td></tr>
+<tr><td><b>Semantic model</b> (бұрынғы dataset)</td><td>Модель мен өлшемдер, бірнеше есеп ортақ қолдана алады</td></tr>
+<tr><td><b>Dashboard</b></td><td>Әртүрлі есептерден бекітілген (pin) визуалдардың бір беті</td></tr>
+<tr><td><b>App</b></td><td>Workspace-ті кең аудиторияға тарату тәсілі</td></tr>
+<tr><td><b>Scheduled refresh</b></td><td>Деректерді кесте бойынша автоматты жаңарту</td></tr>
+<tr><td><b>Gateway</b></td><td>Компания ішіндегі (on-premises) дерекқорға бұлттан қосылу</td></tr>
+<tr><td><b>RLS</b> (Row-Level Security)</td><td>Әр пайдаланушы тек өз жолдарын көреді</td></tr>
+</table>
+<p>RLS мысалы: Алматы менеджеріне тек Алматы деректері көрінуі үшін рөл жасаймыз:</p>
+<pre><code>[city] = "Алматы"</code></pre>
+<div class="tip">Портфолио үшін: Power BI Desktop-та есеп жасап, .pbix файлын GitHub-қа салыңыз және скриншоттарымен README жазыңыз. Тегін тіркелгіде жария веб-сілтеме жасау шектеулі болуы мүмкін.</div></div>
+<p><a href="../../#lesson/m3-5/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-gate">
+<h2>9. Модуль емтиханы: Power BI</h2>
+<div class="prose"><p>Модуль бойынша қорытынды тест. Өту үшін барлық тапсырманы орындаңыз.</p></div>
+<p><a href="../../#lesson/m3-5/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m3-5">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
-<script src="vendor/codemirror/codemirror.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/sql.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/python.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/closebrackets.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=d2b4bfd93f"></script>
-<script src="content/curriculum.js?v=d2b4bfd93f"></script>
-<script src="content/datasets.js?v=d2b4bfd93f"></script>
-<script src="content/csv.js?v=d2b4bfd93f"></script>
-<script src="content/mldata.js?v=d2b4bfd93f"></script>
-<script src="content/m0.js?v=d2b4bfd93f"></script>
-<script src="content/sheets.js?v=d2b4bfd93f"></script>
-<script src="content/spreadsheets.js?v=d2b4bfd93f"></script>
-<script src="content/sql.js?v=d2b4bfd93f"></script>
-<script src="content/python.js?v=d2b4bfd93f"></script>
-<script src="content/pandas.js?v=d2b4bfd93f"></script>
-<script src="content/git.js?v=d2b4bfd93f"></script>
-<script src="content/stats.js?v=d2b4bfd93f"></script>
-<script src="content/cleaning.js?v=d2b4bfd93f"></script>
-<script src="content/viz.js?v=d2b4bfd93f"></script>
-<script src="content/advanced.js?v=d2b4bfd93f"></script>
-<script src="content/powerbi.js?v=d2b4bfd93f"></script>
-<script src="content/business.js?v=d2b4bfd93f"></script>
-<script src="content/capstone.js?v=d2b4bfd93f"></script>
-<script src="content/probability.js?v=d2b4bfd93f"></script>
-<script src="content/inference.js?v=d2b4bfd93f"></script>
-<script src="content/mathml.js?v=d2b4bfd93f"></script>
-<script src="content/ml.js?v=d2b4bfd93f"></script>
-<script src="content/mlpractice.js?v=d2b4bfd93f"></script>
-<script src="content/dscapstone.js?v=d2b4bfd93f"></script>
-<script src="content/career.js?v=d2b4bfd93f"></script>
-<script src="content/diagnostic.js?v=d2b4bfd93f"></script>
-<script src="js/config.js?v=d2b4bfd93f"></script>
-<script src="js/store.js?v=d2b4bfd93f"></script>
-<script src="js/cloud.js?v=d2b4bfd93f"></script>
-<script src="js/runners.js?v=d2b4bfd93f"></script>
-<script src="js/sheet.js?v=d2b4bfd93f"></script>
-<script src="js/app.js?v=d2b4bfd93f"></script>
-
 </body>
 </html>

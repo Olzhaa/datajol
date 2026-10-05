@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Күрделі SQL: CTE және window functions — M3.3 Advanced SQL &amp; Modeling | DataJol</title>
+<meta name="description" content="Аналитиктің күнделікті SQL-і: CTE, window functions, кумулятивті сома, top-N, воронка, когорт retention, star schema және сұрау жылдамдығы. Жаңа metrics…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m3-3/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Күрделі SQL: CTE және window functions — M3.3 Advanced SQL &amp; Modeling | DataJol">
+<meta property="og:description" content="Аналитиктің күнделікті SQL-і: CTE, window functions, кумулятивті сома, top-N, воронка, когорт retention, star schema және сұрау жылдамдығы. Жаңа metrics…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m3-3/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.3 Advanced SQL & Modeling","description":"Аналитиктің күнделікті SQL-і: CTE, window functions, кумулятивті сома, top-N, воронка, когорт retention, star schema және сұрау жылдамдығы. Жаңа metrics…","url":"https://olzhaa.github.io/datajol/m/m3-3/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT25H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.3 Advanced SQL & Modeling","item":"https://olzhaa.github.io/datajol/m/m3-3/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 3: Дерек аналитигі / M3.3</nav>
+<article class="reading">
+<p class="eyebrow">M3.3 · 25–35 сағат · 10 сабақ</p>
+<h1>M3.3 Advanced SQL &amp; Modeling: Күрделі SQL: CTE және window functions</h1>
+<p class="prose">Аналитиктің күнделікті SQL-і: CTE, window functions, кумулятивті сома, top-N, воронка, когорт retention, star schema және сұрау жылдамдығы. Жаңа metrics дерекқоры өнім метрикаларына арналған.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m3-3">Тапсырмаларды орындау</a></p>
+<section id="adv-1">
+<h2>1. CTE: WITH арқылы сұрауды бөлшектеу</h2>
+<div class="prose">
+<p>Күрделі сұрау оқуға қиын болады. <b>CTE</b> (Common Table Expression) сұрауды атаулы қадамдарға бөледі:</p>
+<pre><code>WITH revenue AS (
+  SELECT o.customer_id, SUM(oi.quantity * p.price) AS total
+  FROM orders o
+  JOIN order_items oi ON oi.order_id = o.id
+  JOIN products p ON p.id = oi.product_id
+  GROUP BY o.customer_id
+)
+SELECT AVG(total) FROM revenue;</code></pre>
+<p>CTE бір сұраудың ішінде ғана өмір сүреді. Бірнеше CTE-ні үтірмен жазуға болады: <code>WITH a AS (...), b AS (...) SELECT ...</code>. Аналитиктер subquery орнына CTE-ді жиі таңдайды, себебі оны жоғарыдан төмен оқуға болады.</p>
+<div class="tip">Ереже: бір CTE бір ой. «Табыс», «белсенді клиенттер», «нәтиже» деп қадамдарға бөлсеңіз, қатені табу оңай.</div></div>
+<p><a href="../../#lesson/m3-3/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-2">
+<h2>2. Window functions: OVER және рейтинг</h2>
+<div class="prose">
+<p>Сыныптағы бағаларды елестетіңіз. <code>GROUP BY</code> «сыныптың орташасы 4.2» деп бір ғана сан береді, оқушылардың аты жоғалады. Ал <b>window function</b> әр оқушыны орнында қалдырады да, қасына «сенің сыныбыңның орташасы 4.2, сен 3-орындасың» деп жазып қояды.</p>
+<p>Яғни агрегат функция жолдарды бір жолға жинайды, ал window function әр жолды сақтап, оның қасына «терезе» бойынша есеп қосады. Бұл <code>staff</code> дерекқоры: <code>employees(id, name, department, salary, hire_date, manager_id)</code>.</p>
+<pre><code>SELECT name, department, salary,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg
+FROM employees;</code></pre>
+<p><code>PARTITION BY</code> терезені топтарға бөледі, <code>ORDER BY</code> терезе ішіндегі ретті береді. <code>PARTITION BY</code> жазылмаса, бүкіл кесте бір терезе болады: <code>OVER (ORDER BY salary DESC)</code> бүкіл компания бойынша рейтинг береді.</p>
+<h3>Қадамдап мысал</h3>
+<p>Кіші кесте:</p>
+<table>
+<tr><th>name</th><th>department</th><th>salary</th></tr>
+<tr><td>Айгүл</td><td>IT</td><td>900</td></tr>
+<tr><td>Болат</td><td>IT</td><td>720</td></tr>
+<tr><td>Дана</td><td>IT</td><td>720</td></tr>
+<tr><td>Ерлан</td><td>Sales</td><td>560</td></tr>
+<tr><td>Жанар</td><td>Sales</td><td>640</td></tr>
+</table>
+<pre><code>SELECT name, department, salary,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg,
+  RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk
+FROM employees;</code></pre>
+<p>SQL алдымен жолдарды бөлімге бөледі (IT: 3 жол, Sales: 2 жол). Әр бөлім ішінде орташаны есептейді: IT = (900 + 720 + 720) / 3 = 780, Sales = (560 + 640) / 2 = 600. Сосын бөлім ішінде жалақыны кемуі бойынша реттеп, орын береді:</p>
+<table>
+<tr><th>name</th><th>department</th><th>salary</th><th>dept_avg</th><th>rnk</th></tr>
+<tr><td>Айгүл</td><td>IT</td><td>900</td><td>780</td><td>1</td></tr>
+<tr><td>Болат</td><td>IT</td><td>720</td><td>780</td><td>2</td></tr>
+<tr><td>Дана</td><td>IT</td><td>720</td><td>780</td><td>2</td></tr>
+<tr><td>Жанар</td><td>Sales</td><td>640</td><td>600</td><td>1</td></tr>
+<tr><td>Ерлан</td><td>Sales</td><td>560</td><td>600</td><td>2</td></tr>
+</table>
+<p>Жолдар саны өзгерген жоқ: 5 жол кірді, 5 жол шықты. Window function нәтижесімен арифметика да жасауға болады, мысалы оны <code>salary</code>-дан алып тастап, «орташадан қаншаға артық» деген баған жасау.</p>
+<h3>Рейтинг функциялары</h3>
+<table>
+<tr><th>Функция</th><th>Тең мәндерде</th><th>Мысал (900, 720, 720, 560)</th></tr>
+<tr><td><code>ROW_NUMBER()</code></td><td>әрқашан бірегей нөмір</td><td>1, 2, 3, 4</td></tr>
+<tr><td><code>RANK()</code></td><td>бірдей орын, сосын секіреді</td><td>1, 2, 2, 4</td></tr>
+<tr><td><code>DENSE_RANK()</code></td><td>бірдей орын, секірмейді</td><td>1, 2, 2, 3</td></tr>
+<tr><td><code>NTILE(n)</code></td><td>жолдарды n тең топқа бөледі</td><td>квартильдер үшін</td></tr>
+</table>
+<div class="tip">Window function <code>WHERE</code> орындалғаннан кейін есептеледі, сондықтан оны <code>WHERE</code>-де тікелей қолдануға болмайды. Subquery не CTE ішіне орап, сыртында сүзіңіз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>DESC</code>-ті ұмыту. <code>ORDER BY</code> әдепкіде өсу ретімен жүреді, сонда ең <b>аз</b> жалақы 1-орын алады.</li>
+<li>Керек жерде <code>PARTITION BY</code>-ды ұмыту: «бөлім ішіндегі» рейтингтің орнына бүкіл компания бойынша рейтинг шығады.</li>
+<li><code>WHERE rnk &lt;= 3</code> деп сол сұраудың ішінде жазу. Қате береді: алдымен ішкі сұрауда рейтингті есептеп, сыртқы сұрауда сүзіңіз.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-3/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-3">
+<h2>3. Кумулятивті сома және жылжымалы орташа</h2>
+<div class="prose">
+<p>Қолыңызда жинақ қорабы (копилка) бар деп елестетіңіз. Күн сайын оған ақша саласыз. «Бүгін қанша салдым?» — бұл күндік сан. «Қорапта барлығы қанша жиналды?» — бұл <b>кумулятивті сома</b>. Ол әр күні алдыңғы жиынға бүгінгі санды қосып отырады.</p>
+<p>Терезеге <code>ORDER BY</code> қосылса, агрегат «осы жолға дейінгі» мәндерді ғана көреді. Бұл <b>running total</b> (кумулятивті сома):</p>
+<pre><code>SELECT day, revenue,
+  SUM(revenue) OVER (ORDER BY day) AS running
+FROM daily_sales
+WHERE region = 'Алматы';</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>Бір аймақтың 5 күндік табысы (сандар оқу үшін ойдан алынған). <code>running</code> бағаны жиналып отырады, <code>ma3</code> — төмендегі 3 күндік жылжымалы орташа:</p>
+<table>
+<tr><th>day</th><th>revenue</th><th>running</th><th>ma3</th></tr>
+<tr><td>1</td><td>100</td><td>100</td><td>100 / 1 = 100</td></tr>
+<tr><td>2</td><td>120</td><td>100 + 120 = 220</td><td>(100 + 120) / 2 = 110</td></tr>
+<tr><td>3</td><td>90</td><td>220 + 90 = 310</td><td>(100 + 120 + 90) / 3 ≈ 103.33</td></tr>
+<tr><td>4</td><td>150</td><td>310 + 150 = 460</td><td>(120 + 90 + 150) / 3 = 120</td></tr>
+<tr><td>5</td><td>130</td><td>460 + 130 = 590</td><td>(90 + 150 + 130) / 3 ≈ 123.33</td></tr>
+</table>
+<p>Соңғы <code>running</code> (590) барлық күндердің қосындысына тең. Ал <code>ma3</code> 90-нан 150-ге секірудің орнына баяу өзгереді.</p>
+<h3>Терезе шекарасы: ROWS BETWEEN</h3>
+<p>Күнделікті деректер «секіреді». <b>Жылжымалы орташа</b> (moving average) трендті тегістейді. Соңғы 3 күн:</p>
+<pre><code>AVG(revenue) OVER (
+  PARTITION BY region ORDER BY day
+  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+) AS ma3</code></pre>
+<p><code>2 PRECEDING</code> — алдыңғы 2 жол, <code>CURRENT ROW</code> — осы жол. Алғашқы күндерде терезе толық емес, сондықтан орташа аз жолдан есептеледі (кестедегі 1- және 2-күн). <code>PARTITION BY region</code> әр аймақтың терезесін бөлек ұстайды: Астананың орташасына Алматының күндері араласпайды.</p>
+<h3>Үлес (share of total)</h3>
+<pre><code>revenue * 100.0 / SUM(revenue) OVER (PARTITION BY day)</code></pre>
+<p>Мысалы, бір күні Алматы 300, Астана 200 тапты. Сол күннің жиыны 500, сондықтан үлестер: 300 × 100.0 / 500 = 60.0% және 40.0%. Бұл жерде <code>ORDER BY</code> жоқ: бізге «осы күнге дейін» емес, бүкіл күннің жиыны керек.</p>
+<p><code>100.0</code> жазу маңызды: бүтін санды бүтінге бөлсе, SQLite бөлшекті тастап жібереді.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>OVER</code> ішіндегі <code>ORDER BY</code> тек есептеу ретін береді. Нәтиженің өзі реттелуі үшін сұраудың соңына да <code>ORDER BY</code> жазыңыз. (2) Бірнеше аймақ болса, <code>PARTITION BY region</code>-ды ұмытпаңыз, әйтпесе қосынды мен орташа аймақтарды араластырады. (3) <code>100</code> деп бүтін сан жазсаңыз, бөлшек жоғалады: 33.3% орнына 33 шығады.</div></div>
+<p><a href="../../#lesson/m3-3/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-4">
+<h2>4. LAG және LEAD: өсімді есептеу</h2>
+<div class="prose">
+<p>Таразыға күнде тұрасыз дейік. «Кеше 70 кг едім, бүгін 69.5» — бүгінгі санды мағыналы ететін нәрсе <b>алдыңғы</b> күнмен салыстыру. SQL-де жолдар бір-бірін «көрмейді», бірақ <code>LAG</code> мен <code>LEAD</code> көршіге қарауға мүмкіндік береді.</p>
+<p><code>LAG(col)</code> — алдыңғы жолдың мәні, <code>LEAD(col)</code> — келесі жолдың мәні. Олар айлық өсімді (month-over-month) есептеуге таптырмайды. «Алдыңғы» деген ұғым <code>OVER (ORDER BY ...)</code> ішіндегі реттен шығады. Баған кез келген түрде бола алады: сан, мәтін, күн. Мысалы, <code>LAG(order_date)</code> алдыңғы тапсырыстың күнін береді.</p>
+<h3>Қадамдап мысал</h3>
+<p>Айлық тапсырыстар (оқу үшін ойдан алынған сандар) және <code>LAG</code>/<code>LEAD</code> нәтижесі:</p>
+<table>
+<tr><th>month</th><th>orders</th><th>prev (LAG)</th><th>next (LEAD)</th><th>change</th><th>pct</th></tr>
+<tr><td>2024-01</td><td>40</td><td>NULL</td><td>50</td><td>NULL</td><td>NULL</td></tr>
+<tr><td>2024-02</td><td>50</td><td>40</td><td>45</td><td>50 − 40 = 10</td><td>10 × 100.0 / 40 = 25.0</td></tr>
+<tr><td>2024-03</td><td>45</td><td>50</td><td>54</td><td>45 − 50 = −5</td><td>−5 × 100.0 / 50 = −10.0</td></tr>
+<tr><td>2024-04</td><td>54</td><td>45</td><td>NULL</td><td>54 − 45 = 9</td><td>9 × 100.0 / 45 = 20.0</td></tr>
+</table>
+<p>Пайыз әрқашан <b>алдыңғы</b> мәнге бөлінеді: «өткен аймен салыстырғанда қаншаға өстік». Кестені SQL-мен былай аламыз:</p>
+<pre><code>WITH m AS (
+  SELECT substr(order_date, 1, 7) AS month, COUNT(*) AS orders
+  FROM orders GROUP BY month
+)
+SELECT month, orders,
+  orders - LAG(orders) OVER (ORDER BY month) AS change
+FROM m;</code></pre>
+<p>Бірінші айда алдыңғы ай жоқ, сондықтан <code>LAG</code> <code>NULL</code> қайтарады. Бұл қате емес.</p>
+<h3>Пайыздық өзгеріс</h3>
+<pre><code>ROUND((x - LAG(x) OVER (ORDER BY d)) * 100.0 / LAG(x) OVER (ORDER BY d), 1)</code></pre>
+<p>Бұл формулада <code>LAG</code> екі рет жазылады: бір рет айырма үшін, бір рет бөлім үшін. CTE ішінде алдымен <code>prev</code> бағанын есептеп алсаңыз, сыртқы сұрау қысқарады.</p>
+<div class="tip"><code>LAG(col, 7)</code> 7 жол артқа қарайды: апталық салыстыру (week-over-week) үшін ыңғайлы.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>OVER ()</code> ішінде <code>ORDER BY</code>-ды ұмыту. Рет болмаса, «алдыңғы жол» кездейсоқ болады.</li>
+<li>Кестеде бірнеше аймақ не клиент болса, оларды сүзбеу (<code>WHERE</code>) не бөлмеу (<code>PARTITION BY</code>). Сонда Астананың «кешегі» мәні ретінде Алматының соңғы күні алынып кетеді.</li>
+<li>Пайызды ағымдағы мәнге бөлу не <code>100</code> деп бүтін сан жазу. Бөлім — алдыңғы мән, көбейткіш — <code>100.0</code>.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-3/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-5">
+<h2>5. Top-N әр топта және дубликаттарды алу</h2>
+<div class="prose">
+<p>«Әр бөлімнің ең көп жалақы алатын қызметкері», «әр клиенттің соңғы тапсырысы» — сұхбатта ең жиі кездесетін SQL тапсырмалары. Үлгі әрқашан бірдей:</p>
+<pre><code>SELECT * FROM (
+  SELECT e.*,
+    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS rn
+  FROM employees e
+)
+WHERE rn = 1;</code></pre>
+<p><code>rn = 1</code> — әр топтан біреу, <code>rn &lt;= 3</code> — әр топтан үшеу.</p>
+<h3>Дубликаттарды тазалау</h3>
+<p>Деректе бір клиент екі рет жазылса, <code>ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at DESC)</code> арқылы ең соңғы жазбаны қалдырасыз. Бұл — data cleaning-тің стандарт тәсілі.</p>
+<div class="tip">Тең мәндердің бәрін қалдыру керек болса, <code>ROW_NUMBER</code> орнына <code>RANK</code> қолданыңыз.</div></div>
+<p><a href="../../#lesson/m3-3/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-6">
+<h2>6. CASE WHEN, pivot және воронка</h2>
+<div class="prose">
+<p><code>CASE WHEN</code> — SQL ішіндегі if/else. Ол жаңа категория жасайды:</p>
+<pre><code>SELECT name,
+  CASE WHEN price >= 100000 THEN 'қымбат'
+       WHEN price >= 10000 THEN 'орташа'
+       ELSE 'арзан' END AS segment
+FROM products;</code></pre>
+<h3>Шартты агрегация (pivot)</h3>
+<p>Жолдарды бағандарға айналдыру үшін <code>CASE</code>-ті агрегаттың ішіне жазамыз:</p>
+<pre><code>SELECT
+  SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered,
+  SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
+FROM orders;</code></pre>
+<h3>Воронка (funnel)</h3>
+<p><code>events(user_id, step)</code> кестесінде қадамдар бар: <code>visit</code> → <code>cart</code> → <code>purchase</code>. Әр қадамға жеткен бірегей пайдаланушылар:</p>
+<pre><code>COUNT(DISTINCT CASE WHEN step = 'cart' THEN user_id END) AS cart</code></pre>
+<p><code>CASE</code>-те <code>ELSE</code> жоқ болса, нәтиже <code>NULL</code> болады, ал <code>COUNT</code> NULL-ды санамайды. Конверсия = келесі қадам / алдыңғы қадам.</p></div>
+<p><a href="../../#lesson/m3-3/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-7">
+<h2>7. Когорттық талдау және retention</h2>
+<div class="prose">
+<p>Мектеп түлектерін елестетіңіз: «2020 жылғы түлектердің қаншасы 5 жылдан кейін де кездесуге келеді?» Бір жылы бітіргендерді бір топ ретінде қадағалаймыз. Өнімде де солай: бір айда тіркелгендерді бірге бақылап, олардың қаншасы қайта оралатынын көреміз.</p>
+<p><b>Когорт</b> — бір уақытта келген пайдаланушылар тобы, мысалы шілдеде тіркелгендер. <b>Retention</b> — когорттың қанша пайызы кейінгі айларда да белсенді.</p>
+<p><code>metrics</code> дерекқоры: <code>users(id, signup_month, channel)</code> және <code>activity(user_id, month)</code> (пайдаланушы белсенді болған айлар).</p>
+<h3>1-қадам: когорт өлшемі</h3>
+<pre><code>SELECT signup_month, COUNT(*) AS size FROM users GROUP BY signup_month;</code></pre>
+<h3>2-қадам: әр айдағы белсенділер</h3>
+<pre><code>SELECT u.signup_month AS cohort, a.month, COUNT(DISTINCT a.user_id) AS active
+FROM users u JOIN activity a ON a.user_id = u.id
+GROUP BY cohort, a.month;</code></pre>
+<h3>3-қадам: пайызға айналдыру</h3>
+<p>Екі нәтижені CTE арқылы біріктіріп, <code>active * 100.0 / size</code> есептейміз. Нәтиже — retention кестесі: жолдар когорттар, бағандар айлар.</p>
+<p>Жоспар: 1-қадамды <code>WITH</code> ішіне CTE етіп жазасыз. 2-қадамның сұрауына осы CTE-ді <code>signup_month</code> бойынша <code>JOIN</code> жасайсыз, сонда әр жолда когорт өлшемі де тұрады. Ең соңында <code>ROUND(..., 1)</code> арқылы бір ондық белгіге дейін дөңгелектейсіз.</p>
+<h3>Қадамдап мысал</h3>
+<p>Ойдан алынған екі когорт. 1-қадамның нәтижесі: қаңтар когорты 10 адам, ақпан когорты 5 адам. 2-қадамның нәтижесі (белсенділер саны):</p>
+<table>
+<tr><th>cohort</th><th>size</th><th>2024-01</th><th>2024-02</th><th>2024-03</th></tr>
+<tr><td>2024-01</td><td>10</td><td>10</td><td>6</td><td>4</td></tr>
+<tr><td>2024-02</td><td>5</td><td>—</td><td>5</td><td>2</td></tr>
+</table>
+<p>3-қадам: әр ұяшықты сол когорттың өлшеміне бөлеміз. Мысалы, 6 × 100.0 / 10 = 60.0, ал 2 × 100.0 / 5 = 40.0:</p>
+<table>
+<tr><th>cohort</th><th>2024-01</th><th>2024-02</th><th>2024-03</th></tr>
+<tr><td>2024-01</td><td>100.0</td><td>60.0</td><td>40.0</td></tr>
+<tr><td>2024-02</td><td>—</td><td>100.0</td><td>40.0</td></tr>
+</table>
+<p>Оқу: қаңтарда тіркелгендердің 60%-ы ақпанда, 40%-ы наурызда қайта келді. Ақпан когорты екінші айында-ақ 40%-ға түсті, бұл қаңтар когортынан нашар. SQL нәтижесі «ұзын» форматта шығады (<code>cohort</code>, <code>month</code>, <code>retention</code> — әр ұяшық бір жол), ал жоғарыдағы тор — соны көзге ыңғайлы етіп жайған түрі.</p>
+<div class="tip">Retention-ды арна (<code>channel</code>) бойынша бөлсеңіз, қай жарнама «сапалы» клиент әкелетінін көресіз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>COUNT(*)</code> қолдану. Бір адамның айда бірнеше белсенділік жолы болса, ол бірнеше рет саналады. <code>COUNT(DISTINCT a.user_id)</code> керек.</li>
+<li>Алдыңғы айдың белсенділеріне бөлу. Retention әрқашан когорттың <b>бастапқы өлшеміне</b> бөлінеді.</li>
+<li><code>100</code> деп бүтін сан жазу: <code>2 * 100 / 5</code> дұрыс шыққанымен, <code>1 * 100 / 3</code> 33.3 емес, 33 береді. <code>100.0</code> жазыңыз.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-3/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-8">
+<h2>8. Деректер моделі: star schema</h2>
+<div class="prose">
+<p>Аналитикалық дерекқор (data warehouse) әдетте <b>star schema</b> түрінде құрылады: ортада бір <b>fact</b> кестесі, айналасында <b>dimension</b> кестелері.</p>
+<table>
+<tr><th></th><th>Fact кестесі</th><th>Dimension кестесі</th></tr>
+<tr><td>Не сақтайды</td><td>Оқиғалар мен өлшемдер: сатылым, сома, саны</td><td>Сипаттамалар: тауар, клиент, күн, дүкен</td></tr>
+<tr><td>Жол саны</td><td>Өте көп (миллиондар)</td><td>Аз</td></tr>
+<tr><td>Мысал</td><td><code>fact_sales(date_key, product_key, quantity, amount)</code></td><td><code>dim_product(product_key, name, category)</code></td></tr>
+</table>
+<h3>Grain (түйіршік)</h3>
+<p>Fact кестесін жобалағанда алдымен <b>бір жол нені білдіреді</b> деп сұраймыз: «бір чектегі бір тауар» ме, әлде «бір күндегі бір дүкен» бе? Grain-ді анық айтпау — есептердегі қателердің негізгі көзі.</p>
+<h3>Нормализация және денормализация</h3>
+<p>OLTP жүйелер (банк, дүкен қосымшасы) қайталануды азайту үшін нормализацияланады. Аналитикада жылдам оқу үшін dimension кестелері әдейі денормализацияланады: категория атауы тауар кестесінде тұра береді.</p>
+<div class="tip">Power BI мен басқа BI құралдары star schema-мен ең жақсы жұмыс істейді. Бір үлкен «бәрі бір кестеде» файлдан гөрі fact + dimension моделі дұрыс.</div></div>
+<p><a href="../../#lesson/m3-3/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-9">
+<h2>9. Сұрау жылдамдығы: индекс және жақсы әдеттер</h2>
+<div class="prose">
+<p>Кесте миллиондаған жолға жеткенде сұраудың жылдамдығы маңызды болады. Негізгі құрал — <b>индекс</b>. Ол кітаптың соңындағы көрсеткіш сияқты: бүкіл кестені оқымай, керекті жолдарды бірден табады.</p>
+<pre><code>CREATE INDEX idx_orders_customer ON orders(customer_id);</code></pre>
+<p>Индекс <code>WHERE</code>, <code>JOIN ... ON</code> және <code>ORDER BY</code>-да жиі қолданылатын бағандарға пайдалы. Бірақ әр индекс жазуды баяулатады және орын алады.</p>
+<h3>EXPLAIN</h3>
+<p><code>EXPLAIN QUERY PLAN SELECT ...</code> дерекқордың сұрауды қалай орындайтынын көрсетеді: <code>SCAN</code> — бүкіл кестені оқу, <code>SEARCH ... USING INDEX</code> — индекспен іздеу.</p>
+<h3>Жақсы әдеттер</h3>
+<ul>
+<li><code>SELECT *</code> орнына керекті бағандарды ғана алыңыз.</li>
+<li>Индекстелген бағанға функция қолданбаңыз: <code>WHERE substr(order_date,1,4) = '2024'</code> индексті «өшіреді», ал <code>WHERE order_date &gt;= '2024-01-01' AND order_date &lt; '2025-01-01'</code> индексті қолданады.</li>
+<li>Алдымен сүзіңіз, сосын JOIN жасаңыз: аз жол, жылдам нәтиже.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-3/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-gate">
+<h2>10. Модуль емтиханы: Advanced SQL</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: CTE, window functions, CASE және retention. Кеңес жоқ, бірақ «Іске қосу» арқылы аралық нәтижені көре аласыз.</p>
+<p>Дерекқорлар: <code>staff</code>, <code>shop</code>, <code>metrics</code>. Әр тапсырманың үстінде қай дерекқор екені көрсетілген.</p></div>
+<p><a href="../../#lesson/m3-3/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m3-3">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

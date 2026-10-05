@@ -1,5 +1,3 @@
-<title>DataJol</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті нөлден үйренетін қазақша интерактивті платформа">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -360,7 +358,7 @@ span.CodeMirror-selectedtext { background: none; }
   --ink: #121616;
   --ink-2: #646B6A;
   --line: #E6E8E8;
-  --line-strong: #D2D6D5;
+  --line-strong: #8A9391;
   --accent: #0F766E;
   --accent-press: #0B5A54;
   --accent-ink: #FFFFFF;
@@ -368,7 +366,7 @@ span.CodeMirror-selectedtext { background: none; }
   --gold: #B45309;
   --gold-soft: #FDF6EC;
   --flame: #EA580C;
-  --ok: #15803D;
+  --ok: #15803D; --ok-ink: #fff;
   --ok-soft: #EEF8F1;
   --bad: #C2281D;
   --bad-soft: #FDF0EF;
@@ -386,17 +384,17 @@ span.CodeMirror-selectedtext { background: none; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
-    --line: #242B2A; --line-strong: #323B3A; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
     --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
-    --ok: #5BD38A; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
-  --line: #242B2A; --line-strong: #323B3A; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
   --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
-  --ok: #5BD38A; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -520,7 +518,7 @@ input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px 
 .lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
 .lesson-row:hover { background: var(--surface-2); }
 .lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: #fff; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
 .lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
 .lesson-row b { font-weight: 600; }
 .lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
@@ -546,7 +544,7 @@ input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px 
 .task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
 .task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
-.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
 .task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
 .gate-result.pass { border-color: var(--ok); }
 .gate-result.fail { border-color: var(--bad); }
@@ -570,7 +568,7 @@ kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; 
 .editor-bar .dots { display: none; }
 .CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
 .CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
-.CodeMirror-linenumber { color: #4a5755; }
+.CodeMirror-linenumber { color: #7D8C8A; }
 .CodeMirror-cursor { border-left-color: var(--code-key); }
 div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
 .cm-s-default .cm-keyword { color: var(--code-key); }
@@ -709,12 +707,43 @@ textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 1
   .cert { border-color: #999; }
 }
 
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
 </style>
 
 <header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app" aria-live="polite"></main>
-<div id="toast-root"></div>
+<main class="wrap" id="app">
+<section class="landing" style="padding:40px 0 64px">
+<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
+<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
+<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
+<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+</section>
+</main>
+<div id="toast-root" role="status" aria-live="polite"></div>
 
+<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
 <script src="vendor/codemirror/codemirror.js"></script>
 <script src="vendor/codemirror/sql.js"></script>
 <script src="vendor/codemirror/python.js"></script>

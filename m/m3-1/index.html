@@ -2,373 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сипаттамалық статистика — M3.1 Descriptive Statistics | DataJol</title>
+<meta name="description" content="Статистика — деректі бір-екі санмен сипаттау және «бұл қалыпты ма?» деген сұраққа жауап беру. Формулаларды алдымен қолмен Python-да жазасыз, сосын дайын…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m3-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Сипаттамалық статистика — M3.1 Descriptive Statistics | DataJol">
+<meta property="og:description" content="Статистика — деректі бір-екі санмен сипаттау және «бұл қалыпты ма?» деген сұраққа жауап беру. Формулаларды алдымен қолмен Python-да жазасыз, сосын дайын…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m3-1/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.1 Descriptive Statistics","description":"Статистика — деректі бір-екі санмен сипаттау және «бұл қалыпты ма?» деген сұраққа жауап беру. Формулаларды алдымен қолмен Python-да жазасыз, сосын дайын…","url":"https://olzhaa.github.io/datajol/m/m3-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.1 Descriptive Statistics","item":"https://olzhaa.github.io/datajol/m/m3-1/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -736,74 +384,260 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 3: Дерек аналитигі / M3.1</nav>
+<article class="reading">
+<p class="eyebrow">M3.1 · 20–30 сағат · 10 сабақ</p>
+<h1>M3.1 Descriptive Statistics: Сипаттамалық статистика</h1>
+<p class="prose">Статистика — деректі бір-екі санмен сипаттау және «бұл қалыпты ма?» деген сұраққа жауап беру. Формулаларды алдымен қолмен Python-да жазасыз, сосын дайын функциялармен салыстырасыз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m3-1">Тапсырмаларды орындау</a></p>
+<section id="st-1">
+<h2>1. Таралу және гистограмма</h2>
+<div class="prose">
+<p><b>Таралу</b> (distribution) — мәндердің қалай орналасқаны: қай мәндер жиі, қайсысы сирек. Оны көрудің ең қарапайым жолы — <b>жиілік кестесі</b> және <b>гистограмма</b>.</p>
+<p>Гистограмма мәндерді тең аралықтарға (bins) бөледі де, әр аралықтағы мәндер санын баған биіктігімен көрсетеді.</p>
+<pre><code>scores = [55, 62, 68, 71, 74, 75, 78, 81, 85, 93]
+# аралықтар: 50–59, 60–69, 70–79, 80–89, 90–99
+bins = {}
+for s in scores:
+    start = s // 10 * 10        # 74 → 70
+    bins[start] = bins.get(start, 0) + 1
+print(bins)   # {50: 1, 60: 2, 70: 4, 80: 2, 90: 1}</code></pre>
+<h3>Таралу пішіні</h3>
+<ul>
+<li><b>Симметриялы</b>: екі жағы бірдей, орташа ≈ медиана.</li>
+<li><b>Оңға қисайған</b> (right skew): ұзын «құйрық» оң жақта. Жалақы, тапсырыс сомасы осындай: орташа &gt; медиана.</li>
+<li><b>Солға қисайған</b>: құйрық сол жақта, орташа &lt; медиана.</li>
+</ul>
+<div class="tip">Кез келген жаңа деректі алғанда, алдымен гистограммасын қараңыз. Орташаны есептеу одан кейін.</div></div>
+<p><a href="../../#lesson/m3-1/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="st-2">
+<h2>2. Орталық көрсеткіштер Python-да</h2>
+<div class="prose">
+<p>Math refresher-да орташа мен медиананы қолмен есептедік. Енді оларды функция ретінде жазамыз.</p>
+<pre><code>def mean(xs):
+    return sum(xs) / len(xs)
+
+def median(xs):
+    s = sorted(xs)
+    n = len(s)
+    mid = n // 2
+    if n % 2 == 1:
+        return s[mid]
+    return (s[mid - 1] + s[mid]) / 2</code></pre>
+<p>Python-да дайын <code>statistics</code> модулі бар: <code>statistics.mean</code>, <code>median</code>, <code>mode</code>. Нақты жұмыста соларды (немесе pandas-ты) қолданасыз, бірақ ішінде не болып жатқанын білу маңызды.</p>
+<pre><code>import statistics
+statistics.median([3, 1, 2, 10])   # 2.5</code></pre></div>
+<p><a href="../../#lesson/m3-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-3">
+<h2>3. Шашыраңқылық: дисперсия және стандартты ауытқу</h2>
+<div class="prose">
+<p>Екі дүкеннің орташа күндік сатылымы 100 болуы мүмкін, бірақ біреуінде күн сайын 95–105, екіншісінде 20–180. Айырмашылықты <b>шашыраңқылық</b> көрсеткіштері өлшейді.</p>
+<ul>
+<li><b>Ауқым</b> (range) = max − min. Қарапайым, бірақ бір шеткі мәнге тәуелді.</li>
+<li><b>Дисперсия</b> (variance) — орташадан ауытқулар квадраттарының орташасы.</li>
+<li><b>Стандартты ауытқу</b> (standard deviation, SD) = √дисперсия. Бірлігі деректің өзімен бірдей.</li>
+</ul>
+<p>Қарапайым түсінік: SD — «мәндер орташадан әдетте қаншаға алыстайды» деген сан. Бірінші дүкенде SD кіші, екіншісінде үлкен.</p>
+<h3>Қадамдап мысал</h3>
+<p>Мәндер: 2, 4, 6, 8. Орташа = (2 + 4 + 6 + 8) / 4 = 5.</p>
+<table>
+<tr><th>x</th><th>x − орташа</th><th>(x − орташа)²</th></tr>
+<tr><td>2</td><td>−3</td><td>9</td></tr>
+<tr><td>4</td><td>−1</td><td>1</td></tr>
+<tr><td>6</td><td>1</td><td>1</td></tr>
+<tr><td>8</td><td>3</td><td>9</td></tr>
+<tr><td><b>Қосынды</b></td><td>0</td><td>20</td></tr>
+</table>
+<ol>
+<li>Ауытқулардың қосындысы әрқашан 0: плюстер мен минустер бірін-бірі жояды. Сондықтан оларды квадратқа шығарамыз.</li>
+<li>Таңдама дисперсиясы: 20 / (4 − 1) ≈ 6.67.</li>
+<li>Таңдама SD: √6.67 ≈ 2.58.</li>
+<li>Салыстыру үшін популяция формуласы: 20 / 4 = 5, SD = √5 ≈ 2.24.</li>
+</ol>
+<h3>Таңдама формуласы</h3>
+<pre><code>def sample_var(xs):
+    m = sum(xs) / len(xs)
+    return sum((x - m) ** 2 for x in xs) / (len(xs) - 1)</code></pre>
+<p>Неге <code>n − 1</code>? Біз әдетте барлық популяцияны емес, оның <b>таңдамасын</b> (sample) көреміз. <code>n − 1</code>-ге бөлу таңдамадан популяция дисперсиясын жүйелі түрде кем бағаламауға көмектеседі. <code>statistics.variance</code> және <code>statistics.stdev</code> осы формуланы қолданады, ал <code>pvariance</code> мен <code>pstdev</code> <code>n</code>-ге бөледі.</p>
+<pre><code>import statistics
+statistics.variance([2, 4, 6, 8])   # 6.666...
+statistics.stdev([2, 4, 6, 8])      # 2.58...
+statistics.pstdev([2, 4, 6, 8])     # 2.23...</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>n</code> мен <code>n − 1</code>-ді шатастыру: таңдама үшін <code>n − 1</code>. (2) Дисперсияда тоқтап қалу: дисперсияның бірлігі квадрат (теңге²), SD алу үшін түбір керек (<code>math.sqrt</code> не <code>** 0.5</code>). (3) Квадраттың орнына ауытқуларды жай қосу: нәтиже әрқашан 0 болады.</div></div>
+<p><a href="../../#lesson/m3-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-4">
+<h2>4. Перцентильдер, IQR және шеткі мәндер</h2>
+<div class="prose">
+<p><b>Перцентиль</b> — мәндердің белгілі бір пайызы одан төмен жатқан нүкте. 50-перцентиль = медиана. 25- және 75-перцентильдер — <b>Q1</b> және <b>Q3</b> квартильдері.</p>
+<p><b>IQR</b> (interquartile range) = Q3 − Q1. Бұл ортадағы 50% деректің ені, шеткі мәндерге сезімтал емес.</p>
+<h3>Шеткі мәндер ережесі (Tukey)</h3>
+<pre><code>low  = Q1 - 1.5 * IQR
+high = Q3 + 1.5 * IQR
+# low-дан кіші немесе high-тан үлкен мәндер — outlier</code></pre>
+<p>Python-да квартильдер:</p>
+<pre><code>import statistics
+q1, q2, q3 = statistics.quantiles(data, n=4)</code></pre>
+<div class="tip">Outlier әрқашан «қате» емес. Ол алаяқтық, ірі клиент немесе енгізу қатесі болуы мүмкін. Алдымен себебін анықтаңыз, сосын ғана алып тастаңыз.</div></div>
+<p><a href="../../#lesson/m3-1/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-5">
+<h2>5. Z-score және стандарттау</h2>
+<div class="prose">
+<p>Бойыңыз 180 см. Бұл көп пе? Баскетбол командасында — аз, балабақшада — өте көп. Санның өзі емес, оның <b>өз тобындағы орны</b> маңызды. Z-score дәл осыны өлшейді.</p>
+<p><b>Z-score</b> мәннің орташадан неше стандартты ауытқу қашық екенін көрсетеді:</p>
+<pre><code>z = (x - mean) / sd</code></pre>
+<p>z = 0 — дәл орташа, z = 2 — орташадан 2 SD жоғары, z = −1 — 1 SD төмен. Бірлігі жоқ, сондықтан әртүрлі шкаладағы мәндерді салыстыруға болады: «математикадан 85 ұпай» мен «жүгіруден 12.4 секунд» қайсысы жақсырақ нәтиже?</p>
+<p>Жауап: математика орташасы 70, SD 10 болса, z = (85 − 70) / 10 = 1.5. Жүгіру орташасы 13.0 с, SD 0.4 болса, z = (12.4 − 13.0) / 0.4 = −1.5. Жүгіруде аз уақыт жақсы, сондықтан −1.5 те «орташадан 1.5 SD жақсы» дегенді білдіреді. Екі нәтиже бірдей күшті.</p>
+<h3>Қадамдап мысал</h3>
+<p>Мәндер: 53, 59, 60, 61, 67. Орташа = 300 / 5 = 60. Ауытқулар квадраттарының қосындысы: 49 + 1 + 0 + 1 + 49 = 100. Таңдама SD = √(100 / 4) = √25 = 5.</p>
+<table>
+<tr><th>x</th><th>x − 60</th><th>z = (x − 60) / 5</th></tr>
+<tr><td>53</td><td>−7</td><td>−1.4</td></tr>
+<tr><td>59</td><td>−1</td><td>−0.2</td></tr>
+<tr><td>60</td><td>0</td><td>0.0</td></tr>
+<tr><td>61</td><td>1</td><td>0.2</td></tr>
+<tr><td>67</td><td>7</td><td>1.4</td></tr>
+</table>
+<p>Байқаңыз: z-score-тардың қосындысы 0, ал олардың SD-і 1. Бұл кез келген деректе солай болады.</p>
+<p>Python-да орташа мен SD-ді <code>statistics.mean</code> және <code>statistics.stdev</code> береді. Сосын әр мәнге формуланы list comprehension арқылы қолданасыз.</p>
+<p>Барлық мәндерді z-score-ға айналдыру <b>стандарттау</b> деп аталады. Бұл кейін ML-де (StandardScaler) жиі керек болады.</p>
+<div class="tip">Қалыпты таралуда |z| &gt; 3 өте сирек кездеседі, сондықтан оны да шеткі мәнді табу үшін қолданады.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>stdev</code> (таңдама, <code>n − 1</code>) мен <code>pstdev</code> (<code>n</code>) шатастыру: z-score сәл өзгеше шығады. Тапсырмада қайсысы айтылса, соны алыңыз.</li>
+<li>Таңбаны ұмыту: z = −2 «нашар» емес, жай «орташадан төмен». Жақсы ма, жаман ба — метрикаға байланысты.</li>
+<li>Барлық мәндер бірдей болса, SD = 0, ал нөлге бөлуге болмайды.</li>
+</ul></div>
+<p><a href="../../#lesson/m3-1/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-6">
+<h2>6. Корреляция</h2>
+<div class="prose">
+<p>Екі адам қатар жүр деп елестетіңіз. Біреуі алға шықса, екіншісі де алға шыға ма? Әрдайым солай болса — олар «бірге қозғалады». Корреляция екі санның осылай бірге қозғалатынын өлшейді.</p>
+<p><b>Корреляция</b> (Пирсон коэффициенті, r) екі айнымалының сызықтық байланысын −1-ден 1-ге дейінгі санмен өлшейді.</p>
+<table>
+<tr><th>r</th><th>Мағынасы</th></tr>
+<tr><td>≈ 1</td><td>күшті оң байланыс: біреуі өссе, екіншісі де өседі</td></tr>
+<tr><td>≈ 0</td><td>сызықтық байланыс жоқ</td></tr>
+<tr><td>≈ −1</td><td>күшті теріс байланыс</td></tr>
+</table>
+<pre><code>def pearson(x, y):
+    mx, my = sum(x) / len(x), sum(y) / len(y)
+    cov = sum((a - mx) * (b - my) for a, b in zip(x, y))
+    sx = sum((a - mx) ** 2 for a in x) ** 0.5
+    sy = sum((b - my) ** 2 for b in y) ** 0.5
+    return cov / (sx * sy)</code></pre>
+<p>Идея: әр жұпта екі ауытқуды көбейтеміз. Екеуі де орташадан жоғары (не екеуі де төмен) болса, көбейтінді оң. Біреуі жоғары, біреуі төмен болса — теріс. Қосынды оң болса, байланыс оң. Сосын <code>sx × sy</code>-ке бөліп, нәтижені −1…1 аралығына келтіреміз.</p>
+<h3>Қадамдап мысал</h3>
+<p>Жарнамаға кеткен ақша <code>x</code> және сатылым <code>y</code> (5 апта): x = 1, 2, 3, 4, 5; y = 2, 4, 5, 4, 5. Орташалар: mx = 3, my = 4.</p>
+<table>
+<tr><th>x</th><th>y</th><th>x − 3</th><th>y − 4</th><th>көбейтінді</th></tr>
+<tr><td>1</td><td>2</td><td>−2</td><td>−2</td><td>4</td></tr>
+<tr><td>2</td><td>4</td><td>−1</td><td>0</td><td>0</td></tr>
+<tr><td>3</td><td>5</td><td>0</td><td>1</td><td>0</td></tr>
+<tr><td>4</td><td>4</td><td>1</td><td>0</td><td>0</td></tr>
+<tr><td>5</td><td>5</td><td>2</td><td>1</td><td>2</td></tr>
+</table>
+<ol>
+<li><code>cov</code> = 4 + 0 + 0 + 0 + 2 = 6.</li>
+<li><code>sx</code> = √(4 + 1 + 0 + 1 + 4) = √10 ≈ 3.16.</li>
+<li><code>sy</code> = √(4 + 0 + 1 + 0 + 1) = √6 ≈ 2.45.</li>
+<li>r = 6 / (3.16 × 2.45) ≈ 0.77 — едәуір күшті оң байланыс.</li>
+</ol>
+<p>Python 3.10+ нұсқасында дайын функция бар: <code>statistics.correlation(x, y)</code>. Ол да осы мысалда ≈ 0.77 береді.</p>
+<h3>Корреляция ≠ себеп</h3>
+<p>Балмұздақ сатылымы мен суға батып кетулер корреляцияланады, бірақ біреуі екіншісін тудырмайды: екеуінің де себебі — ыстық ауа райы (<b>confounder</b>). Себепті дәлелдеу үшін эксперимент (A/B тест) керек, оны Phase 4-те өтесіз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) r-ды себеп деп оқу (жоғарыдағы балмұздақ мысалы). (2) r ≈ 0 болса, «байланыс мүлде жоқ» деп ойлау. r тек <b>түзу сызықты</b> байланысты көреді: x = −2, −1, 0, 1, 2 және y = x² болса, y толық x-ке тәуелді, бірақ r = 0. (3) Шеткі мәндерді тексермеу: бір ғана outlier r-ды қатты өзгертеді. Сондықтан алдымен scatter plot салыңыз.</div></div>
+<p><a href="../../#lesson/m3-1/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-7">
+<h2>7. Қалыпты таралу және 68–95–99.7 ережесі</h2>
+<div class="prose">
+<p><b>Қалыпты таралу</b> (normal distribution) — «қоңырау» пішінді симметриялы таралу. Бой, өлшеу қателері, көп кездейсоқ факторлардың қосындысы осындай болады.</p>
+<p>Оның ең пайдалы қасиеті — <b>68–95–99.7 ережесі</b>:</p>
+<ul>
+<li>мәндердің ≈68%-ы орташадан ±1 SD аралығында,</li>
+<li>≈95%-ы ±2 SD аралығында,</li>
+<li>≈99.7%-ы ±3 SD аралығында.</li>
+</ul>
+<p>Мысал: IQ орташасы 100, SD = 15. Адамдардың шамамен 95%-ының IQ-ы 70 мен 130 аралығында.</p>
+<p>Неге бой қалыпты таралады? Оған жүздеген кіші фактор әсер етеді: гендер, тамақ, ұйқы, спорт. Әрқайсысы бойды сәл қосады не сәл азайтады. Көп кездейсоқ «қосу-азайту» жиналғанда, мәндердің көбі ортаға жиналады да, шеттер сирек болады. Ал жалақы мен сатып алу сомасы төменнен 0-мен шектелген, жоғарыдан шексіз созылады, сондықтан симметриялы емес.</p>
+<h3>Қадамдап мысал</h3>
+<p>Әйелдердің бойы: орташа 165 см, SD = 6 см. Аралықтарды есептейміз:</p>
+<table>
+<tr><th>Аралық</th><th>Есептеу</th><th>Шекаралар</th><th>Ішінде</th></tr>
+<tr><td>±1 SD</td><td>165 ± 6</td><td>159–171 см</td><td>≈68%</td></tr>
+<tr><td>±2 SD</td><td>165 ± 12</td><td>153–177 см</td><td>≈95%</td></tr>
+<tr><td>±3 SD</td><td>165 ± 18</td><td>147–183 см</td><td>≈99.7%</td></tr>
+</table>
+<p>Енді «неше пайызы 177 см-ден биік?» деген сұрақ. 177 = орташа + 2 SD. Ішкі аралықта 95%, сыртында 100 − 95 = 5%. Таралу симметриялы, сондықтан бұл 5% екі «құйрыққа» тең бөлінеді: 2.5% төменде (153-тен аласа), 2.5% жоғарыда (177-ден биік).</p>
+<p>Дәл осылай: 171 см-ден биіктер — (100 − 68) / 2 = 16%. Бұл z-score-пен байланысты: z = 1 нүктесінен жоғары ≈16%, z = 2 нүктесінен жоғары ≈2.5%.</p>
+<div class="tip">Барлық дерек қалыпты емес. Жалақы, табыс, сайттағы уақыт әдетте оңға қисайған. Бұл ережені гистограммасын көрмей қолданбаңыз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Бір жақты сұраққа сыртқы пайызды бөлмей жауап беру: «2 SD-ден жоғары» 5% емес, 2.5%.</li>
+<li>Ережені қисайған дерекке (жалақы, күніне тапсырыс саны, көбі 0) қолдану.</li>
+<li>68/95/99.7 сандарын дәл деп ойлау. Бұл жуық мәндер (дәлірек 68.3%, 95.4%, 99.7%).</li>
+</ul></div>
+<p><a href="../../#lesson/m3-1/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-8">
+<h2>8. Таңдама, bias және Симпсон парадоксы</h2>
+<div class="prose">
+<p>Біз сирек бүкіл <b>популяцияны</b> көреміз. Көбіне <b>таңдамамен</b> (sample) жұмыс істейміз, сондықтан таңдама популяцияға ұқсас болуы керек.</p>
+<h3>Жиі кездесетін bias түрлері</h3>
+<ul>
+<li><b>Selection bias</b>: таңдама кездейсоқ емес. Мысалы, сауалнаманы тек Instagram жазылушыларына жіберу.</li>
+<li><b>Survivorship bias</b>: тек «аман қалғандарды» көру. Жабылған стартаптар туралы дерек жоқ, сондықтан табысты стартаптардың ортақ белгілері алдамшы.</li>
+<li><b>Non-response bias</b>: сауалнамаға тек қатты риза немесе қатты наразы адамдар жауап береді.</li>
+</ul>
+<h3>Симпсон парадоксы</h3>
+<p>Топтар бойынша бір бағыт, ал жалпы деректе кері бағыт көрінуі мүмкін.</p>
+<table>
+<tr><th></th><th>A емдеу</th><th>B емдеу</th></tr>
+<tr><td>Жеңіл жағдай</td><td>81/87 = 93%</td><td>234/270 = 87%</td></tr>
+<tr><td>Ауыр жағдай</td><td>192/263 = 73%</td><td>55/80 = 69%</td></tr>
+<tr><td><b>Барлығы</b></td><td><b>273/350 = 78%</b></td><td><b>289/350 = 83%</b></td></tr>
+</table>
+<p>Әр топта A жақсы, бірақ жалпыда B жақсы көрінеді. Себебі A ауыр жағдайларға жиі берілген. Сабақ: салыстыру алдында топтардың құрамын тексеріңіз.</p></div>
+<p><a href="../../#lesson/m3-1/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-9">
+<h2>9. SQL-де сипаттамалық статистика</h2>
+<div class="prose">
+<p>Көп жағдайда статистиканы деректі Python-ға жүктемей, дерекқордың ішінде есептеген ыңғайлы.</p>
+<pre><code>SELECT department,
+  COUNT(*) AS n, AVG(salary) AS avg_salary,
+  MIN(salary) AS min_salary, MAX(salary) AS max_salary
+FROM employees
+GROUP BY department;</code></pre>
+<h3>Дисперсия SQL-де</h3>
+<p>SQLite-та <code>STDDEV</code> жоқ, бірақ популяция дисперсиясын формуламен есептеуге болады: <code>AVG(x*x) - AVG(x)*AVG(x)</code>.</p>
+<h3>Медиана SQL-де</h3>
+<p>Медиана үшін мәндерді сұрыптап, ортадағысын алу керек. PostgreSQL-де <code>PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary)</code> бар. SQLite-та <code>ORDER BY ... LIMIT ... OFFSET</code> арқылы ортадағы жолдарды аламыз.</p></div>
+<p><a href="../../#lesson/m3-1/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="st-gate">
+<h2>10. Модуль емтиханы: Descriptive Statistics</h2>
+<div class="prose">
+<p>Қорытынды тексеріс. Python тапсырмаларында тек стандарт кітапхана (<code>statistics</code>, <code>math</code>) қолжетімді.</p></div>
+<p><a href="../../#lesson/m3-1/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m3-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
-<script src="vendor/codemirror/codemirror.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/sql.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/python.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/closebrackets.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=d2b4bfd93f"></script>
-<script src="content/curriculum.js?v=d2b4bfd93f"></script>
-<script src="content/datasets.js?v=d2b4bfd93f"></script>
-<script src="content/csv.js?v=d2b4bfd93f"></script>
-<script src="content/mldata.js?v=d2b4bfd93f"></script>
-<script src="content/m0.js?v=d2b4bfd93f"></script>
-<script src="content/sheets.js?v=d2b4bfd93f"></script>
-<script src="content/spreadsheets.js?v=d2b4bfd93f"></script>
-<script src="content/sql.js?v=d2b4bfd93f"></script>
-<script src="content/python.js?v=d2b4bfd93f"></script>
-<script src="content/pandas.js?v=d2b4bfd93f"></script>
-<script src="content/git.js?v=d2b4bfd93f"></script>
-<script src="content/stats.js?v=d2b4bfd93f"></script>
-<script src="content/cleaning.js?v=d2b4bfd93f"></script>
-<script src="content/viz.js?v=d2b4bfd93f"></script>
-<script src="content/advanced.js?v=d2b4bfd93f"></script>
-<script src="content/powerbi.js?v=d2b4bfd93f"></script>
-<script src="content/business.js?v=d2b4bfd93f"></script>
-<script src="content/capstone.js?v=d2b4bfd93f"></script>
-<script src="content/probability.js?v=d2b4bfd93f"></script>
-<script src="content/inference.js?v=d2b4bfd93f"></script>
-<script src="content/mathml.js?v=d2b4bfd93f"></script>
-<script src="content/ml.js?v=d2b4bfd93f"></script>
-<script src="content/mlpractice.js?v=d2b4bfd93f"></script>
-<script src="content/dscapstone.js?v=d2b4bfd93f"></script>
-<script src="content/career.js?v=d2b4bfd93f"></script>
-<script src="content/diagnostic.js?v=d2b4bfd93f"></script>
-<script src="js/config.js?v=d2b4bfd93f"></script>
-<script src="js/store.js?v=d2b4bfd93f"></script>
-<script src="js/cloud.js?v=d2b4bfd93f"></script>
-<script src="js/runners.js?v=d2b4bfd93f"></script>
-<script src="js/sheet.js?v=d2b4bfd93f"></script>
-<script src="js/app.js?v=d2b4bfd93f"></script>
-
 </body>
 </html>

@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL негіздері қазақша — M1.2 SQL Core | DataJol</title>
+<meta name="description" content="Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m1-2/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL негіздері қазақша — M1.2 SQL Core | DataJol">
+<meta property="og:description" content="Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m1-2/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M1.2 SQL Core","description":"Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен…","url":"https://olzhaa.github.io/datajol/m/m1-2/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT30H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 1: Дерек құралдары","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M1.2 SQL Core","item":"https://olzhaa.github.io/datajol/m/m1-2/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 1: Дерек құралдары / M1.2</nav>
+<article class="reading">
+<p class="eyebrow">M1.2 · 30–45 сағат · 15 сабақ</p>
+<h1>M1.2 SQL Core: SQL негіздері қазақша</h1>
+<p class="prose">Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен нәтижені көріңіз, сосын «Тексеру» басыңыз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m1-2">Тапсырмаларды орындау</a></p>
+<section id="sql-1">
+<h2>1. Дерекқор және бірінші SELECT</h2>
+<div class="prose">
+<p><b>SQL</b> (Structured Query Language) — дерекқордағы кестелерге сұрақ қоятын тіл. Банк, дүкен, такси қосымшасы — барлығының ішінде SQL дерекқоры бар.</p>
+<p>Біздің дүкен дерекқорында төрт кесте бар:</p>
+<table>
+<tr><th>Кесте</th><th>Бағандар</th></tr>
+<tr><td><code>customers</code></td><td>id, name, city, signup_date</td></tr>
+<tr><td><code>products</code></td><td>id, name, category, price</td></tr>
+<tr><td><code>orders</code></td><td>id, customer_id, order_date, status</td></tr>
+<tr><td><code>order_items</code></td><td>order_id, product_id, quantity</td></tr>
+</table>
+<h3>SELECT ... FROM</h3>
+<p>Ең қарапайым сұрау кестедегі бәрін алады. <code>*</code> белгісі «барлық бағандар» дегенді білдіреді:</p>
+<pre><code>SELECT * FROM customers;</code></pre>
+<p>Тек керекті бағандарды үтір арқылы атауға болады:</p>
+<pre><code>SELECT name, city FROM customers;</code></pre>
+<div class="tip">SQL кілт сөздерін (SELECT, FROM) бас әріппен жазу — дәстүр ғана. <code>select</code> да жұмыс істейді. Сұрау соңындағы <code>;</code> бірнеше сұрауды бөлу үшін керек.</div></div>
+<p><a href="../../#lesson/m1-2/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-2">
+<h2>2. WHERE: жолдарды сүзу</h2>
+<div class="prose">
+<p><code>WHERE</code> шарты тек керекті жолдарды қалдырады. Ол <code>FROM</code>-нан кейін жазылады:</p>
+<pre><code>SELECT name, price
+FROM products
+WHERE price > 50000;</code></pre>
+<h3>Салыстыру операторлары</h3>
+<table>
+<tr><th>Оператор</th><th>Мағынасы</th></tr>
+<tr><td><code>=</code></td><td>тең</td></tr>
+<tr><td><code>&lt;&gt;</code> немесе <code>!=</code></td><td>тең емес</td></tr>
+<tr><td><code>&gt;</code>, <code>&lt;</code></td><td>үлкен, кіші</td></tr>
+<tr><td><code>&gt;=</code>, <code>&lt;=</code></td><td>үлкен немесе тең, кіші немесе тең</td></tr>
+</table>
+<p>Мәтін мен күн <b>бір тырнақшада</b> жазылады: <code>WHERE city = 'Алматы'</code>. Сандар тырнақшасыз: <code>WHERE price = 9000</code>.</p>
+<div class="tip">Күндер <code>'2024-09-01'</code> форматында сақталған. Бұл форматты мәтін ретінде салыстыру да дұрыс жұмыс істейді: <code>order_date &gt;= '2024-10-01'</code>.</div></div>
+<p><a href="../../#lesson/m1-2/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-3">
+<h2>3. AND, OR, NOT, BETWEEN, IN</h2>
+<div class="prose">
+<p>Бірнеше шартты біріктіру үшін логикалық операторлар бар:</p>
+<ul>
+<li><code>AND</code> — екі шарт та орындалуы керек.</li>
+<li><code>OR</code> — кемінде бір шарт орындалса жеткілікті.</li>
+<li><code>NOT</code> — шартты керісінше етеді.</li>
+</ul>
+<pre><code>SELECT name, price FROM products
+WHERE category = 'Электроника' AND price &lt; 100000;</code></pre>
+<h3>BETWEEN және IN</h3>
+<p><code>BETWEEN a AND b</code> — аралық, шеттерін қоса алғанда. <code>IN (...)</code> — тізімнің біріне тең.</p>
+<pre><code>WHERE price BETWEEN 5000 AND 20000
+WHERE city IN ('Алматы', 'Шымкент')
+WHERE city NOT IN ('Алматы')</code></pre>
+<div class="tip">AND пен OR араласса, жақша қойыңыз: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Жақшасыз AND бірінші орындалады.</div></div>
+<p><a href="../../#lesson/m1-2/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-4">
+<h2>4. LIKE және NULL</h2>
+<div class="prose">
+<h3>LIKE: үлгі бойынша іздеу</h3>
+<p><code>%</code> — кез келген таңбалар тізбегі, <code>_</code> — дәл бір таңба.</p>
+<pre><code>WHERE name LIKE 'Кітап%'   -- «Кітап» сөзінен басталады
+WHERE name LIKE '%фон'     -- «фон» сөзімен аяқталады
+WHERE name LIKE '%ал%'     -- ішінде «ал» бар</code></pre>
+<h3>NULL: мән жоқ</h3>
+<p><code>NULL</code> — «белгісіз» немесе «бос». Ол нөл де, бос мәтін де емес. Сондықтан <code>= NULL</code> жұмыс істемейді, арнайы оператор керек:</p>
+<pre><code>WHERE city IS NULL
+WHERE city IS NOT NULL</code></pre>
+<div class="tip">Нақты деректе NULL өте жиі кездеседі. Талдау алдында қай бағандарда бос мән бар екенін әрқашан тексеріңіз.</div></div>
+<p><a href="../../#lesson/m1-2/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-5">
+<h2>5. ORDER BY, LIMIT, DISTINCT</h2>
+<div class="prose">
+<p><code>ORDER BY</code> нәтижені сұрыптайды. <code>ASC</code> — өсу ретімен (әдепкі), <code>DESC</code> — кему ретімен.</p>
+<pre><code>SELECT name, price FROM products
+ORDER BY price DESC;</code></pre>
+<p><code>LIMIT n</code> — тек алғашқы n жолды қалдырады. ORDER BY-мен бірге «топ-N» алу үшін қолданылады.</p>
+<p><code>DISTINCT</code> — қайталанатын жолдарды алып тастайды:</p>
+<pre><code>SELECT DISTINCT category FROM products;</code></pre>
+<h3>Сұрау бөліктерінің реті</h3>
+<pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre></div>
+<p><a href="../../#lesson/m1-2/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-6">
+<h2>6. Alias және есептелген бағандар</h2>
+<div class="prose">
+<p>SELECT ішінде арифметика жасауға болады: <code>+ - * /</code>. Жаңа бағанға <code>AS</code> арқылы атау (alias) береміз:</p>
+<pre><code>SELECT name,
+       price,
+       price * 1.12 AS price_with_vat
+FROM products;</code></pre>
+<p>Кестеге де қысқа атау беруге болады. Бұл JOIN сабағында өте пайдалы болады:</p>
+<pre><code>SELECT p.name FROM products AS p;
+SELECT p.name FROM products p;   -- AS міндетті емес</code></pre>
+<div class="tip">SQLite-та бүтін санды бүтін санға бөлсеңіз, нәтиже де бүтін болады: <code>7 / 2 = 3</code>. Дәл нәтиже үшін біреуін бөлшекке айналдырыңыз: <code>7 / 2.0 = 3.5</code>.</div></div>
+<p><a href="../../#lesson/m1-2/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-7">
+<h2>7. Агрегат функциялар</h2>
+<div class="prose">
+<p>Дүкен кассасын елестетіңіз. Кассир чектегі әр тауарды жеке айтпайды, соңында бір сан айтады: «Барлығы 41 700 ₸». <b>Агрегат функциялар</b> да солай жасайды: көп жолды алып, бір санға жинақтайды. Менеджердің «қанша клиент бар?», «орташа баға қандай?» деген сұрақтарының бәрі осылай шешіледі. Excel-дегі <code>COUNT</code>, <code>SUM</code>, <code>AVERAGE</code> формулаларымен бірдей.</p>
+<table>
+<tr><th>Функция</th><th>Не қайтарады</th></tr>
+<tr><td><code>COUNT(*)</code></td><td>жолдар саны</td></tr>
+<tr><td><code>COUNT(col)</code></td><td>NULL емес мәндер саны</td></tr>
+<tr><td><code>SUM(col)</code></td><td>қосынды</td></tr>
+<tr><td><code>AVG(col)</code></td><td>орташа</td></tr>
+<tr><td><code>MIN(col)</code>, <code>MAX(col)</code></td><td>ең кіші, ең үлкен</td></tr>
+</table>
+<h3>Мысал: бір сұрауда бірнеше функция</h3>
+<p><code>products</code> кестесінде тек 4 тауар бар деп елестетейік:</p>
+<table>
+<tr><th>id</th><th>name</th><th>category</th><th>price</th></tr>
+<tr><td>2</td><td>Құлаққап</td><td>Электроника</td><td>25000</td></tr>
+<tr><td>4</td><td>Кітап: SQL негіздері</td><td>Кітаптар</td><td>6500</td></tr>
+<tr><td>7</td><td>Термос</td><td>Аксессуарлар</td><td>9000</td></tr>
+<tr><td>9</td><td>Блокнот</td><td>Кеңсе</td><td>1200</td></tr>
+</table>
+<pre><code>SELECT COUNT(*)   AS n,
+       SUM(price) AS total,
+       AVG(price) AS avg_price,
+       MAX(price) AS max_price
+FROM products;</code></pre>
+<p>Нәтиже — 4 жол емес, <b>бір жол</b>. Бағандар SELECT-те жазылған ретпен шығады:</p>
+<table>
+<tr><th>n</th><th>total</th><th>avg_price</th><th>max_price</th></tr>
+<tr><td>4</td><td>41700</td><td>10425</td><td>25000</td></tr>
+</table>
+<p>Есептеу: 25000 + 6500 + 9000 + 1200 = 41700, ал 41700 / 4 = 10425. Агрегатты <code>WHERE</code>-пен бірге қолдануға болады: алдымен жолдар сүзіледі, сосын қалғаны жинақталады:</p>
+<pre><code>SELECT COUNT(*) AS n, AVG(price) AS avg_price
+FROM products
+WHERE category = 'Электроника';</code></pre>
+<h3>COUNT-тың үш түрі</h3>
+<p>Төрт клиент: Айгерім (Алматы), Ержан (Алматы), Бауыржан (қаласы <code>NULL</code>), Жанар (Ақтөбе).</p>
+<table>
+<tr><th>Өрнек</th><th>Нәтиже</th><th>Неге</th></tr>
+<tr><td><code>COUNT(*)</code></td><td>4</td><td>барлық жол</td></tr>
+<tr><td><code>COUNT(city)</code></td><td>3</td><td>NULL саналмайды</td></tr>
+<tr><td><code>COUNT(DISTINCT city)</code></td><td>2</td><td>Алматы, Ақтөбе</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>COUNT пен SUM-ды шатастыру.</b> <code>COUNT(quantity)</code> — қанша жол бар, ал <code>SUM(quantity)</code> — барлық дананың қосындысы. Бір жолда 5 блокнот болса, COUNT оны 1 деп, SUM 5 деп санайды.</li>
+<li><b>Агрегат пен қарапайым бағанды араластыру:</b> <code>SELECT name, MAX(price)</code>. Мұндай сұрауда <code>name</code> қай жолдан алынатыны түсініксіз. Ең қымбат тауардың атын білу үшін <code>ORDER BY price DESC LIMIT 1</code> жазыңыз, ал «әр топ үшін» есептеу — келесі сабақтағы GROUP BY.</li>
+<li><b>NULL-ды ұмыту.</b> <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> NULL мәндерді елемейді. Сондықтан <code>AVG</code> бос мәндерді нөл деп санамайды.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-8">
+<h2>8. GROUP BY және HAVING</h2>
+<div class="prose">
+<p>Өткен сабақта агрегат бүкіл кестеге бір сан берді. Ал «<b>әр</b> қалада қанша клиент?» деген сұраққа бір сан жетпейді. Үстелдегі чектерді қала бойынша үйінділерге бөліп, әр үйіндіні бөлек санайтыныңызды елестетіңіз. <code>GROUP BY</code> дәл осылай жасайды: жолдарды топтарға бөліп, әр топқа агрегат есептейді. Excel-дегі pivot table-мен бірдей.</p>
+<h3>Мысал: әр қаладағы клиенттер</h3>
+<table>
+<tr><th>id</th><th>name</th><th>city</th></tr>
+<tr><td>1</td><td>Айгерім</td><td>Алматы</td></tr>
+<tr><td>2</td><td>Нұрлан</td><td>Астана</td></tr>
+<tr><td>4</td><td>Ержан</td><td>Алматы</td></tr>
+<tr><td>6</td><td>Тимур</td><td>Астана</td></tr>
+<tr><td>7</td><td>Әсем</td><td>Алматы</td></tr>
+</table>
+<pre><code>SELECT city, COUNT(*) AS customers
+FROM customers
+GROUP BY city;</code></pre>
+<p>SQL алдымен екі топ құрады: «Алматы» (Айгерім, Ержан, Әсем) және «Астана» (Нұрлан, Тимур). Сосын әр топтағы жолдарды санайды. Нәтижеде әр топқа <b>бір жол</b>:</p>
+<table>
+<tr><th>city</th><th>customers</th></tr>
+<tr><td>Алматы</td><td>3</td></tr>
+<tr><td>Астана</td><td>2</td></tr>
+</table>
+<p>SELECT-ке бірнеше агрегат қатар жазуға болады, мысалы <code>COUNT(*)</code> пен <code>AVG(price)</code> бірге — әр топ үшін екеуі де есептеледі.</p>
+<p>Ереже: SELECT-тегі агрегат емес әр баған GROUP BY-да да болуы керек.</p>
+<h3>HAVING: топтарды сүзу</h3>
+<p><code>WHERE</code> топтауға дейін <b>жолдарды</b> сүзеді. <code>HAVING</code> топтаудан кейін <b>топтарды</b> сүзеді. Сондықтан агрегат бойынша шарт (<code>COUNT(*)</code>, <code>AVG(price)</code>) тек HAVING-те жазылады. Жоғарыдағы кестеден кемінде 3 клиенті бар қалаларды ғана қалдырайық:</p>
+<pre><code>SELECT city, COUNT(*) AS customers
+FROM customers
+GROUP BY city
+HAVING COUNT(*) &gt;= 3;</code></pre>
+<table>
+<tr><th>city</th><th>customers</th></tr>
+<tr><td>Алматы</td><td>3</td></tr>
+</table>
+<p>Астана тобында 2 жол, шарт орындалмады, сондықтан ол алынып тасталды. Тағы бір мысал — орташа бағасы 10 000-нан жоғары санаттар:</p>
+<pre><code>SELECT category, AVG(price) AS avg_price
+FROM products
+GROUP BY category
+HAVING AVG(price) &gt; 10000;</code></pre>
+<p>Толық реті: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Агрегатты WHERE-ге жазу:</b> <code>WHERE COUNT(*) &gt; 1</code> қате береді. WHERE кезінде топтар әлі жоқ — HAVING қолданыңыз.</li>
+<li><b>GROUP BY-ды ұмыту.</b> <code>SELECT city, COUNT(*) FROM customers</code> әр қалаға емес, бүкіл кестеге бір жол қайтарады.</li>
+<li><b>NULL тобын байқамау.</b> <code>city</code> бос жолдар бөлек <code>NULL</code> тобына жиналады. Ол керек болмаса, <code>WHERE city IS NOT NULL</code> қосыңыз.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-9">
+<h2>9. CASE WHEN: шартты бағандар</h2>
+<div class="prose">
+<p>Мұғалім жұмыстарды тексергенде әр ұпайға баға қояды: 85-тен жоғары болса «5», 70-тен жоғары болса «4», әйтпесе «3». <code>CASE</code> — SQL-дегі дәл осындай «егер ... онда ...». Ол әр жол үшін шартты тексеріп, жаңа баған жасайды. Excel-дегі <code>IF</code> формуласына ұқсайды, бірақ бірнеше шартты қатар жазу оңай.</p>
+<pre><code>CASE
+  WHEN шарт1 THEN мән1
+  WHEN шарт2 THEN мән2
+  ELSE қалғандарына мән
+END AS жаңа_баған</code></pre>
+<p>Шарттар <b>жоғарыдан төмен</b> тексеріледі, бірінші орындалғаны алынады да, қалғандары қаралмайды.</p>
+<h3>Мысал: бағаны деңгейге бөлу</h3>
+<table>
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Ноутбук</td><td>350000</td></tr>
+<tr><td>Құлаққап</td><td>25000</td></tr>
+<tr><td>Термос</td><td>9000</td></tr>
+<tr><td>Үстел шамы</td><td>8000</td></tr>
+<tr><td>Блокнот</td><td>1200</td></tr>
+</table>
+<pre><code>SELECT name, price,
+  CASE
+    WHEN price &gt;= 20000 THEN 'жоғары'
+    WHEN price &gt;= 5000 THEN 'орта'
+    ELSE 'төмен'
+  END AS level
+FROM products;</code></pre>
+<table>
+<tr><th>name</th><th>price</th><th>level</th></tr>
+<tr><td>Ноутбук</td><td>350000</td><td>жоғары</td></tr>
+<tr><td>Құлаққап</td><td>25000</td><td>жоғары</td></tr>
+<tr><td>Термос</td><td>9000</td><td>орта</td></tr>
+<tr><td>Үстел шамы</td><td>8000</td><td>орта</td></tr>
+<tr><td>Блокнот</td><td>1200</td><td>төмен</td></tr>
+</table>
+<p>Термосты қарайық: 9000 ≥ 20000 емес, бірінші шарт өтпеді. 9000 ≥ 5000 — екінші шарт өтті, сондықтан «орта». Блокнотқа ешбір шарт келмеді, ол <code>ELSE</code>-ке түсті.</p>
+<p>Шарт мәтінмен де жазылады: <code>WHEN city = 'Алматы' THEN 'Алматы' ELSE 'өңірлер'</code>. Мәтін әрқашан жалғыз тырнақшада болады.</p>
+<h3>CASE + GROUP BY</h3>
+<p>CASE-ке alias беріп, сол alias бойынша топтасаңыз, өз сегменттеріңіз бойынша санай аласыз:</p>
+<pre><code>SELECT
+  CASE
+    WHEN price &gt;= 20000 THEN 'жоғары'
+    WHEN price &gt;= 5000 THEN 'орта'
+    ELSE 'төмен'
+  END AS level,
+  COUNT(*) AS n
+FROM products
+GROUP BY level;</code></pre>
+<table>
+<tr><th>level</th><th>n</th></tr>
+<tr><td>жоғары</td><td>2</td></tr>
+<tr><td>орта</td><td>2</td></tr>
+<tr><td>төмен</td><td>1</td></tr>
+</table>
+<p>SQL алдымен әр жолға деңгей береді (жоғарыдағы кесте), сосын бірдей деңгейдегі жолдарды бір топқа жинап, санайды. Шартта бір ғана мәнді тексеріп, қалғанының бәрін <code>ELSE</code>-пен бір топқа жинауға да болады — сонда нәтижеде екі топ қана болады. Alias бойынша GROUP BY SQLite пен PostgreSQL-де жұмыс істейді; кейбір дерекқорларда CASE өрнегін GROUP BY-ға толық қайта жазу керек.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li><b>Шарттардың реті.</b> <code>WHEN price &gt;= 5000</code> бірінші тұрса, Ноутбук та «орта» болып кетеді. Үлкен шекарадан бастаңыз.</li>
+<li><b>ELSE-ті ұмыту.</b> ELSE болмаса, ешбір шартқа келмеген жолдар <code>NULL</code> алады.</li>
+<li><b>END-ті ұмыту</b> немесе үтірді қате қою. CASE ... END — бір баған, одан кейін үтір қойылады.</li>
+</ul></div></div>
+<p><a href="../../#lesson/m1-2/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-10">
+<h2>10. JOIN: кестелерді біріктіру</h2>
+<div class="prose">
+<p>Деректер бірнеше кестеге бөлінген: тапсырыста тек <code>customer_id</code> бар, ал клиенттің аты <code>customers</code> кестесінде. Курьерді елестетіңіз: оның қолында «3-клиентке жеткізу» деген қағаз бар, ал аты-жөнін білу үшін ол клиенттер дәптерінен 3 нөмірін іздейді. <code>JOIN</code> осы іздеуді әр жол үшін автоматты жасайды. Excel-дегі XLOOKUP-қа ұқсайды, бірақ бірден бүкіл кестеге.</p>
+<h3>Мысал: тапсырысқа клиент атын қосу</h3>
+<p><code>orders</code>:</p>
+<table>
+<tr><th>id</th><th>customer_id</th><th>order_date</th></tr>
+<tr><td>101</td><td>1</td><td>2024-08-02</td></tr>
+<tr><td>102</td><td>2</td><td>2024-08-05</td></tr>
+<tr><td>103</td><td>1</td><td>2024-08-19</td></tr>
+</table>
+<p><code>customers</code>:</p>
+<table>
+<tr><th>id</th><th>name</th></tr>
+<tr><td>1</td><td>Айгерім</td></tr>
+<tr><td>2</td><td>Нұрлан</td></tr>
+<tr><td>3</td><td>Дана</td></tr>
+</table>
+<pre><code>SELECT o.id, c.name, o.order_date
+FROM orders o
+JOIN customers c ON o.customer_id = c.id;</code></pre>
+<table>
+<tr><th>id</th><th>name</th><th>order_date</th></tr>
+<tr><td>101</td><td>Айгерім</td><td>2024-08-02</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>2024-08-05</td></tr>
+<tr><td>103</td><td>Айгерім</td><td>2024-08-19</td></tr>
+</table>
+<p>Әр тапсырыс үшін SQL <code>customers</code> ішінен <code>id</code>-і <code>customer_id</code>-ге тең жолды тапты. Айгерімнің екі тапсырысы бар, сондықтан оның аты екі рет шықты.</p>
+<p><code>ON</code> — қай бағандар арқылы байланысатынын көрсетеді. Әдетте бұл <b>foreign key</b> (<code>orders.customer_id</code>) мен <b>primary key</b> (<code>customers.id</code>).</p>
+<h3>INNER JOIN</h3>
+<p><code>JOIN</code> = <code>INNER JOIN</code>: екі кестеде де сәйкесі бар жолдар ғана қалады. Тапсырыс жасамаған клиент нәтижеге кірмейді — мысалдағы Дана жоқ.</p>
+<p>JOIN-нан кейін әдеттегідей <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code> жаза бересіз. Мысалы, тек Айгерімнің тапсырыстары: <code>... JOIN ... ON ... WHERE c.name = 'Айгерім'</code>.</p>
+<div class="tip">Екі кестеде бірдей атаулы баған болса (мысалы <code>id</code>, <code>name</code>), кесте атауын немесе alias-ты міндетті түрде жазыңыз: <code>c.name</code>, <code>p.name</code>.</div>
+<h3>Табысты есептеу</h3>
+<p>Тапсырыс табысы = дана × баға. Дана саны <code>order_items</code>-та, баға <code>products</code>-та, сондықтан оларды біріктіреміз:</p>
+<pre><code>SELECT oi.order_id, SUM(oi.quantity * p.price) AS revenue
+FROM order_items oi
+JOIN products p ON p.id = oi.product_id
+GROUP BY oi.order_id;</code></pre>
+<p>JOIN-нан кейін, топтауға дейін аралық кесте былай көрінеді:</p>
+<table>
+<tr><th>order_id</th><th>product</th><th>quantity</th><th>price</th><th>quantity × price</th></tr>
+<tr><td>101</td><td>Ноутбук</td><td>1</td><td>350000</td><td>350000</td></tr>
+<tr><td>101</td><td>Құлаққап</td><td>1</td><td>25000</td><td>25000</td></tr>
+<tr><td>102</td><td>Кітап: SQL негіздері</td><td>2</td><td>6500</td><td>13000</td></tr>
+<tr><td>102</td><td>Блокнот</td><td>5</td><td>1200</td><td>6000</td></tr>
+</table>
+<p>GROUP BY әр тапсырыстың жолдарын қосады:</p>
+<table>
+<tr><th>order_id</th><th>revenue</th></tr>
+<tr><td>101</td><td>375000</td></tr>
+<tr><td>102</td><td>19000</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>ON-ды қате бағанмен жазу:</b> <code>ON o.id = c.id</code>. Тапсырыс нөмірі клиент нөмірі емес! Байланыс әрқашан foreign key → primary key: <code>o.customer_id = c.id</code>.</li>
+<li><b>ON-ды ұмыту.</b> Шартсыз JOIN әр жолды екінші кестенің әр жолымен жұптайды: 15 × 10 = 150 жол шығады.</li>
+<li><b>Ретті шатастыру.</b> <code>WHERE</code> JOIN-нан бұрын емес, кейін жазылады: <code>FROM → JOIN ... ON → WHERE → GROUP BY</code>.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-11">
+<h2>11. LEFT JOIN және бірнеше JOIN</h2>
+<div class="prose">
+<p>Сынып журналын елестетіңіз: оқушылардың тізімі толық тұрады, ал сабаққа келмеген оқушының бағасы бос қалады. Оны тізімнен ешкім өшірмейді. <code>LEFT JOIN</code> дәл осылай жұмыс істейді: сол жақ кестенің <b>барлық</b> жолын сақтайды. Оң жақта сәйкесі болмаса, оның бағандары <code>NULL</code> болады. Ал INNER JOIN мұндай «келмеген оқушыны» тізімнен алып тастар еді.</p>
+<h3>Мысал: клиенттер мен олардың тапсырыстары</h3>
+<p><code>customers</code>: 1 Айгерім, 2 Нұрлан, 8 Бауыржан. <code>orders</code>: 101 (клиент 1), 102 (клиент 2), 103 (клиент 1).</p>
+<pre><code>SELECT c.name, o.id AS order_id
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id;</code></pre>
+<table>
+<tr><th>name</th><th>order_id</th></tr>
+<tr><td>Айгерім</td><td>101</td></tr>
+<tr><td>Айгерім</td><td>103</td></tr>
+<tr><td>Нұрлан</td><td>102</td></tr>
+<tr><td>Бауыржан</td><td>NULL</td></tr>
+</table>
+<p>Бауыржанның тапсырысы жоқ, бірақ ол нәтижеде қалды, ал <code>order_id</code> бос. INNER JOIN болса, бұл жол мүлдем болмас еді.</p>
+<p>Бұл «ешқашан тапсырыс бермеген клиенттер» сияқты сұрақтарға жауап береді: <code>NULL</code> қалған жолдарды <code>WHERE o.id IS NULL</code> арқылы сүземіз. Жоғарыдағы мысалда тек Бауыржан қалады.</p>
+<h3>LEFT JOIN-нан кейін санау</h3>
+<p>Әр клиенттің тапсырыс санын GROUP BY арқылы есептесек, екі әдістің айырмашылығы көрінеді:</p>
+<table>
+<tr><th>name</th><th>COUNT(*)</th><th>COUNT(o.id)</th></tr>
+<tr><td>Айгерім</td><td>2</td><td>2</td></tr>
+<tr><td>Нұрлан</td><td>1</td><td>1</td></tr>
+<tr><td>Бауыржан</td><td>1 (қате)</td><td>0 (дұрыс)</td></tr>
+</table>
+<p><code>COUNT(*)</code> Бауыржанның NULL жолын да санайды. <code>COUNT(o.id)</code> NULL-ды санамайды, сондықтан дұрыс 0 береді. Топтағанда <code>c.id</code>-ді де қосыңыз: аттары бірдей екі клиент бір топқа бірігіп кетпейді.</p>
+<h3>JOIN түрлері</h3>
+<table>
+<tr><th>Түрі</th><th>Не қалады</th></tr>
+<tr><td>INNER JOIN</td><td>тек екі жақта да сәйкесі барлар</td></tr>
+<tr><td>LEFT JOIN</td><td>сол жақтың бәрі + оң жақтан сәйкестері</td></tr>
+<tr><td>RIGHT JOIN</td><td>оң жақтың бәрі + сол жақтан сәйкестері</td></tr>
+<tr><td>FULL JOIN</td><td>екі жақтың да бәрі</td></tr>
+</table>
+<h3>Бірнеше JOIN</h3>
+<p>JOIN-дарды тізбектеп жазуға болады: тапсырыс → клиент, тапсырыс → позициялар → тауар. Әр жаңа JOIN өз <code>ON</code> шартымен бұрын қосылған кестеге жалғанады:</p>
+<pre><code>SELECT o.id, c.name, p.name AS product, oi.quantity
+FROM orders o
+JOIN customers c    ON c.id = o.customer_id
+JOIN order_items oi ON oi.order_id = o.id
+JOIN products p     ON p.id = oi.product_id;</code></pre>
+<table>
+<tr><th>id</th><th>name</th><th>product</th><th>quantity</th></tr>
+<tr><td>101</td><td>Айгерім</td><td>Ноутбук</td><td>1</td></tr>
+<tr><td>101</td><td>Айгерім</td><td>Құлаққап</td><td>1</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>Кітап: SQL негіздері</td><td>2</td></tr>
+<tr><td>102</td><td>Нұрлан</td><td>Блокнот</td><td>5</td></tr>
+</table>
+<p>Енді бір жолда клиенттің қаласы да, тауардың бағасы да, тапсырыс статусы да бар. Осыдан кейін әдеттегідей <code>WHERE</code>, <code>GROUP BY</code>, <code>ORDER BY</code> жазып, кез келген бағанмен сүзуге, топтауға, сұрыптауға болады.</p>
+<div class="tip"><b>Жиі қателер:</b>
+<ul>
+<li>LEFT JOIN-нан кейін санағанда <code>COUNT(*)</code> емес, <code>COUNT(o.id)</code> жазыңыз. Әйтпесе тапсырысы жоқ клиент 0 емес, 1 болып саналады.</li>
+<li>LEFT JOIN-нан кейін оң жақ кесте бойынша WHERE жазсаңыз (мысалы <code>WHERE o.status = 'delivered'</code>), NULL жолдар өшіп, LEFT JOIN жай INNER JOIN-ға айналады. Мұндай шартты <code>ON ... AND o.status = 'delivered'</code> ішіне жазыңыз.</li>
+<li>Бірнеше JOIN-да <code>ON</code> әлі қосылмаған кестеге сілтесе, қате шығады. Кестелерді байланыс ретімен қосыңыз.</li>
+</ul></div></div>
+<p><a href="../../#lesson/m1-2/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-12">
+<h2>12. Subquery, EXISTS, ANY және ALL</h2>
+<div class="prose">
+<p>«Орташадан қымбат тауарлар қайсы?» деген сұрақты екі қадаммен шешесіз: алдымен орташаны есептеп, қағазға жазып қоясыз, сосын сол санмен салыстырасыз. <b>Subquery</b> — сұрау ішіндегі сұрау. Ол осы «қағаздағы санды» SQL-дің өзіне есептетеді. Subquery әрқашан жақшаға алынады, ал SQL алдымен ішкі сұрауды орындайды.</p>
+<h3>Бір мән қайтаратын subquery</h3>
+<p>Төрт тауар: Құлаққап 25000, Рюкзак 15000, Термос 9000, Блокнот 1200.</p>
+<pre><code>SELECT name, price FROM products
+WHERE price &gt; (SELECT AVG(price) FROM products);</code></pre>
+<p>1-қадам: ішкі сұрау (25000 + 15000 + 9000 + 1200) / 4 = 12550 береді. 2-қадам: сұрау <code>WHERE price &gt; 12550</code> болып орындалады:</p>
+<table>
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Құлаққап</td><td>25000</td></tr>
+<tr><td>Рюкзак</td><td>15000</td></tr>
+</table>
+<p>Неге 12550 санын қолмен жазбаймыз? Деректер өзгергенде орташа да өзгереді, ал subquery әр жолы жаңадан есептейді.</p>
+<h3>Тізім қайтаратын subquery + IN</h3>
+<pre><code>SELECT name FROM customers
+WHERE id IN (SELECT customer_id FROM orders WHERE status = 'cancelled');</code></pre>
+<p>Ішкі сұрау бас тартылған тапсырыстардың клиенттерін береді: <code>(3, 10)</code>. Сыртқы сұрау <code>WHERE id IN (3, 10)</code> болып, Дана мен Арманды шығарады. Ішкі сұраудағы WHERE кез келген шарт бола алады: <code>=</code>, <code>BETWEEN</code>, күн бойынша <code>LIKE</code> т.б.</p>
+<h3>EXISTS</h3>
+<p><code>EXISTS</code> ішкі сұрау кемінде бір жол тапса, ақиқат болады. <code>NOT EXISTS</code> — керісінше:</p>
+<pre><code>SELECT p.name FROM products p
+WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id);</code></pre>
+<p>Мұнда ішкі сұрау <b>әр тауар үшін</b> қайта орындалады, өйткені ол сыртқы <code>p.id</code>-ге сілтейді. Ноутбук (id 1) үшін <code>order_items</code>-та жол табылады → EXISTS ақиқат → NOT EXISTS жалған, Ноутбук шықпайды. Үстел шамы (id 11) ешбір тапсырыста жоқ → ол нәтижеге кіреді. <code>SELECT 1</code> — «не қайтарғаны маңызды емес, тек жол бар ма» дегенді білдіреді.</p>
+<h3>ANY және ALL</h3>
+<p>PostgreSQL сияқты дерекқорларда <code>price &gt; ALL (SELECT ...)</code> «барлығынан үлкен», <code>price &gt; ANY (...)</code> «кемінде біреуінен үлкен» дегенді білдіреді. Біздің браузердегі SQLite оларды қолдамайды, бірақ мағынасы бірдей жазу бар: <code>&gt; ALL</code> = <code>&gt; (SELECT MAX(...))</code>, <code>&gt; ANY</code> = <code>&gt; (SELECT MIN(...))</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Көп мәнді <code>&gt;</code> немесе <code>=</code>-мен салыстыру.</b> Ішкі сұрау тізім қайтарса, <code>IN</code> керек. SQLite бұл жағдайда қате бермей, жай бірінші мәнді алады — нәтиже үнсіз бұрыс болады.</li>
+<li><b>NOT IN және NULL.</b> Ішкі тізімде бір <code>NULL</code> болса, <code>NOT IN</code> бос нәтиже береді. Мұндайда <code>NOT EXISTS</code> қауіпсізірек.</li>
+<li><b>IN ішінде бірнеше баған.</b> <code>id IN (SELECT customer_id, order_date ...)</code> қате — IN үшін ішкі сұрау бір баған қайтаруы керек.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/11">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-13">
+<h2>13. DDL және DML: кесте құру және өзгерту</h2>
+<div class="prose">
+<p>Осы уақытқа дейін деректі тек оқыдық. SQL командалары бірнеше топқа бөлінеді:</p>
+<table>
+<tr><th>Топ</th><th>Командалар</th><th>Не үшін</th></tr>
+<tr><td><b>DQL</b></td><td>SELECT</td><td>деректі оқу</td></tr>
+<tr><td><b>DDL</b></td><td>CREATE, ALTER, DROP, TRUNCATE</td><td>кесте құрылымын анықтау</td></tr>
+<tr><td><b>DML</b></td><td>INSERT, UPDATE, DELETE</td><td>деректі өзгерту</td></tr>
+<tr><td><b>TCL</b></td><td>BEGIN, COMMIT, ROLLBACK, SAVEPOINT</td><td>транзакциялар</td></tr>
+<tr><td><b>DCL</b></td><td>GRANT, REVOKE</td><td>рұқсаттар</td></tr>
+</table>
+<h3>CREATE TABLE және шектеулер (constraints)</h3>
+<pre><code>CREATE TABLE courses (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL UNIQUE,
+  hours INTEGER CHECK (hours &gt; 0),
+  level TEXT DEFAULT 'beginner'
+);</code></pre>
+<p><code>PRIMARY KEY</code> — жолдың бірегей идентификаторы. <code>FOREIGN KEY</code> (<code>REFERENCES</code>) — басқа кестеге сілтеме. <code>NOT NULL</code>, <code>UNIQUE</code>, <code>CHECK</code>, <code>DEFAULT</code> — деректің сапасын қорғайды.</p>
+<h3>INSERT, UPDATE, DELETE</h3>
+<pre><code>INSERT INTO courses (id, title, hours) VALUES (1, 'SQL', 40);
+UPDATE products SET price = price * 1.1 WHERE category = 'Кітаптар';
+DELETE FROM orders WHERE status = 'cancelled';
+ALTER TABLE customers ADD COLUMN phone TEXT;</code></pre>
+<div class="tip">UPDATE мен DELETE-ті <b>WHERE-сіз</b> жазсаңыз, бүкіл кесте өзгереді. Жұмыста алдымен сол WHERE-пен SELECT жасап, қай жолдар өзгеретінін тексеріңіз.</div></div>
+<p><a href="../../#lesson/m1-2/12">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-14">
+<h2>14. Транзакциялар, VIEW және рұқсаттар</h2>
+<div class="prose">
+<h3>Транзакция (TCL)</h3>
+<p>Транзакция — бірге орындалуы керек командалар тобы. Мысалы аударымда бір шоттан ақша алынып, екіншіге түсуі керек: біреуі ғана орындалса, ақша жоғалады.</p>
+<pre><code>BEGIN;
+UPDATE accounts SET balance = balance - 5000 WHERE id = 1;
+UPDATE accounts SET balance = balance + 5000 WHERE id = 2;
+COMMIT;      -- өзгерістерді бекіту</code></pre>
+<p><code>ROLLBACK</code> — транзакция басынан бергі өзгерістерді болдырмау. <code>SAVEPOINT name</code> — ішкі белгі, оған дейін <code>ROLLBACK TO name</code> арқылы қайтуға болады.</p>
+<h3>VIEW</h3>
+<p><code>VIEW</code> — сақталған сұрау. Ол кесте сияқты оқылады, бірақ дерек сақтамайды:</p>
+<pre><code>CREATE VIEW big_orders AS
+SELECT * FROM order_items WHERE quantity &gt;= 3;
+
+SELECT * FROM big_orders;</code></pre>
+<h3>Рұқсаттар (DCL)</h3>
+<p>Серверлік дерекқорларда (PostgreSQL, MySQL) кім не істей алатынын <code>GRANT</code> және <code>REVOKE</code> басқарады:</p>
+<pre><code>GRANT SELECT ON orders TO analyst;
+REVOKE DELETE ON orders FROM analyst;</code></pre>
+<p>SQLite файлдық дерекқор болғандықтан, бұл командалар мұнда жоқ. Аналитикке әдетте тек <code>SELECT</code> рұқсаты беріледі.</p></div>
+<p><a href="../../#lesson/m1-2/13">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-gate">
+<h2>15. Модуль емтиханы: SQL Core</h2>
+<div class="prose">
+<p>Бұл — модульдің қорытынды тексерісі. Тапсырмалар әр сабақтан араласып келеді, кеңес жоқ. Барлығын орындасаңыз, модуль аяқталады және <b>L2 SQL Practitioner</b> деңгейіне жақындайсыз.</p>
+<p>Дерекқор сол: <code>customers</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>.</p>
+<div class="tip">Асықпаңыз: алдымен «Іске қосу» арқылы аралық нәтижені қарап, сосын тексеріңіз.</div></div>
+<p><a href="../../#lesson/m1-2/14">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m1-2">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

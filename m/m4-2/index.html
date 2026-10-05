@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A/B тест және статистикалық қорытынды — M4.2 Inference &amp; A/B Testing | DataJol</title>
+<meta name="description" content="Inference — шағын таңдамадан бүкіл популяция туралы сенімді қорытынды жасау. Модуль соңында A/B тестті жоспарлап, талдап, нәтижесін бизнеске түсінікті шешім…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m4-2/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A/B тест және статистикалық қорытынды — M4.2 Inference &amp; A/B Testing | DataJol">
+<meta property="og:description" content="Inference — шағын таңдамадан бүкіл популяция туралы сенімді қорытынды жасау. Модуль соңында A/B тестті жоспарлап, талдап, нәтижесін бизнеске түсінікті шешім…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m4-2/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M4.2 Inference & A/B Testing","description":"Inference — шағын таңдамадан бүкіл популяция туралы сенімді қорытынды жасау. Модуль соңында A/B тестті жоспарлап, талдап, нәтижесін бизнеске түсінікті шешім…","url":"https://olzhaa.github.io/datajol/m/m4-2/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT30H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 4: DS негізі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M4.2 Inference & A/B Testing","item":"https://olzhaa.github.io/datajol/m/m4-2/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 4: DS негізі / M4.2</nav>
+<article class="reading">
+<p class="eyebrow">M4.2 · 30–40 сағат · 11 сабақ</p>
+<h1>M4.2 Inference &amp; A/B Testing: A/B тест және статистикалық қорытынды</h1>
+<p class="prose">Inference — шағын таңдамадан бүкіл популяция туралы сенімді қорытынды жасау. Модуль соңында A/B тестті жоспарлап, талдап, нәтижесін бизнеске түсінікті шешім ретінде жаза аласыз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m4-2">Тапсырмаларды орындау</a></p>
+<section id="ab-1">
+<h2>1. Таңдамалық таралу және CLT</h2>
+<div class="prose">
+<p>Сіз барлық клиенттің орташа чегін білгіңіз келеді, бірақ қолыңызда тек 30 клиенттің дерегі бар. Осы 30 адамның орташасы — <b>статистика</b> (statistic), ал барлық клиенттің шын орташасы — <b>параметр</b>. Басқа 30 клиентті алсаңыз, орташа сәл басқаша шығады. Таңдамалық орташа — өзі де кездейсоқ шама.</p>
+<h3>Таңдамалық таралу</h3>
+<p>Ойша тәжірибе: популяциядан 30 адамнан тұратын таңдаманы мың рет аламыз да, әр жолы орташаны жазамыз. Сол мың орташаның таралуы <b>таңдамалық таралу</b> (sampling distribution) деп аталады. Inference-тің бәрі осы таралуға сүйенеді.</p>
+<h3>Орталық шектік теорема (CLT)</h3>
+<p><b>Central Limit Theorem</b>: популяция қандай пішінде болса да (тіпті қатты оңға қисайған болса да), таңдама жеткілікті үлкен болғанда (әдетте n ≥ 30) таңдамалық орташалар шамамен <b>қалыпты</b> таралады. Оның:</p>
+<ul>
+<li>орташасы популяция орташасына тең (μ);</li>
+<li>стандартты ауытқуы σ / √n — оны келесі сабақта <b>standard error</b> деп атаймыз.</li>
+</ul>
+<h3>Қадамдап мысал: симуляция</h3>
+<p>Чек сомасы оңға қисайған: көбі кішкентай, кейбірі өте үлкен. Оны <code>random.expovariate</code> арқылы модельдейміз (орташасы 50 мың ₸).</p>
+<pre><code>import random, statistics
+random.seed(1)
+means = []
+for _ in range(1000):
+    sample = [random.expovariate(1 / 50) for _ in range(30)]
+    means.append(statistics.mean(sample))
+print(statistics.mean(means))    # ≈ 50
+print(statistics.stdev(means))   # ≈ 50 / √30 ≈ 9.1</code></pre>
+<ol>
+<li>Бір таңдама: 30 кездейсоқ чек. Оның гистограммасы қисайған.</li>
+<li>Оның орташасын есептеп, тізімге қосамыз. Мұны 1000 рет қайталаймыз.</li>
+<li>1000 орташаның гистограммасын салсаңыз, ол қоңырау тәрізді, симметриялы болады. Бұл — CLT.</li>
+<li>Орташалардың SD-і жеке чектердің SD-інен (≈50) √30 есе кіші.</li>
+</ol>
+<div class="tip">CLT деректің өзін қалыпты етпейді. Ол тек <b>орташалардың</b> таралуы туралы айтады.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>«n = 30 болса, деректің өзі қалыпты» деп ойлау. Жоқ, қалыпты тек орташа.</li>
+<li>Өте қисайған дерекке (мысалы, табыстың 99%-ы 0) n = 30 жеткілікті деп сену. Мұндай деректе n әлдеқайда үлкен болуы керек.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-2">
+<h2>2. Standard error</h2>
+<div class="prose">
+<p>Өткен сабақта таңдамалық орташалардың SD-і σ / √n екенін көрдік. Бұл санның өз аты бар: <b>standard error</b> (SE, стандартты қате). SD деректің шашырауын өлшейді, ал SE <b>бағаның</b> (мысалы, орташаның) шашырауын өлшейді: «басқа таңдама алсам, орташа қаншаға өзгерер еді?»</p>
+<h3>Формулалар</h3>
+<table>
+<tr><th>Баға</th><th>SE</th></tr>
+<tr><td>Орташа</td><td>s / √n (s — таңдама SD)</td></tr>
+<tr><td>Пропорция (конверсия)</td><td>√(p(1 − p) / n)</td></tr>
+</table>
+<p>Пропорция — орташаның ерекше жағдайы: әр пайдаланушы 1 (сатып алды) немесе 0 (алмады). M4.1-дегі Bernoulli таралуын еске түсіріңіз: оның дисперсиясы p(1 − p).</p>
+<h3>Қадамдап мысал</h3>
+<p>Сайтқа 400 адам кірді, 48-і сатып алды.</p>
+<ol>
+<li>Конверсия: p = 48 / 400 = 0.12.</li>
+<li>Дисперсия: p(1 − p) = 0.12 × 0.88 = 0.1056.</li>
+<li>n-ге бөлеміз: 0.1056 / 400 = 0.000264.</li>
+<li>Түбір: SE = √0.000264 ≈ 0.0162, яғни ≈ 1.6 пайыздық пункт.</li>
+</ol>
+<p>Мағынасы: егер дәл осындай 400 адамдық таңдаманы қайта-қайта алсақ, конверсия әдетте 12% ± 1.6 п.п. шамасында ауытқыр еді.</p>
+<pre><code>import math, statistics
+
+def se_mean(xs):
+    return statistics.stdev(xs) / math.sqrt(len(xs))
+
+def se_prop(p, n):
+    return math.sqrt(p * (1 - p) / n)
+
+se_prop(0.12, 400)   # 0.01624...</code></pre>
+<h3>√n заңы</h3>
+<p>SE √n-ге кері пропорционал. Дәлдікті екі есе арттыру (SE-ні екі есе азайту) үшін таңдаманы <b>төрт</b> есе үлкейту керек. Сондықтан A/B тесттер кейде апталап жүреді: кішкентай айырмашылықты көру үшін көп пайдаланушы керек. Мысалы, жоғарыдағы 12% конверсияда n = 1 600 болса (төрт есе көп), SE ≈ 1.6 / 2 ≈ 0.8 п.п.-ке дейін кішірейеді.</p>
+<div class="tip">SD — «клиенттер бір-бірінен қаншалықты өзгеше», SE — «менің орташам қаншалықты дәл». n өскенде SD өзгермейді, ал SE кішірейеді.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Есепте SE-нің орнына SD көрсету (немесе керісінше).</li>
+<li>Пропорцияны пайызбен (12) қойып, √(12 × 88 / 400) есептеу. Формулада үлес (0.12) керек.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-3">
+<h2>3. Сенімділік интервалы (confidence interval)</h2>
+<div class="prose">
+<p>«Конверсия 12%» деген бір сан (point estimate) оның қаншалықты дәл екенін айтпайды. <b>Сенімділік интервалы</b> (confidence interval, CI) бағаның айналасына «қате шегін» қосады: <b>баға ± z × SE</b>.</p>
+<h3>z қайдан шығады</h3>
+<p>CLT бойынша баға шамамен қалыпты таралады. 95% интервал үшін стандартты қалыпты таралудың ортасындағы 95%-ын алатын шекара керек: екі құйрықта 2.5%-дан. Оны <code>NormalDist().inv_cdf</code> береді (cdf-тің кері функциясы: ықтималдық → z).</p>
+<pre><code>from statistics import NormalDist
+NormalDist().inv_cdf(0.975)   # 1.95996...  (95% CI)
+NormalDist().inv_cdf(0.95)    # 1.6449      (90% CI)
+NormalDist().inv_cdf(0.995)   # 2.5758      (99% CI)</code></pre>
+<p>Жалпы: деңгей <code>level</code> болса, <code>z = NormalDist().inv_cdf(1 - (1 - level) / 2)</code>.</p>
+<h3>Қадамдап мысал: пропорция</h3>
+<p>400 келушінің 48-і сатып алды. 95% CI қандай?</p>
+<ol>
+<li>p = 48 / 400 = 0.12.</li>
+<li>SE = √(0.12 × 0.88 / 400) ≈ 0.01625.</li>
+<li>z = 1.96. Қате шегі: 1.96 × 0.01625 ≈ 0.0318.</li>
+<li>CI = 0.12 ± 0.0318 = [0.088; 0.152], яғни 8.8%-дан 15.2%-ға дейін.</li>
+</ol>
+<h3>Орташа үшін</h3>
+<pre><code>m = statistics.mean(xs)
+se = statistics.stdev(xs) / math.sqrt(len(xs))
+low, high = m - z * se, m + z * se</code></pre>
+<p>Кішкентай таңдамада (n &lt; 30) дұрысы z-тің орнына t-таралу мәнін алу. Үлкен n-де екеуі іс жүзінде бірдей; біз стандарт кітапханамен жұмыс істейтіндіктен, z қолданамыз.</p>
+<h3>Дұрыс түсіндіру</h3>
+<p>«95% CI» — <b>әдіс</b> туралы мәлімдеме: осылай құрылған интервалдардың 95%-ы шын параметрді қамтиды. Нақты бір интервал не қамтиды, не қамтымайды. Іс жүзінде «шын конверсия шамамен 8.8–15.2% аралығында деп сенімдіміз» деп айту жеткілікті.</p>
+<div class="tip">Интервал ені √n-ге кері пропорционал. Ені екі есе тар болсын десеңіз, төрт есе көп дерек керек.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>95% CI үшін <code>inv_cdf(0.95)</code> алу. Бұл 90% интервал береді: құйрықтар екеу.</li>
+<li>«Деректің 95%-ы осы интервалда» деп айту. CI орташа туралы, жеке мәндер туралы емес.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-4">
+<h2>4. Гипотезаны тексеру логикасы</h2>
+<div class="prose">
+<p>Жаңа «Сатып алу» батырмасы конверсияны көтерді ме, әлде айырмашылық кездейсоқ па? Гипотезаны тексеру (hypothesis testing) — осы сұраққа жауап берудің стандарт тәсілі. Ол сотқа ұқсайды: «кінәсіз» деп бастаймыз да, дәлел жеткілікті болса ғана үкім шығарамыз.</p>
+<h3>Қадамдар</h3>
+<ol>
+<li><b>H0</b> (нөлдік гипотеза): айырмашылық жоқ, мысалы p_B = p_A.</li>
+<li><b>H1</b> (балама гипотеза): айырмашылық бар, p_B ≠ p_A (екі жақты).</li>
+<li><b>α</b> (significance level) деректі көрмей тұрып таңдалады, әдетте 0.05.</li>
+<li><b>Тест статистикасы</b>: бақыланған айырмашылық H0 кезінде күтілетіннен неше SE-ге алыс. Мысалы, z = (баға − H0 мәні) / SE.</li>
+<li><b>p-value</b>: егер H0 рас болса, дәл осындай немесе одан да шеткі нәтиже алу ықтималдығы.</li>
+<li>p &lt; α болса, H0-ді <b>жоққа шығарамыз</b> (reject). Әйтпесе «H0-ді жоққа шығаруға дәлел жеткіліксіз» дейміз.</li>
+</ol>
+<h3>Қадамдап мысал</h3>
+<p>Тест статистикасы z = 2.1 шықты, α = 0.05, тест екі жақты.</p>
+<ol>
+<li>Бір құйрық: P(Z &gt; 2.1) = 1 − cdf(2.1) ≈ 0.0179.</li>
+<li>Екі жақты болғандықтан, екі құйрықты қосамыз: p ≈ 2 × 0.0179 = 0.0357.</li>
+<li>0.0357 &lt; 0.05, сондықтан H0-ді жоққа шығарамыз: айырмашылық статистикалық маңызды.</li>
+</ol>
+<pre><code>from statistics import NormalDist
+def p_two_sided(z):
+    return 2 * (1 - NormalDist().cdf(abs(z)))
+p_two_sided(2.1)   # 0.0357</code></pre>
+<h3>Екі түрлі қате</h3>
+<table>
+<tr><th></th><th>H0 шын рас</th><th>H0 шын жалған</th></tr>
+<tr><td>H0-ді жоққа шығардық</td><td><b>Type I</b> (false positive), ықтималдығы α</td><td>Дұрыс шешім (power)</td></tr>
+<tr><td>Жоққа шығармадық</td><td>Дұрыс шешім</td><td><b>Type II</b> (false negative), ықтималдығы β</td></tr>
+</table>
+<p>Type I: жұмыс істемейтін өзгерісті «жеңді» деп шығару. Type II: шын жақсартуды байқамай қалу. Power = 1 − β.</p>
+<div class="tip">p-value — «H0 рас болуының ықтималдығы» <b>емес</b>. Ол H0 рас деп болжағандағы деректің ықтималдығы.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>p = 0.2 болса «әсер жоқ екені дәлелденді» деу. Дұрысы: дәлел жеткіліксіз.</li>
+<li>α-ны нәтижені көргеннен кейін таңдау (0.05 болмады, 0.1 алайық).</li>
+<li>Екі жақты тестте құйрықты екіге көбейтуді ұмыту.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-5">
+<h2>5. Екі пропорцияның z-тесті: A/B тесттің өзегі</h2>
+<div class="prose">
+<p>Классикалық A/B тест: пайдаланушылар кездейсоқ екі топқа бөлінеді. A — бұрынғы нұсқа (control), B — жаңа нұсқа (treatment). Метрика — конверсия, яғни пропорция. Сұрақ: p_B мен p_A айырмашылығы кездейсоқтықпен түсіндіріле ме?</p>
+<h3>Формула</h3>
+<ul>
+<li>Конверсиялар: p_A = x_A / n_A, p_B = x_B / n_B.</li>
+<li>H0 кезінде екі топтың конверсиясы бірдей, сондықтан оны біріктіріп бағалаймыз (<b>pooled</b>): p = (x_A + x_B) / (n_A + n_B).</li>
+<li>SE = √(p(1 − p) × (1/n_A + 1/n_B)).</li>
+<li>z = (p_B − p_A) / SE, p-value = 2 × (1 − cdf(|z|)).</li>
+</ul>
+<h3>Қадамдап мысал</h3>
+<p>A: 2 000 адам, 200 сатып алды. B: 2 000 адам, 250 сатып алды.</p>
+<ol>
+<li>p_A = 0.10, p_B = 0.125. Айырмашылық: 2.5 п.п.</li>
+<li>Pooled: p = 450 / 4 000 = 0.1125.</li>
+<li>SE = √(0.1125 × 0.8875 × (1/2000 + 1/2000)) = √(0.09984 × 0.001) ≈ 0.00999.</li>
+<li>z = 0.025 / 0.00999 ≈ 2.50.</li>
+<li>p = 2 × (1 − cdf(2.50)) ≈ 0.0124 &lt; 0.05. H0 жоққа шығарылады.</li>
+</ol>
+<pre><code>import math
+from statistics import NormalDist
+
+def two_prop_z(x_a, n_a, x_b, n_b):
+    p_a, p_b = x_a / n_a, x_b / n_b
+    p = (x_a + x_b) / (n_a + n_b)
+    se = math.sqrt(p * (1 - p) * (1 / n_a + 1 / n_b))
+    z = (p_b - p_a) / se
+    return z, 2 * (1 - NormalDist().cdf(abs(z)))
+
+two_prop_z(200, 2000, 250, 2000)   # (2.50, 0.0124)</code></pre>
+<h3>Қашан жарамды</h3>
+<p>Тест CLT-ке сүйенеді, сондықтан әр топта сатып алғандар да, алмағандар да жеткілікті болуы керек (әдетте әрқайсысы кемінде 10). Пайдаланушылар бір-біріне тәуелсіз болуы керек: бір адам екі топқа түспейді.</p>
+<div class="tip">z оң болса, B жақсы; теріс болса, A жақсы. p-value бағытты айтпайды, сондықтан айырмашылықтың белгісін әрқашан қараңыз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Пайдаланушы емес, <b>сессия</b> немесе көрсетілім санап, n-ді жасанды үлкейту. Бір адамның сессиялары тәуелсіз емес.</li>
+<li>Pooled SE-нің орнына әр топтың p-сын бөлек ауыстырып, формуланы араластыру. Тест үшін pooled, ал айырма интервалы үшін unpooled SE (10-сабақ).</li>
+<li>p = 0.06 болса «B нашар» деп шешу. Бұл тек дәлелдің жеткіліксіздігі.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-6">
+<h2>6. Орташаларды салыстыру: Welch t-тесті</h2>
+<div class="prose">
+<p>Метрика әрқашан конверсия емес. Көбіне <b>орташа</b> салыстырамыз: бір пайдаланушыға табыс (ARPU), сайттағы уақыт, чек сомасы. Мұнда екі таңдаманың t-тесті қолданылады. Ең қауіпсіз нұсқасы — <b>Welch t-тесті</b>: ол топтардың дисперсиясы бірдей деп болжамайды.</p>
+<h3>Формула</h3>
+<p>t = (m_B − m_A) / √(s_A² / n_A + s_B² / n_B)</p>
+<p>Мұндағы m — орташа, s² — таңдама дисперсиясы (<code>statistics.variance</code>), n — топ көлемі. Бөлімдегі түбір — айырманың standard error-ы: әр топтың SE²-ын қосамыз.</p>
+<h3>p-value туралы</h3>
+<p>Дәл p-value t-таралудан алынады, оның еркіндік дәрежесі (Welch–Satterthwaite формуласы) бар. Стандарт кітапханада t-таралу жоқ. Бірақ n үлкен болғанда (әр топта жүздеген адам, A/B тесттерде әдетте мыңдаған) t-таралу қалыпты таралуға өте жақын. Сондықтан біз <b>қалыпты жуықтауды</b> қолданамыз: p = 2 × (1 − cdf(|t|)). Шағын топтарда (n &lt; 30) бұл p-value-ды сәл кем көрсетеді, ол жағдайда <code>scipy.stats.ttest_ind(a, b, equal_var=False)</code> қолданыңыз.</p>
+<h3>Қадамдап мысал</h3>
+<p>Сайттағы уақыт (мин): A = [5, 7, 6, 8, 4], B = [9, 7, 8, 10, 6].</p>
+<ol>
+<li>m_A = 6, m_B = 8. Айырма: 2 мин.</li>
+<li>s_A² = 2.5, s_B² = 2.5 (<code>statistics.variance</code>).</li>
+<li>SE = √(2.5/5 + 2.5/5) = √1 = 1.</li>
+<li>t = 2 / 1 = 2.0.</li>
+<li>Қалыпты жуықтау: p ≈ 0.046. Бірақ n = 5 өте кіші, дәл t-тест p ≈ 0.08 береді. Шағын таңдамада жуықтауға сенбеңіз.</li>
+</ol>
+<pre><code>import math, statistics
+from statistics import NormalDist
+
+def welch_t(a, b):
+    se = math.sqrt(statistics.variance(a) / len(a) + statistics.variance(b) / len(b))
+    t = (statistics.mean(b) - statistics.mean(a)) / se
+    p = 2 * (1 - NormalDist().cdf(abs(t)))   # үлкен n үшін жуықтау
+    return t, p</code></pre>
+<div class="tip">Табыс метрикасы қатты оңға қисайған: көбі 0, кейбірі өте үлкен. CLT орташаларға жұмыс істейді, бірақ мұндай деректе n үлкен болуы керек және бір «кит» клиент нәтижені бұзуы мүмкін. Шеткі мәндерді алдын ала тексеріңіз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>pvariance</code> (n-ге бөлу) қолдану. Таңдама дисперсиясы керек.</li>
+<li>Бөлімде SE-лерді квадратқа шығармай қосу: √(SE_A² + SE_B²), SE_A + SE_B емес.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-7">
+<h2>7. Power және таңдама көлемі</h2>
+<div class="prose">
+<p>Тестті бастамас бұрын «қанша пайдаланушы керек?» деп сұрау керек. Аз болса, шын жақсартуды байқамай қаламыз (Type II қате). Көп болса, уақыт пен трафикті босқа жұмсаймыз.</p>
+<h3>Төрт кіріс</h3>
+<ul>
+<li><b>Baseline</b> p₁ — қазіргі конверсия, мысалы 10%.</li>
+<li><b>MDE</b> (minimum detectable effect) — байқағымыз келетін ең кіші айырма. Абсолют (10% → 12%, яғни +2 п.п.) немесе салыстырмалы (+20%) болуы мүмкін; біз абсолют қолданамыз.</li>
+<li><b>α</b> — Type I қате деңгейі, 0.05.</li>
+<li><b>Power</b> = 1 − β — шын эффект болса, оны табу ықтималдығы, әдетте 0.8.</li>
+</ul>
+<h3>Формула (бір топқа)</h3>
+<p>n = (z_{1−α/2} + z_{power})² × (p₁(1 − p₁) + p₂(1 − p₂)) / MDE², мұндағы p₂ = p₁ + MDE. Нәтижені жоғары қарай бүтінге дөңгелектейміз (<code>math.ceil</code>). Бұл кең тараған жуықтау; онлайн калькуляторлар сәл басқа сан беруі мүмкін.</p>
+<h3>Қадамдап мысал</h3>
+<p>Baseline 10%, MDE = 2 п.п., α = 0.05, power = 0.8.</p>
+<ol>
+<li>z_{1−α/2} = inv_cdf(0.975) ≈ 1.960, z_{power} = inv_cdf(0.8) ≈ 0.842. Қосындының квадраты: 2.802² ≈ 7.849.</li>
+<li>p₂ = 0.12. Дисперсиялар: 0.1 × 0.9 + 0.12 × 0.88 = 0.09 + 0.1056 = 0.1956.</li>
+<li>MDE² = 0.02² = 0.0004.</li>
+<li>n = 7.849 × 0.1956 / 0.0004 ≈ 3 838.2 → <b>3 839</b> адам әр топқа, барлығы ≈ 7 700.</li>
+</ol>
+<pre><code>import math
+from statistics import NormalDist
+
+def sample_size(p1, mde, alpha=0.05, power=0.8):
+    p2 = p1 + mde
+    z_a = NormalDist().inv_cdf(1 - alpha / 2)
+    z_b = NormalDist().inv_cdf(power)
+    var = p1 * (1 - p1) + p2 * (1 - p2)
+    return math.ceil((z_a + z_b) ** 2 * var / mde ** 2)</code></pre>
+<h3>Интуиция</h3>
+<p>n MDE²-қа кері пропорционал: эффектті екі есе кіші (1 п.п.) байқау үшін шамамен <b>төрт</b> есе көп адам керек. Күніне 1 000 жаңа пайдаланушы болса, 2 п.п. үшін ≈ 8 күн, 1 п.п. үшін ≈ 1 ай жүреді. MDE-ні бизнес шешеді: «қандай өсім біз үшін маңызды?»</p>
+<div class="tip">Тест ұзақтығын алдын ала белгілеп, кемінде бір толық апта (ал жақсысы — екі) жүргізіңіз: демалыс күндері пайдаланушылар өзгеше әрекет етеді.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Салыстырмалы MDE-ні (20%) абсолют (0.20) деп формулаға қою.</li>
+<li>Бір топтың n-ін барлық тестке керек сан деп ойлау. Екіге көбейтіңіз.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-8">
+<h2>8. A/B тест дизайны және тұзақтар</h2>
+<div class="prose">
+<p>Формула дұрыс болғанымен, тест нашар жоспарланса, нәтиже алдамшы болады. Ең жиі кездесетін тұзақтар:</p>
+<h3>1. Рандомизация бірлігі</h3>
+<p>Әдетте <b>пайдаланушы</b> кездейсоқ бөлінеді (user_id бойынша), сессия немесе бет көрсетілімі емес. Әйтпесе бір адам екі нұсқаны да көреді, ал бақылаулар тәуелсіз болмайды. Талдау бірлігі рандомизация бірлігімен сәйкес болуы керек.</p>
+<h3>2. Peeking (ерте қарау)</h3>
+<p>Нәтижені күн сайын қарап, p &lt; 0.05 болған сәтте тоқтату — Type I қатені 5%-дан әлдеқайда жоғарылатады: кездейсоқ тербеліс уақытша шекарадан өтуі мүмкін. Шешім: n-ді алдын ала есептеп, соған жеткенде ғана шешім қабылдау (немесе арнайы sequential әдістер).</p>
+<h3>3. Көп салыстыру</h3>
+<p>Бес метриканы немесе бес нұсқаны α = 0.05-пен тексерсеңіз, кем дегенде біреуінің кездейсоқ «маңызды» болу ықтималдығы ≈ 1 − 0.95⁵ ≈ 23%. Ең қарапайым түзету — <b>Bonferroni</b>: әр тест үшін α / m. 5 метрика: 0.05 / 5 = 0.01. Тағы бір жол — бір негізгі метриканы алдын ала таңдау.</p>
+<h3>4. Novelty effect</h3>
+<p>Жаңа дизайн алғашқы күндері «жаңалық» болғандықтан ғана көп басылады, сосын әсер жоғалады. Эффектті күндер бойынша қарап, тестті жеткілікті ұзақ жүргізіңіз.</p>
+<h3>5. SRM (sample ratio mismatch)</h3>
+<p>50/50 жоспарланса, топ көлемдері шамамен тең болуы керек. Айырма кездейсоқтықпен түсіндірілмесе — бөлуде қате бар (бот сүзгісі, redirect, кэш), нәтижеге сенуге болмайды.</p>
+<h3>Қадамдап мысал: SRM тексерісі</h3>
+<p>A: 5 120, B: 4 880, барлығы N = 10 000.</p>
+<ol>
+<li>H0 кезінде A-ның саны биномдық: орташа N/2 = 5 000, SD = √(N × 0.5 × 0.5) = 50.</li>
+<li>z = (5 120 − 5 000) / 50 = 2.4.</li>
+<li>p = 2 × (1 − cdf(2.4)) ≈ 0.016.</li>
+<li>SRM үшін қатаң шек қолданылады (көбіне p &lt; 0.001). Мұнда 0.016 — ескерту белгісі: бөлуді тексеріңіз. 100 000 адамда 50 600 / 49 400 болса, p ≈ 0.0001 — анық SRM.</li>
+</ol>
+<div class="tip">SRM — талдаудың <b>бірінші</b> қадамы. Топ көлемдері дұрыс болмаса, конверсияны салыстыруға мағына жоқ.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Тестті «жеңіс» көрінген күні тоқтату.</li>
+<li>20 сегментті қарап, біреуі маңызды болса, соны «нәтиже» деп жариялау.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-9">
+<h2>9. A/B тестті SQL-де талдау</h2>
+<div class="prose">
+<p>Нақты жұмыста тест деректері дерекқорда жатады: бір кестеде кім қай нұсқаға түскені (<code>assignments</code>), екіншісінде кім сатып алғаны (<code>conversions</code>). Конверсия кестесінде тек сатып алғандар бар, сондықтан негізгі қадам — <b>LEFT JOIN</b>: сатып алмаған пайдаланушылар да есепке кіруі керек.</p>
+<h3>Негізгі сұрау</h3>
+<pre><code>SELECT a.variant,
+  COUNT(*) AS users,
+  COUNT(c.user_id) AS buyers,
+  ROUND(COUNT(c.user_id) * 1.0 / COUNT(*), 3) AS cr
+FROM assignments a
+LEFT JOIN conversions c ON c.user_id = a.user_id
+GROUP BY a.variant;</code></pre>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li><code>LEFT JOIN</code> әр пайдаланушыны сақтайды. Сатып алмағандардың <code>c.user_id</code> және <code>c.revenue</code> бағандары <code>NULL</code>.</li>
+<li><code>COUNT(*)</code> барлық жолды санайды (топ көлемі), ал <code>COUNT(c.user_id)</code> тек NULL емесін (сатып алғандар).</li>
+<li><code>* 1.0</code> бүтін санды бөлуден (SQLite-та 6 / 32 = 0) құтқарады.</li>
+<li>Біздің деректе: A — 6 / 32 ≈ 0.188, B — 10 / 32 ≈ 0.313.</li>
+<li>Осы сандарды Python-дағы <code>two_prop_z(6, 32, 10, 32)</code>-ге береміз: z ≈ 1.15, p ≈ 0.25. 12 п.п. айырма әсерлі көрінеді, бірақ 64 адаммен бұл кездейсоқтық болуы әбден мүмкін.</li>
+</ol>
+<h3>Табыс метрикасы</h3>
+<p>Бір пайдаланушыға табыс (revenue per user) барлық пайдаланушыға бөлінеді, тек сатып алғандарға емес. NULL табысты 0-ге айналдыру үшін <code>COALESCE(c.revenue, 0)</code>.</p>
+<pre><code>SUM(COALESCE(c.revenue, 0)) * 1.0 / COUNT(*)</code></pre>
+<h3>Сегменттер</h3>
+<p><code>GROUP BY a.variant, a.device</code> әр құрылғыдағы эффектті көрсетеді. Есте сақтаңыз: сегменттерді көп қарау — көп салыстыру мәселесі (8-сабақ). Сегмент нәтижесі гипотеза ғана, дәлел емес.</p>
+<div class="tip">SQL санап береді, ал статистикалық тестті Python-да (немесе SQL-дегі формуламен) жасайсыз. Әуелі SRM, сосын негізгі метрика, соңында сегменттер.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>INNER JOIN</code> қолдану: сатып алмағандар жоғалып, конверсия 100% болып шығады.</li>
+<li>Revenue per user-ды <code>AVG(c.revenue)</code> деп есептеу: бұл тек сатып алғандардың орташа чегі.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-10">
+<h2>10. Практикалық маңыздылық және шешім жазу</h2>
+<div class="prose">
+<p>«p &lt; 0.05» — шешімнің соңы емес, басы. <b>Статистикалық маңыздылық</b> «айырма кездейсоқ емес шығар» дейді. <b>Практикалық маңыздылық</b> «айырма бизнеске маңызды ма?» деп сұрайды. Миллиондаған пайдаланушыда 0.05 п.п. өсім де p &lt; 0.001 береді, бірақ ол әзірлеу шығынын ақтамауы мүмкін.</p>
+<h3>Айырманың сенімділік интервалы</h3>
+<p>p-value-дан гөрі ақпараттырақ — <b>p_B − p_A айырмасының CI-ы</b>. Мұнда unpooled SE қолданылады (H0-ді болжамаймыз):</p>
+<p>SE = √(p_A(1 − p_A)/n_A + p_B(1 − p_B)/n_B), CI = (p_B − p_A) ± z × SE.</p>
+<h3>Қадамдап мысал</h3>
+<p>A: 200 / 2 000, B: 250 / 2 000. Бизнес алдын ала айтқан: «1 п.п.-тен аз өсім енгізуге тұрмайды».</p>
+<ol>
+<li>Айырма: 0.125 − 0.10 = 0.025 (2.5 п.п.).</li>
+<li>SE = √(0.1 × 0.9 / 2000 + 0.125 × 0.875 / 2000) = √(0.000045 + 0.0000547) ≈ 0.00998.</li>
+<li>95% CI = 0.025 ± 1.96 × 0.00998 = [0.0054; 0.0446], яғни +0.5 п.п.-тен +4.5 п.п.-ке дейін.</li>
+<li>Интервал 0-ді қамтымайды — статистикалық маңызды. Бірақ төменгі шекара (0.5 п.п.) біздің 1 п.п. табалдырығынан төмен: эффект кішкентай болуы да мүмкін.</li>
+</ol>
+<table>
+<tr><th>CI жағдайы</th><th>Шешім</th></tr>
+<tr><td>Толығымен табалдырықтан жоғары</td><td>Енгіземіз</td></tr>
+<tr><td>0-ден жоғары, бірақ табалдырықты қиып өтеді</td><td>Енгізуге болады, тәуекелді айтамыз немесе тестті ұзартамыз</td></tr>
+<tr><td>0-ді қамтиды, тар</td><td>Эффект жоқтың қасы, енгізбейміз</td></tr>
+<tr><td>0-ді қамтиды, кең</td><td>Дерек жеткіліксіз, қорытынды жоқ</td></tr>
+</table>
+<h3>Шешімді жазу</h3>
+<p>Жақсы қорытынды бірінші сөйлемде шешімді айтады, сосын: эффект пен CI («+2.5 п.п., 95% CI +0.5…+4.5»), p-value, тексерістер (SRM, ұзақтығы, peeking жоқ), guardrail метрикалар (бас тарту, қайтарулар), тәуекелдер және келесі қадам.</p>
+<div class="tip">Менеджерге «p = 0.012» емес, «B конверсияны шамамен 2.5 п.п. көтереді, айына ≈ X ₸ қосымша табыс» деп жазыңыз.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Тек p-value беріп, эффекттің көлемін айтпау.</li>
+<li>Маңызды емес нәтижені «B жұмыс істемейді» деп жазу.</li>
+</ul></div>
+<p><a href="../../#lesson/m4-2/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ab-gate">
+<h2>11. Модуль емтиханы: Inference &amp; A/B Testing</h2>
+<div class="prose">
+<p>Қорытынды тексеріс. Python тапсырмаларында тек стандарт кітапхана (<code>math</code>, <code>statistics</code>, оның ішінде <code>NormalDist</code>) қолжетімді. Кеңестер жоқ: модульдегі формулаларға сүйеніңіз.</p></div>
+<p><a href="../../#lesson/m4-2/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m4-2">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

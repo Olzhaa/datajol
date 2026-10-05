@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ықтималдық теориясы — M4.1 Probability | DataJol</title>
+<meta name="description" content="Ықтималдық — белгісіздікті санмен сипаттау тілі. Монета мен сүйектен бастап, конверсия, алаяқтық дабылы, сағаттағы тапсырыс саны және промоның пайдасы сияқты…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m4-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ықтималдық теориясы — M4.1 Probability | DataJol">
+<meta property="og:description" content="Ықтималдық — белгісіздікті санмен сипаттау тілі. Монета мен сүйектен бастап, конверсия, алаяқтық дабылы, сағаттағы тапсырыс саны және промоның пайдасы сияқты…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m4-1/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M4.1 Probability","description":"Ықтималдық — белгісіздікті санмен сипаттау тілі. Монета мен сүйектен бастап, конверсия, алаяқтық дабылы, сағаттағы тапсырыс саны және промоның пайдасы сияқты…","url":"https://olzhaa.github.io/datajol/m/m4-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 4: DS негізі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M4.1 Probability","item":"https://olzhaa.github.io/datajol/m/m4-1/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 4: DS негізі / M4.1</nav>
+<article class="reading">
+<p class="eyebrow">M4.1 · 20–30 сағат · 11 сабақ</p>
+<h1>M4.1 Probability: Ықтималдық теориясы</h1>
+<p class="prose">Ықтималдық — белгісіздікті санмен сипаттау тілі. Монета мен сүйектен бастап, конверсия, алаяқтық дабылы, сағаттағы тапсырыс саны және промоның пайдасы сияқты бизнес сұрақтарына дейін барамыз: әр формуланы алдымен қолмен, сосын Python-да есептейсіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m4-1">Тапсырмаларды орындау</a></p>
+<section id="pr-1">
+<h2>1. Ықтималдық негіздері және sample space</h2>
+<div class="prose">
+<p><b>Ықтималдық</b> (probability) — оқиғаның болу мүмкіндігін 0-ден 1-ге дейінгі санмен өлшеу. 0 — ешқашан болмайды, 1 — міндетті түрде болады, 0.5 — екі жағдайдың бірі.</p>
+<p>Үш негізгі ұғым:</p>
+<ul>
+<li><b>Тәжірибе</b> (experiment): нәтижесі алдын ала белгісіз әрекет. Сүйек лақтыру, клиенттің сайтқа кіруі.</li>
+<li><b>Sample space</b> (нәтижелер кеңістігі, Ω): барлық мүмкін нәтижелер жиыны. Бір сүйек үшін Ω = {1, 2, 3, 4, 5, 6}.</li>
+<li><b>Оқиға</b> (event): Ω-ның бір бөлігі. «Жұп сан түсті» = {2, 4, 6}.</li>
+</ul>
+<p>Барлық нәтиже <b>бірдей ықтимал</b> болса, классикалық формула жұмыс істейді:</p>
+<pre><code>P(A) = қолайлы нәтижелер саны / барлық нәтижелер саны</code></pre>
+<h3>Қадамдап мысал</h3>
+<p>Екі сүйек лақтырамыз. Қосынды 7 болу ықтималдығы қандай?</p>
+<ol>
+<li>Sample space: бірінші сүйек 6 мән, екіншісі 6 мән, барлығы 6 × 6 = 36 жұп.</li>
+<li>Қолайлы жұптар: (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) — 6 жұп.</li>
+<li>P(қосынды = 7) = 6 / 36 = 1/6 ≈ 0.167.</li>
+</ol>
+<p>Python-да sample space-ті <code>itertools.product</code> құрады, ал <code>fractions.Fraction</code> бөлшекті дәл сақтайды:</p>
+<pre><code>from itertools import product
+from fractions import Fraction
+omega = list(product(range(1, 7), repeat=2))   # 36 жұп
+fav = [w for w in omega if sum(w) == 7]
+print(Fraction(len(fav), len(omega)))           # 1/6</code></pre>
+<h3>Frequentist көзқарас</h3>
+<p>Нәтижелер бірдей ықтимал болмаса ше? Мысалы, «клиент сатып алады ма?» Онда ықтималдықты <b>жиілік</b> ретінде бағалаймыз: 10 000 келушінің 320-сы сатып алса, P(сатып алу) ≈ 320 / 10 000 = 0.032. Бұл <b>frequentist</b> (жиіліктік) көзқарас: ықтималдық — тәжірибе көп рет қайталанғанда оқиғаның үлесі.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) (3,4) мен (4,3)-ті бір нәтиже деп санау: сүйектер әртүрлі, сондықтан екеуі бөлек. (2) Нәтижелер бірдей ықтимал емес жерде классикалық формуланы қолдану: «ертең жаңбыр жауады не жаумайды» — бұл 50/50 дегенді білдірмейді. (3) Ықтималдықты 1-ден үлкен не теріс шығару: бұл есептеуде қате бар деген белгі.</div></div>
+<p><a href="../../#lesson/m4-1/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-2">
+<h2>2. random модулімен симуляция және үлкен сандар заңы</h2>
+<div class="prose">
+<p>Кейде ықтималдықты формуламен шығару қиын. Онда компьютерге тәжірибені мың рет «ойнатып», жиілікті санаймыз. Бұл <b>симуляция</b> (Monte Carlo әдісі).</p>
+<pre><code>import random
+random.seed(42)              # нәтиже қайталансын
+random.random()              # 0 ≤ x &lt; 1 кездейсоқ сан
+random.randint(1, 6)         # сүйек: 1..6
+random.choice(["H", "T"])    # монета</code></pre>
+<p><code>random.seed</code> кездейсоқ сандар тізбегін бекітеді: бірдей seed — бірдей нәтиже. Талдауды басқа адам қайталай алуы үшін бұл маңызды.</p>
+<h3>Қадамдап мысал</h3>
+<p>Сұрақ: монетаны лақтырғанда «елтаңба» үлесі 0.5-ке жақындай ма?</p>
+<pre><code>import random
+random.seed(1)
+def share_heads(n):
+    heads = 0
+    for _ in range(n):
+        if random.random() &lt; 0.5:   # 50% мүмкіндікпен "елтаңба"
+            heads += 1
+    return heads / n
+
+for n in (10, 100, 1000, 100000):
+    print(n, share_heads(n))</code></pre>
+<ol>
+<li><code>random.random() &lt; 0.5</code> — «p ықтималдықпен иә» дегеннің стандартты тәсілі. p = 0.03 болса, <code>&lt; 0.03</code>.</li>
+<li>Әр «иә» болғанда санауышты арттырамыз.</li>
+<li>Соңында санауышты n-ге бөліп, жиілікті аламыз.</li>
+</ol>
+<p>Нәтиже шамамен мынадай: n = 10 кезінде 0.3 не 0.7 сияқты «секірмелі» сан, n = 100 000 кезінде 0.50x. Бұл — <b>үлкен сандар заңы</b> (law of large numbers): тәжірибе саны өскен сайын жиілік шын ықтималдыққа жақындайды.</p>
+<h3>Бизнесте неге маңызды</h3>
+<p>Бір күнде 20 келуші болып, 3-еуі сатып алса, конверсия 15% деп айтуға асықпаңыз: аз дерекке жиілік қатты ауытқиды. 20 000 келушіде бағаға сенуге болады. Келесі модульде (A/B testing) осы «қаншалықты сенімдіміз» деген сұраққа сан береміз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Seed қоймау: әр іске қосқанда басқа нәтиже шығады да, қатені табу қиындайды. (2) Цикл ішінде <code>random.seed</code> шақыру: әр қадамда бір сан қайталанады. (3) «Құмар ойыншы қатесі» (gambler fallacy): 5 рет қатарынан «елтаңба» түссе, келесісі «сан» болуға «міндетті» емес. Монетаның жады жоқ, үлкен сандар заңы ұзақ мерзімде ғана жұмыс істейді.</div></div>
+<p><a href="../../#lesson/m4-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-3">
+<h2>3. Қосу ережесі және толықтауыш</h2>
+<div class="prose">
+<p>Оқиғаларды біріктіргенде екі сұрақ жиі туады: «A <b>немесе</b> B» және «A <b>емес</b>».</p>
+<h3>Толықтауыш (complement)</h3>
+<pre><code>P(A емес) = 1 − P(A)</code></pre>
+<p>Клиенттің кетіп қалу ықтималдығы 0.2 болса, қалу ықтималдығы 0.8. Қарапайым, бірақ «кемінде бір рет» сұрақтарында өте күшті құрал.</p>
+<h3>Қосу ережесі</h3>
+<pre><code>P(A немесе B) = P(A) + P(B) − P(A және B)</code></pre>
+<p>Неге шегереміз? Екі оқиғаға да кіретін нәтижелер екі рет саналады. Егер A мен B бір уақытта болмаса (<b>mutually exclusive</b>), P(A және B) = 0, ережесі жай қосындыға айналады.</p>
+<h3>Қадамдап мысал</h3>
+<p>Клиенттер базасы: 40%-ы мобильді қосымшаны қолданады (M), 30%-ы email ашады (E), 12%-ы екеуін де жасайды.</p>
+<table>
+<tr><th>Сұрақ</th><th>Есептеу</th><th>Жауап</th></tr>
+<tr><td>M немесе E</td><td>0.40 + 0.30 − 0.12</td><td>0.58</td></tr>
+<tr><td>Екеуін де жасамайды</td><td>1 − 0.58</td><td>0.42</td></tr>
+<tr><td>Тек M (E жоқ)</td><td>0.40 − 0.12</td><td>0.28</td></tr>
+</table>
+<p>Яғни клиенттердің 42%-ына екі арнаның ешқайсысымен жете алмаймыз. SMS сияқты үшінші арна сол үшін керек.</p>
+<h3>«Кемінде бір» трюгі</h3>
+<p>Сайтта 5 сервер бар, әрқайсысы бір күнде 2% ықтималдықпен істен шығады (бір-біріне тәуелсіз). Кемінде біреуінің істен шығу ықтималдығы?</p>
+<ol>
+<li>Тікелей санау қиын: біреуі, екеуі, ... бесеуі.</li>
+<li>Толықтауышын аламыз: «ешқайсысы істен шықпайды» = 0.98 × 0.98 × 0.98 × 0.98 × 0.98 = 0.98⁵ ≈ 0.904.</li>
+<li>P(кемінде бір) = 1 − 0.904 ≈ 0.096, шамамен 10%.</li>
+</ol>
+<p>Бір серверге 2% аз көрінеді, бірақ бесеуіне бірге — 10%. Тәуелсіздік ұғымын келесі сабақта толығырақ қараймыз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Қиылысуды шегермеу: 0.40 + 0.30 = 0.70 — қате, ортақ 12% екі рет саналды. (2) «Кемінде бір» үшін ықтималдықтарды жай қосу: 5 × 0.02 = 0.10 жуық болғанымен, 60 сервер болса, 1.2 шығады, ал ықтималдық 1-ден аспайды. (3) «Тәуелсіз» мен «mutually exclusive»-ті шатастыру: бұлар мүлде басқа ұғымдар.</div></div>
+<p><a href="../../#lesson/m4-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-4">
+<h2>4. Шартты ықтималдық және тәуелсіздік</h2>
+<div class="prose">
+<p><b>Шартты ықтималдық</b> P(A | B) — «B болды деп білгенде, A-ның ықтималдығы». Тік сызық «шарт бойынша» деп оқылады.</p>
+<pre><code>P(A | B) = P(A және B) / P(B)</code></pre>
+<p>Мағынасы: біз енді бүкіл деректі емес, тек B болған жолдарды қараймыз, және олардың ішіндегі A үлесін санаймыз.</p>
+<h3>Қадамдап мысал: 2×2 кесте</h3>
+<p>Дүкен 2 000 клиенттің 1 000-ына промо-email жіберді. Бір аптадан кейінгі нәтиже:</p>
+<table>
+<tr><th></th><th>Сатып алды</th><th>Алмады</th><th>Барлығы</th></tr>
+<tr><td>Email алды</td><td>120</td><td>880</td><td>1 000</td></tr>
+<tr><td>Email алмады</td><td>60</td><td>940</td><td>1 000</td></tr>
+<tr><td><b>Барлығы</b></td><td>180</td><td>1 820</td><td>2 000</td></tr>
+</table>
+<ol>
+<li>P(сатып алу) = 180 / 2 000 = 0.09.</li>
+<li>P(сатып алу | email) = 120 / 1 000 = 0.12. Тек «Email алды» жолын қараймыз.</li>
+<li>P(сатып алу | email жоқ) = 60 / 1 000 = 0.06.</li>
+<li>Формуламен тексеру: P(сатып алу және email) = 120 / 2 000 = 0.06, P(email) = 0.5, 0.06 / 0.5 = 0.12. Сәйкес.</li>
+</ol>
+<h3>Тәуелсіздік</h3>
+<p>A мен B <b>тәуелсіз</b>, егер B туралы білу A-ның ықтималдығын өзгертпесе:</p>
+<pre><code>P(A | B) = P(A)   немесе   P(A және B) = P(A) × P(B)</code></pre>
+<p>Біздің мысалда P(сатып алу | email) = 0.12 ≠ 0.09, сондықтан сатып алу email-ге тәуелді. Монеталарды бірнеше рет лақтыру — тәуелсіздіктің классикалық мысалы.</p>
+<p>Python-да кестені сөздікпен сақтау ыңғайлы:</p>
+<pre><code>t = {("email", "buy"): 120, ("email", "no"): 880,
+     ("none", "buy"): 60,   ("none", "no"): 940}
+row = t[("email", "buy")] + t[("email", "no")]
+print(t[("email", "buy")] / row)   # 0.12</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) P(A | B) мен P(B | A)-ны шатастыру: P(email | сатып алу) = 120 / 180 ≈ 0.67, бұл 0.12 емес. (2) Бөлімге бүкіл деректі қою: шартты ықтималдықта бөлім — шарттың (B) жол саны. (3) Корреляциядағыдай, тәуелділік себеп емес: email-ді белсенді клиенттерге ғана жібердік пе, жоқ па — соны тексеріңіз.</div></div>
+<p><a href="../../#lesson/m4-1/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-5">
+<h2>5. Bayes теоремасы және base rate</h2>
+<div class="prose">
+<p>Bayes теоремасы шартты ықтималдықты «аударады»: P(B | A)-ны білсек, P(A | B)-ны табады.</p>
+<pre><code>P(A | B) = P(B | A) × P(A) / P(B)</code></pre>
+<p>Ең жиі қолданысы: «тест (немесе модель) оң нәтиже берді — шынымен ауру (алаяқ) ма?»</p>
+<ul>
+<li><b>Prior</b> P(A): тестке дейінгі ықтималдық, яғни <b>base rate</b> (ауру қаншалықты жиі кездеседі).</li>
+<li><b>Sensitivity</b> P(+ | ауру): ауруды тест қаншалықты жиі ұстайды.</li>
+<li><b>False positive rate</b> P(+ | сау): сау адамға қате «оң» беру жиілігі.</li>
+<li><b>Posterior</b> P(ауру | +): бізді қызықтыратын сан.</li>
+</ul>
+<h3>Қадамдап мысал: 10 000 адам</h3>
+<p>Ауру 1% адамда кездеседі. Тест sensitivity 90%, false positive rate 5%. Формуланың орнына нақты адамдармен санаймыз:</p>
+<table>
+<tr><th></th><th>Тест +</th><th>Тест −</th><th>Барлығы</th></tr>
+<tr><td>Ауру</td><td>90</td><td>10</td><td>100</td></tr>
+<tr><td>Сау</td><td>495</td><td>9 405</td><td>9 900</td></tr>
+<tr><td><b>Барлығы</b></td><td>585</td><td>9 415</td><td>10 000</td></tr>
+</table>
+<ol>
+<li>Ауру: 10 000 × 0.01 = 100. Олардың 90%-ы тест +: 90.</li>
+<li>Сау: 9 900. Олардың 5%-ы қате +: 495.</li>
+<li>Барлық оң нәтиже: 90 + 495 = 585.</li>
+<li>P(ауру | +) = 90 / 585 ≈ 0.154. Тек 15%!</li>
+</ol>
+<p>Тест «90% дәл» болса да, оң нәтижелердің көбі сау адамдардан келеді, себебі сау адамдар әлдеқайда көп. Бұл — <b>base rate</b> әсері.</p>
+<h3>Python-да</h3>
+<pre><code>def posterior(prior, sens, fpr):
+    p_pos = sens * prior + fpr * (1 - prior)   # P(+)
+    return sens * prior / p_pos</code></pre>
+<p>Бизнесте дәл осы: алаяқтық дабылы, спам-фильтр, churn моделі. Алаяқтық 0.5% болса, «99% дәл» модельдің дабылдарының көбі жалған болуы мүмкін. Сондықтан командаға «дабыл берілгенде, шын алаяқтық ықтималдығы қанша?» деген санды көрсету керек.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Sensitivity-ді posterior деп оқу: P(+ | ауру) = 0.9, бірақ P(ауру | +) = 0.15. (2) Base rate-ті ұмыту (base rate fallacy). (3) P(+) есептегенде сау адамдардың жалған оң нәтижесін қоспау.</div></div>
+<p><a href="../../#lesson/m4-1/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-6">
+<h2>6. Комбинаторика: permutations және combinations</h2>
+<div class="prose">
+<p>Классикалық ықтималдық үшін нәтижелерді санау керек. Нәтижелер миллиондаған болса, оларды тізбей алмаймыз, формула керек.</p>
+<h3>Көбейту ережесі</h3>
+<p>Бір таңдауда a нұсқа, екіншісінде b нұсқа болса, барлығы a × b. Футболка: 3 түс × 4 өлшем = 12 нұсқа. 4 таңбалы PIN-код: 10 × 10 × 10 × 10 = 10 000.</p>
+<h3>Факториал және permutations</h3>
+<p>n элементті <b>ретімен</b> орналастыру саны: n! = n × (n − 1) × ... × 1. 3 баннерді бетте орналастыру: 3! = 6 тәсіл.</p>
+<p>n элементтен k элементті <b>ретімен</b> таңдау (permutations):</p>
+<pre><code>P(n, k) = n! / (n − k)!
+math.perm(10, 3)   # 720: 10 үміткерден 1-, 2-, 3-орын</code></pre>
+<h3>Combinations: рет маңызды емес</h3>
+<pre><code>C(n, k) = n! / (k! × (n − k)!)
+math.comb(10, 3)   # 120: 10 адамнан 3 адамдық топ</code></pre>
+<p>Айырмашылық: «жеңімпаз, екінші, үшінші» — рет маңызды (perm). «Үш адамдық комиссия» — рет маңызды емес (comb). Әр 3 адамдық топ 3! = 6 рет ретімен жазылады, сондықтан 720 / 6 = 120.</p>
+<h3>Қадамдап мысал</h3>
+<p>Қоймада 12 тауар, оның 3-еуі ақаулы. Кездейсоқ 4 тауар тексерілді. Дәл 1 ақаулы табылу ықтималдығы?</p>
+<ol>
+<li>Барлық тәсіл: 12-ден 4 таңдау, рет маңызды емес: C(12, 4) = 495.</li>
+<li>Қолайлы: 3 ақаулыдан 1 таңдау × 9 сапалыдан 3 таңдау = C(3, 1) × C(9, 3) = 3 × 84 = 252.</li>
+<li>P = 252 / 495 ≈ 0.509.</li>
+</ol>
+<pre><code>import math
+p = math.comb(3, 1) * math.comb(9, 3) / math.comb(12, 4)
+print(round(p, 3))   # 0.509</code></pre>
+<p>Бұл формула келесі сабақтағы Binomial таралудың да негізі: «n тәжірибеден қай k-сы сәтті болды» — бұл C(n, k).</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Рет маңызды ма, жоқ па — алдымен осыны шешіңіз. Шатастырсаңыз, жауап k! есе қате. (2) Қайталау бар-жоғын тексермеу: PIN-кодта цифр қайталана алады (10⁴), ал жарыс орындарында бір адам екі орын алмайды (perm). (3) <code>math.comb(n, k)</code> мен <code>math.comb(k, n)</code>-ді шатастыру: k &gt; n болса, нәтиже 0.</div></div>
+<p><a href="../../#lesson/m4-1/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-7">
+<h2>7. Bernoulli және Binomial таралу</h2>
+<div class="prose">
+<p><b>Кездейсоқ шама</b> (random variable) — тәжірибенің нәтижесіне сан беретін ереже. «Келуші сатып алды ма?» → 1 немесе 0. «100 келушіден неше сатып алу?» → 0..100.</p>
+<h3>Bernoulli</h3>
+<p>Бір тәжірибе, екі нәтиже: сәтті (1) p ықтималдықпен, сәтсіз (0) 1 − p ықтималдықпен. Конверсия, email ашу, кредит қайтару — бәрі Bernoulli.</p>
+<h3>Binomial</h3>
+<p>n тәуелсіз Bernoulli тәжірибесіндегі сәттілер саны X ~ Binomial(n, p). Оның <b>pmf</b>-і (probability mass function — әр мәннің ықтималдығы):</p>
+<pre><code>P(X = k) = C(n, k) × p^k × (1 − p)^(n − k)</code></pre>
+<p>Мағынасы: k сәтті және n − k сәтсіз нәтиженің бір нақты реті p^k (1 − p)^(n − k) ықтималдықпен болады, ал мұндай реттер саны C(n, k).</p>
+<h3>Қадамдап мысал: қолмен</h3>
+<p>Конверсия 10%. 4 келуші. Дәл 1 сатып алу ықтималдығы?</p>
+<ol>
+<li>Бір реті, мысалы «иә, жоқ, жоқ, жоқ»: 0.1 × 0.9 × 0.9 × 0.9 = 0.0729.</li>
+<li>Сатып алушы 4 адамның кез келгені бола алады: C(4, 1) = 4 рет.</li>
+<li>P(X = 1) = 4 × 0.0729 = 0.2916.</li>
+</ol>
+<h3>Python-да</h3>
+<pre><code>import math
+def binom_pmf(k, n, p):
+    return math.comb(n, k) * p ** k * (1 - p) ** (n - k)
+
+binom_pmf(1, 4, 0.1)                              # 0.2916
+sum(binom_pmf(k, 4, 0.1) for k in range(5))       # 1.0</code></pre>
+<p>«Кемінде k» сұрақтары үшін толықтауыш ыңғайлы: P(X ≥ 3) = 1 − P(X = 0) − P(X = 1) − P(X = 2).</p>
+<p>Binomial-дың орташасы n × p, дисперсиясы n × p × (1 − p). 200 келуші, конверсия 5% болса, орташа 10 сатып алу күтеміз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) C(n, k)-ны ұмыту: тек бір ретті есептеп қою. (2) Тәуелсіздік бұзылған жерде Binomial қолдану: бір отбасынан 5 адам — тәуелсіз емес. (3) «Кемінде 3» дегенде P(X = 3)-ті ғана алу. «Кемінде» — 3, 4, ..., n қосындысы.</div></div>
+<p><a href="../../#lesson/m4-1/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-8">
+<h2>8. Poisson таралу: сағаттағы тапсырыстар</h2>
+<div class="prose">
+<p>Binomial-да тәжірибе саны n белгілі. Ал «бір сағатта неше тапсырыс келеді?», «бір күнде қанша support тикет?» деген сұрақтарда n жоқ: оқиғалар уақыт бойы кездейсоқ келеді. Мұндай санауларды <b>Poisson</b> таралуы сипаттайды.</p>
+<p>X ~ Poisson(λ), мұнда <b>λ</b> (лямбда) — бір аралықтағы орташа оқиға саны.</p>
+<pre><code>P(X = k) = λ^k × e^(−λ) / k!</code></pre>
+<p>Қасиеттері: орташасы λ, дисперсиясы да λ. Мәндері 0, 1, 2, ... (жоғарыдан шектелмеген).</p>
+<h3>Қашан қолданылады</h3>
+<ul>
+<li>Оқиғалар бір-біріне тәуелсіз келеді.</li>
+<li>Орташа жылдамдық тұрақты (түскі сағат пен түнгі сағатты араластырмаңыз).</li>
+<li>Екі оқиға дәл бір сәтте келмейді.</li>
+</ul>
+<h3>Қадамдап мысал</h3>
+<p>Кафеге сағатына орташа 4 онлайн-тапсырыс келеді (λ = 4). Бір сағатта тапсырыс мүлде келмеу ықтималдығы, және 6-дан көп келу ықтималдығы?</p>
+<ol>
+<li>P(X = 0) = 4⁰ × e⁻⁴ / 0! = e⁻⁴ ≈ 0.0183. Шамамен 2%.</li>
+<li>P(X = 1) = 4 × e⁻⁴ ≈ 0.0733, P(X = 2) = 16 × e⁻⁴ / 2 ≈ 0.1465, ...</li>
+<li>P(X ≤ 6) — 0-ден 6-ға дейінгі қосынды ≈ 0.889.</li>
+<li>P(X &gt; 6) = 1 − 0.889 ≈ 0.111. Сағаттардың шамамен 11%-ында 6-дан көп тапсырыс.</li>
+</ol>
+<pre><code>import math
+def poisson_pmf(k, lam):
+    return lam ** k * math.exp(-lam) / math.factorial(k)
+
+p_le6 = sum(poisson_pmf(k, 4) for k in range(7))
+print(round(1 - p_le6, 3))   # 0.111</code></pre>
+<p>Бизнес қорытынды: бір курьер сағатына 6 тапсырыс жеткізе алса, сағаттардың ~11%-ында кешігу болады. Екінші курьер керек пе — енді сандармен талқылауға болады.</p>
+<h3>Аралықты өзгерту</h3>
+<p>λ уақыт аралығына пропорционал: сағатына 4 болса, 30 минутқа λ = 2, бір күнге (10 сағат) λ = 40.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) λ-ны аралыққа сәйкестендірмеу: сұрақ 30 минут туралы болса, λ-ны да 30 минутқа келтіріңіз. (2) «6-дан көп» дегенде <code>range(6)</code> алу: P(X &gt; 6) = 1 − P(X ≤ 6), ал X ≤ 6 үшін <code>range(7)</code>. (3) Орташасы мен дисперсиясы қатты өзгеше деректе (мысалы, акция күндері) Poisson-ды сынақсыз қолдану.</div></div>
+<p><a href="../../#lesson/m4-1/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-9">
+<h2>9. Үздіксіз таралулар: uniform және NormalDist</h2>
+<div class="prose">
+<p>Тапсырыс саны — <b>дискретті</b> (0, 1, 2, ...). Ал жеткізу уақыты, бой, сома — <b>үздіксіз</b>: 40.0, 40.01, 40.013 ... минут. Үздіксіз шамада бір нақты мәннің ықтималдығы 0, сондықтан біз <b>аралықтардың</b> ықтималдығын сұраймыз: P(35 &lt; X &lt; 45).</p>
+<p>Ол үшін <b>CDF</b> (cumulative distribution function) қолданылады: F(x) = P(X ≤ x). Аралық: P(a &lt; X ≤ b) = F(b) − F(a).</p>
+<h3>Uniform таралу</h3>
+<p>[a, b] аралығындағы барлық мән бірдей ықтимал. Автобус 20 минут сайын келеді, сіз кездейсоқ уақытта келдіңіз: күту уақыты Uniform(0, 20). P(X ≤ x) = (x − a) / (b − a). 5 минуттан аз күту: 5 / 20 = 0.25.</p>
+<h3>Normal таралу: statistics.NormalDist</h3>
+<p>M3.1-дегі 68–95–99.7 ережесі жуық. Дәл сан үшін Python-да дайын класс бар:</p>
+<pre><code>from statistics import NormalDist
+d = NormalDist(mu=40, sigma=5)   # жеткізу уақыты, мин
+d.cdf(45)          # P(X ≤ 45) ≈ 0.841
+d.inv_cdf(0.95)    # 95% тапсырыс осы уақыттан тез: ≈ 48.2</code></pre>
+<p><code>cdf</code> мәннен ықтималдыққа апарады, <code>inv_cdf</code> керісінше: ықтималдықтан мәнге (перцентиль).</p>
+<h3>Қадамдап мысал</h3>
+<p>Жеткізу уақыты NormalDist(40, 5). Уәде — 50 минут. Неше пайызы кешігеді, және 95% тапсырысқа қандай уәде беру керек?</p>
+<ol>
+<li>Кешігу: P(X &gt; 50) = 1 − cdf(50). z = (50 − 40) / 5 = 2, cdf(50) ≈ 0.9772.</li>
+<li>1 − 0.9772 = 0.0228: шамамен 2.3% (ереже 2.5% дейтін, дәлі 2.28%).</li>
+<li>95% уәде: inv_cdf(0.95) ≈ 48.2 минут.</li>
+<li>Аралық: P(35 &lt; X ≤ 45) = cdf(45) − cdf(35) ≈ 0.841 − 0.159 = 0.683.</li>
+</ol>
+<div class="tip"><b>Жиі қателер:</b> (1) «Х-тен көп» сұрағында <code>cdf</code>-тің өзін алу: керегі <code>1 - cdf(x)</code>. (2) <code>sigma</code> орнына дисперсияны беру: NormalDist SD күтеді. (3) Қисайған деректі (жалақы, сома) Normal деп модельдеу — алдымен гистограмма.</div></div>
+<p><a href="../../#lesson/m4-1/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-10">
+<h2>10. Күтілетін мән және дисперсия: промо тиімді ме?</h2>
+<div class="prose">
+<p><b>Күтілетін мән</b> (expected value, E[X]) — кездейсоқ шаманың «ұзақ мерзімдегі орташасы»: әр мәнді оның ықтималдығына көбейтіп, қосамыз.</p>
+<pre><code>E[X] = Σ x × P(X = x)
+Var(X) = Σ (x − E[X])² × P(X = x)</code></pre>
+<p>Дисперсия мен SD (√Var) тәуекелді өлшейді: орташасы бірдей екі шешімнің біреуі әлдеқайда «секірмелі» болуы мүмкін.</p>
+<pre><code>def expected_value(dist):          # dist: {мән: ықтималдық}
+    return sum(x * p for x, p in dist.items())
+
+def variance(dist):
+    m = expected_value(dist)
+    return sum((x - m) ** 2 * p for x, p in dist.items())</code></pre>
+<h3>Қадамдап мысал: промо тиімді ме?</h3>
+<p>Интернет-дүкен. Қазір конверсия 5%, бір сатудан маржа 4 000 ₸. Маркетинг 1 000 ₸ жеңілдік ұсынады: болжам бойынша конверсия 7%-ға өседі.</p>
+<table>
+<tr><th></th><th>Промосыз</th><th>Промомен</th></tr>
+<tr><td>P(сатып алу)</td><td>0.05</td><td>0.07</td></tr>
+<tr><td>Маржа (сатылса)</td><td>4 000 ₸</td><td>3 000 ₸</td></tr>
+<tr><td>E[пайда / келуші]</td><td>0.05 × 4 000 = 200 ₸</td><td>0.07 × 3 000 = 210 ₸</td></tr>
+</table>
+<ol>
+<li>Әр келуші — кездейсоқ шама: маржа p ықтималдықпен, әйтпесе 0.</li>
+<li>E[промосыз] = 200 ₸, E[промомен] = 210 ₸. Айырма +10 ₸ / келуші.</li>
+<li>Айына 50 000 келуші болса: 50 000 × 10 = +500 000 ₸.</li>
+<li>Бірақ конверсия тек 6.5%-ға өссе: 0.065 × 3 000 = 195 ₸ &lt; 200 ₸ — промо зиянды. Шешім болжамға өте сезімтал, сондықтан алдымен A/B тест (M4.2).</li>
+</ol>
+<h3>Дисперсия мысалы</h3>
+<p>Промосыз: X ∈ {0, 4 000}, P = {0.95, 0.05}. Var = 0.95 × 200² + 0.05 × 3 800² = 760 000, SD ≈ 872 ₸. Бір келушіде пайда өте шулы, бірақ мыңдаған келушіде орташа E[X]-ке жақындайды (үлкен сандар заңы).</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Ықтималдықтар қосындысы 1 екенін тексермеу. (2) Жеңілдікті маржадан шегеруді ұмыту. (3) Тек E[X]-ке қарап, тәуекелді (SD) елемеу: E[X] бірдей болса, тұрақтырақ нұсқа жақсы болуы мүмкін.</div></div>
+<p><a href="../../#lesson/m4-1/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pr-gate">
+<h2>11. Модуль емтиханы: Probability</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: шартты ықтималдық, Bayes, Binomial, Poisson, Normal және күтілетін мән. Python тапсырмаларында тек стандарт кітапхана (<code>math</code>, <code>statistics</code>, <code>random</code>) қолжетімді.</p></div>
+<p><a href="../../#lesson/m4-1/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m4-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

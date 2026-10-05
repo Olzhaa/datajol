@@ -33,7 +33,7 @@
   function toast(html, icon = 'bolt') {
     const root = $('#toast-root');
     const el = document.createElement('div');
-    el.className = 'toast'; el.setAttribute('role', 'status');
+    el.className = 'toast';
     el.innerHTML = ICON[icon] + `<span>${html}</span>`;
     const n = root.children.length;
     el.style.bottom = `calc(${24 + n * 58}px + env(safe-area-inset-bottom, 0px))`;
@@ -47,13 +47,41 @@
   }
 
   // ---------- routing ----------
-  let route = { view: 'dash' };
+  let route = { view: 'dash' }, pendingRoute = null;
+  // Routes live in the URL hash, so Back/Forward, reload and shared links land on the same screen.
+  function hashFor(r) {
+    if (r.view === 'module') return '#module/' + r.mod;
+    if (r.view === 'lesson') return `#lesson/${r.mod}/${r.li}`;
+    if (r.view === 'cert') return r.uid ? `#cert/${r.uid}/${r.mod}` : '#cert/' + r.mod;
+    return ['map', 'diag', 'profile', 'board'].includes(r.view) ? '#' + r.view : '';
+  }
+  function parseHash(h) {
+    h = (h || '').replace(/^#/, '');
+    let m;
+    if ((m = h.match(/^module\/([\w-]+)$/))) return { view: 'module', mod: m[1] };
+    if ((m = h.match(/^lesson\/([\w-]+)\/(\d+)$/))) return { view: 'lesson', mod: m[1], li: Number(m[2]) };
+    if ((m = h.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/))) return { view: 'cert', uid: m[1], mod: m[2] };
+    if ((m = h.match(/^cert\/(L\d)$/))) return { view: 'cert', mod: m[1] };
+    if (['map', 'diag', 'profile', 'board'].includes(h)) return { view: h };
+    return null;
+  }
   function go(view, params = {}) {
+    flushSave();
     if (cm) cm = null;
     route = Object.assign({ view }, params);
-    render();
+    const h = hashFor(route);
+    if (h !== location.hash && !(h === '' && !location.hash)) history.pushState(null, '', h || location.pathname + location.search);
+    render(true);
     window.scrollTo(0, 0);
   }
+  window.addEventListener('popstate', () => {
+    flushSave(); if (cm) cm = null;
+    route = parseHash(location.hash) || { view: 'dash' };
+    render(true);
+  });
+  // Editor autosave: the pending write is bound to its own exercise and flushed before any navigation.
+  let pendingSave = null;
+  function flushSave() { if (pendingSave) { clearTimeout(pendingSave.t); pendingSave.fn(); pendingSave = null; } }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]');
     if (!b) return;
@@ -61,13 +89,20 @@
     go(b.dataset.go, { mod: b.dataset.mod, li: b.dataset.li != null ? Number(b.dataset.li) : undefined });
   });
 
-  function render() {
-    if (!S.current() && route.view !== 'cert') { route = { view: 'auth' }; }
+  const TITLES = { auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат' };
+  function render(moveFocus) {
+    if (!S.current() && route.view !== 'cert' && route.view !== 'auth') { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
     topbar();
     const views = { auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
     (views[route.view] || viewDash)();
-    document.title = 'DataJol';
+    const m = route.mod && DJ.findModule(route.mod);
+    const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
+      : route.view === 'module' && m ? `${m.code} ${m.title}` : TITLES[route.view];
+    document.title = t ? `${t} · DataJol` : 'DataJol';
+    // After a screen change, move keyboard and screen-reader focus to the new heading.
+    if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
   }
+  function afterAuth() { const r = pendingRoute; pendingRoute = null; if (r) go(r.view, r); else go('dash'); }
 
   // ---------- topbar ----------
   function topbar() {
@@ -85,9 +120,9 @@
         <button data-go="board" ${cur('board')}>Рейтинг</button>
       </nav>
       <div class="stats">
-        <span class="pill gold" title="Күндер қатарынан">${ICON.flame}${st}</span>
-        <span class="pill xp" title="Тәжірибе ұпайы">${ICON.bolt}${p.xp} XP</span>
-        <span class="pill hide-sm" title="Деңгей">Lv ${lv.level}</span>
+        <span class="pill gold" title="Күндер қатарынан" aria-label="Күндер қатарынан: ${st}">${ICON.flame}${st}</span>
+        <span class="pill xp" title="Тәжірибе ұпайы" aria-label="Тәжірибе ұпайы: ${p.xp} XP">${ICON.bolt}${p.xp} XP</span>
+        <span class="pill hide-sm" title="Деңгей" aria-label="Деңгей ${lv.level}">Lv ${lv.level}</span>
         <button class="avatar" data-go="profile" aria-label="Профиль">${esc((u.name || u.username).slice(0, 1).toUpperCase())}</button>
       </div>`;
   }
@@ -163,7 +198,7 @@
       const f = e.target;
       const err = mode === 'login' ? await S.login(f.username.value, f.pw.value) : await S.register(f.username.value, f.name.value, f.pw.value);
       if (err) { $('#auth-err').textContent = err; return; }
-      go('dash');
+      afterAuth();
     };
   }
 
@@ -312,10 +347,11 @@
     const isCode = ex.type === 'sql' || ex.type === 'python';
     lessonEl.classList.toggle('solo', !isCode);
     const stepCls = i => G ? (G.res[i] === 'ok' ? 'ok' : G.res[i] === 'fail' ? 'bad' : '') : (p.done[exId(L.lesson, i)] ? 'ok' : '');
-    const steps = exs.map((_, i) => `<button class="${i === L.ei ? 'cur' : ''} ${stepCls(i)}" data-step="${i}" aria-label="Тапсырма ${i + 1}">${i + 1}</button>`).join('');
+    const stepState = i => ({ ok: ', орындалды', bad: ', есепке алынбады' })[stepCls(i)] || '';
+    const steps = exs.map((_, i) => `<button class="${i === L.ei ? 'cur' : ''} ${stepCls(i)}" data-step="${i}" aria-label="Тапсырма ${i + 1}${stepState(i)}"${i === L.ei ? ' aria-current="step"' : ''}>${i + 1}</button>`).join('');
     let inner = '';
     if (ex.type === 'quiz') {
-      inner = `<div class="options" role="radiogroup">${ex.options.map((o, i) => `<button class="opt" role="radio" aria-checked="false" data-opt="${i}">${o}</button>`).join('')}</div>
+      inner = `<div class="options" role="group" aria-label="Жауап нұсқалары">${ex.options.map((o, i) => `<button class="opt" aria-pressed="false" data-opt="${i}">${o}</button>`).join('')}</div>
         <div class="actions" style="margin-top:12px"><button class="btn" id="q-check" disabled>Тексеру</button></div>`;
     } else if (ex.type === 'number') {
       inner = `<div style="display:flex;gap:8px;align-items:center;margin-top:10px;max-width:280px"><input type="text" inputmode="decimal" id="num-in" placeholder="Жауап" aria-label="Жауап">${ex.unit ? `<b>${esc(ex.unit)}</b>` : ''}</div>
@@ -324,7 +360,7 @@
       const tabs = ex.tabs || [ex.sheet];
       inner = `${ex.cell ? `<p class="note" style="margin-bottom:0">Формула <b>${esc(ex.cell)}</b> ұяшығына жазылады деп есептеңіз. Ұяшықты басып, адресін формулаға қоюға болады.</p>` : '<p class="note" style="margin-bottom:0">Ұяшықты басып, адресін формулаға қоюға болады.</p>'}
         <div class="sheet-tabs">${tabs.map((t, i) => `<button class="${i ? '' : 'cur'}" data-tab="${t}">${esc(DJ.sheets[t].name)}</button>`).join('')}</div>
-        <div class="sheet-grid" id="grid"></div>
+        <div class="sheet-grid" id="grid" tabindex="0" aria-label="Кесте деректері"></div>
         <div class="fx"><b>fx</b><input type="text" id="fx-in" placeholder="=SUM(H2:H25)" aria-label="Формула" autocomplete="off" spellcheck="false"></div>
         <div class="fx-result" id="fx-out"></div>
         <div class="actions" style="margin-top:12px"><button class="btn ghost" id="fx-run">Есептеу</button><button class="btn" id="q-check">Тексеру</button></div>`;
@@ -338,18 +374,18 @@
       inner = `<div class="term"><span>$</span><input type="text" id="cmd-in" placeholder="git ..." aria-label="Команда" autocomplete="off" spellcheck="false" autocapitalize="off"></div>
         <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Тексеру</button></div>`;
     } else {
-      inner = `<p class="note">Кодты ${window.innerWidth > 900 ? 'оң жақтағы' : 'төмендегі'} редакторға жазыңыз. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> іске қосады.</p>`;
+      inner = `<p class="note">Кодты ${window.innerWidth > 900 ? 'оң жақтағы' : 'төмендегі'} редакторға жазыңыз. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> іске қосады, <kbd>Esc</kbd> редактордан шығарады.</p>`;
     }
     const hintsBtn = (!G && ex.hints && ex.hints.length) ? `<button class="btn ghost" id="hint-btn">Кеңес (${ex.hints.length})</button>` : '';
     task.innerHTML = `
       ${exs.length > 1 ? `<div class="task-steps">${steps}</div>` : ''}
-      <h3>Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span></h3>
+      <h3 id="task-h">Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span></h3>
       <div class="prose">${ex.prompt}</div>
       ${inner}
       <div class="hints" id="hints"></div>
       <div class="actions" style="margin-top:10px">${isCode || ex.type === 'sheet' || ex.type === 'cmd' ? hintsBtn : ''}<span id="sol-slot"></span></div>
       <div id="qv" style="margin-top:10px"></div>`;
-    $$('[data-step]', task).forEach(b => b.onclick = () => { L.ei = Number(b.dataset.step); renderTask(); });
+    $$('[data-step]', task).forEach(b => b.onclick = () => { L.ei = Number(b.dataset.step); renderTask(); const h = $('#task h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } });
     if ($('#hint-btn')) $('#hint-btn').onclick = () => showHint(ex, id);
     if (G) {
       const left = gateTries(ex) - (G.tries[L.ei] || 0);
@@ -360,13 +396,13 @@
 
     if (ex.type === 'quiz') {
       let sel = null;
-      $$('.opt', task).forEach(b => b.onclick = () => { sel = Number(b.dataset.opt); $$('.opt', task).forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', String(x === b)); x.classList.remove('right', 'wrong'); }); $('#q-check').disabled = false; });
+      $$('.opt', task).forEach(b => b.onclick = () => { sel = Number(b.dataset.opt); $$('.opt', task).forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-pressed', String(x === b)); x.classList.remove('right', 'wrong'); }); $('#q-check').disabled = false; });
       $('#q-check').onclick = () => {
         if (G && gateState().res[L.ei]) return;
         const ok = sel === ex.answer;
         $$('.opt', task).forEach(x => { const i = Number(x.dataset.opt); if (i === sel) x.classList.add(ok ? 'right' : 'wrong'); });
         if (!ok && G) { if (gateState().res[L.ei]) return; gateFail(ex, '#qv'); return; }
-        if (!ok) { L.fails[id] = (L.fails[id] || 0) + 1; $('#qv').innerHTML = `<div class="verdict bad">Дұрыс емес. Тағы бір ойланып көріңіз${L.fails[id] >= 2 && ex.explain ? ': ' + ex.explain : '.'}</div>`; return; }
+        if (!ok) { L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id); $('#qv').innerHTML = `<div class="verdict bad">Дұрыс емес. Тағы бір ойланып көріңіз${L.fails[id] >= 2 && ex.explain ? ': ' + ex.explain : '.'}</div>`; return; }
         passed(ex, id, 'quiz', ex.explain);
       };
     } else if (ex.type === 'number') {
@@ -377,7 +413,7 @@
         if (G && gateState().res[L.ei]) return;
         if (Math.abs(v - ex.answer) <= (ex.tol || 0.001) + 1e-9) passed(ex, id, 'number', ex.explain);
         else if (G) { if (!gateState().res[L.ei]) gateFail(ex, '#qv'); }
-        else { L.fails[id] = (L.fails[id] || 0) + 1; $('#qv').innerHTML = `<div class="verdict bad">Жауап басқа.${L.fails[id] >= 2 && ex.explain ? ' Шешу жолы: ' + ex.explain : ' Есептеуді қайта тексеріңіз.'}</div>`; }
+        else { L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id); $('#qv').innerHTML = `<div class="verdict bad">Жауап басқа.${L.fails[id] >= 2 && ex.explain ? ' Шешу жолы: ' + ex.explain : ' Есептеуді қайта тексеріңіз.'}</div>`; }
       };
       $('#q-check').onclick = check;
       inp.onkeydown = e => { if (e.key === 'Enter') check(); };
@@ -385,13 +421,13 @@
       const inp = $('#fx-in');
       const drawGrid = t => {
         const rows = DJ.sheets[t].rows, w = Math.max(...rows.map(r => r.length));
-        $('#grid').innerHTML = `<table><thead><tr><th></th>${Array.from({ length: w }, (_, i) => `<th>${DJ.sheet.colName(i + 1)}</th>`).join('')}</tr></thead><tbody>${rows.map((r, ri) => `<tr><th>${ri + 1}</th>${Array.from({ length: w }, (_, ci) => { const v = r[ci]; return `<td data-addr="${t === ex.sheet ? '' : DJ.sheets[t].name + '!'}${DJ.sheet.colName(ci + 1)}${ri + 1}" class="${typeof v === 'number' ? 'num' : ''}">${v == null ? '' : esc(String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+        $('#grid').innerHTML = `<table><thead><tr><th><span class="sr-only">Жол</span></th>${Array.from({ length: w }, (_, i) => `<th>${DJ.sheet.colName(i + 1)}</th>`).join('')}</tr></thead><tbody>${rows.map((r, ri) => `<tr><th>${ri + 1}</th>${Array.from({ length: w }, (_, ci) => { const v = r[ci]; return `<td data-addr="${t === ex.sheet ? '' : DJ.sheets[t].name + '!'}${DJ.sheet.colName(ci + 1)}${ri + 1}" class="${typeof v === 'number' ? 'num' : ''}">${v == null ? '' : esc(String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
         $$('#grid td').forEach(td => td.onclick = () => { const a = td.dataset.addr; if (!inp.value) inp.value = '='; const at = Math.max(1, inp.selectionStart == null ? inp.value.length : inp.selectionStart); inp.value = inp.value.slice(0, at) + a + inp.value.slice(at); inp.focus(); inp.setSelectionRange(at + a.length, at + a.length); });
       };
       drawGrid(ex.sheet);
       $$('[data-tab]', task).forEach(b => b.onclick = () => { $$('[data-tab]', task).forEach(x => x.classList.toggle('cur', x === b)); drawGrid(b.dataset.tab); });
       const saved = (p.code || {})[id]; if (saved) inp.value = saved;
-      const calc = () => { const r = DJ.sheet.run(inp.value, DJ.sheets, ex.sheet); $('#fx-out').innerHTML = r.ok ? `Нәтиже: <code>${esc(DJ.sheet.show(r.value))}</code>` : `<span style="color:var(--bad)">${r.error}</span>`; };
+      const calc = () => { const r = DJ.sheet.run(inp.value, DJ.sheets, ex.sheet); $('#fx-out').innerHTML = r.ok ? `Нәтиже: <code>${esc(DJ.sheet.show(r.value))}</code>` : `<span style="color:var(--bad)">${esc(r.error)}</span>`; };
       const check = () => {
         S.saveCode(id, inp.value);
         const r = DJ.sheet.check(ex, inp.value);
@@ -427,7 +463,7 @@
         if (G && gateState().res[L.ei]) return;
         if (ex.accept.some(a => new RegExp('^(?:' + a + ')$').test(v))) { passed(ex, id, 'cmd', ex.explain); return; }
         if (G) { gateFail(ex, '#qv'); return; }
-        L.fails[id] = (L.fails[id] || 0) + 1;
+        L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id);
         $('#qv').innerHTML = `<div class="verdict bad">Бұл команда тапсырманы орындамайды.${L.fails[id] >= 2 ? ` Дұрыс жауап: <code>${esc(ex.solution)}</code>` : ' Кеңесті қараңыз немесе қайта көріңіз.'}</div>`;
       };
       $('#q-check').onclick = check;
@@ -437,10 +473,12 @@
     nextSlot();
   }
 
+  function markHinted(id) { if (S.markHinted) S.markHinted(id); }
+  const wasHinted = id => !!(S.hinted && S.hinted(id));
   function showHint(ex, id) {
     const n = (L.hints[id] || 0);
     if (n >= ex.hints.length) return;
-    L.hints[id] = n + 1;
+    L.hints[id] = n + 1; markHinted(id);
     $('#hints').insertAdjacentHTML('beforeend', `<div class="hint"><b>Кеңес ${n + 1}.</b> ${ex.hints[n]}</div>`);
     const b = $('#hint-btn');
     if (L.hints[id] >= ex.hints.length) { b.remove(); offerSolution(ex, id); }
@@ -449,7 +487,7 @@
   function offerSolution(ex, id) {
     if (L.lesson.gate || $('#sol-btn')) return;
     $('#sol-slot').innerHTML = `<button class="btn ghost" id="sol-btn">Шешімді көрсету</button>`;
-    $('#sol-btn').onclick = () => { L.hints[id] = (L.hints[id] || 0) + 1; L.solShown = id; if (cm) cm.setValue(ex.solution); else if ($('#fx-in')) $('#fx-in').value = ex.solution; else if ($('#cmd-in')) $('#cmd-in').value = ex.solution; $('#sol-btn').remove(); $('#qv').innerHTML = '<div class="verdict info">Шешім редакторға қойылды. Оны оқып, іске қосып, түсінгеннен кейін тексеріңіз. XP жартысы беріледі.</div>'; };
+    $('#sol-btn').onclick = () => { L.hints[id] = (L.hints[id] || 0) + 1; markHinted(id); L.solShown = id; if (cm) cm.setValue(ex.solution); else if ($('#fx-in')) $('#fx-in').value = ex.solution; else if ($('#cmd-in')) $('#cmd-in').value = ex.solution; $('#sol-btn').remove(); $('#qv').innerHTML = '<div class="verdict info">Шешім редакторға қойылды. Оны оқып, іске қосып, түсінгеннен кейін тексеріңіз. XP жартысы беріледі.</div>'; };
   }
 
   function renderWorkbench(ex, id) {
@@ -476,9 +514,15 @@
       cm = CodeMirror(host, {
         value: saved != null ? saved : (ex.starter || ''), mode: isSql ? 'text/x-sqlite' : 'python', lineNumbers: true, indentUnit: 4,
         matchBrackets: true, autoCloseBrackets: true, lineWrapping: true, viewportMargin: Infinity,
-        extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    ') }
+        extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    '), Esc: () => { const b = $('#run'); if (b) b.focus(); } }
       });
-      let t; cm.on('change', () => { clearTimeout(t); t = setTimeout(() => cm && S.saveCode(id, cm.getValue()), 500); });
+      cm.getInputField().setAttribute('aria-label', isSql ? 'SQL код редакторы' : 'Python код редакторы');
+      const ed = cm;
+      cm.on('change', () => {
+        flushSave();
+        const fn = () => S.saveCode(id, ed.getValue());
+        pendingSave = { fn, t: setTimeout(() => { pendingSave = null; fn(); }, 500) };
+      });
       setTimeout(() => cm && cm.refresh(), 0);
     } else {
       host.innerHTML = `<textarea id="plain" spellcheck="false" style="width:100%;height:240px;background:var(--code-bg);color:var(--code-ink);border:0;padding:12px;font-family:var(--font-mono)"></textarea>`;
@@ -516,27 +560,31 @@
   }
 
   async function doRun(ex) {
-    const code = cm.getValue();
+    const ed = cm, code = cm.getValue();
+    const stale = () => cm !== ed;   // the learner moved to another task while this was running
     busy(true); $('#verdict').innerHTML = '';
     try {
       if (ex.type === 'sql') {
         $('#out').innerHTML = '<p class="muted" style="margin:0">Орындалуда…</p>';
         const r = await DJ.run.sql.run(code, ex.dataset);
+        if (stale()) return;
         if (!r.ok) $('#out').innerHTML = `<pre style="color:var(--bad)">${esc(r.error)}</pre>`;
         else if (!r.results.length) $('#out').innerHTML = `<p style="margin:0">Сұрау орындалды. Өзгерген жолдар: ${r.changes}.</p>`;
         else $('#out').innerHTML = r.results.map(tableHtml).join('<hr style="border:0;border-top:1px solid var(--line)">');
       } else {
-        if (!(await pyGuard())) return;
+        if (!(await pyGuard()) || stale()) return;
         $('#out').innerHTML = `<p class="muted" style="margin:0">${pandasNote(code) || 'Орындалуда…'}</p>`;
         const r = await DJ.run.py.run(code);
+        if (stale()) return;
         $('#out').innerHTML = (r.stdout ? `<pre>${esc(r.stdout)}</pre>` : '') + (r.error ? `<pre style="color:var(--bad)">${esc(r.error)}</pre>` : '') || '<p class="muted" style="margin:0">Код орындалды, бірақ ештеңе шығарылмады. <code>print()</code> қолданыңыз.</p>';
       }
-    } catch (e) { $('#out').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
-    finally { busy(false); }
+    } catch (e) { if (!stale()) $('#out').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
+    finally { if (!stale()) busy(false); }
   }
 
   async function doCheck(ex, id) {
-    const code = cm.getValue();
+    const ed = cm, code = cm.getValue();
+    const stale = () => cm !== ed;
     S.saveCode(id, code);
     busy(true);
     $('#verdict').innerHTML = '<div class="verdict info">Тексерілуде…</div>';
@@ -544,11 +592,14 @@
       let r;
       if (ex.type === 'sql') {
         r = await DJ.run.sql.check(ex, code);
+        if (stale()) return;
         if (r.shown) $('#out').innerHTML = tableHtml(r.shown);
       } else {
-        if (!(await pyGuard())) { $('#verdict').innerHTML = ''; return; }
+        if (!(await pyGuard())) { if (!stale()) $('#verdict').innerHTML = ''; return; }
+        if (stale()) return;
         if (pandasNote(code)) $('#verdict').innerHTML = `<div class="verdict info">${pandasNote(code)}</div>`;
         r = await DJ.run.py.check(ex, code);
+        if (stale()) return;
         let out = '';
         if (r.stdout) out += `<div class="eyebrow">Сіздің шығысыңыз</div><pre>${esc(r.stdout)}</pre>`;
         if (r.trace) out += `<pre style="color:var(--bad)">${esc(r.trace)}</pre>`;
@@ -564,8 +615,8 @@
         $('#verdict').innerHTML = `<div class="verdict bad">${r.msg || 'Әзірге дұрыс емес.'}</div>`;
         if (L.fails[id] >= 3 && (!ex.hints || (L.hints[id] || 0) >= ex.hints.length)) offerSolution(ex, id);
       }
-    } catch (e) { $('#verdict').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
-    finally { busy(false); }
+    } catch (e) { if (!stale()) $('#verdict').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
+    finally { if (!stale()) busy(false); }
   }
 
   // ---------- module exams: limited tries per task, pass mark 75% ----------
@@ -624,7 +675,7 @@
       afterGateStep();
       return;
     }
-    const usedHint = !!(L.hints[id] || (kind !== 'sql' && kind !== 'python' && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
+    const usedHint = !!(L.hints[id] || wasHinted(id) || (kind !== 'sql' && kind !== 'python' && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
     celebrate(r);
     topbar();
@@ -665,7 +716,9 @@
   const DIAG_STATUS = {
     known: ['Білесіз', 'done'], partial: ['Қайталау керек', 'part'], learn: ['Үйрену керек', 'todo'], skip: ['Тексерілмеді', 'skip']
   };
+  let diagRuns = 0;
   function viewDiag() {
+    diagRuns++;
     const D = DJ.diagnostic, p = S.progress();
     const pathOrder = track => {
       const path = DJ.paths.find(x => x.id === track) || DJ.paths[0];
@@ -707,6 +760,7 @@
     }
 
     function run(track) {
+      const myRun = ++diagRuns, gone = () => myRun !== diagRuns || route.view !== 'diag';
       const order = pathOrder(track);
       const blocks = D.blocks.filter(b => order.includes(b.mod));
       const mods = {}; let bi = -1, block = null, step = 0, marks = [], correct = 0, total = 0;
@@ -733,16 +787,16 @@
           <div><div style="display:flex;justify-content:space-between" class="eyebrow"><span>${esc(block.area)} · ${['оңай', 'орташа', 'қиын'][step]} сұрақ</span><span>${bi + 1} / ${blocks.length}</span></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div></div>
           <div class="card">
             <div class="prose">${q.prompt}</div>
-            ${q.type === 'quiz' ? `<div class="options">${q.options.map((o, i) => `<button class="opt" data-o="${i}">${o}</button>`).join('')}</div>` : ''}
+            ${q.type === 'quiz' ? `<div class="options">${q.options.map((o, i) => `<button class="opt" data-o="${i}" aria-pressed="false">${o}</button>`).join('')}</div>` : ''}
             ${q.type === 'number' ? `<div style="display:flex;gap:8px;align-items:center;max-width:240px;margin-top:12px"><input type="text" inputmode="decimal" id="dq-num" aria-label="Жауап">${q.unit ? `<b>${esc(q.unit)}</b>` : ''}</div>` : ''}
-            ${code ? `${q.type === 'sql' ? `<p class="note">Кестелер: ${Object.entries(DJ.datasets[q.dataset].tables).map(([t, c]) => `<code>${esc(t)}</code> (${esc(c)})`).join(', ')}</p>` : ''}<textarea id="dq-code" class="code-area" spellcheck="false" rows="8">${esc(q.starter || '')}</textarea><div class="err" id="dq-err" role="alert"></div>` : ''}
+            ${code ? `${q.type === 'sql' ? `<p class="note">Кестелер: ${Object.entries(DJ.datasets[q.dataset].tables).map(([t, c]) => `<code>${esc(t)}</code> (${esc(c)})`).join(', ')}</p>` : ''}<textarea id="dq-code" class="code-area" spellcheck="false" rows="8" aria-label="${q.type === 'sql' ? 'SQL' : 'Python'} коды (Esc: шығу)">${esc(q.starter || '')}</textarea><div class="err" id="dq-err" role="alert"></div>` : ''}
           </div>
           <div class="actions"><button class="btn" id="dq-go" ${q.type === 'quiz' ? 'disabled' : ''}>${code ? 'Тексеріп, жалғастыру' : 'Жауап беру'}</button><button class="btn ghost" id="dq-skip">Білмеймін</button></div>
         </div>`;
         let pick = null;
-        $$('.opt[data-o]').forEach(b => b.onclick = () => { pick = Number(b.dataset.o); $$('.opt[data-o]').forEach(x => x.classList.toggle('sel', x === b)); $('#dq-go').disabled = false; });
+        $$('.opt[data-o]').forEach(b => b.onclick = () => { pick = Number(b.dataset.o); $$('.opt[data-o]').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-pressed', String(x === b)); }); $('#dq-go').disabled = false; });
         const ta = $('#dq-code');
-        if (ta) ta.onkeydown = e => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end'); } };
+        if (ta) ta.onkeydown = e => { if (e.key === 'Escape') { $('#dq-go').focus(); return; } if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end'); } };
         $('#dq-skip').onclick = () => record(false);
         $('#dq-go').onclick = async () => {
           if (q.type === 'quiz') return record(pick === q.answer);
@@ -759,6 +813,7 @@
             if (q.type === 'sql') r = await DJ.run.sql.check({ dataset: q.dataset, solution: q.solution }, src);
             else { await DJ.run.py.start(); r = await DJ.run.py.check({ solution: q.solution, check: { tests: q.tests } }, src); }
           } catch (e) { r = { pass: false }; }
+          if (gone()) return;
           record(!!(r && r.pass));
         };
         window.scrollTo(0, 0);
@@ -834,7 +889,8 @@
           <h1 class="cert-name">${esc(c.name)}</h1>
           <p class="cert-lead">DataJol-дағы <b>${esc(c.level.name)}</b> деңгейіне кіретін барлық модульді аяқтағанын растайды.</p>
           <ul class="cert-mods">${c.mods.map(x => `<li><span>${esc(x.m.code)} ${esc(x.m.title)}</span><span>${esc(x.date)}</span></li>`).join('')}</ul>
-          <div class="cert-foot"><span>Берілген күні: <b>${esc(c.date)}</b></span>${verified ? `<span class="chip done">DataJol серверінде тексерілді</span>` : ''}</div>
+          <div class="cert-foot"><span>Берілген күні: <b>${esc(c.date)}</b></span>${verified ? `<span class="chip done">DataJol-да тіркелген</span>` : ''}</div>
+          ${verified ? `<p class="note" style="margin:0">Бұл сертификат оқушының DataJol аккаунтындағы прогреске сүйенеді.</p>` : ''}
         </article>
         <div class="actions noprint">
           ${link ? `<button class="btn" id="cert-copy">Сілтемені көшіру</button>` : ''}
@@ -866,7 +922,7 @@
     $('#app').innerHTML = `<div class="diag">
       <div class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <span class="avatar" style="width:56px;height:56px;font-size:1.4rem">${esc(u.name.slice(0, 1).toUpperCase())}</span>
-        <div style="min-width:0"><h2>${esc(u.name)}</h2><div class="muted">@${esc(u.username)} · ${esc(career.id)} ${esc(career.name)} · ${u.created} бастап</div></div>
+        <div style="min-width:0"><h1 style="font-size:1.5rem;margin:0">${esc(u.name)}</h1><div class="muted">@${esc(u.username)} · ${esc(career.id)} ${esc(career.name)} · ${u.created} бастап</div></div>
       </div>
       <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px">
         ${stat(p.xp, 'XP барлығы')}${stat(lv.level, 'деңгей')}${stat(p.best, 'ең ұзақ streak')}${stat(Object.keys(p.lessons).length, 'сабақ өтілді')}${stat(Object.keys(p.done).length, 'тапсырма орындалды')}
@@ -892,18 +948,18 @@
     $('#reset-p').onclick = () => {
       $('#confirm').innerHTML = `<div class="verdict bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">Барлық XP, сабақтар мен белгілер өшеді. Сенімдісіз бе?<button class="btn" id="yes-reset" style="background:var(--bad)">Иә, нөлдеу</button><button class="btn ghost" id="no-reset">Жоқ</button></div>`;
       $('#no-reset').onclick = () => { $('#confirm').innerHTML = ''; };
-      $('#yes-reset').onclick = () => { S.save({ xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {} }); topbar(); go('dash'); };
+      $('#yes-reset').onclick = () => { if (S.resetProgress) S.resetProgress(); else S.save({ xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {}, prefs: p.prefs }); topbar(); go('dash'); };
     };
   }
 
   // ---------- boot ----------
-  const start = (location.hash || '').slice(1);
-  if (['map', 'diag', 'profile', 'board'].includes(start)) route = { view: start };
-  const certHash = start.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/);
-  if (certHash) route = { view: 'cert', uid: certHash[1], mod: certHash[2] };
+  route = parseHash(location.hash) || route;
+  // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
+  window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module'].includes(route.view)) render(); });
+  window.addEventListener('dj:storage-full', () => toast('Браузер жады толды: прогресс сақталмауы мүмкін. Аккаунтпен кіріңіз немесе ескі деректі тазалаңыз.', 'bolt'));
   // With cloud accounts on, wait for the Supabase session (including a return from Google or an email link).
   if (DJ.cloud && DJ.cloud.enabled) {
     $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';
-    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname); render(); });
+    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (/access_token|error_description/.test(location.hash)) history.replaceState(null, '', location.pathname); if (route.view === 'auth' && S.current()) route = pendingRoute || { view: 'dash' }; render(); });
   } else render();
 })();

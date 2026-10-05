@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Science қорытынды жобасы — M5.3 DS Capstone | DataJol</title>
+<meta name="description" content="DS қорытынды жобасы: «Дала Мобайл» операторы retention ұсынысымен churn-ді азайтқысы келеді. churn.csv деректерімен бастан-аяқ жүресіз: бизнес сұрақ және…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m5-3/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data Science қорытынды жобасы — M5.3 DS Capstone | DataJol">
+<meta property="og:description" content="DS қорытынды жобасы: «Дала Мобайл» операторы retention ұсынысымен churn-ді азайтқысы келеді. churn.csv деректерімен бастан-аяқ жүресіз: бизнес сұрақ және…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m5-3/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M5.3 DS Capstone","description":"DS қорытынды жобасы: «Дала Мобайл» операторы retention ұсынысымен churn-ді азайтқысы келеді. churn.csv деректерімен бастан-аяқ жүресіз: бизнес сұрақ және…","url":"https://olzhaa.github.io/datajol/m/m5-3/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT50H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 5: Машиналық оқыту","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M5.3 DS Capstone","item":"https://olzhaa.github.io/datajol/m/m5-3/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 5: Машиналық оқыту / M5.3</nav>
+<article class="reading">
+<p class="eyebrow">M5.3 · 50–70 сағат · 11 сабақ</p>
+<h1>M5.3 DS Capstone: Data Science қорытынды жобасы</h1>
+<p class="prose">DS қорытынды жобасы: «Дала Мобайл» операторы retention ұсынысымен churn-ді азайтқысы келеді. churn.csv деректерімен бастан-аяқ жүресіз: бизнес сұрақ және қатенің бағасы → EDA → baseline → Pipeline → күштірек модель → шекті теңгемен таңдау → интерпретация және тексеру → memo мен презентация. Бұл жобаны портфолиоңызға қосуға болады.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m5-3">Тапсырмаларды орындау</a></p>
+<section id="dc-1">
+<h2>1. Бриф: бизнес сұрақ және қатенің бағасы</h2>
+<div class="prose">
+<p><b>Клиент:</b> «Дала Мобайл» — Қазақстандағы ұялы байланыс операторы. Әр айда абоненттердің бір бөлігі басқа операторға кетеді (churn). Retention бөлімі кетуге бейім абоненттерге <b>ұсыныс</b> (offer) жібергісі келеді: бір ай тегін қосымша 10 GB.</p>
+<p><b>Бизнес сұрақ:</b> «Ұсынысты кімге жіберсек, ақшаны ең көп үнемдейміз?» Бұл «модель құрыңыз» деген тапсырма емес. Модель — тек құрал, ал жауап теңгемен өлшенеді.</p>
+<h3>Деректер: <code>churn.csv</code></h3>
+<p>600 абонент: <code>city</code>, <code>age</code>, <code>tenure_months</code> (неше ай бізбен), <code>plan</code> (basic / standard / premium), <code>monthly_fee</code>, <code>data_gb</code>, <code>support_calls</code>, <code>has_contract</code>. Мақсат (target): <code>churned</code> — келесі тоқсанда кетті ме (1) әлде жоқ па (0).</p>
+<h3>Қатенің бағасы</h3>
+<ul>
+<li>Ұсыныстың құны: <b>2 000 ₸</b> бір абонентке.</li>
+<li>Кеткен абоненттің шығыны: <b>40 000 ₸</b> (болашақ табыс).</li>
+<li>Retention бөлімінің тәжірибесі: ұсыныс кетпекші абоненттің <b>30%</b>-ын сақтап қалады.</li>
+</ul>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li><b>TP</b> (кетпекші, ұсыныс алды): орташа пайда 0.3 × 40 000 − 2 000 = <b>+10 000 ₸</b>.</li>
+<li><b>FP</b> (кетпейтін, бірақ ұсыныс алды): ақша босқа кетті, <b>−2 000 ₸</b>.</li>
+<li><b>FN</b> (кетпекші, ұсыныс алмады) және <b>TN</b>: «ештеңе істемеу» нұсқасымен салыстырғанда 0 ₸.</li>
+<li>Churn ықтималдығы <code>p</code> абонентке ұсыныс жіберудің күтілетін пайдасы: <code>p × 12 000 − 2 000</code>. Ол нөлден үлкен болады, егер <code>p &gt; 2 000 / 12 000 ≈ 0.17</code>.</li>
+</ol>
+<p>Қорытынды: бір FN (жіберіп алған клиент) бір FP-дан бірнеше есе қымбат. Сондықтан бізге <b>recall</b> маңыздырақ, ал шекті (threshold) 0.5 емес, әлдеқайда төмен болуы мүмкін. Табыс метрикасы: <b>тест жиынындағы күтілетін пайда, ₸</b>. Accuracy, AUC — көмекші метрикалар.</p>
+<pre><code>SAVE, LOST, OFFER = 0.3, 40000, 2000
+tp_value = SAVE * LOST - OFFER   # 10000
+fp_value = -OFFER                # -2000</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) Жобаны «accuracy 90%-ға жету» деп бастау. Бизнес accuracy-ді емес, теңгені көреді. (2) Ұсыныс кетпекші адамның бәрін сақтайды деп есептеу. Шын өмірде қабылдау үлесі 100%-дан әлдеқайда төмен. (3) Сандарды өзіңіз ойлап табу: шығын мен құнды бизнестен сұрап, memo-ға жазыңыз.</div></div>
+<p><a href="../../#lesson/m5-3/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-2">
+<h2>2. EDA: деректің денсаулығы</h2>
+<div class="prose">
+<p>Модельге асықпаймыз. Data Analyst капстоунындағыдай, алдымен деректің «денсаулығын» тексереміз: неше жол, қандай бағандар, қай жерде бос мән, target қалай таралған.</p>
+<h3>Төрт сұрақ</h3>
+<ol>
+<li>Неше абонент, неше баған? <code>df.shape</code></li>
+<li>Churn үлесі қандай? <code>df["churned"].mean()</code> — 0/1 бағанның орташасы — 1-лердің үлесі.</li>
+<li>Қай бағанда бос мән бар? <code>df.isna().sum()</code></li>
+<li>Категориялар бойынша churn қалай өзгереді? <code>groupby</code></li>
+</ol>
+<h3>Қадамдап мысал</h3>
+<pre><code>import pandas as pd
+df = pd.read_csv("churn.csv")
+print(df.shape)                       # (600, 10)
+print(round(df["churned"].mean(), 3)) # 0.258
+print(df.isna().sum())                # age 25, data_gb 17</code></pre>
+<ol>
+<li>600 абоненттің шамамен 26%-ы кеткен. Демек, класстар теңгерімсіз: «ешкім кетпейді» деп айтатын модельдің accuracy-і 74% болады. Бұл санды есте сақтаңыз.</li>
+<li><code>age</code>-те 25, <code>data_gb</code>-да 17 бос мән бар. Жолдарды өшірсек, 42 абонентті (7%) жоғалтамыз. Оның орнына Pipeline ішінде медианамен толтырамыз (3-кезең).</li>
+<li>Енді жоспар мен келісімшарт бойынша салыстырамыз:</li>
+</ol>
+<pre><code>df.groupby("has_contract")["churned"].mean()
+# 0    0.335
+# 1    0.147</code></pre>
+<p>Неліктен EDA капстоунда бөлек кезең? Себебі модель тек деректегі заңдылықтарды қайталайды. Егер біз оларды алдын ала көрмесек, модельдің нәтижесін тексере алмаймыз: «tenure маңызды» деген сөздің дұрыс екенін қайдан білеміз? EDA-дағы әр тұжырым кейін permutation importance-пен салыстырылады, ал бос мәндер мен теңгерімсіздік туралы фактілер memo-ның «Шектеулер» бөліміне кіреді. Сондықтан нәтижелерді жазып отырыңыз.</p>
+<p>Келісімшарты жоқ абоненттер екі еседен көп кетеді. Бұл — memo-ға енетін алғашқы тұжырым. Бірақ ол <b>корреляция</b>: келісімшарт кетуді тоқтатады деп әлі айта алмаймыз, мүмкін адал клиенттер жай ғана келісімшартқа көбірек қол қояды.</p>
+<table>
+<tr><th>plan</th><th>churn үлесі</th></tr>
+<tr><td>basic</td><td>0.235</td></tr>
+<tr><td>standard</td><td>0.262</td></tr>
+<tr><td>premium</td><td>0.321</td></tr>
+</table>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>customer_id</code>-ді белгі (feature) ретінде қалдыру: ол жай нөмір, модель оған «үйреніп» алуы мүмкін. (2) <code>dropna()</code>-ны ойланбай шақыру: бос мәндер кездейсоқ болмаса, үлгі бұрмаланады. (3) Бос мәндерді толтыруды split-ке <b>дейін</b> бүкіл деректе жасау. Бұл leakage, M5.2-де көргенбіз.</div></div>
+<p><a href="../../#lesson/m5-3/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-3">
+<h2>3. EDA: tenure топтары және қолдау қызметі</h2>
+<div class="prose">
+<p><code>tenure_months</code> — сандық баған (1-ден 72 айға дейін). Әр мәнге бөлек churn есептесек, кесте шулы болады. Бизнеске түсінікті <b>топтар</b> (bands) керек: «бірінші жыл», «екінші жыл», «2–4 жыл», «4 жылдан көп».</p>
+<pre><code>df["band"] = pd.cut(df["tenure_months"],
+                    bins=[0, 12, 24, 48, 72],
+                    labels=["0-12", "13-24", "25-48", "49-72"])</code></pre>
+<p><code>pd.cut</code> әр мәнді аралыққа салады. <code>bins=[0, 12, ...]</code> «0-ден үлкен, 12-ге дейін қоса» дегенді білдіреді, сондықтан 12 ай бірінші топқа түседі.</p>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li>Топтарды жасаймыз (жоғарыдағы код).</li>
+<li>Әр топ бойынша churn үлесі мен абоненттер саны:</li>
+</ol>
+<pre><code>df.groupby("band", observed=True)["churned"].agg(["mean", "size"])</code></pre>
+<table>
+<tr><th>band</th><th>mean</th><th>size</th></tr>
+<tr><td>0-12</td><td>0.561</td><td>107</td></tr>
+<tr><td>13-24</td><td>0.409</td><td>110</td></tr>
+<tr><td>25-48</td><td>0.158</td><td>190</td></tr>
+<tr><td>49-72</td><td>0.104</td><td>193</td></tr>
+</table>
+<ol start="3">
+<li>Тұжырым: жаңа абоненттердің жартысынан көбі бірінші жылы кетеді, ал 4 жылдан асқандардың тек 10%-ы. Tenure — ең күшті белгі болуы ықтимал.</li>
+<li>Тағы бір белгі: қолдау қызметіне қоңыраулар. 3 және одан көп рет қоңырау шалғандардың churn үлесі шамамен 43%, қалғандарында 22%. Бұл «наразы клиент» белгісі.</li>
+</ol>
+<p>Неліктен бұл маңызды? Бизнес үшін «tenure-дің коэффициенті −0.9» түсініксіз, ал «бірінші жылдағы абоненттердің жартысы кетеді» — бірден түсінікті әрі әрекетке итермелейді: мүмкін, ұсынысты жаңа абоненттерге бағыттау керек. Мұндай кестелер кейін презентацияның екінші слайдына айналады. Сонымен қатар олар модельді тексеруге көмектеседі: модель жаңа абоненттерге жоғары ықтималдық бермесе, бір жерде қате бар.</p>
+<p><code>observed=True</code> — категориялық бағанмен топтағанда тек бар топтарды көрсетеді (әйтпесе pandas ескерту береді).</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>band</code> бағанын модельге <code>tenure_months</code>-пен бірге беру: бір ақпарат екі рет. Топтар — тек EDA мен баяндау үшін. (2) Кіші топтан үлкен қорытынды жасау: 6 қоңырау шалған 3 абоненттің бәрі кеткен, бірақ 3 адам — дәлел емес. Әрқашан <code>size</code>-ты қатар көрсетіңіз. (3) Аралық шекараларын тексермеу: <code>bins</code> 0-ден басталмаса, 0 мәні <code>NaN</code> болып қалады.</div></div>
+<p><a href="../../#lesson/m5-3/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-4">
+<h2>4. Train/test бөлу және baseline</h2>
+<div class="prose">
+<p>Кез келген модель бір сұраққа жауап беруі керек: «қарапайым ережеден жақсы ма?» Ол ереже — <b>baseline</b>. Ең қарапайым baseline: әрқашан ең жиі класты болжау (majority class). Біздің деректе ол «ешкім кетпейді».</p>
+<h3>Белгілер мен target</h3>
+<pre><code>num = ["age", "tenure_months", "monthly_fee", "data_gb",
+       "support_calls", "has_contract"]
+cat = ["plan"]
+X = df[num + cat]
+y = df["churned"]</code></pre>
+<p><code>customer_id</code> алынбайды (нөмір). <code>city</code>-ді де модельге қоспаймыз: ұсынысты тұрғылықты қалаға қарап таратуды бизнес қаламайды. Бірақ оны 7-кезеңде <b>тексеру</b> үшін сақтаймыз.</p>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li>Бөлу: 75% train, 25% test. <code>stratify=y</code> екі бөлікте де churn үлесін бірдей (≈26%) етеді.</li>
+</ol>
+<pre><code>from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, stratify=y, random_state=0)
+print(len(X_test), y_test.sum())   # 150 39</code></pre>
+<ol start="2">
+<li>Baseline:</li>
+</ol>
+<pre><code>from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, recall_score
+dummy = DummyClassifier(strategy="most_frequent")
+dummy.fit(X_train, y_train)
+pred = dummy.predict(X_test)
+print(accuracy_score(y_test, pred))  # 0.74
+print(recall_score(y_test, pred))    # 0.0</code></pre>
+<ol start="3">
+<li>Accuracy 74%, бірақ recall 0: бірде-бір кетпекшіні ұстамайды. Бизнес тілінде бұл «ештеңе істемеу», пайдасы 0 ₸. Ал 1-кезеңде «барлығына жіберу» 168 000 ₸ берді. Модель осы екі нұсқадан да жақсы болуы керек.</li>
+</ol>
+<p>Неліктен екі baseline? «Ештеңе істемеу» — бизнестің қазіргі жағдайы, ал «барлығына жіберу» — модельсіз ең қарапайым әрекет. Бизнес сізге «модель құнын ақтай ма?» деп сұрайды. Жауап тек салыстыру арқылы беріледі: модель екеуінен де көп пайда әкелмесе, оны құрудың, енгізудің және қолдаудың мағынасы жоқ. Бұл — нақты жұмыста жиі кездесетін адал қорытынды.</p>
+<p>Test жиынын жобаның соңына дейін «сейфте» сақтаймыз: модель таңдау cross-validation арқылы тек train-де жүреді.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>stratify</code>-ді ұмыту: кіші деректе test-тегі churn үлесі 20% немесе 32% болып кетуі мүмкін, метрикалар секіреді. (2) <code>random_state</code> бермеу: әр іске қосуда басқа нәтиже, memo-дағы сандар қайталанбайды. (3) Baseline-сыз «accuracy 80%» деп мақтану: 74%-бен салыстырғанда бұл әлсіз жетістік.</div></div>
+<p><a href="../../#lesson/m5-3/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-5">
+<h2>5. Logistic regression Pipeline-да</h2>
+<div class="prose">
+<p>Алғашқы нағыз модель: logistic regression. Ол қарапайым, жылдам және коэффициенттерін түсіндіруге болады. Бірақ оған дайындалған дерек керек: бос мәндер толтырылған, сандар масштабталған, мәтін бағандар (<code>plan</code>) сандарға айналған.</p>
+<p>M5.2-ден білеміз: мұның бәрін <b>Pipeline</b> мен <b>ColumnTransformer</b> ішіне саламыз. Сонда <code>fit</code> тек train-де үйренеді, ал <code>predict</code> test-ке сол ережелерді қолданады. Leakage жоқ.</p>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li>Сандық бағандарға: медианамен толтыру → стандарттау.</li>
+<li>Категориялық бағанға: one-hot кодтау.</li>
+<li>Соңында модель.</li>
+</ol>
+<pre><code>from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+pre = ColumnTransformer([
+    ("num", Pipeline([("imp", SimpleImputer(strategy="median")),
+                      ("sc", StandardScaler())]), num),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), cat),
+])
+pipe = Pipeline([("pre", pre),
+                 ("model", LogisticRegression(max_iter=1000))])
+pipe.fit(X_train, y_train)</code></pre>
+<ol start="4">
+<li>Бағалау. <code>predict</code> 0.5 шегімен 0/1 береді, ал <code>predict_proba(X_test)[:, 1]</code> — churn ықтималдығы. AUC ықтималдықтармен есептеледі.</li>
+</ol>
+<pre><code>proba = pipe.predict_proba(X_test)[:, 1]
+pred = pipe.predict(X_test)
+recall_score(y_test, pred)      # ≈ 0.44
+precision_score(y_test, pred)   # ≈ 0.68
+roc_auc_score(y_test, proba)    # ≈ 0.79</code></pre>
+<p>Pipeline-ның тағы бір пайдасы бар: бүкіл дайындық пен модель бір объектіде сақталады. Келесі айда жаңа абоненттер тізімі келгенде, <code>pipe.predict_proba(new_df)</code> жеткілікті: медиана, масштаб және one-hot бағандары train кезіндегідей қолданылады. Ал бөлек қадамдарды қолмен қайталасаңыз, бір қадамды ұмыту оңай. Production-да мұндай қате үнсіз, бірақ қымбат.</p>
+<p>Нәтиже: 0.5 шегінде модель кетпекшілердің тек 44%-ын ұстайды. Ал біз 1-кезеңде recall маңыздырақ екенін көрдік. Бұл мәселені шекті өзгерту арқылы шешеміз (6-кезең). AUC 0.79 — модель ықтималдық бойынша кетпекшілерді жақсы реттейді деген сөз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>roc_auc_score</code>-қа <code>predict</code> нәтижесін (0/1) беру: AUC ықтималдықпен есептеледі. (2) <code>StandardScaler</code>-ді бүкіл <code>X</code>-ке Pipeline-сыз қолдану (leakage). (3) <code>handle_unknown="ignore"</code>-ды ұмыту: жаңа деректе бұрын көрмеген жоспар пайда болса, модель құлайды.</div></div>
+<p><a href="../../#lesson/m5-3/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-6">
+<h2>6. Күштірек модель: random forest және CV</h2>
+<div class="prose">
+<p>Logistic regression сызықтық: «tenure бір айға өссе, churn логиті белгілі шамаға өзгереді». Ал random forest «егер tenure &lt; 12 <b>және</b> келісімшарт жоқ болса» сияқты өзара әрекеттесулерді өзі табады. Ол күштірек бола ма? Мұны test-пен емес, <b>cross-validation</b>-мен (тек train ішінде) тексереміз.</p>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li>Сол <code>pre</code>-ді қайта қолданамыз, тек модель басқа.</li>
+<li>Кішкентай grid: ағаш тереңдігі мен жапырақтағы ең аз жол саны. 2 × 2 = 4 комбинация × 5 fold = 20 модель.</li>
+<li>Метрика: <code>scoring="roc_auc"</code>. Шекті кейін таңдаймыз, сондықтан модельдің ықтималдықтарды қаншалықты жақсы <b>реттейтіні</b> маңызды.</li>
+</ol>
+<pre><code>from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV, cross_val_score
+rf = Pipeline([("pre", pre),
+               ("model", RandomForestClassifier(n_estimators=100,
+                                                random_state=0))])
+grid = GridSearchCV(rf, {"model__max_depth": [3, 5],
+                         "model__min_samples_leaf": [1, 5]},
+                    cv=5, scoring="roc_auc")
+grid.fit(X_train, y_train)
+print(grid.best_params_, round(grid.best_score_, 3))
+# {'model__max_depth': 3, 'model__min_samples_leaf': 5} 0.811</code></pre>
+<ol start="4">
+<li>Logistic regression-ды да дәл солай бағалаймыз:</li>
+</ol>
+<pre><code>cv_lr = cross_val_score(pipe, X_train, y_train,
+                        cv=5, scoring="roc_auc").mean()   # ≈ 0.819</code></pre>
+<ol start="5">
+<li>Нәтиже күтпеген: қарапайым модель сәл жақсы! 450 жолда сигнал негізінен сызықтық (tenure, келісімшарт, қоңыраулар), ал орман артық күрделілікті «шуға» жұмсайды.</li>
+</ol>
+<p>Бір ескерту: CV-дағы айырма өте кіші, сондықтан басқа <code>random_state</code> немесе басқа fold-тармен орман сәл озып кетуі де мүмкін. Нақты жұмыста fold-тардағы AUC-тың стандартты ауытқуын (<code>cross_val_score(...).std()</code>) қарап, айырма шудан үлкен бе деп тексереміз. Біздің жағдайда екі модель статистикалық тұрғыдан тең.</p>
+<p>Шешім: <b>logistic regression-ды</b> таңдаймыз. Сапасы бірдей болса, қарапайым модель жақсы: жылдам, түсіндіруге оңай, қолдау арзан. Бұл — memo-ға жазатын адал тұжырым.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Модельдерді test-тегі нәтиже бойынша салыстырып, ең жақсысын таңдау: сонда test «таза» болмай қалады. (2) Үлкен grid: 100 комбинация кіші деректе тек кездейсоқ «жеңімпазды» табады. (3) «Күрделі модель әрқашан жақсы» деген сенім. 0.811 мен 0.819 айырмасы fold-тар арасындағы шашыраудан кіші болуы мүмкін.</div></div>
+<p><a href="../../#lesson/m5-3/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-7">
+<h2>7. Шекті теңгемен таңдау</h2>
+<div class="prose">
+<p>Модель әр абонентке ықтималдық береді. Ұсынысты кімге жіберу — <b>шекке</b> (threshold) байланысты: <code>proba &gt;= th</code> болса жібереміз. Әдепкі 0.5 — математикалық әдет, бизнес шешімі емес. Біздің шешім теңгемен өлшенеді.</p>
+<h3>Пайда функциясы</h3>
+<pre><code>def profit(y_true, y_pred):
+    tp = ((y_pred == 1) &amp; (y_true == 1)).sum()
+    fp = ((y_pred == 1) &amp; (y_true == 0)).sum()
+    return int(10000 * tp - 2000 * fp)</code></pre>
+<h3>Қадамдап мысал</h3>
+<ol>
+<li>Шектерді 0.05-тен 0.90-ға дейін 0.05 қадаммен тексереміз.</li>
+<li>Әр шекте <code>pred = (proba &gt;= th).astype(int)</code> және пайданы есептейміз.</li>
+<li>Ең үлкен пайда берген шекті таңдаймыз.</li>
+</ol>
+<pre><code>for th in np.arange(0.05, 0.95, 0.05):
+    th = round(th, 2)
+    pred = (proba &gt;= th).astype(int)
+    print(th, profit(y_test, pred))</code></pre>
+<table>
+<tr><th>Шек</th><th>TP</th><th>FP</th><th>Пайда, ₸</th></tr>
+<tr><td>0.10</td><td>36</td><td>65</td><td><b>230 000</b></td></tr>
+<tr><td>0.20</td><td>30</td><td>42</td><td>216 000</td></tr>
+<tr><td>0.30</td><td>27</td><td>23</td><td>224 000</td></tr>
+<tr><td>0.50</td><td>17</td><td>8</td><td>154 000</td></tr>
+<tr><td>барлығына</td><td>39</td><td>111</td><td>168 000</td></tr>
+</table>
+<ol start="4">
+<li>Қорытынды: 0.5 шегі «барлығына жіберуден» де нашар! Ал 0.10–0.30 аралығында пайда шамамен бірдей (216–230 мың ₸) — қисық тегіс. Теориялық шек 1/6 ≈ 0.17 (1-кезең) осы аралықтың ортасында.</li>
+</ol>
+<p>Неге 0.5 соншалықты нашар? 0.5 шегі FN мен FP-ны бірдей «бағалайды». Ал бізде FN бес есе қымбат, сондықтан модель кетпекшілерді көбірек ұстау үшін «сенімсіз» абоненттерге де ұсыныс жіберуі тиіс. Шекті төмендеткенде recall өседі, precision азаяды, ал пайда алдымен өсіп, кейін құлайды: тым көп FP ұсыныс бюджетін жеп қояды.</p>
+<p>Тегіс аймақта бизнеске ыңғайлы нүктені таңдауға болады: 0.3 шегі ұсыныс санын екі есе азайтады (50 vs 101), ал пайданы тек 6 000 ₸-ге кемітеді. Егер ұсыныс беру операторлардың уақытын алса, бұл маңызды дәлел.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Шекті test-те таңдау — шамалы leakage: 230 000 ₸ тым оптимистік баға. Дұрысы: train-де <code>cross_val_predict</code> арқылы шекті таңдап, test-те тек бір рет тексеру. Біз оқу үшін жеңілдеттік, memo-да мұны «шектеу» ретінде жазыңыз. (2) <code>np.arange</code> 0.15000000000000002 сияқты сандар береді, <code>round</code> қолданыңыз. (3) <code>&amp;</code> орнына <code>and</code> жазу: массивтерде қате береді.</div></div>
+<p><a href="../../#lesson/m5-3/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-8">
+<h2>8. Интерпретация және қала бойынша тексеру</h2>
+<div class="prose">
+<p>Бизнес екі сұрақ қояды: «Модель неге сүйенеді?» және «Ол бір топқа әділетсіз емес пе?» Бірінші сұраққа <b>permutation importance</b>, екіншісіне <b>топтар бойынша метрикалар</b> жауап береді.</p>
+<h3>Permutation importance</h3>
+<p>Бір бағанды кездейсоқ араластырамыз (байланысы үзіледі) де, test AUC-тың қаншаға түскенін өлшейміз. Көп түссе, модель сол бағанға қатты сүйенеді. Pipeline-ға тікелей қолданылады, сондықтан бастапқы бағандар (<code>plan</code> бір баған ретінде) бағаланады.</p>
+<pre><code>from sklearn.inspection import permutation_importance
+r = permutation_importance(pipe, X_test, y_test, n_repeats=5,
+                           random_state=0, scoring="roc_auc")
+imp = pd.Series(r.importances_mean, index=X_test.columns)
+imp.sort_values(ascending=False)
+# tenure_months   0.18
+# support_calls   0.07
+# has_contract    0.06
+# ...             ≈ 0</code></pre>
+<p>EDA-дағы үш тұжырым расталды: tenure, қоңыраулар, келісімшарт. Жас, тариф, трафик модельге іс жүзінде ештеңе қоспайды.</p>
+<h3>Қадамдап мысал: қала бойынша тексеру</h3>
+<ol>
+<li><code>city</code> модельде жоқ, бірақ test жолдарына оны қайта қосамыз: <code>te = df.loc[X_test.index].copy()</code>.</li>
+<li>Таңдалған шек бойынша белгі: <code>te["flag"] = (proba &gt;= 0.1).astype(int)</code>.</li>
+<li>Әр қалада: абоненттер саны, нақты churn, ұсыныс алғандар үлесі және <b>recall</b> (кетпекшілердің қаншасы ұсыныс алды):</li>
+</ol>
+<pre><code>te[te["churned"] == 1].groupby("city")["flag"].mean()</code></pre>
+<table>
+<tr><th>city</th><th>test-те</th><th>кетпекші</th><th>recall</th></tr>
+<tr><td>Алматы</td><td>55</td><td>14</td><td>1.00</td></tr>
+<tr><td>Астана</td><td>38</td><td>13</td><td>0.92</td></tr>
+<tr><td>Шымкент</td><td>21</td><td>4</td><td>1.00</td></tr>
+<tr><td>Қарағанды</td><td>16</td><td>5</td><td>0.80</td></tr>
+<tr><td>Ақтөбе</td><td>20</td><td>3</td><td>0.67</td></tr>
+</table>
+<p>Тағы бір sanity check: ұсыныс алатындар үлесі нақты churn-ге сай ма? 0.1 шегінде модель Алматының 73%-ына ұсыныс жібереді, ал Ақтөбенің 50%-ына. Бұл Ақтөбеде churn төмен (15%) болғандықтан қисынды. Егер керісінше болса (churn төмен қалаға көп ұсыныс), модельде немесе деректе бір қате бар деп ойлауға негіз болар еді.</p>
+<ol start="4">
+<li>Ақтөбеде recall төмен көрінеді, бірақ ол 3 кетпекшінің 2-еуі. Бір адам үшін қорытынды жасамаймыз, бірақ memo-да атап, келесі тоқсанда бақылауды ұсынамыз.</li>
+</ol>
+<div class="tip"><b>Жиі қателер:</b> (1) Importance-ты себеп деп түсіну: «tenure маңызды» — «tenure-ді ұзартсақ, churn азаяды» дегенді білдірмейді. (2) Importance-ты train-де есептеу: модель жаттап алған шуды да «маңызды» деп көрсетеді. (3) Шағын топтағы айырманы «модель әділетсіз» деп жариялау, немесе керісінше, топтарды мүлдем тексермеу.</div></div>
+<p><a href="../../#lesson/m5-3/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-9">
+<h2>9. Бизнеске арналған модель memo-сы</h2>
+<div class="prose">
+<p>Retention бөлімінің басшысы Python оқымайды. Ол бір бетте төрт сұраққа жауап күтеді: <b>не істеу керек, қанша ақша, қаншалықты сенуге болады, келесі қадам не.</b> Data Analyst капстоунындағы memo құрылымын ML-ге бейімдейміз.</p>
+<ol>
+<li><b>Қорытынды</b> (1–2 сөйлем): ұсыныс пен теңгедегі нәтиже.</li>
+<li><b>Модель не істейді</b>: қарапайым тілмен, бір абзац. «Әр абоненттің келесі тоқсанда кету ықтималдығын бағалайды.»</li>
+<li><b>Дәлелдер</b>: baseline-мен салыстыру кестесі, шек, пайда; модельдің негізгі белгілері.</li>
+<li><b>Тәуекелдер мен шектеулер</b>: деректің көлемі, шекті таңдау әдісі, 30% болжам, қала бойынша тексеру.</li>
+<li><b>Келесі қадам</b>: пилот және оны қалай өлшейміз.</li>
+</ol>
+<h3>Қадамдап мысал: дәлелдер кестесі</h3>
+<table>
+<tr><th>Стратегия</th><th>Ұсыныс саны (150-ден)</th><th>Күтілетін пайда</th></tr>
+<tr><td>Ештеңе істемеу</td><td>0</td><td>0 ₸</td></tr>
+<tr><td>Барлығына</td><td>150</td><td>168 000 ₸</td></tr>
+<tr><td>Модель, шек 0.5</td><td>25</td><td>154 000 ₸</td></tr>
+<tr><td>Модель, шек 0.3</td><td>50</td><td>224 000 ₸</td></tr>
+</table>
+<p>150 абонент — бүкіл базаның бір бөлігі ғана. Нәтижені бір абонентке шаққанда айтқан түсінікті: 224 000 / 150 ≈ <b>1 500 ₸ бір абонентке</b> бір тоқсанда. 100 000 абонентке масштабтасақ — шамамен 150 млн ₸, бірақ бұл болжамның шартын (30% сақтау) міндетті түрде көрсетеміз.</p>
+<p>Тәуекелдер бөлімінде ең маңызды болжамды бөліп көрсетіңіз: бүкіл есеп «ұсыныс кетпекшінің 30%-ын сақтайды» деген санға тәуелді. Егер шын мәні 15% болса, бір TP-ның пайдасы 4 000 ₸-ге түседі, ал тиімді шек жоғарылайды. Сондықтан memo-ның соңғы бөлімі — осы санды тексеретін пилот.</p>
+<h3>Жақсы memo-ның белгілері</h3>
+<ul>
+<li>Жаргон аз: «AUC 0.79» орнына «модель кететін абоненттердің 70%-ын ұстайды, ұсыныстың әр екіншісі нысанаға тиеді».</li>
+<li>Әр сан нақты нәтижеден алынған.</li>
+<li>Шектеулер жасырылмайды: олар сенімді арттырады.</li>
+</ul>
+<div class="tip"><b>Жиі қателер:</b> (1) Memo-ны әдістен бастау («Біз GridSearchCV қолдандық...»). Оқырман алдымен шешімді күтеді. (2) Болжамдарды факт ретінде жазу: «150 млн ₸ үнемдейміз» емес, «егер ұсыныс 30%-ды сақтаса, шамамен 150 млн ₸». (3) Шектеулерді мүлдем жазбау немесе керісінше, memo-ның жартысын шектеулерге арнау.</div></div>
+<p><a href="../../#lesson/m5-3/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-10">
+<h2>10. Презентация және келесі қадамдар</h2>
+<div class="prose">
+<p>Memo — оқу үшін, презентация — шешім қабылдайтын жиналыс үшін. 10 минутта 5–6 слайд жеткілікті. Әр слайдтың тақырыбы — <b>тұжырым</b>, жай тақырып емес: «Деректер» емес, «Жаңа абоненттердің жартысы бірінші жылы кетеді».</p>
+<h3>Слайдтар жоспары</h3>
+<ol>
+<li><b>Мәселе және сұрақ</b>: тоқсанына 26% абонент кетеді; ұсыныс құны 2 000 ₸, кеткен абонент 40 000 ₸.</li>
+<li><b>Кім кетеді</b>: tenure топтары, келісімшарт, қоңыраулар (EDA).</li>
+<li><b>Төрт стратегия</b>: ешкімге / барлығына / модель 0.5 / модель таңдалған шек — бір бағанды диаграмма, ₸-мен.</li>
+<li><b>Модельге сенуге бола ма</b>: CV, қарапайым модель неге таңдалды, қала бойынша тексеру.</li>
+<li><b>Ұсыныс және пилот</b>.</li>
+<li>Қосымша (backup): техникалық мәліметтер, сұраққа дайын.</li>
+</ol>
+<h3>Қадамдап мысал: салыстыру кестесі</h3>
+<p>3-слайдтың дерегін кодпен жинаймыз, сонда сандар ноутбуктағы нәтижемен дәл сәйкес келеді:</p>
+<pre><code>strategies = {
+    "none": np.zeros(len(y_test), dtype=int),
+    "all": np.ones(len(y_test), dtype=int),
+    "model_05": (proba &gt;= 0.5).astype(int),
+    "model_03": (proba &gt;= 0.3).astype(int),
+}
+summary = pd.DataFrame({
+    "offers": {k: int(v.sum()) for k, v in strategies.items()},
+    "profit": {k: profit(y_test, v) for k, v in strategies.items()},
+})</code></pre>
+<p>Презентацияға дайындалғанда күтілетін сұрақтарды алдын ала жазып қойыңыз: «Неге нейрондық желі емес?», «Модель қаншалықты жиі қателеседі?», «Ақтөбеде неге нашар?», «30% қайдан алынды?». Әр сұраққа бір сөйлемдік жауап пен backup слайд дайын болса, жиналыс шешіммен аяқталады, ал «тағы талдап көріңізші» деген тапсырмамен емес.</p>
+<h3>Келесі қадамдар</h3>
+<ul>
+<li><b>Пилот (A/B тест)</b>: бір айда жоғары қауіпті абоненттерді кездейсоқ екі топқа бөлеміз, біреуіне ұсыныс жібереміз. Churn айырмасы 30% болжамын тексереді (M4 модуліндегі A/B тест әдістері).</li>
+<li><b>Мониторинг</b>: ай сайын recall, ұсыныс саны және қала бойынша көрсеткіштер.</li>
+<li><b>Қайта үйрету</b>: тоқсан сайын жаңа деректермен; клиенттер мінезі өзгереді (data drift).</li>
+</ul>
+<div class="tip"><b>Жиі қателер:</b> (1) Слайдқа код немесе confusion matrix-ті түсіндірмесіз қою. (2) Бір слайдта бес түрлі сан: бір слайд — бір ой. (3) Пилотсыз бүкіл базаға бірден енгізу: 30% болжамы қате болса, шығын үлкен болады.</div></div>
+<p><a href="../../#lesson/m5-3/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dc-gate">
+<h2>11. Модуль емтиханы: churn жобасы басынан аяғына дейін</h2>
+<div class="prose">
+<p>Data Science жолының соңғы тексерісі. Дерек: <code>churn.csv</code>. Белгілер: <code>age</code>, <code>tenure_months</code>, <code>monthly_fee</code>, <code>data_gb</code>, <code>support_calls</code>, <code>has_contract</code>, <code>plan</code>. Бөлу: <code>test_size=0.25</code>, <code>stratify=y</code>, <code>random_state=0</code>. Экономика: TP = +10 000 ₸, FP = −2 000 ₸.</p>
+<p>Әр тапсырма бір кезеңді тексереді: EDA → Pipeline → шек → қала бойынша тексеру → қорытынды.</p></div>
+<p><a href="../../#lesson/m5-3/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m5-3">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

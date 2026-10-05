@@ -2,373 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excel және Google Sheets қазақша — M1.1 Spreadsheets | DataJol</title>
+<meta name="description" content="Excel мен Google Sheets — кез келген аналитиктің бірінші құралы. Бұл модульде формулаларды, сілтемелерді, шартты агрегаттарды (SUMIFS), іздеу функцияларын…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m1-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Excel және Google Sheets қазақша — M1.1 Spreadsheets | DataJol">
+<meta property="og:description" content="Excel мен Google Sheets — кез келген аналитиктің бірінші құралы. Бұл модульде формулаларды, сілтемелерді, шартты агрегаттарды (SUMIFS), іздеу функцияларын…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m1-1/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M1.1 Spreadsheets","description":"Excel мен Google Sheets — кез келген аналитиктің бірінші құралы. Бұл модульде формулаларды, сілтемелерді, шартты агрегаттарды (SUMIFS), іздеу функцияларын…","url":"https://olzhaa.github.io/datajol/m/m1-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT15H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 1: Дерек құралдары","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M1.1 Spreadsheets","item":"https://olzhaa.github.io/datajol/m/m1-1/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -736,74 +384,155 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 1: Дерек құралдары / M1.1</nav>
+<article class="reading">
+<p class="eyebrow">M1.1 · 15–25 сағат · 8 сабақ</p>
+<h1>M1.1 Spreadsheets: Excel және Google Sheets қазақша</h1>
+<p class="prose">Excel мен Google Sheets — кез келген аналитиктің бірінші құралы. Бұл модульде формулаларды, сілтемелерді, шартты агрегаттарды (SUMIFS), іздеу функцияларын (XLOOKUP), мәтінді тазалауды және жиынтық кестені (pivot table) үйренесіз. Тапсырмалар кіріктірілген кесте тренажерінде орындалады: формуланы жазасыз, ол бірден есептеліп тексеріледі. Ағылшынша (SUM) да, орысша (СУММ) да атаулар жұмыс істейді, бөлгіш ретінде үтір де, нүктелі үтір де болады.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m1-1">Тапсырмаларды орындау</a></p>
+<section id="ss-1">
+<h2>1. Ұяшық, формула және сілтеме</h2>
+<div class="prose">
+<p>Кесте бағандардан (<b>A, B, C…</b>) және жолдардан (<b>1, 2, 3…</b>) тұрады. Әр ұяшықтың адресі бар: <code>C2</code> — C бағаны, 2-жол. Ауқым (range): <code>H2:H25</code> — H2-ден H25-ке дейінгі ұяшықтар.</p>
+<p>Формула әрқашан <code>=</code> белгісінен басталады:</p>
+<pre><code>=F2*G2          саны × бағасы
+=H2*0.12        12% ҚҚС
+=(G2-650)/G2    маржа үлесі</code></pre>
+<h3>Салыстырмалы және абсолютті сілтеме</h3>
+<p>Формуланы төмен көшірсеңіз (fill down), <code>=F2*G2</code> келесі жолда <code>=F3*G3</code> болады: сілтемелер <b>салыстырмалы</b>. Ұяшық өзгермеуі керек болса, <code>$</code> қойылады: <code>=H2/$H$26</code>. Ол <b>абсолютті</b> сілтеме.</p>
+<table>
+<tr><th>Жазылуы</th><th>Көшіргенде</th></tr>
+<tr><td><code>A1</code></td><td>баған да, жол да өзгереді</td></tr>
+<tr><td><code>$A$1</code></td><td>ештеңе өзгермейді</td></tr>
+<tr><td><code>A$1</code></td><td>тек жол бекітілген</td></tr>
+<tr><td><code>$A1</code></td><td>тек баған бекітілген</td></tr>
+</table>
+<div class="tip">Excel-де <kbd>F4</kbd> пернесі сілтеме түрін ауыстырады. Санды формулаға қолмен жазбаңыз: деректер өзгергенде формула ескіреді. Тренажер мұны тексереді.</div></div>
+<p><a href="../../#lesson/m1-1/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="ss-2">
+<h2>2. Негізгі функциялар: SUM, AVERAGE, COUNT</h2>
+<div class="prose">
+<table>
+<tr><th>Функция</th><th>Не істейді</th><th>Орысша</th></tr>
+<tr><td><code>SUM(H2:H25)</code></td><td>қосынды</td><td>СУММ</td></tr>
+<tr><td><code>AVERAGE(H2:H25)</code></td><td>орташа</td><td>СРЗНАЧ</td></tr>
+<tr><td><code>COUNT(H2:H25)</code></td><td>сандар бар ұяшықтар саны</td><td>СЧЁТ</td></tr>
+<tr><td><code>COUNTA(C2:C25)</code></td><td>бос емес ұяшықтар саны</td><td>СЧЁТЗ</td></tr>
+<tr><td><code>MIN</code>, <code>MAX</code>, <code>MEDIAN</code></td><td>ең кіші, ең үлкен, медиана</td><td>МИН, МАКС, МЕДИАНА</td></tr>
+<tr><td><code>ROUND(x, 0)</code></td><td>дөңгелектеу</td><td>ОКРУГЛ</td></tr>
+</table>
+<p>Функцияларды бір-бірінің ішіне салуға болады: <code>=ROUND(AVERAGE(H2:H25), 0)</code>.</p>
+<p>Бұл SQL-ден таныс: <code>SUM</code>, <code>AVG</code>, <code>COUNT</code>, <code>MIN</code>, <code>MAX</code>.</p></div>
+<p><a href="../../#lesson/m1-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-3">
+<h2>3. Шарттар: IF, AND, OR</h2>
+<div class="prose">
+<pre><code>=IF(шарт, ақиқат болса, жалған болса)
+=IF(H2&gt;=2500, "Үлкен", "Кіші")
+=IF(AND(C2="Алматы", F2&gt;=3), "Иә", "Жоқ")
+=IF(OR(D2="instagram", D2="2gis"), "Жарнама", "Ұсыныс")</code></pre>
+<p>Мәтін әрқашан қос тырнақшада жазылады. Салыстыру операторлары: <code>=</code>, <code>&lt;&gt;</code> (тең емес), <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>.</p>
+<p>Көп деңгейлі шарт үшін <code>IFS</code> немесе IF ішіне IF салынады:</p>
+<pre><code>=IFS(H2&gt;=4000, "A", H2&gt;=2000, "B", TRUE, "C")</code></pre>
+<div class="tip">SQL-дегі баламасы — <code>CASE WHEN ... THEN ... ELSE ... END</code>.</div></div>
+<p><a href="../../#lesson/m1-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-4">
+<h2>4. Шартты агрегат: COUNTIF, SUMIFS</h2>
+<div class="prose">
+<p>Аналитиктің күнделікті жұмысы: «Шымкенттен қанша тапсырыс?», «instagram қанша табыс әкелді?»</p>
+<pre><code>=COUNTIF(C2:C25, "Шымкент")                       қала бойынша саны
+=SUMIF(D2:D25, "instagram", H2:H25)               арна бойынша сома
+=SUMIFS(H2:H25, C2:C25, "Астана", E2:E25, "Латте") бірнеше шарт
+=AVERAGEIF(C2:C25, "Алматы", H2:H25)              шарт бойынша орташа
+=COUNTIFS(F2:F25, "&gt;=3", C2:C25, "Шымкент")</code></pre>
+<p>Ретіне назар аударыңыз: <code>SUMIF(шарт ауқымы, шарт, сома ауқымы)</code>, бірақ <code>SUMIFS(сома ауқымы, шарт ауқымы1, шарт1, ...)</code>.</p>
+<p>Шарттың түрлері: <code>"Шымкент"</code>, <code>"&gt;=3"</code>, <code>"&lt;&gt;instagram"</code> (тең емес), <code>"Лат*"</code> (Лат-тан басталатын).</p>
+<div class="tip">SQL баламасы: <code>SELECT SUM(amount) FROM t WHERE city = 'Астана' AND product = 'Латте'</code>.</div></div>
+<p><a href="../../#lesson/m1-1/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-5">
+<h2>5. Іздеу: XLOOKUP, VLOOKUP, INDEX/MATCH</h2>
+<div class="prose">
+<p>Екі кестені біріктіру — SQL-дегі <code>JOIN</code>. Кестеде бұл іздеу функцияларымен жасалады.</p>
+<h3>XLOOKUP (Excel 2021+, Google Sheets)</h3>
+<pre><code>=XLOOKUP(E2, Өнімдер!A2:A7, Өнімдер!C2:C7)
+        не іздейміз  қайдан іздейміз   нені қайтарамыз</code></pre>
+<h3>VLOOKUP (ескі, бірақ әлі көп кездеседі)</h3>
+<pre><code>=VLOOKUP(E2, Өнімдер!A2:C7, 3, FALSE)</code></pre>
+<p>Үшінші аргумент — кестенің неше бағанын қайтару, төртінші <code>FALSE</code> — дәл сәйкестік. <b>FALSE-ты ұмытпаңыз:</b> әйтпесе Excel жуық сәйкестік іздейді.</p>
+<h3>INDEX + MATCH</h3>
+<pre><code>=INDEX(Өнімдер!B2:B7, MATCH(E2, Өнімдер!A2:A7, 0))</code></pre>
+<p>Жуық сәйкестік пайдалы жағдай: бонус шкаласы (шектер өсу ретімен).</p>
+<pre><code>=VLOOKUP(50000, Бонус!A2:B5, 2, TRUE)   → 5   (40 000 ≤ 50 000 &lt; 80 000)</code></pre>
+<div class="tip">Мән табылмаса <code>#N/A</code> шығады. <code>IFERROR(..., "жоқ")</code> оны ұстап алады.</div></div>
+<p><a href="../../#lesson/m1-1/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-6">
+<h2>6. Мәтін функциялары және тазалау</h2>
+<div class="prose">
+<p>Нақты деректер лас: артық бос орындар, әртүрлі регистр, әртүрлі форматтар. «Қызметкерлер» парағын қараңыз.</p>
+<table>
+<tr><th>Функция</th><th>Мысал</th><th>Нәтиже</th></tr>
+<tr><td><code>TRIM</code></td><td><code>TRIM("  асқар  нұрлан")</code></td><td>асқар нұрлан</td></tr>
+<tr><td><code>PROPER</code></td><td><code>PROPER("асқар нұрлан")</code></td><td>Асқар Нұрлан</td></tr>
+<tr><td><code>UPPER</code>, <code>LOWER</code></td><td><code>LOWER("ASKAR@MAIL.KZ")</code></td><td>askar@mail.kz</td></tr>
+<tr><td><code>LEFT</code>, <code>RIGHT</code>, <code>MID</code></td><td><code>LEFT("2024-03-07", 7)</code></td><td>2024-03</td></tr>
+<tr><td><code>LEN</code></td><td><code>LEN("Латте")</code></td><td>5</td></tr>
+<tr><td><code>FIND</code></td><td><code>FIND("@", "dina@mail.kz")</code></td><td>5</td></tr>
+<tr><td><code>SUBSTITUTE</code></td><td><code>SUBSTITUTE("8 705", " ", "")</code></td><td>8705</td></tr>
+<tr><td><code>&amp;</code>, <code>CONCAT</code></td><td><code>A2 &amp; " (" &amp; D2 &amp; ")"</code></td><td>біріктіру</td></tr>
+</table>
+<h3>Құралдар</h3>
+<ul>
+<li><b>Remove duplicates</b> (Data → Remove duplicates) — қайталанған жолдарды жою.</li>
+<li><b>Text to columns</b> — бір бағанды бөлгіш бойынша бірнеше бағанға бөлу.</li>
+<li><b>Data validation</b> — ұяшыққа тек рұқсат етілген мәндерді енгізу (мысалы, бөлімдер тізімі).</li>
+<li><b>Filter</b> және <b>Sort</b> — сүзу мен сұрыптау (деректерді өзгертпейді).</li>
+</ul></div>
+<p><a href="../../#lesson/m1-1/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-7">
+<h2>7. Pivot table және диаграммалар</h2>
+<div class="prose">
+<p><b>Pivot table</b> (жиынтық кесте) — формуласыз топтау: SQL-дегі <code>GROUP BY</code>. Insert → PivotTable.</p>
+<table>
+<tr><th>Аймақ</th><th>Не қоямыз</th><th>SQL</th></tr>
+<tr><td><b>Rows</b></td><td>Қала</td><td><code>GROUP BY city</code></td></tr>
+<tr><td><b>Columns</b></td><td>Ай</td><td>екінші топтау</td></tr>
+<tr><td><b>Values</b></td><td>Сома (Sum)</td><td><code>SUM(amount)</code></td></tr>
+<tr><td><b>Filters</b></td><td>Арна</td><td><code>WHERE channel = ...</code></td></tr>
+</table>
+<p>Pivot table-дің кез келген ұяшығын <code>SUMIFS</code>-пен қайталауға болады. Бұл нәтижені тексерудің жақсы тәсілі.</p>
+<h3>Диаграмма таңдау</h3>
+<ul>
+<li>Уақыт бойынша өзгеріс → <b>Line</b></li>
+<li>Категорияларды салыстыру → <b>Bar/Column</b> (сұрыпталған)</li>
+<li>2–4 бөліктің үлесі → <b>Stacked bar</b> немесе сирек <b>Pie</b></li>
+<li>Екі санның байланысы → <b>Scatter</b></li>
+</ul>
+<div class="tip">Деректерді <b>Format as Table</b> (Ctrl+T) арқылы «кесте» етсеңіз, жаңа жолдар pivot пен формулаларға автоматты қосылады.</div></div>
+<p><a href="../../#lesson/m1-1/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ss-gate">
+<h2>8. Модуль емтиханы: Spreadsheets</h2>
+<div class="prose"><p>Қорытынды тапсырмалар. Формулалар «Сатылым», «Өнімдер» және «Бонус» парақтарында есептеледі.</p></div>
+<p><a href="../../#lesson/m1-1/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m1-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
-<script src="vendor/codemirror/codemirror.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/sql.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/python.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/closebrackets.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=d2b4bfd93f"></script>
-<script src="content/curriculum.js?v=d2b4bfd93f"></script>
-<script src="content/datasets.js?v=d2b4bfd93f"></script>
-<script src="content/csv.js?v=d2b4bfd93f"></script>
-<script src="content/mldata.js?v=d2b4bfd93f"></script>
-<script src="content/m0.js?v=d2b4bfd93f"></script>
-<script src="content/sheets.js?v=d2b4bfd93f"></script>
-<script src="content/spreadsheets.js?v=d2b4bfd93f"></script>
-<script src="content/sql.js?v=d2b4bfd93f"></script>
-<script src="content/python.js?v=d2b4bfd93f"></script>
-<script src="content/pandas.js?v=d2b4bfd93f"></script>
-<script src="content/git.js?v=d2b4bfd93f"></script>
-<script src="content/stats.js?v=d2b4bfd93f"></script>
-<script src="content/cleaning.js?v=d2b4bfd93f"></script>
-<script src="content/viz.js?v=d2b4bfd93f"></script>
-<script src="content/advanced.js?v=d2b4bfd93f"></script>
-<script src="content/powerbi.js?v=d2b4bfd93f"></script>
-<script src="content/business.js?v=d2b4bfd93f"></script>
-<script src="content/capstone.js?v=d2b4bfd93f"></script>
-<script src="content/probability.js?v=d2b4bfd93f"></script>
-<script src="content/inference.js?v=d2b4bfd93f"></script>
-<script src="content/mathml.js?v=d2b4bfd93f"></script>
-<script src="content/ml.js?v=d2b4bfd93f"></script>
-<script src="content/mlpractice.js?v=d2b4bfd93f"></script>
-<script src="content/dscapstone.js?v=d2b4bfd93f"></script>
-<script src="content/career.js?v=d2b4bfd93f"></script>
-<script src="content/diagnostic.js?v=d2b4bfd93f"></script>
-<script src="js/config.js?v=d2b4bfd93f"></script>
-<script src="js/store.js?v=d2b4bfd93f"></script>
-<script src="js/cloud.js?v=d2b4bfd93f"></script>
-<script src="js/runners.js?v=d2b4bfd93f"></script>
-<script src="js/sheet.js?v=d2b4bfd93f"></script>
-<script src="js/app.js?v=d2b4bfd93f"></script>
-
 </body>
 </html>

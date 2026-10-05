@@ -2,373 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бизнес-аналитика және KPI — M3.6 Business Analytics | DataJol</title>
+<meta name="description" content="Техникалық білім бизнес сұрағына жауап бергенде ғана құнды. Бұл модульде KPI, табыс метрикалары, воронка, retention мен churn, unit economics (CAC, LTV) және…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m3-6/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Бизнес-аналитика және KPI — M3.6 Business Analytics | DataJol">
+<meta property="og:description" content="Техникалық білім бизнес сұрағына жауап бергенде ғана құнды. Бұл модульде KPI, табыс метрикалары, воронка, retention мен churn, unit economics (CAC, LTV) және…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m3-6/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.6 Business Analytics","description":"Техникалық білім бизнес сұрағына жауап бергенде ғана құнды. Бұл модульде KPI, табыс метрикалары, воронка, retention мен churn, unit economics (CAC, LTV) және…","url":"https://olzhaa.github.io/datajol/m/m3-6/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.6 Business Analytics","item":"https://olzhaa.github.io/datajol/m/m3-6/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -736,74 +384,152 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 3: Дерек аналитигі / M3.6</nav>
+<article class="reading">
+<p class="eyebrow">M3.6 · 20–30 сағат · 9 сабақ</p>
+<h1>M3.6 Business Analytics: Бизнес-аналитика және KPI</h1>
+<p class="prose">Техникалық білім бизнес сұрағына жауап бергенде ғана құнды. Бұл модульде KPI, табыс метрикалары, воронка, retention мен churn, unit economics (CAC, LTV) және аналитикалық memo жазуды үйренесіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m3-6">Тапсырмаларды орындау</a></p>
+<section id="ba-1">
+<h2>1. KPI және метрикалар ағашы</h2>
+<div class="prose">
+<p><b>Метрика</b> — өлшенетін сан (тапсырыс саны). <b>KPI</b> — бизнес мақсатқа тікелей байланған, басшылық қадағалайтын негізгі метрика.</p>
+<h3>North Star және метрикалар ағашы</h3>
+<p>Компания бір басты метриканы таңдайды (<b>North Star Metric</b>), мысалы «аптасына сатып алған клиенттер». Сосын оны құрайтын бөліктерге жіктейді:</p>
+<pre><code>Табыс
+├── Сатып алушылар саны
+│   ├── Сайтқа келгендер (трафик)
+│   └── Конверсия
+└── Орташа чек (AOV)
+    ├── Бір чектегі тауар саны
+    └── Тауар бағасы</code></pre>
+<p>Табыс түссе, ағаш бойымен төмен түсіп, қай бөлік өзгергенін іздейміз. Бұл — аналитиктің ең жиі жұмысы.</p>
+<h3>Vanity metrics</h3>
+<p>Әдемі, бірақ шешімге әсер етпейтін метрикалар: жүктеп алулар саны, жалпы тіркелгендер, лайктар. Жақсы метрика <b>әрекетке</b> әкеледі.</p></div>
+<p><a href="../../#lesson/m3-6/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="ba-2">
+<h2>2. Табыс метрикалары: AOV, ARPU, ARPPU</h2>
+<div class="prose">
+<table>
+<tr><th>Метрика</th><th>Формула</th><th>Не айтады</th></tr>
+<tr><td><b>Revenue</b></td><td>барлық төлемдер қосындысы</td><td>жалпы табыс</td></tr>
+<tr><td><b>AOV</b> (average order value)</td><td>табыс / тапсырыстар саны</td><td>орташа чек</td></tr>
+<tr><td><b>ARPU</b></td><td>табыс / барлық белсенді пайдаланушылар</td><td>бір пайдаланушыдан орташа табыс</td></tr>
+<tr><td><b>ARPPU</b></td><td>табыс / төлеген пайдаланушылар</td><td>бір төлеушіден орташа табыс</td></tr>
+</table>
+<p>SQL-де AOV екі қадаммен есептеледі: алдымен әр тапсырыстың сомасы, сосын олардың орташасы.</p>
+<pre><code>WITH t AS (
+  SELECT o.id, SUM(oi.quantity * p.price) AS total
+  FROM orders o
+  JOIN order_items oi ON oi.order_id = o.id
+  JOIN products p ON p.id = oi.product_id
+  WHERE o.status = 'delivered'
+  GROUP BY o.id
+)
+SELECT AVG(total) AS aov FROM t;</code></pre>
+<div class="tip">Ортақ қате: <code>AVG(quantity * price)</code> тапсырыстың емес, <b>жолдың</b> (бір тауардың) орташасын береді. Алдымен тапсырыс деңгейіне жинаңыз.</div></div>
+<p><a href="../../#lesson/m3-6/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-3">
+<h2>3. Воронка: қай жерде жоғалтамыз?</h2>
+<div class="prose">
+<p>Воронка қадамдары арасындағы конверсия «қай жерде клиент жоғалады?» деген сұраққа жауап береді.</p>
+<table>
+<tr><th>Қадам</th><th>Адамдар</th><th>Алдыңғыдан конверсия</th></tr>
+<tr><td>Сайтқа кірді</td><td>10 000</td><td>—</td></tr>
+<tr><td>Тауарды қарады</td><td>4 000</td><td>40%</td></tr>
+<tr><td>Себетке салды</td><td>1 200</td><td>30%</td></tr>
+<tr><td>Төледі</td><td>300</td><td>25%</td></tr>
+</table>
+<p>Жалпы конверсия = 300 / 10 000 = 3%. Ең үлкен абсолют жоғалту — бірінші қадамда (6 000 адам), ал ең әлсіз пайыздық қадам — төлем (25%).</p>
+<h3>Сегменттеу</h3>
+<p>Жалпы воронка жеткіліксіз. Оны арна, құрылғы немесе қала бойынша бөлсеңіз, мәселе нақты бір топта екені көрінеді: мысалы, мобильде төлем беті бұзылған.</p></div>
+<p><a href="../../#lesson/m3-6/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-4">
+<h2>4. Retention, churn және LTV</h2>
+<div class="prose">
+<p><b>Churn rate</b> — кезең ішінде кеткен клиенттер үлесі. Айдың басында 200 клиент болып, оның 30-ы келесі айда сатып алмаса, churn = 30 / 200 = 15%.</p>
+<p><b>Retention</b> = 1 − churn = 85%.</p>
+<h3>LTV (lifetime value)</h3>
+<p>Бір клиенттің бүкіл «өмірінде» әкелетін табысы. Қарапайым формула:</p>
+<pre><code>Орташа өмір ұзақтығы (ай) = 1 / churn
+LTV = ARPU (айлық) × маржа × (1 / churn)</code></pre>
+<p>Мысал: ARPU 4 000 ₸, маржа 50%, churn 10% → 4 000 × 0.5 × 10 = <b>20 000 ₸</b>.</p>
+<div class="tip">Формула клиенттер бірқалыпты кетеді деп болжайды. Нақты жұмыста когорттардың retention қисықтарынан есептеген дәлірек.</div></div>
+<p><a href="../../#lesson/m3-6/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-5">
+<h2>5. Unit economics: CAC, LTV/CAC, payback</h2>
+<div class="prose">
+<p><b>Unit economics</b> бір клиенттің бизнеске пайдалы ма, жоқ па екенін көрсетеді.</p>
+<ul>
+<li><b>CAC</b> (customer acquisition cost) = маркетинг шығыны / тартылған жаңа клиенттер.</li>
+<li><b>LTV / CAC</b>: 3-тен жоғары болса, жақсы деп саналады; 1-ден төмен болса, әр клиент шығын әкеледі.</li>
+<li><b>Payback period</b> = CAC / (ARPU × маржа): шығын неше айда өтеледі.</li>
+</ul>
+<p>CAC-ты арна бойынша есептеу маңызды: бір арна арзан, екіншісі қымбат клиент әкелуі мүмкін.</p>
+<pre><code>WITH s AS (SELECT channel, SUM(spend) AS spend FROM ad_spend GROUP BY channel),
+     u AS (SELECT channel, COUNT(*) AS n FROM users GROUP BY channel)
+SELECT s.channel, s.spend * 1.0 / u.n AS cac
+FROM s JOIN u ON u.channel = s.channel;</code></pre></div>
+<p><a href="../../#lesson/m3-6/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-6">
+<h2>6. Өсім: MoM, YoY және маусымдылық</h2>
+<div class="prose">
+<ul>
+<li><b>MoM</b> (month-over-month) = (осы ай − өткен ай) / өткен ай.</li>
+<li><b>YoY</b> (year-over-year) = (осы ай − былтырғы осы ай) / былтырғы осы ай.</li>
+</ul>
+<p>Желтоқсанда сатылым қарашадан 40% өсті, бұл жақсы ма? Бәлкім, әр желтоқсан осылай өседі (<b>маусымдылық</b>). Сондықтан маусымдық бизнесте YoY-ға қараймыз: ол маусымдылықты «жояды».</p>
+<div class="tip">Аз сандарда пайыздар алдамшы: 2 тапсырыстан 4-ке өсу — «+100%», бірақ бизнес үшін маңызсыз. Пайызбен бірге абсолют санды да көрсетіңіз.</div></div>
+<p><a href="../../#lesson/m3-6/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-7">
+<h2>7. Метрикалардағы қақпандар</h2>
+<div class="prose">
+<h3>1. Орташалардың орташасы</h3>
+<p>Екі дүкеннің конверсиясы 10% (100 келушіден) және 2% (10 000 келушіден). Орташа «6%» емес: жалпы конверсия = (10 + 200) / 10 100 ≈ 2.1%. Қатынастарды алдымен алым мен бөлімге жинап, сосын бөліңіз.</p>
+<h3>2. Survivorship және селекция</h3>
+<p>«Премиум клиенттер көбірек сатып алады» — бәлкім, көп сатып алатындар премиумға ауысады. Бағыт керісінше болуы мүмкін.</p>
+<h3>3. Гудхарт заңы</h3>
+<p>«Метрика мақсатқа айналғанда, ол жақсы метрика болудан қалады.» Колл-орталыққа «қоңырау ұзақтығын қысқарт» деген KPI берсеңіз, операторлар мәселені шешпей-ақ телефонды қоя салады. Әр KPI-ға «қарсы салмақ» метрика қойыңыз (мысалы, қайта қоңыраулар саны).</p></div>
+<p><a href="../../#lesson/m3-6/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-8">
+<h2>8. Аналитикалық memo жазу</h2>
+<div class="prose">
+<p>Талдаудың соңғы өнімі — кесте емес, <b>шешім</b>. Оны басшыға memo (қысқа жазба) арқылы жеткіземіз.</p>
+<h3>Құрылым: жауап бірінші</h3>
+<ol>
+<li><b>Негізгі тұжырым</b> (1–2 сөйлем): «Қыркүйекте табыс 12% түсті, себебі мобильде төлем конверсиясы 25%-дан 14%-ға құлады.»</li>
+<li><b>Дәлелдер</b>: 2–3 сан немесе бір график, дереккөзімен.</li>
+<li><b>Ұсыныс</b>: нақты әрекет және жауапты адам.</li>
+<li><b>Шектеулер</b>: не тексерілмеді, қандай болжам жасалды.</li>
+</ol>
+<div class="tip">Басшы тек бірінші абзацты оқиды деп жазыңыз. «Алдымен деректі жүктедім, сосын тазаладым...» деп бастамаңыз: процесс оқырманға керек емес.</div></div>
+<p><a href="../../#lesson/m3-6/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="ba-gate">
+<h2>9. Модуль емтиханы: Business Analytics</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: табыс метрикалары, воронка, retention, unit economics. Дерекқорлар: <code>shop</code> және <code>metrics</code>.</p></div>
+<p><a href="../../#lesson/m3-6/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m3-6">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
-<script src="vendor/codemirror/codemirror.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/sql.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/python.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/closebrackets.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=d2b4bfd93f"></script>
-<script src="content/curriculum.js?v=d2b4bfd93f"></script>
-<script src="content/datasets.js?v=d2b4bfd93f"></script>
-<script src="content/csv.js?v=d2b4bfd93f"></script>
-<script src="content/mldata.js?v=d2b4bfd93f"></script>
-<script src="content/m0.js?v=d2b4bfd93f"></script>
-<script src="content/sheets.js?v=d2b4bfd93f"></script>
-<script src="content/spreadsheets.js?v=d2b4bfd93f"></script>
-<script src="content/sql.js?v=d2b4bfd93f"></script>
-<script src="content/python.js?v=d2b4bfd93f"></script>
-<script src="content/pandas.js?v=d2b4bfd93f"></script>
-<script src="content/git.js?v=d2b4bfd93f"></script>
-<script src="content/stats.js?v=d2b4bfd93f"></script>
-<script src="content/cleaning.js?v=d2b4bfd93f"></script>
-<script src="content/viz.js?v=d2b4bfd93f"></script>
-<script src="content/advanced.js?v=d2b4bfd93f"></script>
-<script src="content/powerbi.js?v=d2b4bfd93f"></script>
-<script src="content/business.js?v=d2b4bfd93f"></script>
-<script src="content/capstone.js?v=d2b4bfd93f"></script>
-<script src="content/probability.js?v=d2b4bfd93f"></script>
-<script src="content/inference.js?v=d2b4bfd93f"></script>
-<script src="content/mathml.js?v=d2b4bfd93f"></script>
-<script src="content/ml.js?v=d2b4bfd93f"></script>
-<script src="content/mlpractice.js?v=d2b4bfd93f"></script>
-<script src="content/dscapstone.js?v=d2b4bfd93f"></script>
-<script src="content/career.js?v=d2b4bfd93f"></script>
-<script src="content/diagnostic.js?v=d2b4bfd93f"></script>
-<script src="js/config.js?v=d2b4bfd93f"></script>
-<script src="js/store.js?v=d2b4bfd93f"></script>
-<script src="js/cloud.js?v=d2b4bfd93f"></script>
-<script src="js/runners.js?v=d2b4bfd93f"></script>
-<script src="js/sheet.js?v=d2b4bfd93f"></script>
-<script src="js/app.js?v=d2b4bfd93f"></script>
-
 </body>
 </html>

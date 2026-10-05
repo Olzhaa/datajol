@@ -2,373 +2,21 @@
 <html lang="kk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DataJol — дата аналитика, SQL және Python қазақша</title>
-<meta name="description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<link rel="canonical" href="https://olzhaa.github.io/datajol/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
-<meta property="og:title" content="DataJol — дата аналитика, SQL және Python қазақша">
-<meta property="og:description" content="Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі.">
-<meta property="og:url" content="https://olzhaa.github.io/datajol/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дерек әлеміне кіріспе — M0.1 Дерек әлемі | DataJol</title>
+<meta name="description" content="M0.1 Дерек әлемі: Дерек деген не, мамандықтар, аналитикалық сұрақ қою. Қазақша тегін сабақтар мен браузерде тексерілетін тапсырмалар.">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m0-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Дерек әлеміне кіріспе — M0.1 Дерек әлемі | DataJol">
+<meta property="og:description" content="M0.1 Дерек әлемі: Дерек деген не, мамандықтар, аналитикалық сұрақ қою. Қазақша тегін сабақтар мен браузерде тексерілетін тапсырмалар.">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m0-1/">
 <meta property="og:locale" content="kk_KZ">
 <meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F766E'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1.5' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='13' rx='1.5' fill='%23fff'/%3E%3Crect x='21' y='15' width='4' height='10' rx='1.5' fill='%23fff'/%3E%3Ccircle cx='23' cy='8' r='3' fill='%23F5B451'/%3E%3C/svg%3E" type="image/svg+xml">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "DataJol", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, статистика және ML. Тапсырмалар браузерде бірден тексеріледі."}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* BASICS */
-
-.CodeMirror {
-  /* Set height, width, borders, and global font properties here */
-  font-family: monospace;
-  height: 300px;
-  color: black;
-  direction: ltr;
-}
-
-/* PADDING */
-
-.CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px; /* Horizontal padding of content */
-}
-
-.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
-}
-
-/* GUTTER */
-
-.CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-}
-.CodeMirror-linenumbers {}
-.CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-
-.CodeMirror-guttermarker { color: black; }
-.CodeMirror-guttermarker-subtle { color: #999; }
-
-/* CURSOR */
-
-.CodeMirror-cursor {
-  border-left: 1px solid black;
-  border-right: none;
-  width: 0;
-}
-/* Shown when moving in bi-directional text */
-.CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
-}
-.cm-fat-cursor .CodeMirror-cursor {
-  width: auto;
-  border: 0 !important;
-  background: #7e7;
-}
-.cm-fat-cursor div.CodeMirror-cursors {
-  z-index: 1;
-}
-.cm-fat-cursor .CodeMirror-line::selection,
-.cm-fat-cursor .CodeMirror-line > span::selection, 
-.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
-.cm-fat-cursor .CodeMirror-line::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
-.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
-.cm-fat-cursor { caret-color: transparent; }
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@-webkit-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-@keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
-}
-
-/* Can style cursor different in overwrite (non-insert) mode */
-.CodeMirror-overwrite .CodeMirror-cursor {}
-
-.cm-tab { display: inline-block; text-decoration: inherit; }
-
-.CodeMirror-rulers {
-  position: absolute;
-  left: 0; right: 0; top: -50px; bottom: 0;
-  overflow: hidden;
-}
-.CodeMirror-ruler {
-  border-left: 1px solid #ccc;
-  top: 0; bottom: 0;
-  position: absolute;
-}
-
-/* DEFAULT THEME */
-
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
-.cm-negative {color: #d44;}
-.cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
-.cm-em {font-style: italic;}
-.cm-link {text-decoration: underline;}
-.cm-strikethrough {text-decoration: line-through;}
-
-.cm-s-default .cm-keyword {color: #708;}
-.cm-s-default .cm-atom {color: #219;}
-.cm-s-default .cm-number {color: #164;}
-.cm-s-default .cm-def {color: #00f;}
-.cm-s-default .cm-variable,
-.cm-s-default .cm-punctuation,
-.cm-s-default .cm-property,
-.cm-s-default .cm-operator {}
-.cm-s-default .cm-variable-2 {color: #05a;}
-.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #a11;}
-.cm-s-default .cm-string-2 {color: #f50;}
-.cm-s-default .cm-meta {color: #555;}
-.cm-s-default .cm-qualifier {color: #555;}
-.cm-s-default .cm-builtin {color: #30a;}
-.cm-s-default .cm-bracket {color: #997;}
-.cm-s-default .cm-tag {color: #170;}
-.cm-s-default .cm-attribute {color: #00c;}
-.cm-s-default .cm-hr {color: #999;}
-.cm-s-default .cm-link {color: #00c;}
-
-.cm-s-default .cm-error {color: #f00;}
-.cm-invalidchar {color: #f00;}
-
-.CodeMirror-composing { border-bottom: 2px solid; }
-
-/* Default styles for common addons */
-
-div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
-div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
-.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
-.CodeMirror-activeline-background {background: #e8f2ff;}
-
-/* STOP */
-
-/* The rest of this file contains styles related to the mechanics of
-   the editor. You probably shouldn't touch them. */
-
-.CodeMirror {
-  position: relative;
-  overflow: hidden;
-  background: white;
-}
-
-.CodeMirror-scroll {
-  overflow: scroll !important; /* Things will break if this is overridden */
-  /* 50px is the magic margin used to hide the element's real scrollbars */
-  /* See overflow: hidden in .CodeMirror */
-  margin-bottom: -50px; margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  outline: none; /* Prevent dragging from highlighting the element */
-  position: relative;
-  z-index: 0;
-}
-.CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-
-/* The fake, visible scrollbars. Used to force redraw during scrolling
-   before actual scrolling happens, thus preventing shaking and
-   flickering artifacts. */
-.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.CodeMirror-vscrollbar {
-  right: 0; top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.CodeMirror-hscrollbar {
-  bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-.CodeMirror-scrollbar-filler {
-  right: 0; bottom: 0;
-}
-.CodeMirror-gutter-filler {
-  left: 0; bottom: 0;
-}
-
-.CodeMirror-gutters {
-  position: absolute; left: 0; top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.CodeMirror-gutter-background {
-  position: absolute;
-  top: 0; bottom: 0;
-  z-index: 4;
-}
-.CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
-.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
-
-.CodeMirror-lines {
-  cursor: text;
-  min-height: 1px; /* prevents collapsing before first draw */
-}
-.CodeMirror pre.CodeMirror-line,
-.CodeMirror pre.CodeMirror-line-like {
-  /* Reset some styles that the rest of the page might have set */
-  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  margin: 0;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  z-index: 2;
-  position: relative;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-variant-ligatures: contextual;
-  font-variant-ligatures: contextual;
-}
-.CodeMirror-wrap pre.CodeMirror-line,
-.CodeMirror-wrap pre.CodeMirror-line-like {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  word-break: normal;
-}
-
-.CodeMirror-linebackground {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 0;
-}
-
-.CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: 0.1px; /* Force widget margins to stay inside of the container */
-}
-
-.CodeMirror-widget {}
-
-.CodeMirror-rtl pre { direction: rtl; }
-
-.CodeMirror-code {
-  outline: none;
-}
-
-/* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
-.CodeMirror-sizer,
-.CodeMirror-gutter,
-.CodeMirror-gutters,
-.CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-.CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-
-.CodeMirror-cursor {
-  position: absolute;
-  pointer-events: none;
-}
-.CodeMirror-measure pre { position: static; }
-
-div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-div.CodeMirror-dragcursors {
-  visibility: visible;
-}
-
-.CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-
-.CodeMirror-selected { background: #d9d9d9; }
-.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
-.CodeMirror-crosshair { cursor: crosshair; }
-.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
-.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
-
-.cm-searching {
-  background-color: #ffa;
-  background-color: rgba(255, 255, 0, .4);
-}
-
-/* Used to force a border model for a node */
-.cm-force-border { padding-right: .1px; }
-
-@media print {
-  /* Hide the cursor when printing */
-  .CodeMirror div.CodeMirror-cursors {
-    visibility: hidden;
-  }
-}
-
-/* See issue #2901 */
-.cm-tab-wrap-hack:after { content: ''; }
-
-/* Help users use markselection to safely style text background */
-span.CodeMirror-selectedtext { background: none; }
-
-</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M0.1 Дерек әлемі","description":"M0.1 Дерек әлемі: Дерек деген не, мамандықтар, аналитикалық сұрақ қою. Қазақша тегін сабақтар мен браузерде тексерілетін тапсырмалар.","url":"https://olzhaa.github.io/datajol/m/m0-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT4H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 0: Негіз","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M0.1 Дерек әлемі","item":"https://olzhaa.github.io/datajol/m/m0-1/"}]}]</script>
 <style>
 /* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
 [hidden] { display: none !important; }
@@ -736,74 +384,79 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
 
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
 </style>
 </head>
 <body>
-
-<header class="topbar"><div class="wrap" id="topbar"></div></header>
-<main class="wrap" id="app">
-<section class="landing" style="padding:40px 0 64px">
-<h1 style="font-size:2rem;margin-bottom:12px">Дерек тілін нөлден үйреніңіз</h1>
-<p class="muted" style="max-width:62ch">DataJol — дата аналитика мен Data Science-ті қазақ тілінде тегін үйренетін интерактивті платформа: SQL, Python, Excel, Power BI, статистика, A/B тест және машиналық оқыту. Әр тапсырма браузерде бірден тексеріледі.</p>
-<noscript><p><b>Сабақтарды оқу үшін төмендегі модульдерді ашыңыз; тапсырмаларды орындау үшін JavaScript қосыңыз.</b></p></noscript>
-<section class="phase"><div class="phase-head"><h2>Кезең 0 · Негіз</h2><span class="muted">Дерек әлемін түсіну, сандармен сенімді жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m0-1/"><b>M0.1 Дерек әлемі</b></a> — Дерек деген не, мамандықтар, аналитикалық сұрақ қою</li><li><a href="m/m0-2/"><b>M0.2 Math refresher</b></a> — Пайыз, орташа мен медиана, өзгеріс, диаграмма оқу</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 1 · Дерек құралдары</h2><span class="muted">Кестелермен жұмыс және SQL сұраулары</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m1-1/"><b>M1.1 Spreadsheets</b></a> — Формулалар, XLOOKUP, pivot table, диаграммалар</li><li><a href="m/m1-2/"><b>M1.2 SQL Core</b></a> — SELECT, WHERE, GROUP BY, JOIN, subquery, DDL/DML, транзакциялар</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 2 · Бағдарламалау</h2><span class="muted">Python-да дерекпен жұмыс</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m2-1/"><b>M2.1 Python Fundamentals</b></a> — Айнымалылар, шарттар, циклдар, функциялар, dict, қателер</li><li><a href="m/m2-2/"><b>M2.2 pandas &amp; NumPy</b></a> — DataFrame, фильтр, groupby, merge, missing values</li><li><a href="m/m2-3/"><b>M2.3 Git &amp; GitHub</b></a> — commit, branch, pull request, README</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 3 · Дерек аналитигі</h2><span class="muted">Деректен дашборд пен ұсынысқа дейін</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m3-1/"><b>M3.1 Descriptive Statistics</b></a> — Таралу, шашыраңқылық, корреляция</li><li><a href="m/m3-2/"><b>M3.2 Cleaning &amp; EDA</b></a> — Profiling, missing, outliers, EDA чек-листі</li><li><a href="m/m3-3/"><b>M3.3 Advanced SQL &amp; Modeling</b></a> — CTE, window functions, star schema, оптимизация</li><li><a href="m/m3-4/"><b>M3.4 Visualization &amp; Storytelling</b></a> — Диаграмма таңдау, matplotlib, memo жазу</li><li><a href="m/m3-5/"><b>M3.5 Power BI</b></a> — Power Query, модель, DAX, интерактивті есеп</li><li><a href="m/m3-6/"><b>M3.6 Business Analytics</b></a> — KPI, воронка, когорт, unit economics</li><li><a href="m/m3-7/"><b>M3.7 DA Capstone &amp; Interview</b></a> — Портфолио жобасы, сұхбатқа дайындық</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 4 · DS негізі</h2><span class="muted">Ықтималдық, эксперимент, ML математикасы</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m4-1/"><b>M4.1 Probability</b></a> — Шартты ықтималдық, Bayes, таралулар</li><li><a href="m/m4-2/"><b>M4.2 Inference &amp; A/B Testing</b></a> — CI, гипотеза, p-value, sample size</li><li><a href="m/m4-3/"><b>M4.3 Math for ML</b></a> — Вектор, матрица, туынды, gradient descent</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 5 · Машиналық оқыту</h2><span class="muted">Бизнес мәселесіне модель құру</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m5-1/"><b>M5.1 ML Foundations</b></a> — Regression, classification, CV, метрикалар</li><li><a href="m/m5-2/"><b>M5.2 ML in Practice</b></a> — Pipeline, leakage, tuning, boosting, clustering, SHAP</li><li><a href="m/m5-3/"><b>M5.3 DS Capstone</b></a> — Толық DS циклі, презентация</li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 6 · ML инженерия</h2><span class="muted">Модельді өндіріске шығару</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><b>M6.1 Software Eng for Data</b> — OOP, тесттер, venv, REST API <span class="muted">(жақында)</span></li><li><b>M6.2 Deployment</b> — FastAPI, Docker, бұлтқа деплой <span class="muted">(жақында)</span></li><li><b>M6.3 MLOps Basics</b> — MLflow, CI, мониторинг, drift <span class="muted">(жақында)</span></li><li><b>M6.4 Deep Learning Intro</b> — PyTorch, training loop, CNN <span class="muted">(жақында)</span></li><li><b>M6.5 Cloud &amp; Data Eng Basics</b> — Warehouse, ETL, Spark/dbt шолуы <span class="muted">(жақында)</span></li><li><b>M6.6 ML Capstone</b> — End-to-end ML сервисі <span class="muted">(жақында)</span></li><li><b>GenAI GenAI Specialization</b> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps <span class="muted">(жақында)</span></li></ul></section>
-<section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
-<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 0: Негіз / M0.1</nav>
+<article class="reading">
+<p class="eyebrow">M0.1 · 4–6 сағат · 3 сабақ</p>
+<h1>M0.1 Дерек әлемі: Дерек әлеміне кіріспе</h1>
+<p class="prose">Дерек деген не, мамандықтар, аналитикалық сұрақ қою</p>
+<p class="static-cta"><a class="btn" href="../../#module/m0-1">Тапсырмаларды орындау</a></p>
+<section id="m01-1">
+<h2>1. Дерек деген не?</h2>
+<div class="prose">
+<p>Дерек (data) — бір нәрсе туралы жазылып, сақталған факт. Дүкендегі әр чек, банктегі әр аударым, сайттағы әр басу — бәрі дерек. Компаниялар осы деректерден сұрақтарға жауап іздейді: <em>қай тауар жақсы сатылады? клиенттер неге кетіп жатыр? келесі айда қанша тапсырыс болады?</em></p>
+<h3>Деректің екі түрі</h3>
+<ul>
+<li><b>Құрылымдалған</b> — кесте түрінде: жолдар мен бағандар. Excel, SQL дерекқорлары. Аналитиктің 80% жұмысы осында.</li>
+<li><b>Құрылымдалмаған</b> — мәтін, сурет, дыбыс, видео. Оны өңдеу үшін ML мен GenAI керек болады.</li>
+</ul>
+<h3>Кесте қалай құрылады</h3>
+<p>Әр <b>жол</b> (row) — бір объект, мысалы бір клиент. Әр <b>баған</b> (column) — сол объекттің бір қасиеті, мысалы қаласы.</p>
+<table><tr><th>id</th><th>name</th><th>city</th></tr><tr><td>1</td><td>Айгерім</td><td>Алматы</td></tr><tr><td>2</td><td>Нұрлан</td><td>Астана</td></tr></table>
+<h3>Бағандардың типтері</h3>
+<p><b>Сандық</b> (бағасы, жасы) — қосып, орташасын алуға болады. <b>Категориялық</b> (қала, санат) — санауға, топтауға болады. <b>Күн-уақыт</b> (тапсырыс күні) — тренд көруге болады. Типті дұрыс анықтау — талдаудың бірінші қадамы.</p>
+<div class="tip">Бұл платформада барлығын браузерде жасайсыз: ештеңе орнатудың қажеті жоқ.</div></div>
+<p><a href="../../#lesson/m0-1/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="m01-2">
+<h2>2. Data мамандықтары: кім не істейді?</h2>
+<div class="prose">
+<p>Data саласында бірнеше рөл бар. Олардың негізі ортақ (SQL, Python, статистика), бірақ күнделікті жұмысы әртүрлі.</p>
+<table>
+<tr><th>Рөл</th><th>Не істейді</th><th>Негізгі құралдар</th></tr>
+<tr><td><b>Data Analyst</b></td><td>Бизнес сұрағына деректен жауап табады, дашборд жасайды</td><td>SQL, Excel, Power BI/Tableau, негізгі статистика</td></tr>
+<tr><td><b>Data Scientist</b></td><td>Болжам жасайтын модельдер құрады, эксперимент талдайды</td><td>Python, pandas, scikit-learn, статистика</td></tr>
+<tr><td><b>Data Engineer</b></td><td>Деректі жинайтын, тазалайтын, сақтайтын жүйе құрады</td><td>SQL, Python, Airflow, Spark, бұлт</td></tr>
+<tr><td><b>ML Engineer</b></td><td>Модельді өндіріске шығарып, тұрақты жұмыс істетеді</td><td>Python, Docker, MLflow, FastAPI</td></tr>
+<tr><td><b>GenAI Engineer</b></td><td>LLM негізіндегі өнімдер жасайды (чат-бот, RAG)</td><td>Python, LLM API, vector DB</td></tr>
+</table>
+<h3>Неден бастаймыз?</h3>
+<p>Барлық жол SQL мен Python-нан басталады. Data Analyst жолы ең қысқа: шамамен 300–435 сағат. Data Scientist оған ықтималдық, A/B тест және machine learning қосады. ML Engineer бұған қоса бағдарламалық инженерия мен деплойды үйренеді.</p>
+<div class="tip">Нарықта Data Scientist позицияларының көбі жоғары білім талап етеді. Сондықтан ең сенімді жол: алдымен Data Analyst болып жұмысқа тұру, кейін DS-ке өту.</div></div>
+<p><a href="../../#lesson/m0-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="m01-3">
+<h2>3. Дұрыс сұрақ қою</h2>
+<div class="prose">
+<p>Жақсы талдау жақсы сұрақтан басталады. «Сатылымды талдап берші» деген тапсырма тым кең. Аналитик оны <b>өлшенетін</b> сұраққа айналдырады.</p>
+<h3>Бұлыңғыр сұрақ → аналитикалық сұрақ</h3>
+<table>
+<tr><th>Бұлыңғыр</th><th>Аналитикалық</th></tr>
+<tr><td>Клиенттер риза ма?</td><td>Соңғы 3 айда қайталап сатып алған клиенттердің үлесі қанша және ол өсті ме?</td></tr>
+<tr><td>Жарнама жұмыс істей ме?</td><td>Instagram жарнамасынан келген әр клиент бізге қанша теңгеге түседі (CAC)?</td></tr>
+</table>
+<h3>Тексеру тізімі</h3>
+<ul>
+<li><b>Метрика</b> анық па? (саны, сомасы, үлесі, орташасы)</li>
+<li><b>Кезең</b> көрсетілген бе? (апта, ай, тоқсан)</li>
+<li><b>Салыстыру</b> бар ма? (өткен кезеңмен, басқа топпен)</li>
+<li>Жауап қандай <b>шешімге</b> әсер етеді?</li>
+</ul>
+<h3>Корреляция ≠ себеп</h3>
+<p>Жазда балмұздақ сатылымы да, суға бату оқиғалары да өседі. Бірақ балмұздақ суға батуға себеп емес: екеуіне де ыстық ауа райы әсер етеді. Аналитик екі көрсеткіштің бірге өзгеруін көргенде «себеп пе, әлде ортақ фактор ма?» деп сұрайды.</p></div>
+<p><a href="../../#lesson/m0-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m0-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
 </main>
-<div id="toast-root" role="status" aria-live="polite"></div>
-
-<script>window.DJ_VERSION = 'd2b4bfd93f';</script>
-<script src="vendor/codemirror/codemirror.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/sql.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/python.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/closebrackets.js?v=d2b4bfd93f"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=d2b4bfd93f"></script>
-<script src="content/curriculum.js?v=d2b4bfd93f"></script>
-<script src="content/datasets.js?v=d2b4bfd93f"></script>
-<script src="content/csv.js?v=d2b4bfd93f"></script>
-<script src="content/mldata.js?v=d2b4bfd93f"></script>
-<script src="content/m0.js?v=d2b4bfd93f"></script>
-<script src="content/sheets.js?v=d2b4bfd93f"></script>
-<script src="content/spreadsheets.js?v=d2b4bfd93f"></script>
-<script src="content/sql.js?v=d2b4bfd93f"></script>
-<script src="content/python.js?v=d2b4bfd93f"></script>
-<script src="content/pandas.js?v=d2b4bfd93f"></script>
-<script src="content/git.js?v=d2b4bfd93f"></script>
-<script src="content/stats.js?v=d2b4bfd93f"></script>
-<script src="content/cleaning.js?v=d2b4bfd93f"></script>
-<script src="content/viz.js?v=d2b4bfd93f"></script>
-<script src="content/advanced.js?v=d2b4bfd93f"></script>
-<script src="content/powerbi.js?v=d2b4bfd93f"></script>
-<script src="content/business.js?v=d2b4bfd93f"></script>
-<script src="content/capstone.js?v=d2b4bfd93f"></script>
-<script src="content/probability.js?v=d2b4bfd93f"></script>
-<script src="content/inference.js?v=d2b4bfd93f"></script>
-<script src="content/mathml.js?v=d2b4bfd93f"></script>
-<script src="content/ml.js?v=d2b4bfd93f"></script>
-<script src="content/mlpractice.js?v=d2b4bfd93f"></script>
-<script src="content/dscapstone.js?v=d2b4bfd93f"></script>
-<script src="content/career.js?v=d2b4bfd93f"></script>
-<script src="content/diagnostic.js?v=d2b4bfd93f"></script>
-<script src="js/config.js?v=d2b4bfd93f"></script>
-<script src="js/store.js?v=d2b4bfd93f"></script>
-<script src="js/cloud.js?v=d2b4bfd93f"></script>
-<script src="js/runners.js?v=d2b4bfd93f"></script>
-<script src="js/sheet.js?v=d2b4bfd93f"></script>
-<script src="js/app.js?v=d2b4bfd93f"></script>
-
 </body>
 </html>

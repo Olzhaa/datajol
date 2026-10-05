@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python негіздері қазақша — M2.1 Python Fundamentals | DataJol</title>
+<meta name="description" content="Python — data маманының негізгі тілі. Мұнда кодты браузерде жазып, бірден іске қосасыз. Бірінші іске қосу Python ортасын жүктейді (шамамен 10 МБ), сосын…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m2-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python негіздері қазақша — M2.1 Python Fundamentals | DataJol">
+<meta property="og:description" content="Python — data маманының негізгі тілі. Мұнда кодты браузерде жазып, бірден іске қосасыз. Бірінші іске қосу Python ортасын жүктейді (шамамен 10 МБ), сосын…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m2-1/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M2.1 Python Fundamentals","description":"Python — data маманының негізгі тілі. Мұнда кодты браузерде жазып, бірден іске қосасыз. Бірінші іске қосу Python ортасын жүктейді (шамамен 10 МБ), сосын…","url":"https://olzhaa.github.io/datajol/m/m2-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT35H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 2: Бағдарламалау","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M2.1 Python Fundamentals","item":"https://olzhaa.github.io/datajol/m/m2-1/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең 2: Бағдарламалау / M2.1</nav>
+<article class="reading">
+<p class="eyebrow">M2.1 · 35–50 сағат · 14 сабақ</p>
+<h1>M2.1 Python Fundamentals: Python негіздері қазақша</h1>
+<p class="prose">Python — data маманының негізгі тілі. Мұнда кодты браузерде жазып, бірден іске қосасыз. Бірінші іске қосу Python ортасын жүктейді (шамамен 10 МБ), сосын жылдам жұмыс істейді.</p>
+<p class="static-cta"><a class="btn" href="../../#module/m2-1">Тапсырмаларды орындау</a></p>
+<section id="py-1">
+<h2>1. print және бірінші бағдарлама</h2>
+<div class="prose">
+<p>Python бағдарламасы — жоғарыдан төмен орындалатын командалар тізбегі. Ең алғашқы команда — <code>print()</code>, ол экранға мәтін немесе сан шығарады:</p>
+<pre><code>print("Сәлем, Data әлемі!")
+print(2026)
+print("Жыл:", 2026)</code></pre>
+<p>Мәтін (string) тырнақшаға алынады: <code>"..."</code> немесе <code>'...'</code>. Сандар тырнақшасыз жазылады. <code>print</code> ішінде бірнеше мәнді үтірмен берсеңіз, олар бос орынмен бөлініп шығады.</p>
+<h3>Түсініктеме (comment)</h3>
+<pre><code># Бұл жол орындалмайды: ол адамдарға арналған</code></pre>
+<div class="tip">Python бос орынға (indentation) сезімтал. Әзірге әр команданы жолдың басынан бастаңыз.</div></div>
+<p><a href="../../#lesson/m2-1/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-2">
+<h2>2. Айнымалылар мен деректер типтері</h2>
+<div class="prose">
+<p><b>Айнымалы</b> (variable) — мәнге берілген атау. Ол <code>=</code> арқылы құрылады:</p>
+<pre><code>city = "Алматы"
+orders = 120
+avg_check = 8450.5
+is_active = True</code></pre>
+<h3>Негізгі типтер</h3>
+<table>
+<tr><th>Тип</th><th>Мысал</th><th>Не үшін</th></tr>
+<tr><td><code>int</code></td><td>120</td><td>бүтін сан</td></tr>
+<tr><td><code>float</code></td><td>8450.5</td><td>бөлшек сан</td></tr>
+<tr><td><code>str</code></td><td>"Алматы"</td><td>мәтін</td></tr>
+<tr><td><code>bool</code></td><td>True / False</td><td>ақиқат / жалған</td></tr>
+</table>
+<p>Типті <code>type()</code> көрсетеді. Типтер арасында түрлендіруге болады: <code>int("42")</code>, <code>float("3.5")</code>, <code>str(100)</code>.</p>
+<div class="tip">Айнымалы атауы латынша, кіші әріппен, сөздер <code>_</code> арқылы: <code>total_revenue</code>. Ол саннан басталмайды.</div></div>
+<p><a href="../../#lesson/m2-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-3">
+<h2>3. Сандармен амалдар</h2>
+<div class="prose">
+<table>
+<tr><th>Оператор</th><th>Мағынасы</th><th>Мысал</th></tr>
+<tr><td><code>+ - * /</code></td><td>қосу, азайту, көбейту, бөлу</td><td><code>7 / 2 = 3.5</code></td></tr>
+<tr><td><code>//</code></td><td>бүтін бөлу</td><td><code>7 // 2 = 3</code></td></tr>
+<tr><td><code>%</code></td><td>бөлгендегі қалдық</td><td><code>7 % 2 = 1</code></td></tr>
+<tr><td><code>**</code></td><td>дәрежеге шығару</td><td><code>2 ** 3 = 8</code></td></tr>
+</table>
+<p><code>round(x, 2)</code> — екі ондық белгіге дейін дөңгелектеу. <code>abs(x)</code> — модуль. <code>sum()</code>, <code>min()</code>, <code>max()</code> тізімдермен жұмыс істейді (келесі сабақтарда).</p>
+<pre><code>revenue_aug = 80_000_000
+revenue_sep = 100_000_000
+growth = (revenue_sep - revenue_aug) / revenue_aug * 100
+print(round(growth, 1))   # 25.0</code></pre></div>
+<p><a href="../../#lesson/m2-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-4">
+<h2>4. Жолдар (strings) және f-string</h2>
+<div class="prose">
+<p>Мәтінмен жұмыс деректі тазалауда өте жиі кездеседі: артық бос орын, әртүрлі регистр, бөлшектеу.</p>
+<pre><code>name = "  айгерім  "
+print(name.strip())          # "айгерім"
+print(name.strip().title())  # "Айгерім"
+print("ALMATY".lower())      # "almaty"
+print("a,b,c".split(","))    # ['a', 'b', 'c']
+print("2024-09-14"[:7])      # "2024-09"
+print(len("SQL"))            # 3</code></pre>
+<p>Индекстеу 0-ден басталады: <code>"Python"[0]</code> = <code>"P"</code>. Кесінді (slice) <code>[a:b]</code> — a-дан b-ға дейін (b кірмейді).</p>
+<h3>f-string</h3>
+<p>Мәнді мәтін ішіне қоюдың ең ыңғайлы тәсілі:</p>
+<pre><code>city = "Астана"
+orders = 42
+print(f"{city}: {orders} тапсырыс")
+print(f"Орташа чек: {8450.567:.2f}")   # 8450.57</code></pre></div>
+<p><a href="../../#lesson/m2-1/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-5">
+<h2>5. Шарттар: if, elif, else</h2>
+<div class="prose">
+<p>Бағдарлама шартқа қарай әртүрлі әрекет жасай алады:</p>
+<pre><code>price = 25000
+if price &gt;= 100000:
+    segment = "қымбат"
+elif price &gt;= 10000:
+    segment = "орташа"
+else:
+    segment = "арзан"
+print(segment)   # орташа</code></pre>
+<p>Шарттан кейін <code>:</code> қойылады, ал ішкі блок <b>4 бос орынмен</b> шегініп жазылады. SQL-дегі CASE WHEN-нің дәл баламасы.</p>
+<h3>Салыстыру және логика</h3>
+<p><code>==</code> (тең), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Біріктіру: <code>and</code>, <code>or</code>, <code>not</code>. Тізімде бар ма: <code>city in ["Алматы", "Астана"]</code>.</p></div>
+<p><a href="../../#lesson/m2-1/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-6">
+<h2>6. Тізімдер (list)</h2>
+<div class="prose">
+<p>Бір айнымалыда бір ғана мән сақталады. Ал аптаның 7 күнінің сатылымын 7 айнымалыға бөлу ыңғайсыз. <b>Тізім</b> — реттелген мәндер жиыны: нөмірленген сөрелері бар шкаф сияқты, әр сөреде бір мән тұрады. Data-да ол бағанның немесе бірнеше жазбаның қарапайым түрі. Тізім тік жақшамен жазылады, мәндер үтірмен бөлінеді.</p>
+<h3>Индекс: сөренің нөмірі</h3>
+<p><code>sales = [120, 95, 140, 80]</code> тізімі ішінде былай орналасқан:</p>
+<table>
+<tr><th>Индекс</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+<tr><td>Мән</td><td>120</td><td>95</td><td>140</td><td>80</td></tr>
+<tr><td>Теріс индекс</td><td>-4</td><td>-3</td><td>-2</td><td>-1</td></tr>
+</table>
+<p>Санау <b>0-ден</b> басталады. Теріс индекс соңынан санайды: <code>-1</code> — әрқашан соңғы элемент.</p>
+<pre><code>sales = [120, 95, 140, 80]
+print(sales[0])        # 120 (бірінші)
+print(sales[-1])       # 80 (соңғы)
+print(sales[1:3])      # [95, 140]
+print(len(sales))      # 4
+print(sum(sales), max(sales), min(sales))   # 435 140 80
+print(sum(sales) / len(sales))              # 108.75</code></pre>
+<p>Кесінді <code>sales[1:3]</code> 1-индекстен бастап, 3-индекске <b>дейін</b> алады (3 кірмейді). <code>print</code>-ке бірнеше мәнді үтірмен берсеңіз, олар бір жолда бос орынмен шығады.</p>
+<h3>Өзгерту және сұрыптау</h3>
+<pre><code>sales.append(110)      # соңына қосу → [120, 95, 140, 80, 110]
+sales.sort()           # орнында сұрыптау → [80, 95, 110, 120, 140]
+print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
+
+items = ["Термос", "Блокнот", "Рюкзак"]
+items.sort()
+print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
+<p>Мәтіндер әліпби бойынша сұрыпталады. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
+<h3>SQL-мен салыстыру</h3>
+<table>
+<tr><th>SQL</th><th>Python list</th></tr>
+<tr><td><code>COUNT(*)</code></td><td><code>len(xs)</code></td></tr>
+<tr><td><code>SUM</code>, <code>MAX</code>, <code>MIN</code></td><td><code>sum(xs)</code>, <code>max(xs)</code>, <code>min(xs)</code></td></tr>
+<tr><td><code>AVG</code></td><td><code>sum(xs) / len(xs)</code></td></tr>
+<tr><td><code>ORDER BY ... DESC</code></td><td><code>sorted(xs, reverse=True)</code></td></tr>
+</table>
+<div class="tip">Тізімнің орташасы: <code>sum(xs) / len(xs)</code>. Python-да бөлек <code>avg()</code> жоқ, бірақ <code>statistics.mean()</code> бар. Дөңгелектеу: <code>round(x, 2)</code>.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Индексті 1-ден бастау.</b> 4 элементті тізімде <code>sales[4]</code> жоқ — <code>IndexError</code>. Соңғысы <code>sales[3]</code> немесе <code>sales[-1]</code>.</li>
+<li><b><code>xs = xs.sort()</code> жазу.</b> <code>.sort()</code> ештеңе қайтармайды (<code>None</code>), сондықтан тізім жоғалады. Жай <code>xs.sort()</code> жазыңыз.</li>
+<li><b>Қазақ әріптерінің реті.</b> Python әріптерді код нөмірі бойынша салыстырады, сондықтан Ә, Қ, Ө, Ү сияқты әріптер кейде күткен орнында тұрмайды.</li>
+</ul></div>
+<p><a href="../../#lesson/m2-1/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-7">
+<h2>7. for циклі және range</h2>
+<div class="prose">
+<p>Кассирді елестетіңіз: ол себеттегі тауарларды бір-бірлеп алып, әрқайсысын сканерлейді. Әрекет бірдей, тек тауар ауысады. <code>for</code> циклі де тізімнің әр элементі үшін бірдей әрекет жасайды. 3 тауар болса да, 3000 тауар болса да, код өзгермейді.</p>
+<pre><code>prices = [6500, 7200, 15000]
+for p in prices:
+    print(round(p * 1.12))</code></pre>
+<pre><code>7280
+8064
+16800</code></pre>
+<p>Әр айналымда <code>p</code> айнымалысы келесі мәнді алады: алдымен 6500, сосын 7200, сосын 15000. Шегініспен (4 бос орын) жазылған жолдар — циклдің денесі, олар әр элемент үшін қайталанады. <code>round()</code> бөлшек сандардағы <code>7280.000000000001</code> сияқты «қоқысты» алып тастайды.</p>
+<h3>range: сандар тізбегі</h3>
+<p><code>range(n)</code> — 0-ден n−1-ге дейінгі сандар: <code>for i in range(3)</code> → 0, 1, 2. <code>range(1, 4)</code> → 1, 2, 3. Соңғы сан ешқашан кірмейді, сондықтан «1-ден N-ге дейін қоса» үшін <code>range(1, N + 1)</code> жазылады. Цикл ішінде f-string-пен әдемі жол құруға болады: <code>print(f"{i}-күн")</code>.</p>
+<h3>Жинақтаушы (accumulator)</h3>
+<p>Цикл ішінде мәнді біртіндеп жинау — ең жиі үлгі. Цикл <b>алдында</b> <code>total = 0</code> қоямыз, ішінде қосамыз, соңында шығарамыз:</p>
+<pre><code>total = 0
+for p in prices:
+    if p &gt; 7000:
+        total += p
+print(total)   # 22200</code></pre>
+<p>Қадам-қадаммен:</p>
+<table>
+<tr><th>Айналым</th><th>p</th><th>p &gt; 7000?</th><th>total кейін</th></tr>
+<tr><td>1</td><td>6500</td><td>жоқ</td><td>0</td></tr>
+<tr><td>2</td><td>7200</td><td>иә</td><td>7200</td></tr>
+<tr><td>3</td><td>15000</td><td>иә</td><td>22200</td></tr>
+</table>
+<p>Бұл SQL-дегі <code>SELECT SUM(price) FROM products WHERE price &gt; 7000</code> сұрауымен бірдей. Шартты кез келген етіп өзгертуге болады. Мысалы, <code>%</code> — бөліндінің қалдығы: <code>p % 1000 == 0</code> «1000-ға қалдықсыз бөлінеді» дегенді білдіреді.</p>
+<p><code>enumerate()</code> индекс пен мәнді бірге береді: <code>for i, p in enumerate(prices):</code> → (0, 6500), (1, 7200), (2, 15000).</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b><code>total = 0</code>-ді цикл ішіне жазу.</b> Онда ол әр айналымда нөлденеді де, соңында тек соңғы мән қалады.</li>
+<li><b><code>print</code>-тің шегінісі.</b> <code>print(total)</code> цикл ішінде тұрса (шегініспен), ол әр қадамда шығады. Тек қорытынды керек болса, оны шегініссіз жазыңыз.</li>
+<li><b>range-тің соңын ұмыту.</b> <code>range(1, 5)</code> — 1, 2, 3, 4. Бес жоқ!</li>
+</ul></div>
+<p><a href="../../#lesson/m2-1/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-8">
+<h2>8. while, break, continue</h2>
+<div class="prose">
+<p><code>while</code> шарт ақиқат болғанша қайталайды. Қанша рет қайталанатыны алдын ала белгісіз болғанда қолданылады:</p>
+<pre><code>balance = 100000
+months = 0
+while balance &lt; 150000:
+    balance = balance * 1.05
+    months += 1
+print(months)   # 9</code></pre>
+<p><code>break</code> — циклді бірден тоқтатады. <code>continue</code> — қалған бөлігін өткізіп, келесі айналымға өтеді.</p>
+<div class="tip">Шарт ешқашан жалған болмаса, цикл шексіз жүреді. Бұл платформада 8 секундтан кейін код тоқтатылады.</div></div>
+<p><a href="../../#lesson/m2-1/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-9">
+<h2>9. Функциялар</h2>
+<div class="prose">
+<p>Кофе аппаратын елестетіңіз: оған су мен дәнді саласыз (кіріс), батырманы басасыз, ол кофе береді (шығыс). Ішінде не болатынын әр жолы ойлаудың қажеті жоқ. <b>Функция</b> — атауы бар, қайта қолданылатын код бөлігі. Бір формуланы 10 жерде қайта жазудың орнына, оны бір рет функцияға саламыз. Ол <code>def</code> арқылы анықталады, жақшадағы атаулар — <b>параметрлер</b> (кіріс), <code>return</code> нәтижені қайтарады (шығыс):</p>
+<pre><code>def growth_pct(old, new):
+    return (new - old) / old * 100
+
+print(growth_pct(80, 100))   # 25.0</code></pre>
+<p>Бір функцияны әртүрлі мәндермен шақырамыз. Шақырғанда <code>old</code> бірінші мәнді, <code>new</code> екінші мәнді алады:</p>
+<table>
+<tr><th>Шақыру</th><th>Есептеу</th><th>Қайтарады</th></tr>
+<tr><td><code>growth_pct(80, 100)</code></td><td>(100 − 80) / 80 × 100</td><td>25.0</td></tr>
+<tr><td><code>growth_pct(100, 80)</code></td><td>(80 − 100) / 100 × 100</td><td>-20.0</td></tr>
+<tr><td><code>growth_pct(200, 230)</code></td><td>(230 − 200) / 200 × 100</td><td>15.0</td></tr>
+</table>
+<p>SQL-де <code>ROUND</code>, <code>SUM</code> сияқты дайын функцияларды қолдандыңыз. <code>def</code> — өз функцияңызды жасау тәсілі.</p>
+<h3>Бірнеше return және if</h3>
+<p><code>return</code> орындалған сәтте функция <b>бірден тоқтайды</b>. Сондықтан if/elif ішінде әр тармаққа өз return-ін жазуға болады — SQL-дегі CASE WHEN-нің функция түрі. Сол сияқты қате жағдайды алдын ала тексеруге болады:</p>
+<pre><code>def delivery_fee(amount):
+    if amount &lt;= 0:
+        return 0           # қате сома — бірден шығамыз
+    if amount &gt;= 20000:
+        return 0
+    elif amount &gt;= 10000:
+        return 1000
+    return 1500
+
+print(delivery_fee(25000), delivery_fee(12000), delivery_fee(5000))   # 0 1000 1500</code></pre>
+<p>Нөлге бөлу қаупі болса да, дәл осылай бөлуден бұрын тексеріп, бірден return жасаймыз.</p>
+<h3>Әдепкі мән</h3>
+<pre><code>def with_vat(price, rate=0.12):
+    return price * (1 + rate)
+
+with_vat(1000)          # 1120.0
+with_vat(1000, 0.2)     # 1200.0</code></pre>
+<p>Екінші мән берілмесе, <code>rate</code> 0.12 болады.</p>
+<p><code>print</code> мен <code>return</code> әртүрлі: print тек экранға шығарады, ал return мәнді кейін қолдануға болатындай қайтарады. Тексеру тесттері функцияның <b>қайтарған</b> мәнін тексереді.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>return орнына print жазу.</b> Функция экранға санды шығарады, бірақ <code>x = f(...)</code> жазсаңыз, <code>x</code> <code>None</code> болады.</li>
+<li><b>return-ді ұмыту.</b> return жоқ функция әрқашан <code>None</code> қайтарады.</li>
+<li><b>return-нен кейінгі код.</b> Ол ешқашан орындалмайды. Мысалы, return-нен кейін <code>x = round(x, 2)</code> жазсаңыз, дөңгелектеу болмайды. Оны return жолының өзінде жасаңыз: <code>return round(x, 2)</code>.</li>
+</ul></div>
+<p><a href="../../#lesson/m2-1/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-10">
+<h2>10. Сөздіктер (dict)</h2>
+<div class="prose">
+<p><b>Сөздік</b> — «кілт: мән» жұптары. Бір жазбаны (мысалы бір клиентті) сипаттауға ыңғайлы:</p>
+<pre><code>customer = {"name": "Айгерім", "city": "Алматы", "orders": 3}
+print(customer["city"])          # Алматы
+customer["orders"] += 1
+customer["vip"] = True
+print(customer.get("phone", "жоқ"))   # кілт жоқ болса, әдепкі мән</code></pre>
+<h3>Сөздікпен санау</h3>
+<p>Ең пайдалы үлгі — категориялар бойынша санау (SQL-дегі GROUP BY + COUNT):</p>
+<pre><code>cities = ["Алматы", "Астана", "Алматы", "Шымкент", "Алматы"]
+counts = {}
+for c in cities:
+    counts[c] = counts.get(c, 0) + 1
+print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
+<p>Кілттер мен мәндерді аралау: <code>for key, value in counts.items():</code></p></div>
+<p><a href="../../#lesson/m2-1/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-11">
+<h2>11. List comprehension</h2>
+<div class="prose">
+<p>Тізімнен жаңа тізім жасаудың қысқа жазуы:</p>
+<pre><code>prices = [6500, 7200, 15000, 1200]
+
+# цикл арқылы
+with_vat = []
+for p in prices:
+    with_vat.append(p * 1.12)
+
+# comprehension арқылы
+with_vat = [p * 1.12 for p in prices]
+
+# сүзгімен
+expensive = [p for p in prices if p &gt; 7000]</code></pre>
+<p>Үлгі: <code>[өрнек for элемент in тізім if шарт]</code>. Сөздікке де бар: <code>{k: v for k, v in d.items() if v &gt; 0}</code>.</p>
+<div class="tip">pandas-та мұндай операциялар бағандармен бірден жасалады, бірақ comprehension Python-ның «тілін» түсінуге көмектеседі.</div></div>
+<p><a href="../../#lesson/m2-1/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-12">
+<h2>12. Қателер және try/except</h2>
+<div class="prose">
+<p>Нақты дерек «лас» келеді: санның орнында мәтін, бос жол. Қате (exception) бағдарламаны тоқтатады. Қатені оқи білу — маңызды дағды:</p>
+<pre><code>int("12a")
+# ValueError: invalid literal for int() with base 10: '12a'</code></pre>
+<p>Соңғы жол қатенің <b>түрін</b> (ValueError) және <b>себебін</b> айтады. Жиі кездесетіндер: <code>NameError</code> (айнымалы жоқ), <code>TypeError</code> (тип сәйкес емес: <code>"5" + 1</code>), <code>KeyError</code> (сөздікте кілт жоқ), <code>ZeroDivisionError</code>, <code>IndentationError</code>.</p>
+<h3>try / except</h3>
+<pre><code>raw = ["120", "95", "n/a", "140"]
+values = []
+for r in raw:
+    try:
+        values.append(int(r))
+    except ValueError:
+        print("Өткізілді:", r)
+print(sum(values))   # 355</code></pre>
+<div class="tip">Барлық қатені <code>except:</code> деп жасыруға болмайды. Нақты қате түрін жазыңыз, әйтпесе нағыз қатені байқамай қаласыз.</div></div>
+<p><a href="../../#lesson/m2-1/11">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-13">
+<h2>13. Мини жоба: дүкен сатылымын талдау</h2>
+<div class="prose">
+<p>Енді үйренгеннің бәрін бір талдауға біріктірейік. Дүкеннің сатылымы CSV мәтін түрінде берілген. Python-ның <code>csv</code> модулі оны сөздіктер тізіміне айналдырады:</p>
+<pre><code>import csv, io
+rows = list(csv.DictReader(io.StringIO(data)))
+print(rows[0])   # {'date': '2024-09-01', 'city': 'Алматы', ...}</code></pre>
+<p>Ескеріңіз: CSV-дан оқылған барлық мән — <b>мәтін</b>. Сандарды <code>int()</code> арқылы түрлендіру керек.</p>
+<h3>Тапсырмалар</h3>
+<ol>
+<li>Жалпы табыс (<code>qty × price</code>).</li>
+<li>Қалалар бойынша табыс (сөздік).</li>
+<li>Ең көп табыс әкелген қала.</li>
+</ol>
+<p>Бұл — SQL-дағы <code>SUM</code>, <code>GROUP BY</code> және <code>ORDER BY ... LIMIT 1</code>-дің Python нұсқасы. Келесі модульде pandas мұны бір-екі жолмен жасайды.</p></div>
+<p><a href="../../#lesson/m2-1/12">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="py-gate">
+<h2>14. Модуль емтиханы: Python Fundamentals</h2>
+<div class="prose">
+<p>Қорытынды тексеріс: кеңессіз үш тапсырма. Барлығын өтсеңіз, <b>L3 Python for Data</b> деңгейіне бір қадам қаласыз (келесісі — pandas).</p>
+<div class="tip">Функцияның <b>қайтаратын</b> мәні тексеріледі. print міндетті емес.</div></div>
+<p><a href="../../#lesson/m2-1/13">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/m2-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

@@ -62,9 +62,9 @@
   });
 
   function render() {
-    if (!S.current()) { route = { view: 'auth' }; }
+    if (!S.current() && route.view !== 'cert') { route = { view: 'auth' }; }
     topbar();
-    const views = { auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile };
+    const views = { auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
     (views[route.view] || viewDash)();
     document.title = 'DataJol';
   }
@@ -82,6 +82,7 @@
         <button data-go="dash" ${cur('dash')}>Оқу</button>
         <button data-go="map" ${cur('map')}>Карта</button>
         <button data-go="diag" ${cur('diag')}>Диагностика</button>
+        <button data-go="board" ${cur('board')}>Рейтинг</button>
       </nav>
       <div class="stats">
         <span class="pill gold" title="Күндер қатарынан">${ICON.flame}${st}</span>
@@ -781,6 +782,80 @@
     else intro();
   }
 
+  // ---------- leaderboard ----------
+  function viewBoard() {
+    const cloudUser = DJ.cloud && DJ.cloud.user;
+    const period = route.mod === 'all' ? 'all' : 'week';
+    $('#app').innerHTML = `<div class="diag">
+      <div><div class="eyebrow">Рейтинг</div><h1 style="margin:6px 0 0">Кім көп оқыды?</h1></div>
+      ${cloudUser ? `<div class="tabs" role="tablist">${[['week', 'Осы апта'], ['all', 'Барлық уақыт']].map(([k, n]) => `<button role="tab" data-go="board" data-mod="${k}" aria-selected="${period === k}">${n}</button>`).join('')}</div>
+      <div class="card" id="board"><p class="muted" style="margin:0">Жүктелуде…</p></div>
+      <p class="note" style="margin:0">Рейтингте тек атыңыз бен XP көрінеді. Атыңызды өзгерту немесе рейтингтен шығу: Профиль → Аккаунт.</p>`
+      : `<div class="card"><p style="margin:0">Рейтинг аккаунтпен (Google не email) кірген оқушыларға ғана көрінеді, себебі ол бұлттағы прогреске сүйенеді.</p></div>`}
+    </div>`;
+    if (!cloudUser) return;
+    DJ.cloud.leaderboard(period).then(rows => {
+      if (route.view !== 'board') return;
+      $('#board').innerHTML = rows.length ? `<ol class="board">${rows.map(r => `<li class="${r.is_me ? 'me' : ''}"><span class="pos">${r.pos}</span><span class="nm">${esc(r.name)}${r.is_me ? ' <span class="muted">(сіз)</span>' : ''}</span><b>${r.xp} XP</b></li>`).join('')}</ol>`
+        : `<p class="muted" style="margin:0">${period === 'week' ? 'Бұл аптада әзірге ешкім XP жинамады. Бірінші болыңыз!' : 'Әзірге бос.'}</p>`;
+    }).catch(e => {
+      $('#board').innerHTML = `<p class="muted" style="margin:0">Рейтингті жүктеу мүмкін болмады.${/function|schema cache|not find/i.test(e.message || '') ? ' Supabase-те <code>supabase/leaderboard.sql</code> әлі іске қосылмаған.' : ''}</p>`;
+    });
+  }
+
+  // ---------- certificates ----------
+  // A certificate is earned for each career level (L1…L7): every lesson of every module that level and the levels below it need.
+  function certModules(levelId) {
+    const i = DJ.careerLevels.findIndex(l => l.id === levelId);
+    return i < 1 ? [] : DJ.careerLevels.slice(1, i + 1).flatMap(l => l.needs);
+  }
+  function certData(levelId, name, lessons) {
+    const level = DJ.careerLevels.find(l => l.id === levelId);
+    if (!level || !level.needs) return null;
+    const mods = certModules(levelId).map(id => {
+      const m = DJ.findModule(id), ds = (m.lessons || []).map(l => lessons[l.id]);
+      return { m, ok: !!m.lessons && ds.every(Boolean), date: ds.filter(Boolean).sort().pop() || '' };
+    });
+    return { level, name, mods, ok: mods.every(x => x.ok), date: mods.map(x => x.date).sort().pop() || '' };
+  }
+  function certsEarned(p) { return DJ.careerLevels.slice(1).filter(l => { const c = certData(l.id, '', p.lessons); return c && c.ok; }); }
+  function viewCert() {
+    const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+    const draw = (c, verified, link) => {
+      if (!c) { $('#app').innerHTML = `<div class="diag"><div class="card"><p style="margin:0">Сертификат табылмады.</p></div></div>`; return; }
+      if (!c.ok) { $('#app').innerHTML = `<div class="diag"><div class="card"><p style="margin:0">${esc(c.level.id)} ${esc(c.level.name)} сертификаты әлі берілмеген: барлық модуль аяқталмаған.</p></div></div>`; return; }
+      $('#app').innerHTML = `<div class="cert-wrap">
+        <article class="cert">
+          <div class="cert-top">${LOGO}<span>DataJol</span><span class="cert-id">${esc(c.level.id)}</span></div>
+          <div class="eyebrow">Сертификат</div>
+          <p class="cert-lead">Осы сертификат</p>
+          <h1 class="cert-name">${esc(c.name)}</h1>
+          <p class="cert-lead">DataJol-дағы <b>${esc(c.level.name)}</b> деңгейіне кіретін барлық модульді аяқтағанын растайды.</p>
+          <ul class="cert-mods">${c.mods.map(x => `<li><span>${esc(x.m.code)} ${esc(x.m.title)}</span><span>${esc(x.date)}</span></li>`).join('')}</ul>
+          <div class="cert-foot"><span>Берілген күні: <b>${esc(c.date)}</b></span>${verified ? `<span class="chip done">DataJol серверінде тексерілді</span>` : ''}</div>
+        </article>
+        <div class="actions noprint">
+          ${link ? `<button class="btn" id="cert-copy">Сілтемені көшіру</button>` : ''}
+          ${inFrame ? '' : `<button class="btn ghost" id="cert-print">PDF ретінде сақтау</button>`}
+          ${S.current() ? `<button class="btn ghost" data-go="profile">Профильге оралу</button>` : ''}
+        </div>
+        ${link ? `<p class="note noprint" style="margin:0">Бұл сілтемені резюмеге не LinkedIn-ге қойыңыз: оны ашқан адам сертификаттың нақты екенін көреді.</p><input class="cert-link noprint" readonly value="${esc(link)}">` : (S.current() ? `<p class="note noprint" style="margin:0">Тексерілетін сілтеме алу үшін аккаунтпен (Google не email) кіріңіз.</p>` : '')}
+      </div>`;
+      const cp = $('#cert-copy');
+      if (cp) cp.onclick = () => { const inp = $('.cert-link'); (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(() => toast('Сілтеме көшірілді', 'link')).catch(() => { inp.select(); }); };
+      const pr = $('#cert-print'); if (pr) pr.onclick = () => window.print();
+    };
+    if (route.uid) {
+      $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Сертификат тексерілуде…</p>';
+      if (!(DJ.cloud && DJ.cloud.enabled)) { draw(null); return; }
+      DJ.cloud.certInfo(route.uid).then(r => draw(r ? certData(route.mod, r.name, r.lessons || {}) : null, true, location.origin + location.pathname + `#cert/${route.uid}/${route.mod}`)).catch(() => draw(null));
+      return;
+    }
+    const u = S.profile(), p = S.progress();
+    const link = DJ.cloud && DJ.cloud.user ? location.origin + location.pathname + `#cert/${DJ.cloud.user.id}/${route.mod}` : '';
+    draw(certData(route.mod, u.name, p.lessons), false, link);
+  }
+
   // ---------- profile ----------
   function viewProfile() {
     const u = S.profile(), p = S.progress(), lv = S.level(p.xp), career = S.careerLevel(p);
@@ -795,17 +870,22 @@
         ${stat(p.xp, 'XP барлығы')}${stat(lv.level, 'деңгей')}${stat(p.best, 'ең ұзақ streak')}${stat(Object.keys(p.lessons).length, 'сабақ өтілді')}${stat(Object.keys(p.done).length, 'тапсырма орындалды')}
       </div>
       <div class="card"><h3 style="margin-bottom:10px">Мансап деңгейі</h3><div style="display:grid;gap:4px">${DJ.careerLevels.map((l, i) => { const ci = DJ.careerLevels.findIndex(x => x.id === career.id); return `<div style="display:flex;gap:12px;font-size:.92rem;${i === ci ? 'color:var(--accent);font-weight:600' : i < ci ? '' : 'color:var(--ink-2)'}"><span style="font-family:var(--font-mono);width:28px">${l.id}</span><span>${esc(l.name)}</span></div>`; }).join('')}</div></div>
+      <div class="card"><h3 style="margin-bottom:10px">Сертификаттар</h3>${(() => { const cs = certsEarned(p); return cs.length ? `<div style="display:grid;gap:8px">${cs.map(l => `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b>${esc(l.id)}</b> ${esc(l.name)}</span><button class="btn ghost sm" data-go="cert" data-mod="${l.id}">Сертификатты ашу</button></div>`).join('')}</div>` : `<p class="note" style="margin:0">Мансап деңгейінің барлық модулін (емтихандарымен) аяқтағанда сертификат беріледі. Алғашқысы: L1 Data Literate (M0.1 және M0.2).</p>`; })()}</div>
       <div class="card"><h3 style="margin-bottom:12px">Белгілер</h3><div style="display:grid;gap:10px">${S.BADGES.map(b => `<div style="display:flex;gap:12px;align-items:center" class="bdg-row"><div class="bdg ${p.badges[b.id] ? 'got' : ''}"><div class="hex" style="width:40px;height:40px">${ICON[b.icon]}</div></div><div><b>${esc(b.name)}</b><div class="note">${esc(b.desc)}${p.badges[b.id] ? ' · ' + p.badges[b.id] : ''}</div></div></div>`).join('')}</div></div>
       <div class="card" style="display:grid;gap:10px"><h3>Тақырып</h3>
         <div class="tabs" role="tablist">${[['system', 'Жүйелік'], ['light', 'Жарық'], ['dark', 'Қараңғы']].map(([k, n]) => `<button role="tab" data-theme-set="${k}" aria-selected="${theme === k}">${n}</button>`).join('')}</div>
       </div>
       <div class="card" style="display:grid;gap:10px"><h3>Аккаунт</h3>
         <p class="note" style="margin:0">${DJ.cloud && DJ.cloud.user ? `Бұлттағы аккаунт: ${esc(DJ.cloud.user.email || '')}. Прогресс барлық құрылғыда бірдей.` : 'Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Басқа құрылғыда көрінбейді.'}</p>
+        <form id="rename" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Көрсетілетін аты (рейтинг, сертификат)<input type="text" name="nm" maxlength="40" value="${esc(u.name)}"></label><button class="btn ghost" type="submit">Сақтау</button></form>
+        ${DJ.cloud && DJ.cloud.user ? `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="hide-lb" ${(p.prefs || {}).hideLb ? 'checked' : ''}> Мені рейтингте көрсетпеу</label>` : ''}
         <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button></div>
         <div id="confirm"></div>
       </div>
     </div>`;
     $$('[data-theme-set]').forEach(b => b.onclick = () => { const t = b.dataset.themeSet; lsSet('dj.theme', t); applyTheme(t); viewProfile(); });
+    $('#rename').onsubmit = e => { e.preventDefault(); const v = e.target.nm.value.trim(); if (v) { S.rename(v); topbar(); toast('Аты сақталды', 'star'); viewProfile(); } };
+    const hl = $('#hide-lb'); if (hl) hl.onchange = () => S.setPref('hideLb', hl.checked);
     $('#logout').onclick = async () => { if (DJ.cloud && DJ.cloud.user) await DJ.cloud.signOut(); S.logout(); go('auth'); };
     $('#reset-p').onclick = () => {
       $('#confirm').innerHTML = `<div class="verdict bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">Барлық XP, сабақтар мен белгілер өшеді. Сенімдісіз бе?<button class="btn" id="yes-reset" style="background:var(--bad)">Иә, нөлдеу</button><button class="btn ghost" id="no-reset">Жоқ</button></div>`;
@@ -816,7 +896,9 @@
 
   // ---------- boot ----------
   const start = (location.hash || '').slice(1);
-  if (['map', 'diag', 'profile'].includes(start)) route = { view: start };
+  if (['map', 'diag', 'profile', 'board'].includes(start)) route = { view: start };
+  const certHash = start.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/);
+  if (certHash) route = { view: 'cert', uid: certHash[1], mod: certHash[2] };
   // With cloud accounts on, wait for the Supabase session (including a return from Google or an email link).
   if (DJ.cloud && DJ.cloud.enabled) {
     $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';

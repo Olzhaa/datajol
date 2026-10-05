@@ -130,6 +130,12 @@
     gate(lessonId) { const p = this.progress(); const g = (p.gates || {})[lessonId]; return g ? JSON.parse(JSON.stringify(g)) : { attempt: 1, res: {}, tries: {}, best: 0 }; },
     setGate(lessonId, st) { const p = this.progress(); p.gates = p.gates || {}; p.gates[lessonId] = st; this.save(p); },
     setDiag(result) { const p = this.progress(); p.diag = result; if (!p.badges.diagnostic) p.badges.diagnostic = today(); this.save(p); },
+    rename(name) {
+      const u = this.current(); name = String(name || '').trim().slice(0, 40); if (!u || !name) return;
+      const users = this.users(); users[u].name = name; write('dj.users', users);
+      this.save(this.progress());   // pushes the new display name to the cloud
+    },
+    setPref(k, v) { const p = this.progress(); p.prefs = Object.assign({}, p.prefs, { [k]: v }); this.save(p); },
     saveRubric(exId, r) { const p = this.progress(); p.rubric = p.rubric || {}; p.rubric[exId] = r; this.save(p); },
     saveCode(exId, code) { const p = this.progress(); p.code = p.code || {}; p.code[exId] = code; this.save(p); },
     moduleState(mod, p) {

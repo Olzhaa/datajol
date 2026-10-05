@@ -8,6 +8,17 @@
   const q = new URLSearchParams((location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, ''));
   const initialError = q.get('error_description') || q.get('error') || '';   // @supabase/supabase-js 2.117.2 UMD build
 
+  // XP log entries have no ids, so the same entry seen on both sides is kept once (per day and amount, the larger count wins).
+  function mergeLog(x, y) {
+    const count = arr => arr.reduce((m, e) => { const k = e.d + '|' + e.xp; m[k] = (m[k] || 0) + 1; return m; }, {});
+    const cx = count(x), cy = count(y), out = [];
+    for (const k of new Set([...Object.keys(cx), ...Object.keys(cy)])) {
+      const [d, xp] = k.split('|');
+      for (let i = 0; i < Math.max(cx[k] || 0, cy[k] || 0); i++) out.push({ d, xp: Number(xp) });
+    }
+    return out.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0).slice(-300);
+  }
+
   // Combines two progress objects so nothing earned on either device is lost.
   function merge(a, b) {
     if (!a) return b; if (!b) return a;
@@ -27,7 +38,8 @@
     out.lastDay = newer.lastDay; out.streak = newer.streak || 0;
     out.best = Math.max(a.best || 0, b.best || 0);
     out.noHint = Math.max(a.noHint || 0, b.noHint || 0);
-    out.xpLog = [...(a.xpLog || []), ...(b.xpLog || [])].slice(-300);
+    out.xpLog = mergeLog(a.xpLog || [], b.xpLog || []);
+    out.prefs = Object.assign({}, a.prefs || {}, b.prefs || {});
     out.diag = ((a.diag || {}).date || '') >= ((b.diag || {}).date || '') ? a.diag : b.diag;
     return out;
   }
@@ -79,11 +91,12 @@
       const meta = user.user_metadata || {};
       const name = meta.full_name || meta.name || (user.email || '').split('@')[0];
       DJ.store.adoptCloudUser('u_' + user.id.replace(/-/g, '').slice(0, 20), name, user.email);
-      const { data, error } = await this.client.from('progress').select('data').eq('user_id', user.id).maybeSingle();
+      const { data, error } = await this.client.from('progress').select('data, name').eq('user_id', user.id).maybeSingle();
       if (error) { console.warn('progress pull failed', error); return; }
       const local = DJ.store.progress();
       const merged = merge(data ? data.data : null, local);
       DJ.store.save(merged, true);
+      if (data && data.name) DJ.store.rename(data.name);   // a name changed on another device wins
       await this.push(merged);
     },
     timer: null,
@@ -92,6 +105,18 @@
       if (!this.user) return;
       const { error } = await this.client.from('progress').upsert({ user_id: this.user.id, name: (DJ.store.profile() || {}).name || null, data: p, updated_at: new Date().toISOString() });
       if (error) console.warn('progress push failed', error);
+    },
+    async leaderboard(period) {
+      await this.load();
+      const { data, error } = await this.client.rpc('leaderboard', { period, lim: 50 });
+      if (error) throw error;
+      return data || [];
+    },
+    async certInfo(uid) {
+      await this.load();
+      const { data, error } = await this.client.rpc('cert_info', { uid });
+      if (error) throw error;
+      return (data || [])[0] || null;
     },
     async signOut() { if (this.client) await this.client.auth.signOut(); this.user = null; }
   };

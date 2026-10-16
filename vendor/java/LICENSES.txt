@@ -1,0 +1,38 @@
+Java runtime for DataJol exercises (vendor/java/)
+=================================================
+
+What is here
+  java-teavm-0.13.1.compiler.wasm.gz   javac (OpenJDK) + TeaVM 0.13.1 compiled to WasmGC. It turns Java source into a
+                                       standalone WASI .wasm program. Unmodified, from npm @wasm-oj/toolchain-java 0.2.0.
+  java-runtime-classlib.trim.bin.gz    TeaVM class library that is linked into the learner's program. Derived from
+                                       @wasm-oj/toolchain-java 0.2.0 (java-teavm-0.13.1.runtime-classlib.bin): the bundled
+                                       CLDR locale archive was cut down to en, en_US, en_001, kk, kk_KZ, ru, ru_KZ.
+  java-compile-classlib.fixed.bin.gz   API stubs javac compiles against. Derived from @wasm-oj/toolchain-java 0.2.0
+                                       (java-teavm-0.13.1.compile-classlib.bin): TeaVM @Rename annotations applied
+                                       (getMessage0 -> getMessage, getClass0 -> getClass, ...), duplicate methods removed,
+                                       and the self-reference in java.lang.annotation.Annotation removed.
+  teavm-glue.mjs                       JS glue that loads the compiler; extracted from @wasm-oj/browser 0.2.4
+                                       (dist/assets/java-stage.worker-*.js). TeaVM WasmGC runtime glue.
+  LiteScanner.java                     DataJol's own small stand-in for java.util.Scanner (MIT, same as the site).
+  All assets are gzip-compressed and inflated in js/java-worker.mjs with DecompressionStream.
+
+Licences (full texts in licenses/)
+  TeaVM (konsoletyper/teavm) and teavm-javac (konsoletyper/teavm-javac): Apache-2.0           licenses/Apache-2.0.txt
+  javac and the OpenJDK 21 class library parts: GPL-2.0 with the Classpath exception
+      licenses/openjdk-21-GPL-2.0-with-Classpath-exception.txt
+  Android libcore (java.util.Scanner, Spliterators used by TeaVM): GPL-2.0 with the Classpath exception
+      licenses/android-libcore-GPL-2.0-with-Classpath-exception.txt
+  WASM-OJ packaging and JS glue (@wasm-oj/toolchain-java, @wasm-oj/browser): MIT              licenses/wasm-oj-MIT.txt, licenses/wasm-oj-browser-MIT.txt
+
+Corresponding source (GPL-2.0 + Classpath exception: these links are the written source offer)
+  Java compiler build:  https://github.com/wasm-oj/forge  (packages/toolchain-java, tools/java-client)
+  teavm-javac:          https://github.com/konsoletyper/teavm-javac/tree/7e4a44cf521694a4e326e33850dd8aec165eb5c9
+  TeaVM core:           https://github.com/konsoletyper/teavm/tree/b3a245b7d9034ff35cdfab2def057a3d4f256efb
+  OpenJDK 21:           https://github.com/openjdk/jdk21u
+  Android libcore:      https://android.googlesource.com/platform/libcore/+/de876a01b29230b877c9f408348c38a90ee724a5
+  npm packages:         https://www.npmjs.com/package/@wasm-oj/toolchain-java  https://www.npmjs.com/package/@wasm-oj/browser
+  The two derived .bin files are rebuilt from the npm originals with tools/fix_classlib.py and tools/trim_classlib.py
+  (classfile renames and a smaller locale zip; no Java source was changed):
+    python3 -I tools/fix_classlib.py java-teavm-0.13.1.compile-classlib.bin java-teavm-0.13.1.runtime-classlib.bin java-compile-classlib.fixed.bin
+    python3 -I tools/trim_classlib.py java-teavm-0.13.1.runtime-classlib.bin java-runtime-classlib.trim.bin en,en_US,en_001,kk,kk_KZ,ru,ru_KZ
+    gzip -9 each file.

@@ -17,7 +17,7 @@ const { chromium } = require('playwright');
       if (ex.type === 'quiz') { if (!(ex.answer < ex.options.length)) out.fail.push(l.id + '#' + i + ' bad answer idx'); out.quiz++; continue; }
       if (ex.type === 'number' || ex.type === 'cmd' || ex.type === 'rubric') { out.quiz++; continue; }
       if (ex.type === 'sheet') { const r = DJ.sheet.check(ex, ex.solution); if (r.pass) out.pass++; else out.fail.push(l.id + '#' + i + ' ' + r.msg); continue; }
-      const R = DJ.run[ex.type === 'sql' ? 'sql' : 'py'];
+      const R = DJ.run[{ sql: 'sql', java: 'java', cpp: 'cpp' }[ex.type] || 'py'];
       const r = await R.check(ex, ex.solution);
       if (r.pass) out.pass++; else out.fail.push(l.id + '#' + i + ' ' + r.msg + ' ' + (r.trace || ''));
       const s = await R.check(ex, ex.starter || '');

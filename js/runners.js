@@ -1,4 +1,5 @@
-// In-browser code runners and exercise checkers: SQL via sql.js (asm build), Python via Pyodide in a worker.
+// In-browser code runners and exercise checkers: SQL via sql.js (asm build), Python via Pyodide in a worker,
+// Java and C++ compiled to WebAssembly in workers.
 (function () {
   const sql = {
     ready: null,
@@ -154,5 +155,93 @@
   };
   function clean(s) { return (s || '').split('\n').map(l => l.replace(/\s+$/, '')).join('\n').trim(); }
 
-  DJ.run = { sql, py };
+  // Java and C++ compile to WebAssembly inside a worker (js/java-worker.mjs, js/cpp-worker.js; files and licences
+  // in vendor/java/ and vendor/cpp/). The compiler is downloaded only when start() is first called.
+  // Exercise: { type: 'java'|'cpp', ..., check: { cases: [{ stdin, out }], harness?, mustInclude? } }.
+  // The code is compiled once and run once per case; a case passes when the exit code is 0 and stdout equals `out`
+  // (trailing spaces on each line and trailing blank lines ignored). `harness` is extra source compiled with the
+  // learner's code: for C++ it is appended to it; for Java it is a separate file, and the class with main() in the
+  // harness is the entry point (otherwise the learner's class with main(), e.g. `public class Main`).
+  const TIMEOUT_MSG = 'Бағдарлама тым ұзақ орындалды: шексіз цикл немесе тым баяу алгоритм болуы мүмкін.';
+  function native(o) {
+    return {
+      worker: null, ready: null, seq: 0, pending: new Map(), status: 'idle', label: o.label, size: o.size,
+      start() {
+        if (this.worker) return this.ready;
+        this.status = 'loading';
+        const w = this.worker = new Worker(o.url + (window.DJ_VERSION ? '?v=' + window.DJ_VERSION : ''), o.module ? { type: 'module' } : undefined);
+        this.ready = new Promise((resolve, reject) => {
+          const fail = msg => { if (this.worker !== w) return; this.stop(); this.status = 'error'; reject(new Error(msg)); };
+          w.onmessage = (e) => {
+            const d = e.data;
+            if (d.type === 'ready') { this.status = 'ready'; resolve(); return; }
+            if (d.type === 'fatal') { fail(`${o.label} компиляторы жүктелмеді: ${d.error}`); return; }
+            const p = this.pending.get(d.id);
+            if (p) p.on(d);
+          };
+          w.onerror = (e) => fail(`${o.label} компиляторы іске қосылмады: ${e.message || 'worker қатесі'}. Chrome, Edge, Firefox немесе Safari-дің соңғы нұсқасын қолданыңыз.`);
+          setTimeout(() => { if (this.worker === w && this.status === 'loading') fail(`${o.label} компиляторы жүктелмеді: интернет баяу немесе үзілді. Бетті жаңартып, қайталап көріңіз.`); }, 240000);
+        });
+        this.ready.catch(() => {});
+        return this.ready;
+      },
+      // Stops the worker (the only way to stop an endless loop); the next start() loads it again from the browser cache.
+      stop() {
+        if (this.worker) this.worker.terminate();
+        this.worker = null; this.status = 'idle';
+        this.pending.forEach(p => p.abort()); this.pending.clear();
+      },
+      // Compiles once and runs the program once per stdin.
+      // Resolves { compiled, error, cases: [{ stdout, stderr, exitCode }], timeout }.
+      async exec(code, stdins, harness) {
+        await this.start();
+        const id = ++this.seq;
+        return new Promise(resolve => {
+          const res = { compiled: false, error: '', cases: [], timeout: false };
+          let timer;
+          const arm = ms => { clearTimeout(timer); timer = setTimeout(() => { this.pending.delete(id); res.timeout = true; this.stop(); resolve(res); }, ms); };
+          this.pending.set(id, {
+            on: d => {
+              if (d.type === 'compiled') { res.compiled = d.ok; res.error = d.error || ''; if (d.ok) arm(8000); }
+              else if (d.type === 'case') { res.cases.push({ stdout: d.stdout, stderr: d.stderr, exitCode: d.exitCode }); arm(8000); }
+              else if (d.type === 'done') { clearTimeout(timer); this.pending.delete(id); resolve(res); }
+            },
+            abort: () => { clearTimeout(timer); res.timeout = true; resolve(res); }
+          });
+          arm(90000);   // compiling; a run gets 8 s per case
+          this.worker.postMessage({ id, src: code, harness: harness || null, stdins });
+        });
+      },
+      // { ok, stdout, stderr, error }: error is the compiler output, the timeout message, or why the program failed.
+      async run(code, stdin) {
+        const r = await this.exec(code, [stdin || '']);
+        const k = r.cases[0];
+        if (r.timeout) return { ok: false, stdout: k ? k.stdout : '', stderr: '', error: r.compiled ? TIMEOUT_MSG : 'Компиляция тым ұзаққа созылды. Қайталап көріңіз.' };
+        if (!r.compiled) return { ok: false, stdout: '', stderr: '', error: r.error, compileError: true };
+        if (k.exitCode !== 0) return { ok: false, stdout: k.stdout, stderr: k.stderr, error: (k.stderr ? k.stderr.replace(/\s+$/, '') + '\n' : '') + `Бағдарлама қатемен аяқталды (шығу коды ${k.exitCode}).` };
+        return { ok: true, stdout: k.stdout, stderr: k.stderr, error: '' };
+      },
+      async check(ex, code) {
+        const c = ex.check || {}, cases = c.cases || [];
+        if (c.mustInclude) for (const kw of c.mustInclude) if (!code.includes(kw)) return { pass: false, msg: `Бұл тапсырмада <code>${escHtml(kw)}</code> қолдану керек.` };
+        const r = await this.exec(code, cases.map(k => k.stdin || ''), c.harness);
+        if (!r.compiled && !r.timeout) return { pass: false, msg: 'Код компиляцияланбады. Компилятордың хабарламасын қараңыз:', trace: r.error };
+        if (!r.compiled) return { pass: false, msg: 'Компиляция тым ұзаққа созылды. Қайталап көріңіз.' };
+        for (let i = 0; i < cases.length; i++) {
+          const k = r.cases[i], input = cases[i].stdin ? `<div class="eyebrow" style="margin-top:8px">Кіріс</div><pre style="margin:4px 0 0">${escHtml(cases[i].stdin)}</pre>` : '';
+          // With several cases the message names the case: «2-тест: шығыс күткендей емес.»
+          const say = t => (cases.length > 1 ? `${i + 1}-тест: ` + t[0].toLowerCase() + t.slice(1) : t) + input;
+          if (!k) return { pass: false, msg: say(TIMEOUT_MSG) };
+          if (k.exitCode !== 0) return { pass: false, msg: say(`Бағдарлама қатемен аяқталды (шығу коды ${k.exitCode}).`), trace: k.stderr || null, stdout: k.stdout };
+          if (outNorm(k.stdout) !== outNorm(cases[i].out)) return { pass: false, msg: say('Шығыс күткендей емес.'), expected: cases[i].out, stdout: k.stdout };
+        }
+        return { pass: true, stdout: r.cases.length ? r.cases[0].stdout : '' };
+      }
+    };
+  }
+  const outNorm = s => String(s || '').split('\n').map(l => l.replace(/\s+$/, '')).join('\n').replace(/\n+$/, '');
+  const java = native({ label: 'Java', url: 'js/java-worker.mjs', module: true, size: 'шамамен 5 МБ' });
+  const cpp = native({ label: 'C++', url: 'js/cpp-worker.js', size: 'шамамен 30 МБ, бір рет қана' });
+
+  DJ.run = { sql, py, java, cpp };
 })();

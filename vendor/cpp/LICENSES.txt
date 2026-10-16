@@ -1,0 +1,27 @@
+C++ runtime for DataJol exercises (vendor/cpp/)
+===============================================
+
+What is here (all unmodified, from npm @live-codes/clang-wasm 0.3.0)
+  clang-wasm-toolchain.global.js   IIFE bundle (sets self.clangWasmToolchain); bundles @wasm-idle/llvm-core,
+                                   @bjorn3/browser_wasi_shim and fflate.
+  clang/runtime-manifest.v1.json   Toolchain manifest.
+  clang/bin/clang.wasm.gz          Clang 22.1.8 compiled to WebAssembly (LLVM revision ca7933e47d3a3451d81e72ac174dcb5aa28b59d1).
+  clang/bin/lld.wasm.gz            wasm-ld from the same LLVM build.
+  clang/bin/memfs.wasm.gz          In-memory filesystem (binji/wasm-clang memfs, rebuilt and modified by live-codes; see notices).
+  clang/bin/sysroot.tar.gz         libc++ headers/libraries (LLVM 22) and wasi-libc (WASI SDK 33).
+  Programs are compiled -fno-exceptions (the bundled libc++abi has no exception support).
+
+Licences (full texts in licenses/)
+  @live-codes/clang-wasm: MIT                                         licenses/live-codes-clang-wasm-MIT.txt
+  Its third-party notices (memfs modification notice, provenance):   licenses/live-codes-THIRD-PARTY-NOTICES.md
+  LLVM: Clang, LLD, libc++, libc++abi, compiler-rt, @wasm-idle/llvm-core: Apache-2.0 WITH LLVM-exception
+                                                                      licenses/LLVM-Apache-2.0-with-LLVM-exception.txt
+  wasi-libc: Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT; parts: musl (MIT), cloudlibc (BSD-2-Clause),
+             dlmalloc (CC0), emmalloc (MIT), musl-fts (BSD-3-Clause)  licenses/wasi-libc-*.txt
+  @bjorn3/browser_wasi_shim: MIT OR Apache-2.0; fflate: MIT (bundled in clang-wasm-toolchain.global.js, see its header).
+
+Sources
+  https://www.npmjs.com/package/@live-codes/clang-wasm
+  https://github.com/llvm/llvm-project  (llvmorg-22.1.8)
+  https://github.com/WebAssembly/wasi-libc  and  https://github.com/WebAssembly/wasi-sdk (wasi-sdk-33)
+  https://github.com/binji/wasm-clang  (memfs)

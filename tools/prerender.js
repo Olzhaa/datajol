@@ -32,7 +32,9 @@ const TOPIC = {
   'm6-5': 'Data engineering негіздері: warehouse, ETL, dbt, Spark', 'm6-6': 'ML қорытынды жобасы: end-to-end ML сервисі',
   'm6-g': 'Generative AI қазақша: LLM, prompt, RAG және агенттер',
   'py-2': 'Intermediate Python қазақша: OOP, генераторлар, декораторлар, файлдар',
-  'dsa-1': 'Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері'
+  'dsa-1': 'Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері',
+  'java-1': 'Java қазақша: синтаксис, класстар, коллекциялар, exceptions, браузерде код жазу',
+  'cpp-1': 'C++ қазақша: функциялар, vector, pointer, класстар, STL, браузерде код жазу'
 };
 
 const css = read('src/app.css');

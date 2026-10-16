@@ -450,6 +450,10 @@
     topbar(); nextSlot();
   }
 
+  // Exercise types solved in the code editor; java/cpp are compiled in a worker (DJ.run.java / DJ.run.cpp).
+  const isCodeType = t => t === 'sql' || t === 'python' || t === 'java' || t === 'cpp';
+  const NATIVE = { java: { lang: 'Java', mime: 'text/x-java' }, cpp: { lang: 'C++', mime: 'text/x-c++src' } };
+
   function renderTask() {
     const exs = L.lesson.exercises || [];
     const task = $('#task'), wb = $('#wb'), lessonEl = $('#lesson');
@@ -458,7 +462,7 @@
     const p = S.progress();
     const G = L.lesson.gate ? gateState() : null;
     const ex = exs[L.ei], id = exId(L.lesson, L.ei), done = G ? !!G.res[L.ei] : !!p.done[id];
-    const isCode = ex.type === 'sql' || ex.type === 'python';
+    const isCode = isCodeType(ex.type);
     lessonEl.classList.toggle('solo', !isCode);
     const stepCls = i => G ? (G.res[i] === 'ok' ? 'ok' : G.res[i] === 'fail' ? 'bad' : '') : (p.done[exId(L.lesson, i)] ? 'ok' : '');
     const stepState = i => ({ ok: ', орындалды', bad: ', есепке алынбады' })[stepCls(i)] || '';
@@ -606,14 +610,15 @@
 
   function renderWorkbench(ex, id) {
     const wb = $('#wb');
-    const isSql = ex.type === 'sql';
+    const isSql = ex.type === 'sql', nat = NATIVE[ex.type];
     const ds = isSql ? DJ.datasets[ex.dataset || 'shop'] : null;
     const saved = (S.progress().code || {})[id];
     wb.innerHTML = `
       <div class="editor-shell">
-        <div class="editor-bar"><span><span class="dots"><i></i><i></i><i></i></span><span class="lang">${isSql ? 'SQL · ' + esc(ds ? ds.title : '') : 'Python 3'}</span></span><span>Ctrl+Enter: іске қосу</span></div>
+        <div class="editor-bar"><span><span class="dots"><i></i><i></i><i></i></span><span class="lang">${isSql ? 'SQL · ' + esc(ds ? ds.title : '') : nat ? nat.lang : 'Python 3'}</span></span><span>Ctrl+Enter: іске қосу</span></div>
         <div id="cm"></div>
       </div>
+      ${nat ? `<label style="display:block;margin-top:10px"><span class="eyebrow">Кіріс (stdin)</span><textarea id="stdin" rows="3" spellcheck="false" autocapitalize="off" style="display:block;width:100%;margin-top:4px;background:var(--code-bg);color:var(--code-ink);border:0;border-radius:8px;padding:8px 12px;font-family:var(--font-mono);resize:vertical">${esc(((ex.check || {}).cases || [])[0] ? ex.check.cases[0].stdin || '' : '')}</textarea></label>` : ''}
       ${ds && ds.tables ? `<details class="schema"><summary>Кестелер</summary>${Object.entries(ds.tables).map(([t, c]) => `<div><code>${esc(t)}</code>: ${esc(c)}</div>`).join('')}</details>` : ''}
       <div class="actions">
         <button class="btn ghost" id="run">${ICON.play.replace('<svg', '<svg style="width:14px;height:14px"')} Іске қосу</button>
@@ -626,11 +631,11 @@
     const run = () => doRun(ex);
     if (window.CodeMirror) {
       cm = CodeMirror(host, {
-        value: saved != null ? saved : (ex.starter || ''), mode: isSql ? 'text/x-sqlite' : 'python', lineNumbers: true, indentUnit: 4,
+        value: saved != null ? saved : (ex.starter || ''), mode: isSql ? 'text/x-sqlite' : nat ? nat.mime : 'python', lineNumbers: true, indentUnit: 4,
         matchBrackets: true, autoCloseBrackets: true, lineWrapping: true, viewportMargin: Infinity,
         extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    '), Esc: () => { const b = $('#run'); if (b) b.focus(); } }
       });
-      cm.getInputField().setAttribute('aria-label', isSql ? 'SQL код редакторы' : 'Python код редакторы');
+      cm.getInputField().setAttribute('aria-label', (isSql ? 'SQL' : nat ? nat.lang : 'Python') + ' код редакторы');
       const ed = cm;
       cm.on('change', () => {
         flushSave();
@@ -647,7 +652,9 @@
     $('#run').onclick = run;
     $('#check').onclick = () => doCheck(ex, id);
     $('#reset').onclick = () => { cm.setValue(ex.starter || ''); $('#verdict').innerHTML = ''; };
-    if (!isSql && DJ.run.py.status === 'idle') DJ.run.py.start().catch(() => {});
+    // Start loading the runtime as soon as the task is opened, so it is likely ready by the first run.
+    const R = nat ? DJ.run[ex.type] : isSql ? null : DJ.run.py;
+    if (R && R.status === 'idle') R.start().catch(() => {});
   }
 
   function tableHtml(r) {
@@ -667,6 +674,18 @@
     }
   }
 
+  // Java/C++: the compiler is downloaded on first use; tell the learner while it loads.
+  async function nativeGuard(type) {
+    const R = DJ.run[type];
+    if (R.status !== 'ready') $('#out').innerHTML = `<p class="muted" style="margin:0">${R.label} компиляторы жүктелуде, ${R.size}…</p>`;
+    try { await R.start(); return true; }
+    catch (e) {
+      R.stop();
+      $('#out').innerHTML = `<div class="verdict bad">${esc(e.message)}</div>`;
+      return false;
+    }
+  }
+
   function pandasNote(code) {
     const R = DJ.run.py;
     if (R.needsSklearn(code) && !R.sklearn) return 'scikit-learn жүктелуде (шамамен 40 МБ). Бұл тек бірінші рет бір-екі минут алуы мүмкін…';
@@ -674,7 +693,7 @@
   }
 
   async function doRun(ex) {
-    const ed = cm, code = cm.getValue();
+    const ed = cm, code = cm.getValue(), stdin = $('#stdin') ? $('#stdin').value : '';
     const stale = () => cm !== ed;   // the learner moved to another task while this was running
     busy(true); $('#verdict').innerHTML = '';
     try {
@@ -685,6 +704,13 @@
         if (!r.ok) $('#out').innerHTML = `<pre style="color:var(--bad)">${esc(r.error)}</pre>`;
         else if (!r.results.length) $('#out').innerHTML = `<p style="margin:0">Сұрау орындалды. Өзгерген жолдар: ${r.changes}.</p>`;
         else $('#out').innerHTML = r.results.map(tableHtml).join('<hr style="border:0;border-top:1px solid var(--line)">');
+      } else if (NATIVE[ex.type]) {
+        if (!(await nativeGuard(ex.type)) || stale()) return;
+        $('#out').innerHTML = '<p class="muted" style="margin:0">Компиляция және орындау…</p>';
+        const r = await DJ.run[ex.type].run(code, stdin);
+        if (stale()) return;
+        const err = r.error || r.stderr;
+        $('#out').innerHTML = (r.stdout ? `<pre>${esc(r.stdout)}</pre>` : '') + (err ? `<pre style="color:var(--bad)">${esc(err)}</pre>` : '') || '<p class="muted" style="margin:0">Бағдарлама орындалды, бірақ ештеңе шығармады.</p>';
       } else {
         if (!(await pyGuard()) || stale()) return;
         $('#out').innerHTML = `<p class="muted" style="margin:0">${pandasNote(code) || 'Орындалуда…'}</p>`;
@@ -709,10 +735,11 @@
         if (stale()) return;
         if (r.shown) $('#out').innerHTML = tableHtml(r.shown);
       } else {
-        if (!(await pyGuard())) { if (!stale()) $('#verdict').innerHTML = ''; return; }
+        const nat = !!NATIVE[ex.type];
+        if (!(await (nat ? nativeGuard(ex.type) : pyGuard()))) { if (!stale()) $('#verdict').innerHTML = ''; return; }
         if (stale()) return;
-        if (pandasNote(code)) $('#verdict').innerHTML = `<div class="verdict info">${pandasNote(code)}</div>`;
-        r = await DJ.run.py.check(ex, code);
+        if (!nat && pandasNote(code)) $('#verdict').innerHTML = `<div class="verdict info">${pandasNote(code)}</div>`;
+        r = await (nat ? DJ.run[ex.type] : DJ.run.py).check(ex, code);
         if (stale()) return;
         let out = '';
         if (r.stdout) out += `<div class="eyebrow">Сіздің шығысыңыз</div><pre>${esc(r.stdout)}</pre>`;
@@ -735,7 +762,7 @@
 
   // ---------- module exams: limited tries per task, pass mark 75% ----------
   const GATE_PASS = 0.75;
-  const gateTries = ex => (ex.type === 'sql' || ex.type === 'python' || ex.type === 'sheet') ? 3 : 1;
+  const gateTries = ex => (isCodeType(ex.type) || ex.type === 'sheet') ? 3 : 1;
   function gateState() { return S.gate(L.lesson.id); }
   function gateScore(st) {
     const exs = L.lesson.exercises, total = exs.reduce((s, e) => s + (e.xp || 10), 0);
@@ -783,13 +810,13 @@
       st.res[L.ei] = 'ok'; S.setGate(L.lesson.id, st);
       const r = S.complete(id, ex.xp || 10, false, kind);
       celebrate(r); topbar();
-      const target = (kind === 'sql' || kind === 'python') ? $('#verdict') : $('#qv');
+      const target = isCodeType(kind) ? $('#verdict') : $('#qv');
       target.innerHTML = `<div class="verdict ok">Дұрыс!${r.xp ? ` +${r.xp} XP` : ''}</div>` + gateNextHtml();
       if (target.id === 'verdict') { $('#qv').innerHTML = ''; }
       afterGateStep();
       return;
     }
-    const usedHint = !!(L.hints[id] || wasHinted(id) || (kind !== 'sql' && kind !== 'python' && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
+    const usedHint = !!(L.hints[id] || wasHinted(id) || (!isCodeType(kind) && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
     celebrate(r);
     topbar();
@@ -797,7 +824,7 @@
     const p = S.progress();
     const nextI = exs.findIndex((_, i) => !p.done[exId(L.lesson, i)]);
     const msg = `<div class="verdict ok">Дұрыс!${r.xp ? ` +${r.xp} XP` : ''}${explain ? ' ' + explain : ''}</div>`;
-    const target = (kind === 'sql' || kind === 'python') ? $('#verdict') : $('#qv');
+    const target = isCodeType(kind) ? $('#verdict') : $('#qv');
     target.innerHTML = msg + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
     $$('[data-step]').forEach(b => b.classList.toggle('ok', !!p.done[exId(L.lesson, Number(b.dataset.step))]));
     if (nextI >= 0) $('#next-ex').onclick = () => { L.ei = nextI; renderTask(); $('#task').scrollIntoView({ behavior: 'smooth', block: 'start' }); };

@@ -58,6 +58,17 @@ DJ.phases = [
     ] }
 ];
 
+// Stand-alone courses outside the data career paths (shown in the course catalog, not on the roadmap).
+DJ.phases.push(
+  { id: 'xl', n: 'L', extra: true, title: 'Languages', kz: 'Бағдарламалау тілдері', goal: 'Жалпы бағдарламалау',
+    modules: [
+      { id: 'py-2', code: 'PY2', title: 'Intermediate Python', desc: 'OOP, генераторлар, декораторлар, файлдар, рекурсия', hours: '20–30' },
+      { id: 'java-1', code: 'JV1', title: 'Java', desc: 'Синтаксис, класстар, коллекциялар, қателер', hours: '30–40' },
+      { id: 'cpp-1', code: 'CP1', title: 'C++', desc: 'Синтаксис, функциялар, vector, pointer, класстар', hours: '30–40' },
+      { id: 'dsa-1', code: 'DSA', title: 'Data Structures & Algorithms', desc: 'Big-O, іздеу, сұрыптау, рекурсия, stack/queue, hash, ағаш, граф, DP', hours: '40–60' }
+    ] }
+);
+
 DJ.paths = [
   { id: 'da', title: 'Data Analyst', phases: [0, 1, 2, 3, 7], hours: '300–435 сағ', months: '6–9 ай', desc: 'SQL, spreadsheets, Python, статистика, Power BI, бизнес-метрикалар' },
   { id: 'ds', title: 'Data Scientist', phases: [0, 1, 2, 3, 4, 5, 7], hours: '510–725 сағ', months: '11–15 ай', desc: 'DA негізі + ықтималдық, A/B тест, ML, feature engineering' },

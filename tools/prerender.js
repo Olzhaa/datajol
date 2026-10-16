@@ -30,7 +30,8 @@ const TOPIC = {
   'm6-1': 'Деректегі бағдарламалық инженерия: OOP, тесттер, REST API', 'm6-2': 'ML модельді деплой жасау: FastAPI және Docker',
   'm6-3': 'MLOps негіздері: MLflow, CI, мониторинг және drift', 'm6-4': 'Deep learning негіздері: нейрон желілер, PyTorch, CNN',
   'm6-5': 'Data engineering негіздері: warehouse, ETL, dbt, Spark', 'm6-6': 'ML қорытынды жобасы: end-to-end ML сервисі',
-  'm6-g': 'Generative AI қазақша: LLM, prompt, RAG және агенттер'
+  'm6-g': 'Generative AI қазақша: LLM, prompt, RAG және агенттер',
+  'py-2': 'Intermediate Python қазақша: OOP, генераторлар, декораторлар, файлдар'
 };
 
 const css = read('src/app.css');

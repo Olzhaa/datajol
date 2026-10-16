@@ -51,18 +51,20 @@
   // Routes live in the URL hash, so Back/Forward, reload and shared links land on the same screen.
   function hashFor(r) {
     if (r.view === 'module') return '#module/' + r.mod;
+    if (r.view === 'course') return '#course/' + r.course;
     if (r.view === 'lesson') return `#lesson/${r.mod}/${r.li}`;
     if (r.view === 'cert') return r.uid ? `#cert/${r.uid}/${r.mod}` : '#cert/' + r.mod;
-    return ['map', 'diag', 'profile', 'board'].includes(r.view) ? '#' + r.view : '';
+    return ['map', 'diag', 'profile', 'board', 'catalog'].includes(r.view) ? '#' + r.view : '';
   }
   function parseHash(h) {
     h = (h || '').replace(/^#/, '');
     let m;
     if ((m = h.match(/^module\/([\w-]+)$/))) return { view: 'module', mod: m[1] };
+    if ((m = h.match(/^course\/([\w-]+)$/))) return { view: 'course', course: m[1] };
     if ((m = h.match(/^lesson\/([\w-]+)\/(\d+)$/))) return { view: 'lesson', mod: m[1], li: Number(m[2]) };
     if ((m = h.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/))) return { view: 'cert', uid: m[1], mod: m[2] };
     if ((m = h.match(/^cert\/(L\d)$/))) return { view: 'cert', mod: m[1] };
-    if (['map', 'diag', 'profile', 'board'].includes(h)) return { view: h };
+    if (['map', 'diag', 'profile', 'board', 'catalog'].includes(h)) return { view: h };
     return null;
   }
   function go(view, params = {}) {
@@ -125,21 +127,21 @@
     const b = e.target.closest('[data-go]');
     if (!b) return;
     e.preventDefault();
-    go(b.dataset.go, { mod: b.dataset.mod, li: b.dataset.li != null ? Number(b.dataset.li) : undefined });
+    go(b.dataset.go, { mod: b.dataset.mod, course: b.dataset.course, li: b.dataset.li != null ? Number(b.dataset.li) : undefined });
   });
 
-  const TITLES = { auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат' };
+  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат' };
   function render(moveFocus) {
     if (!S.current() && route.view !== 'cert' && route.view !== 'auth') { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
     topbar();
-    const views = { auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
+    const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
     (views[route.view] || viewDash)();
     const m = route.mod && DJ.findModule(route.mod);
     const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
-      : route.view === 'module' && m ? `${m.code} ${m.title}` : TITLES[route.view];
+      : route.view === 'module' && m ? `${m.code} ${m.title}` : route.view === 'course' && DJ.findCourse(route.course) ? DJ.findCourse(route.course).title : TITLES[route.view];
     document.title = t ? `${t} · DataJol` : 'DataJol';
     // After a screen change, move keyboard and screen-reader focus to the new heading.
-    if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Пікір қалдыру немесе қате туралы хабарлау</button></p>');
+    if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag', 'catalog', 'course'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Пікір қалдыру немесе қате туралы хабарлау</button></p>');
     if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
   }
   function afterAuth() { const r = pendingRoute; pendingRoute = null; if (r) go(r.view, r); else go('dash'); }
@@ -155,6 +157,7 @@
     el.innerHTML = `${logo}
       <nav class="nav" aria-label="Негізгі">
         <button data-go="dash" ${cur('dash')}>Оқу</button>
+        <button data-go="catalog" ${route.view === 'catalog' || route.view === 'course' ? 'aria-current="page"' : ''}>Курстар</button>
         <button data-go="map" ${cur('map')}>Карта</button>
         <button data-go="diag" ${cur('diag')}>Диагностика</button>
         <button data-go="board" ${cur('board')}>Рейтинг</button>
@@ -269,8 +272,11 @@
   }
 
   // ---------- helpers ----------
-  function allModules() { const out = []; for (const ph of DJ.phases) for (const m of ph.modules) out.push(DJ.findModule(m.id)); return out; }
+  function allModules() { const out = []; for (const ph of DJ.phases.filter(x => !x.extra)) for (const m of ph.modules) out.push(DJ.findModule(m.id)); return out; }
   function nextLesson(p) {
+    // The module the learner opened last comes first, so a stand-alone course is not lost behind the data path.
+    const last = (p.prefs || {}).last && DJ.findModule(p.prefs.last);
+    if (last && last.lessons) { const li = last.lessons.findIndex(l => !p.lessons[l.id]); if (li >= 0) return { mod: last, li }; }
     const order = allModules().filter(m => m.lessons && !m.preview);
     let list = order;
     if (p.diag && p.diag.start) { const i = order.findIndex(m => m.id === p.diag.start); if (i > 0) list = order.slice(i).concat(order.slice(0, i)); }
@@ -287,6 +293,44 @@
   function lastDays(n) { const out = []; for (let i = n - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); out.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, label: DAYS[d.getDay()] }); } return out; }
   const GOAL = 50;
 
+  // ---------- course catalog ----------
+  const LEVELS = { easy: 'Оңай', medium: 'Орташа', hard: 'Қиын' };
+  function courseOf(modId) { for (const g of DJ.catalog || []) for (const c of g.courses) if (c.mods.includes(modId)) return c; return null; }
+  function courseState(c, p) {
+    const mods = c.mods.map(id => DJ.findModule(id)).filter(Boolean);
+    const lessons = mods.flatMap(m => m.lessons || []);
+    const done = lessons.filter(l => p.lessons[l.id]).length;
+    return { mods, total: lessons.length, done, soon: !lessons.length, pct: lessons.length ? Math.round(done / lessons.length * 100) : 0 };
+  }
+  function catalogGrid(p) {
+    return `<div class="catalog">${DJ.catalog.map(g => `<section class="cat-group"><h3 class="cat-h">${esc(g.title)}</h3>${g.courses.map(c => {
+      const st = courseState(c, p);
+      const attrs = st.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
+      const tag = st.soon ? '<span class="badge-s">Жақында</span>' : st.done === st.total ? '<span class="badge-s done">Аяқталды</span>' : st.done ? `<span class="badge-s open">${st.pct}%</span>` : `<span class="badge-s">${esc(c.level)}</span>`;
+      return `<button class="cat-course ${st.soon ? 'soon' : ''}" ${attrs}><span>${esc(c.title)}</span>${tag}</button>`;
+    }).join('')}</section>`).join('')}</div>`;
+  }
+  function viewCatalog() {
+    $('#app').innerHTML = `<div class="eyebrow">Курстар</div><h1 style="margin:6px 0 8px">Не үйренгіңіз келеді?</h1>
+      <p class="muted" style="max-width:70ch">Кез келген курсты бөлек өтуге болады. Data мансабына толық жол керек болса, «Карта» бетіндегі бағдарламаны қараңыз.</p>
+      ${catalogGrid(S.progress())}`;
+  }
+  function viewCourse() {
+    const c = DJ.findCourse(route.course);
+    if (!c) return go('catalog');
+    const p = S.progress(), st = courseState(c, p);
+    $('#app').innerHTML = `<div class="crumbs"><button data-go="catalog">Курстар</button><span>/</span><span>${esc(c.group.title)}</span></div>
+      <h1 style="margin:6px 0 8px">${esc(c.title)}</h1>
+      <p class="muted">${esc(c.level)} · ${st.mods.length} модуль · ${st.done} / ${st.total} сабақ</p>
+      <div class="modules">${st.mods.map(m => {
+        const s = S.moduleState(m, p), soon = s.state === 'soon';
+        return `<button class="module ${soon ? 'soon' : ''}" ${soon ? 'disabled aria-disabled="true"' : `data-go="module" data-mod="${m.id}"`}>
+          <span class="code">${esc(m.code)}</span><span style="min-width:0"><h3>${esc(m.title)}</h3><p>${esc(m.desc)}</p></span>
+          <span class="prog">${soon ? '<span class="badge-s">Жақында</span>' : s.state === 'done' ? '<span class="badge-s done">Аяқталды</span>' : `<span class="badge-s open">${s.done} / ${s.total} сабақ</span><div class="bar"><i style="width:${s.pct}%"></i></div>`}</span><span class="chev"></span>
+        </button>`;
+      }).join('')}</div>`;
+  }
+
   // ---------- dashboard ----------
   function viewDash() {
     const u = S.profile(), p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
@@ -300,7 +344,7 @@
         <button class="btn" data-go="lesson" data-mod="${nx.mod.id}" data-li="${nx.li}">Ашу ${ICON.play}</button>
       </div>` : `<div class="continue"><div><h2>Ашық сабақтардың бәрі өтілді</h2><p>Жаңа модульдер жақында қосылады.</p></div></div>`;
     const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-    const phases = DJ.phases.map(ph => `
+    const phases = DJ.phases.filter(ph => !ph.extra).map(ph => `
       <section class="phase">
         <div class="phase-head"><span class="phase-tag">${ph.n}-кезең</span><h3>${esc(ph.kz)}</h3><span class="muted">${esc(ph.goal)}</span></div>
         <div class="modules">${ph.modules.map(m0 => {
@@ -330,7 +374,9 @@
         <div class="kpi"><span class="v">Деңгей ${lv.level}</span><span class="l">келесіге ${lv.next - p.xp} XP</span><div class="bar"><i style="width:${lv.pct}%"></i></div></div>
       </div>
       ${cont}
-      <div class="section-title"><h2>Оқу жолы</h2><button class="btn ghost" data-go="map">Толық карта</button></div>
+      <div class="section-title"><h2>Курстар</h2><button class="btn ghost" data-go="catalog">Барлық курстар</button></div>
+      ${catalogGrid(p)}
+      <div class="section-title"><h2>Data мансап жолы</h2><button class="btn ghost" data-go="map">Толық карта</button></div>
       ${phases}`;
   }
 
@@ -340,7 +386,7 @@
     if (!mod || !mod.lessons) return go('dash');
     const p = S.progress(), s = S.moduleState(mod, p);
     $('#app').innerHTML = `
-      <div class="crumbs"><button data-go="dash">Оқу</button><span>/</span><span>Phase ${mod.phase.n} · ${esc(mod.phase.kz)}</span></div>
+      <div class="crumbs">${(() => { const c = courseOf(mod.id); return c ? `<button data-go="catalog">Курстар</button><span>/</span>${c.mods.length > 1 ? `<button data-go="course" data-course="${c.id}">${esc(c.title)}</button>` : `<span>${esc(c.title)}</span>`}` : `<button data-go="dash">Оқу</button><span>/</span><span>Phase ${mod.phase.n} · ${esc(mod.phase.kz)}</span>`; })()}</div>
       <div class="mod-hero" style="--ph: var(--ph${mod.phase.n})"><span class="mod-ico">${esc(mod.code.replace(/^M/, ''))}</span><div style="min-width:0">
       <div class="eyebrow">${esc(mod.code)} · ${esc(mod.hours)} сағ${mod.preview ? ' · алдын ала көрініс' : ''}</div>
       <h1 style="margin:6px 0 10px">${esc(mod.title)}</h1></div></div>
@@ -371,6 +417,7 @@
     let ei = exs.findIndex((_, i) => !p.done[exId(lesson, i)]);
     if (ei < 0) ei = 0;
     L = { mod, lesson, li: route.li, ei, hints: {}, fails: {} };
+    if (S.setPref && (S.progress().prefs || {}).last !== mod.id) S.setPref('last', mod.id);
     const prev = route.li > 0 ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${route.li - 1}">← Алдыңғы</button>` : `<button class="btn ghost" data-go="module" data-mod="${mod.id}">← Модуль</button>`;
     $('#app').innerHTML = `
       <div class="crumbs"><button data-go="dash">Оқу</button><span>/</span><button data-go="module" data-mod="${mod.id}">${esc(mod.code)} ${esc(mod.title)}</button></div>
@@ -446,7 +493,7 @@
     const hintsBtn = (!G && ex.hints && ex.hints.length) ? `<button class="btn ghost" id="hint-btn">Кеңес (${ex.hints.length})</button>` : '';
     task.innerHTML = `
       ${exs.length > 1 ? `<div class="task-steps">${steps}</div>` : ''}
-      <h3 id="task-h">Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span></h3>
+      <h3 id="task-h">Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span>${ex.level && LEVELS[ex.level] ? ` <span class="lvl lvl-${ex.level}">${LEVELS[ex.level]}</span>` : ''}</h3>
       <div class="prose">${ex.prompt}</div>
       ${inner}
       <div class="hints" id="hints"></div>
@@ -765,7 +812,7 @@
       <h1 style="margin:6px 0 8px">Нөлден Junior/Middle деңгейіне дейін</h1>
       <p class="muted" style="max-width:70ch">Бағдарлама тәуелділік графы бойынша құрылған: әр модуль алдыңғысына сүйенеді. Phase 0–3 бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.</p>
       <div class="paths">${DJ.paths.map(x => `<div class="path"><h3>${esc(x.title)}</h3><p>${esc(x.desc)}</p><div class="hrs">${esc(x.hours)} · ${esc(x.months)} · Phase ${x.phases.join(', ')}</div></div>`).join('')}</div>
-      ${DJ.phases.map(ph => `
+      ${DJ.phases.filter(ph => !ph.extra).map(ph => `
         <section class="map-phase" style="--ph: var(--ph${ph.n})">
           <div><div class="ph">PHASE ${ph.n}</div><h3>${esc(ph.kz)}</h3><div class="muted" style="font-size:.88rem">${esc(ph.goal)}</div><div class="note" style="margin-top:6px">Шығу деңгейі: <b>${esc(ph.level)}</b></div></div>
           <div class="map-mods">${ph.modules.map(m0 => {
@@ -1032,7 +1079,7 @@
   // ---------- boot ----------
   route = parseHash(location.hash) || route;
   // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
-  window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module'].includes(route.view)) render(); });
+  window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module', 'catalog', 'course'].includes(route.view)) render(); });
   window.addEventListener('dj:storage-full', () => toast('Браузер жады толды: прогресс сақталмауы мүмкін. Аккаунтпен кіріңіз немесе ескі деректі тазалаңыз.', 'bolt'));
   // With cloud accounts on, only a return from Google or an email link waits for the Supabase session.
   // Otherwise the app opens at once from this browser's copy and the cloud session is checked in the background,

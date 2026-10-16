@@ -748,6 +748,19 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .fb-kinds .chip { background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; }
 .fb-kinds .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
+/* course catalog */
+.catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 28px; margin-bottom: 8px; }
+.cat-group { display: grid; gap: 2px; align-content: start; }
+.cat-h { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; margin: 14px 0 6px; }
+.cat-course { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-radius: 8px; padding: 9px 10px; margin: 0 -10px; color: var(--ink); font: inherit; font-size: 1.02rem; cursor: pointer; }
+.cat-course:hover { background: var(--surface-2); }
+.cat-course.soon { color: var(--ink-2); cursor: default; }
+.cat-course.soon:hover { background: none; }
+.lvl { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; vertical-align: middle; }
+.lvl-easy { color: var(--ok); }
+.lvl-medium { color: var(--gold); }
+.lvl-hard { color: var(--bad); }
+
 </style>
 </head>
 <body>
@@ -774,52 +787,57 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 <ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m6-1/"><b>M6.1 Software Eng for Data</b></a> — OOP, тесттер, venv, REST API</li><li><a href="m/m6-2/"><b>M6.2 Deployment</b></a> — FastAPI, Docker, бұлтқа деплой</li><li><a href="m/m6-3/"><b>M6.3 MLOps Basics</b></a> — MLflow, CI, мониторинг, drift</li><li><a href="m/m6-4/"><b>M6.4 Deep Learning Intro</b></a> — PyTorch, training loop, CNN</li><li><a href="m/m6-5/"><b>M6.5 Cloud &amp; Data Eng Basics</b></a> — Warehouse, ETL, Spark/dbt шолуы</li><li><a href="m/m6-6/"><b>M6.6 ML Capstone</b></a> — End-to-end ML сервисі</li><li><a href="m/m6-g/"><b>GenAI GenAI Specialization</b></a> — LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps</li></ul></section>
 <section class="phase"><div class="phase-head"><h2>Кезең 7 · Мансап</h2><span class="muted">Жұмысқа өтініш беруге дайын</span></div>
 <ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/m7-1/"><b>M7.1 Career &amp; Portfolio</b></a> — Резюме, LinkedIn, mock interview, take-home</li></ul></section>
+<section class="phase"><div class="phase-head"><h2>Кезең L · Бағдарламалау тілдері</h2><span class="muted">Жалпы бағдарламалау</span></div>
+<ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/py-2/"><b>PY2 Intermediate Python</b></a> — OOP, генераторлар, декораторлар, файлдар, рекурсия</li><li><b>JV1 Java</b> — Синтаксис, класстар, коллекциялар, қателер <span class="muted">(жақында)</span></li><li><b>CP1 C++</b> — Синтаксис, функциялар, vector, pointer, класстар <span class="muted">(жақында)</span></li><li><b>DSA Data Structures &amp; Algorithms</b> — Big-O, іздеу, сұрыптау, рекурсия, stack/queue, hash, ағаш, граф, DP <span class="muted">(жақында)</span></li></ul></section>
 </section>
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = '42291ecadd';</script>
-<script src="vendor/codemirror/codemirror.js?v=42291ecadd"></script>
-<script src="vendor/codemirror/sql.js?v=42291ecadd"></script>
-<script src="vendor/codemirror/python.js?v=42291ecadd"></script>
-<script src="vendor/codemirror/closebrackets.js?v=42291ecadd"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=42291ecadd"></script>
-<script src="content/curriculum.js?v=42291ecadd"></script>
-<script src="content/datasets.js?v=42291ecadd"></script>
-<script src="content/csv.js?v=42291ecadd"></script>
-<script src="content/mldata.js?v=42291ecadd"></script>
-<script src="content/m0.js?v=42291ecadd"></script>
-<script src="content/sheets.js?v=42291ecadd"></script>
-<script src="content/spreadsheets.js?v=42291ecadd"></script>
-<script src="content/sql.js?v=42291ecadd"></script>
-<script src="content/python.js?v=42291ecadd"></script>
-<script src="content/pandas.js?v=42291ecadd"></script>
-<script src="content/git.js?v=42291ecadd"></script>
-<script src="content/stats.js?v=42291ecadd"></script>
-<script src="content/cleaning.js?v=42291ecadd"></script>
-<script src="content/viz.js?v=42291ecadd"></script>
-<script src="content/advanced.js?v=42291ecadd"></script>
-<script src="content/powerbi.js?v=42291ecadd"></script>
-<script src="content/business.js?v=42291ecadd"></script>
-<script src="content/capstone.js?v=42291ecadd"></script>
-<script src="content/probability.js?v=42291ecadd"></script>
-<script src="content/inference.js?v=42291ecadd"></script>
-<script src="content/mathml.js?v=42291ecadd"></script>
-<script src="content/ml.js?v=42291ecadd"></script>
-<script src="content/mlpractice.js?v=42291ecadd"></script>
-<script src="content/dscapstone.js?v=42291ecadd"></script>
-<script src="content/swe.js?v=42291ecadd"></script>
-<script src="content/mlops.js?v=42291ecadd"></script>
-<script src="content/deeplearning.js?v=42291ecadd"></script>
-<script src="content/genai.js?v=42291ecadd"></script>
-<script src="content/career.js?v=42291ecadd"></script>
-<script src="content/diagnostic.js?v=42291ecadd"></script>
-<script src="js/config.js?v=42291ecadd"></script>
-<script src="js/store.js?v=42291ecadd"></script>
-<script src="js/cloud.js?v=42291ecadd"></script>
-<script src="js/runners.js?v=42291ecadd"></script>
-<script src="js/sheet.js?v=42291ecadd"></script>
-<script src="js/app.js?v=42291ecadd"></script>
+<script>window.DJ_VERSION = '36c49a6ffc';</script>
+<script src="vendor/codemirror/codemirror.js?v=36c49a6ffc"></script>
+<script src="vendor/codemirror/sql.js?v=36c49a6ffc"></script>
+<script src="vendor/codemirror/python.js?v=36c49a6ffc"></script>
+<script src="vendor/codemirror/closebrackets.js?v=36c49a6ffc"></script>
+<script src="vendor/codemirror/matchbrackets.js?v=36c49a6ffc"></script>
+<script src="content/curriculum.js?v=36c49a6ffc"></script>
+<script src="content/catalog.js?v=36c49a6ffc"></script>
+<script src="content/datasets.js?v=36c49a6ffc"></script>
+<script src="content/csv.js?v=36c49a6ffc"></script>
+<script src="content/mldata.js?v=36c49a6ffc"></script>
+<script src="content/m0.js?v=36c49a6ffc"></script>
+<script src="content/sheets.js?v=36c49a6ffc"></script>
+<script src="content/spreadsheets.js?v=36c49a6ffc"></script>
+<script src="content/sql.js?v=36c49a6ffc"></script>
+<script src="content/python.js?v=36c49a6ffc"></script>
+<script src="content/pandas.js?v=36c49a6ffc"></script>
+<script src="content/git.js?v=36c49a6ffc"></script>
+<script src="content/stats.js?v=36c49a6ffc"></script>
+<script src="content/cleaning.js?v=36c49a6ffc"></script>
+<script src="content/viz.js?v=36c49a6ffc"></script>
+<script src="content/advanced.js?v=36c49a6ffc"></script>
+<script src="content/powerbi.js?v=36c49a6ffc"></script>
+<script src="content/business.js?v=36c49a6ffc"></script>
+<script src="content/capstone.js?v=36c49a6ffc"></script>
+<script src="content/probability.js?v=36c49a6ffc"></script>
+<script src="content/inference.js?v=36c49a6ffc"></script>
+<script src="content/mathml.js?v=36c49a6ffc"></script>
+<script src="content/ml.js?v=36c49a6ffc"></script>
+<script src="content/mlpractice.js?v=36c49a6ffc"></script>
+<script src="content/dscapstone.js?v=36c49a6ffc"></script>
+<script src="content/swe.js?v=36c49a6ffc"></script>
+<script src="content/mlops.js?v=36c49a6ffc"></script>
+<script src="content/deeplearning.js?v=36c49a6ffc"></script>
+<script src="content/genai.js?v=36c49a6ffc"></script>
+<script src="content/pyint.js?v=36c49a6ffc"></script>
+<script src="content/dsa.js?v=36c49a6ffc"></script>
+<script src="content/career.js?v=36c49a6ffc"></script>
+<script src="content/diagnostic.js?v=36c49a6ffc"></script>
+<script src="js/config.js?v=36c49a6ffc"></script>
+<script src="js/store.js?v=36c49a6ffc"></script>
+<script src="js/cloud.js?v=36c49a6ffc"></script>
+<script src="js/runners.js?v=36c49a6ffc"></script>
+<script src="js/sheet.js?v=36c49a6ffc"></script>
+<script src="js/app.js?v=36c49a6ffc"></script>
 
 </body>
 </html>

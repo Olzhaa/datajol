@@ -395,6 +395,19 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .fb-kinds .chip { background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; }
 .fb-kinds .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
+/* course catalog */
+.catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 28px; margin-bottom: 8px; }
+.cat-group { display: grid; gap: 2px; align-content: start; }
+.cat-h { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; margin: 14px 0 6px; }
+.cat-course { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-radius: 8px; padding: 9px 10px; margin: 0 -10px; color: var(--ink); font: inherit; font-size: 1.02rem; cursor: pointer; }
+.cat-course:hover { background: var(--surface-2); }
+.cat-course.soon { color: var(--ink-2); cursor: default; }
+.cat-course.soon:hover { background: none; }
+.lvl { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; vertical-align: middle; }
+.lvl-easy { color: var(--ok); }
+.lvl-medium { color: var(--gold); }
+.lvl-hard { color: var(--bad); }
+
 .static-page section { margin-top: 36px; }
 .static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .static-cta { margin: 18px 0 8px; }

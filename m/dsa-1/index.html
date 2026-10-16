@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері — DSA Data Structures &amp; Algorithms | DataJol</title>
+<meta name="description" content="Алгоритмдер мен деректер құрылымдары: Big-O, массив пен екі көрсеткіш, hash map, stack/queue, linked list, рекурсия, binary search, сұрыптау, ағаш, heap…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/dsa-1/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері — DSA Data Structures &amp; Algorithms | DataJol">
+<meta property="og:description" content="Алгоритмдер мен деректер құрылымдары: Big-O, массив пен екі көрсеткіш, hash map, stack/queue, linked list, рекурсия, binary search, сұрыптау, ағаш, heap…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/dsa-1/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"DSA Data Structures & Algorithms","description":"Алгоритмдер мен деректер құрылымдары: Big-O, массив пен екі көрсеткіш, hash map, stack/queue, linked list, рекурсия, binary search, сұрыптау, ағаш, heap…","url":"https://olzhaa.github.io/datajol/m/dsa-1/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"DataJol","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT40H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DataJol","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең L: Бағдарламалау тілдері","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"DSA Data Structures & Algorithms","item":"https://olzhaa.github.io/datajol/m/dsa-1/"}]}]</script>
+<style>
+/* DataJol minimal: white space, one accent colour, thin lines, no decoration. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7F7;
+  --ink: #121616;
+  --ink-2: #646B6A;
+  --line: #E6E8E8;
+  --line-strong: #8A9391;
+  --accent: #0F766E;
+  --accent-press: #0B5A54;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EAF5F3;
+  --gold: #B45309;
+  --gold-soft: #FDF6EC;
+  --flame: #EA580C;
+  --ok: #15803D; --ok-ink: #fff;
+  --ok-soft: #EEF8F1;
+  --bad: #C2281D;
+  --bad-soft: #FDF0EF;
+  --code-bg: #111716;
+  --code-ink: #E3EEEC;
+  --code-key: #7DD3C8;
+  --code-str: #F2D27A;
+  --code-num: #F5AE7C;
+  --code-com: #7D8C8A;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --t: 150ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+    --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+    --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+    --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1111; --surface: #0E1111; --surface-2: #171C1B; --ink: #ECEFEE; --ink-2: #9AA3A1;
+  --line: #242B2A; --line-strong: #5E6967; --accent: #4FD1C1; --accent-press: #38B3A4; --accent-ink: #062320; --accent-soft: #14302C;
+  --gold: #F5B451; --gold-soft: #2A2112; --flame: #FB923C;
+  --ok: #5BD38A; --ok-ink: #06240F; --ok-soft: #12291B; --bad: #F58A80; --bad-soft: #2E1715; --code-bg: #080B0B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+/* feedback dialog */
+.fb-foot { text-align: center; margin: 24px 0 8px; }
+.fb-dialog { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--bg); color: var(--ink); }
+.fb-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.fb-dialog form { display: grid; gap: 12px; padding: 20px; }
+.fb-dialog h2 { margin: 0; font-size: 1.2rem; }
+.fb-dialog textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; }
+.fb-kinds { display: flex; gap: 8px; flex-wrap: wrap; }
+.fb-kinds .chip { background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; }
+.fb-kinds .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* course catalog */
+.catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 28px; margin-bottom: 8px; }
+.cat-group { display: grid; gap: 2px; align-content: start; }
+.cat-h { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; margin: 14px 0 6px; }
+.cat-course { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-radius: 8px; padding: 9px 10px; margin: 0 -10px; color: var(--ink); font: inherit; font-size: 1.02rem; cursor: pointer; }
+.cat-course:hover { background: var(--surface-2); }
+.cat-course.soon { color: var(--ink-2); cursor: default; }
+.cat-course.soon:hover { background: none; }
+.lvl { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; vertical-align: middle; }
+.lvl-easy { color: var(--ok); }
+.lvl-medium { color: var(--gold); }
+.lvl-hard { color: var(--bad); }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең L: Бағдарламалау тілдері / DSA</nav>
+<article class="reading">
+<p class="eyebrow">DSA · 40–60 сағат · 17 сабақ</p>
+<h1>DSA Data Structures &amp; Algorithms: Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері</h1>
+<p class="prose">Алгоритмдер мен деректер құрылымдары: Big-O, массив пен екі көрсеткіш, hash map, stack/queue, linked list, рекурсия, binary search, сұрыптау, ағаш, heap, граф және динамикалық бағдарламалау. Әр тақырыптан кейін Python-да өзіңіз іске асырасыз, соңында Оңай / Орташа / Қиын деңгейлі есептер жинағын шешесіз.</p>
+<p class="static-cta"><a class="btn" href="../../#module/dsa-1">Тапсырмаларды орындау</a></p>
+<section id="dsa-1">
+<h2>1. Big-O: алгоритмнің құнын санау</h2>
+<div class="prose">
+<p>Бір тапсырманы екі түрлі кодпен шешуге болады: екеуі де дұрыс жауап береді, бірақ біреуі 1 000 тапсырыста жарты секундта, 1 000 000 тапсырыста сағаттап жұмыс істейді. <b>Big-O</b> — кіріс өлшемі <code>n</code> өскенде жұмыс көлемі қалай өсетінін сипаттайтын белгі. Нақты секундтар емес, <b>өсу формасы</b> маңызды.</p>
+<h3>Операцияларды санау</h3>
+<p>Kaspi-стильді дүкенде <code>n</code> тапсырыс бар. Сұрақ: бірдей <code>order_id</code> екі рет кездесе ме?</p>
+<pre><code># 1-нұсқа: әр жұпты салыстыру
+def has_dup_slow(ids):
+    for i in range(len(ids)):
+        for j in range(i + 1, len(ids)):
+            if ids[i] == ids[j]:
+                return True
+    return False
+
+# 2-нұсқа: көргенді set-ке жинау
+def has_dup_fast(ids):
+    seen = set()
+    for x in ids:
+        if x in seen:
+            return True
+        seen.add(x)
+    return False</code></pre>
+<p>Бірінші нұсқада ішкі цикл <code>(n−1) + (n−2) + … + 1 = n(n−1)/2</code> рет орындалады — бұл <b>O(n²)</b>. Екіншісінде әр элементке бір рет қараймыз, ал set-те тексеру орта есеппен тұрақты уақыт алады — <b>O(n)</b>. n = 100 000 болса, біріншісі шамамен 5 млрд салыстыру жасайды, екіншісі — 100 мың.</p>
+<h3>Негізгі өсу кластары</h3>
+<table>
+<tr><th>Big-O</th><th>Мысал</th><th>n = 10⁶ кезінде шамамен</th></tr>
+<tr><td>O(1)</td><td>dict-тен кілт бойынша алу</td><td>1</td></tr>
+<tr><td>O(log n)</td><td>binary search</td><td>20</td></tr>
+<tr><td>O(n)</td><td>тізімді бір рет аралау</td><td>10⁶</td></tr>
+<tr><td>O(n log n)</td><td>жақсы сұрыптау (merge sort, <code>sorted</code>)</td><td>2·10⁷</td></tr>
+<tr><td>O(n²)</td><td>екі кірістірілген цикл</td><td>10¹²</td></tr>
+<tr><td>O(2ⁿ)</td><td>барлық ішкі жиындарды тексеру</td><td>мүмкін емес</td></tr>
+</table>
+<p>Ережелер: тұрақты көбейткіштер мен кіші мүшелер тасталады (<code>3n + 5</code> → O(n), <code>n² + n</code> → O(n²)). Қатар тұрған циклдер қосылады, кірістірілгендер көбейтіледі. Жадқа да осылай қараймыз: <code>seen</code> set-і O(n) қосымша жад алады — уақытты жадпен «сатып алдық».</p>
+<div class="tip"><b>Практикалық бағдар:</b> Python бір секундта шамамен 10⁷ қарапайым операция жасайды (браузерде одан да баяу). n = 10⁵ болса, O(n²) ≈ 10¹⁰ — сәтсіз, O(n log n) ≈ 2·10⁶ — лезде.</div></div>
+<p><a href="../../#lesson/dsa-1/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-2">
+<h2>2. Массив, тізім және екі көрсеткіш</h2>
+<div class="prose">
+<p>Python <code>list</code> — динамикалық массив: элементтер жадта қатар тұрады. Сондықтан индекс бойынша алу <code>a[i]</code> — O(1), соңына қосу <code>append</code> — орта есеппен O(1). Ал басына қосу <code>a.insert(0, x)</code> немесе <code>a.pop(0)</code> — O(n): қалған элементтердің бәрі бір орынға жылжиды.</p>
+<table>
+<tr><th>Операция</th><th>Күрделілік</th></tr>
+<tr><td><code>a[i]</code>, <code>a[i] = x</code>, <code>len(a)</code></td><td>O(1)</td></tr>
+<tr><td><code>a.append(x)</code>, <code>a.pop()</code></td><td>O(1) орта есеппен</td></tr>
+<tr><td><code>a.insert(0, x)</code>, <code>a.pop(0)</code>, <code>x in a</code></td><td>O(n)</td></tr>
+<tr><td><code>a[l:r]</code> (кесінді)</td><td>O(r − l) — көшірме жасайды</td></tr>
+</table>
+<h3>Екі көрсеткіш (two pointers)</h3>
+<p>Көп есепте екі индекс ұстап, оларды бір-біріне қарай жылжытамыз. Мысал: баға тізімі <b>сұрыпталған</b>, сатып алушының бюджеті 10 000 ₸. Қосындысы дәл бюджетке тең екі тауар бар ма?</p>
+<pre><code>def pair_with_sum(prices, budget):
+    i, j = 0, len(prices) - 1
+    while i &lt; j:
+        s = prices[i] + prices[j]
+        if s == budget:
+            return (i, j)
+        if s &lt; budget:
+            i += 1      # қосынды аз — арзанын қымбатырағымен ауыстырамыз
+        else:
+            j -= 1      # қосынды көп — қымбатын арзандатамыз
+    return None</code></pre>
+<p>Неге дұрыс? Егер <code>prices[i] + prices[j] &lt; budget</code> болса, <code>prices[i]</code> кез келген <code>j' ≤ j</code>-мен де аз береді, сондықтан <code>i</code>-ді тастай аламыз. Әр қадамда бір көрсеткіш жылжиды — барлығы O(n), ал барлық жұпты тексеру O(n²) болар еді.</p>
+<p>Тағы бір үлгі — <b>оқу/жазу көрсеткіші</b>: сұрыпталған тізімнен қайталануларды орнында (in place) алып тастау. <code>w</code> — келесі жазатын орын, <code>r</code> — оқып жатқан орын. Жаңа мән кездессе, <code>a[w] = a[r]</code>, <code>w += 1</code>.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Цикл ішінде <code>a.pop(0)</code> қолдану — байқаусызда O(n²). (2) Тізімді аралап жатып одан элемент өшіру — индекстер жылжып, элементтер өткізіліп кетеді. (3) Екі көрсеткіш тек сұрыпталған тізімде жұмыс істейтінін ұмыту.</div></div>
+<p><a href="../../#lesson/dsa-1/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-3">
+<h2>3. Жолдар (strings)</h2>
+<div class="prose">
+<p>Python-да <code>str</code> — <b>өзгермейтін</b> (immutable) таңбалар тізбегі. <code>s[i]</code> — O(1), <code>len(s)</code> — O(1), бірақ <code>s[i] = 'а'</code> жазуға болмайды: кез келген «өзгеріс» жаңа жол жасайды. Бұдан маңызды салдар шығады:</p>
+<pre><code># Баяу: әр += жаңа жол жасап, бұрынғыны көшіреді → O(n²) болуы мүмкін
+out = ''
+for ch in text:
+    out += ch.upper()
+
+# Дұрыс: бөліктерді тізімге жинап, соңында бір рет біріктіру → O(n)
+parts = []
+for ch in text:
+    parts.append(ch.upper())
+out = ''.join(parts)</code></pre>
+<h3>Жиі кездесетін әдістер</h3>
+<ul>
+<li><code>s.lower()</code>, <code>s.upper()</code> — қазақ әріптерімен де жұмыс істейді: <code>'ҚАЗАҚ'.lower() == 'қазақ'</code>.</li>
+<li><code>ch.isalnum()</code>, <code>ch.isalpha()</code>, <code>ch.isdigit()</code> — таңба түрін тексеру.</li>
+<li><code>s.split()</code>, <code>' '.join(words)</code>, <code>s.strip()</code>, <code>s[::-1]</code> (аударылған көшірме).</li>
+</ul>
+<h3>Мысал: палиндром</h3>
+<p>«Қазақ» сөзі екі жақтан бірдей оқылады — бұл палиндром. Тыныс белгілері мен бос орындарды елемей тексеру үшін екі көрсеткіш қолданамыз: сол жақтан және оң жақтан әріп емес таңбаларды өткізіп жібереміз, сосын кіші әріпке келтіріп салыстырамыз.</p>
+<pre><code>def is_palindrome(s):
+    i, j = 0, len(s) - 1
+    while i &lt; j:
+        if not s[i].isalnum():
+            i += 1
+        elif not s[j].isalnum():
+            j -= 1
+        else:
+            if s[i].lower() != s[j].lower():
+                return False
+            i += 1
+            j -= 1
+    return True</code></pre>
+<p>Бұл O(n) уақыт пен O(1) қосымша жад. Қысқа нұсқа <code>t = ''.join(c.lower() for c in s if c.isalnum()); t == t[::-1]</code> да O(n), бірақ O(n) жад алады — көп жағдайда бұл да жарайды.</p>
+<h3>Анаграмма</h3>
+<p>Екі сөз бір әріптерден құралса, олар анаграмма: «аспан» мен «панас». Тексерудің екі жолы: <code>sorted(a) == sorted(b)</code> (O(n log n)) немесе әріп жиілігін санау <code>Counter(a) == Counter(b)</code> (O(n)). Жиілік санау — келесі сабақтағы hash map-тің алғашқы қолданысы.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) Цикл ішінде жолды <code>+=</code> арқылы ұзарту. (2) Регистрді ескермеу: <code>'А' != 'а'</code>. (3) <code>s.split(' ')</code> мен <code>s.split()</code> айырмасын ұмыту: соңғысы қатар тұрған бос орындарды бірге өткізеді.</div></div>
+<p><a href="../../#lesson/dsa-1/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-4">
+<h2>4. Hash map және set: жиілік пен жұптар</h2>
+<div class="prose">
+<p><code>dict</code> пен <code>set</code> — <b>hash table</b>. Кілттен hash-функция сан есептейді, сол сан бойынша кілт кестедегі орнына тікелей барады. Сондықтан іздеу, қосу, өшіру — <b>орта есеппен O(1)</b>. Тізімде <code>x in a</code> — O(n), set-те <code>x in s</code> — O(1). Кілт hash-талатын (өзгермейтін) болуы керек: <code>str</code>, <code>int</code>, <code>tuple</code> — болады, <code>list</code> — болмайды.</p>
+<h3>Үлгі 1: жиілік санау</h3>
+<pre><code>orders = ['Алматы', 'Астана', 'Алматы', 'Шымкент', 'Алматы']
+freq = {}
+for city in orders:
+    freq[city] = freq.get(city, 0) + 1
+# {'Алматы': 3, 'Астана': 1, 'Шымкент': 1}
+
+from collections import Counter
+Counter(orders).most_common(1)   # [('Алматы', 3)]</code></pre>
+<h3>Үлгі 2: «бұрын не көрдім?» (two-sum)</h3>
+<p>Сұрыпталмаған тізімде қосындысы <code>target</code> болатын екі санның индекстерін табу. Әр <code>x</code> үшін бізге <code>target − x</code> керек. Оны бұрын кездестірдік пе — dict-тен O(1)-де сұраймыз:</p>
+<pre><code>def two_sum(nums, target):
+    pos = {}                       # мән → индекс
+    for i, x in enumerate(nums):
+        need = target - x
+        if need in pos:
+            return (pos[need], i)
+        pos[x] = i
+    return None
+
+two_sum([3000, 7000, 1500, 5500], 7000)   # (2, 3)</code></pre>
+<p>Неге <code>pos[x] = i</code> тексеруден <b>кейін</b>? Әйтпесе <code>x + x = target</code> болғанда элементті өзімен жұптап қоямыз. Бұл O(n) уақыт пен O(n) жад; екі цикл O(n²) болар еді.</p>
+<h3>Үлгі 3: топтау</h3>
+<p>Кілт ретінде «қолтаңба» алып, соған жататындарды тізімге жинаймыз: мысалы, анаграммаларды топтауда кілт <code>''.join(sorted(word))</code>. <code>collections.defaultdict(list)</code> бос тізімді өзі жасайды.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>freq[k] += 1</code> — кілт әлі жоқ болса KeyError; <code>get(k, 0)</code> немесе <code>Counter</code> қолданыңыз. (2) Тізімді кілт қылу — TypeError: <code>tuple(lst)</code> жасаңыз. (3) set ретсіз екенін ұмыту: «бірінші кездескен» керек болса, тізіммен немесе индекспен жұмыс істеңіз.</div></div>
+<p><a href="../../#lesson/dsa-1/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-5">
+<h2>5. Stack және queue (deque)</h2>
+<div class="prose">
+<p><b>Stack</b> (стек) — «соңғы кірген бірінші шығады» (LIFO): табақтар үйіндісі сияқты, тек үстінен қосып, үстінен аламыз. Python-да стек — кәдімгі <code>list</code>: <code>append(x)</code> салады, <code>pop()</code> алады, <code>st[-1]</code> үстіңгісін көрсетеді — бәрі O(1).</p>
+<p><b>Queue</b> (кезек) — «бірінші кірген бірінші шығады» (FIFO): ЦОН-дағы кезек сияқты. <code>list.pop(0)</code> — O(n), сондықтан <code>collections.deque</code> қолданамыз: <code>append(x)</code> артқа қосады, <code>popleft()</code> алдынан алады — екеуі де O(1).</p>
+<pre><code>from collections import deque
+q = deque()
+q.append('Айгүл'); q.append('Ерлан'); q.append('Дана')
+q.popleft()      # 'Айгүл' — бірінші келген бірінші қызмет алады
+len(q)           # 2</code></pre>
+<h3>Мысал: жақшалар балансы</h3>
+<p>Формулада <code>( [ { } ] )</code> жақшалары дұрыс жабылған ба? Ашылған жақшаны стекке саламыз. Жабылатын жақша келгенде стектің үстінде оның жұбы тұруы керек. Соңында стек бос болуы тиіс.</p>
+<pre><code>def is_valid(s):
+    pairs = {')': '(', ']': '[', '}': '{'}
+    st = []
+    for ch in s:
+        if ch in '([{':
+            st.append(ch)
+        elif ch in pairs:
+            if not st or st.pop() != pairs[ch]:
+                return False
+    return not st
+
+is_valid('{[()]}')   # True
+is_valid('([)]')     # False — ( ашылды, бірақ ] келді</code></pre>
+<h3>Мысал: жылжымалы терезе кезегі</h3>
+<p>Колл-орталық соңғы 3 секундтағы (3000 мс) қоңырау санын білгісі келеді. Уақыттары өсу ретімен келеді. Әр жаңа қоңырауды кезекке қосып, алдынан ескіргендерін (<code>t − 3000</code>-нан ертерек) <code>popleft</code> арқылы алып тастаймыз. Әр қоңырау кезекке бір рет кіріп, бір рет шығады — жалпы O(n).</p>
+<div class="tip"><b>Қайда кездеседі:</b> стек — функция шақырулары (call stack), браузердің «Артқа» батырмасы, undo, өрнекті есептеу, DFS. Кезек — тапсырмалар кезегі (Celery, Kafka), BFS, rate limiting. <b>Жиі қате:</b> бос стектен <code>pop()</code> — IndexError; алдымен <code>if st</code> тексеріңіз.</div></div>
+<p><a href="../../#lesson/dsa-1/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-6">
+<h2>6. Linked list: байланысқан тізім</h2>
+<div class="prose">
+<p><b>Linked list</b> — әр түйін (node) мәнді және келесі түйінге сілтемені сақтайтын тізбек. Массивтен айырмасы: элементтер жадта қатар тұрмайды, сондықтан <code>k</code>-шы элементке жету үшін басынан <code>k</code> қадам жүру керек — O(n). Есесіне басына қосу, белгілі түйіннен кейін кірістіру немесе өшіру — O(1): тек сілтемелерді ауыстырамыз.</p>
+<pre><code>class Node:
+    def __init__(self, val, next=None):
+        self.val = val
+        self.next = next
+
+# 1 → 2 → 3
+head = Node(1, Node(2, Node(3)))
+cur = head
+while cur:               # аралау: O(n)
+    print(cur.val)
+    cur = cur.next</code></pre>
+<table>
+<tr><th>Операция</th><th>list (массив)</th><th>linked list</th></tr>
+<tr><td>k-шы элемент</td><td>O(1)</td><td>O(k)</td></tr>
+<tr><td>Басына қосу</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Соңына қосу</td><td>O(1)</td><td>O(1), егер <code>tail</code> сақтасақ</td></tr>
+</table>
+<h3>Мысал: тізімді аудару</h3>
+<p>Классикалық есеп — сілтемелерді кері бағыттау. Үш айнымалы ұстаймыз: <code>prev</code> (аударылған бөліктің басы), <code>cur</code> (қазіргі түйін), <code>nxt</code> (келесісін жоғалтпау үшін).</p>
+<pre><code>def reverse_list(head):
+    prev = None
+    cur = head
+    while cur:
+        nxt = cur.next     # 1) келесіні сақтаймыз
+        cur.next = prev    # 2) сілтемені кері бұрамыз
+        prev = cur         # 3) prev алға
+        cur = nxt          # 4) cur алға
+    return prev            # жаңа бас</code></pre>
+<h3>Екі жылдамдықты көрсеткіш</h3>
+<p>Тізімде цикл бар ма (соңғы түйін бұрынғы түйінге сілтейді ме)? Floyd әдісі: <code>slow</code> бір қадам, <code>fast</code> екі қадам жүреді. Цикл болса, олар міндетті түрде кездеседі; болмаса, <code>fast</code> <code>None</code>-ға жетеді. Қосымша жад — O(1). Дәл осы тәсілмен тізімнің ортасын да табады: <code>fast</code> соңына жеткенде, <code>slow</code> ортада.</p>
+<div class="tip"><b>Шын өмірде:</b> Python-да linked list-ті сирек өзіңіз жазасыз — <code>deque</code> іштей соған ұқсас құрылым. Бірақ сұхбатта (interview) жиі сұралады, және LRU кэш, браузер тарихы сияқты құрылымдардың негізі. <b>Жиі қате:</b> <code>cur.next = prev</code> жасамас бұрын <code>cur.next</code>-ті сақтамау — тізімнің қалғаны жоғалады.</div></div>
+<p><a href="../../#lesson/dsa-1/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-7">
+<h2>7. Рекурсия және backtracking</h2>
+<div class="prose">
+<p><b>Рекурсия</b> — функцияның өзін-өзі шақыруы. Әр рекурсивті функцияда екі бөлік бар: <b>базалық жағдай</b> (бұдан әрі бөлінбейтін, жауабы белгілі кіші есеп) және <b>рекурсивті қадам</b> (есепті кішірек дәл сондай есепке келтіру).</p>
+<pre><code>def digit_sum(n):
+    if n &lt; 10:                       # базалық жағдай
+        return n
+    return n % 10 + digit_sum(n // 10)  # соңғы цифр + қалғанының қосындысы
+
+digit_sum(2026)   # 6 + digit_sum(202) = 6 + 2 + digit_sum(20) = … = 10</code></pre>
+<p>Әр шақыру <b>call stack</b>-ке жаңа «қабат» қосады. Базалық жағдай жоқ немесе оған жетпесек, стек толады — <code>RecursionError</code>. Python-да тереңдік шегі шамамен 1000, сондықтан 10⁵ тереңдіктегі рекурсия орнына цикл жазамыз.</p>
+<h3>Backtracking: барлық нұсқаны құру</h3>
+<p>Backtracking — шешімді қадам-қадаммен құрып, әр қадамда таңдау жасап, тереңге кіріп, сосын таңдауды <b>қайтарып алу</b>. Мысал: Kaspi Red-тағы 3 тауардан {телефон, құлаққап, қап} сатып алудың барлық жиынын тізу. Әр тауар үшін екі таңдау: аламыз / алмаймыз → 2³ = 8 ішкі жиын.</p>
+<pre><code>def subsets(items):
+    res, cur = [], []
+    def go(i):
+        if i == len(items):          # барлық тауар бойынша шештік
+            res.append(cur[:])       # көшірмесін сақтаймыз!
+            return
+        cur.append(items[i])         # таңдау: аламыз
+        go(i + 1)
+        cur.pop()                    # таңдауды қайтарамыз
+        go(i + 1)                    # таңдау: алмаймыз
+    go(0)
+    return res</code></pre>
+<p>Ішкі жиын саны 2ⁿ, сондықтан бұл O(n · 2ⁿ) — n = 20 шамасында ғана жарайды. Backtracking-тің күші — <b>кесу</b> (pruning): жарамсыз жолға кірмей тоқтау. Мысалы, жақшалар генерациясында жабылатын жақшаны ашылғандардан көп қоймаймыз.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>res.append(cur)</code> — көшірме емес, бір тізімге сілтеме; соңында бәрі бос болып шығады. <code>cur[:]</code> жазыңыз. (2) Таңдауды қайтармау (<code>cur.pop()</code>). (3) Базалық жағдайды ұмыту.</div></div>
+<p><a href="../../#lesson/dsa-1/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-8">
+<h2>8. Binary search: екіге бөліп іздеу</h2>
+<div class="prose">
+<p>Сұрыпталған тізімнен мән іздеу үшін әр элементті қарау (O(n)) міндетті емес. <b>Binary search</b> ортаңғы элементке қарайды: іздегеніміз одан үлкен болса — оң жартысында, кіші болса — сол жартысында. Әр қадамда іздеу аймағы екі есе кішірейеді, сондықтан 1 000 000 элементте ең көбі ~20 қадам: O(log n).</p>
+<pre><code>def binary_search(a, x):
+    lo, hi = 0, len(a) - 1
+    while lo &lt;= hi:
+        mid = (lo + hi) // 2
+        if a[mid] == x:
+            return mid
+        if a[mid] &lt; x:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1</code></pre>
+<h3>Шекараны іздеу (lower bound)</h3>
+<p>Көбіне «бар ма?» емес, «<code>x</code>-тен кіші емес бірінші элемент қай жерде?» деген сұрақ қойылады. Мысалы, бағасы бойынша сұрыпталған тауарлардан 15 000 ₸-ден басталатынның біріншісі. Жарты ашық аралықпен <code>[lo, hi)</code> жазу ыңғайлы:</p>
+<pre><code>def lower_bound(a, x):
+    lo, hi = 0, len(a)
+    while lo &lt; hi:
+        mid = (lo + hi) // 2
+        if a[mid] &lt; x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo        # барлығы x-тен кіші болса, len(a)</code></pre>
+<p>Python-да дайын нұсқасы бар: <code>bisect.bisect_left(a, x)</code> — дәл осы, <code>bisect_right</code> — <code>x</code>-тен үлкен бірінші орын.</p>
+<h3>Жауап бойынша binary search</h3>
+<p>Ең күшті қолданысы: жауапты тікелей іздемей, «<code>C</code> мәні жарай ма?» деген тексеру функциясын жазамыз. Егер <code>C</code> жараса, одан үлкендері де жарайтын болса (монотондық), ең кіші жарайтын <code>C</code>-ны binary search-пен табамыз. Мысал: Алматыдан Астанаға жүктерді <b>берілген ретпен</b> <code>D</code> күнде жеткізу керек; күнделікті сыйымдылық кемінде қанша? Сыйымдылық <code>C</code> берілсе, неше күн керегін ашкөз (greedy) түрде O(n)-де санаймыз. Ізделетін аралық: <code>[max(weights), sum(weights)]</code>. Барлығы O(n log S).</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>lo &lt;= hi</code> мен <code>lo &lt; hi</code>-ді, <code>hi = mid</code> мен <code>hi = mid − 1</code>-ді араластыру — шексіз цикл. Бір үлгіні таңдап, соған берік болыңыз. (2) Сұрыпталмаған тізімде binary search қолдану.</div></div>
+<p><a href="../../#lesson/dsa-1/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-9">
+<h2>9. Сұрыптау: insertion, merge, quick және key</h2>
+<div class="prose">
+<p>Сұрыптау — көп алгоритмнің бірінші қадамы: сұрыпталған тізімде binary search, екі көрсеткіш, қайталануды табу оңай. Негізгі идеяларды білу маңызды, ал практикада Python-ның <code>sorted</code> / <code>list.sort</code> (Timsort, O(n log n), тұрақты) қолданылады.</p>
+<h3>Қарапайым O(n²) әдістер</h3>
+<p><b>Bubble sort</b> көршілерді салыстырып, үлкенін оңға «көпіршіктетеді». <b>Insertion sort</b> карталарды қолға алғандай: әр жаңа элементті сол жақтағы сұрыпталған бөліктегі орнына кірістіреді. Екеуі де ең нашар жағдайда O(n²), бірақ insertion sort дерлік сұрыпталған тізімде O(n)-ге жақын жұмыс істейді.</p>
+<h3>Merge sort: бөл де билей бер</h3>
+<pre><code>def merge_sort(a):
+    if len(a) &lt;= 1:
+        return a
+    mid = len(a) // 2
+    left = merge_sort(a[:mid])
+    right = merge_sort(a[mid:])
+    out, i, j = [], 0, 0
+    while i &lt; len(left) and j &lt; len(right):   # екі сұрыпталған тізімді біріктіру
+        if left[i] &lt;= right[j]:
+            out.append(left[i]); i += 1
+        else:
+            out.append(right[j]); j += 1
+    out.extend(left[i:]); out.extend(right[j:])
+    return out</code></pre>
+<p>Тізім log n рет екіге бөлінеді, әр деңгейде біріктіру барлығы O(n) — жалпы <b>O(n log n)</b>, әрқашан. <code>&lt;=</code> белгісі тең элементтердің бастапқы ретін сақтайды — бұл <b>тұрақтылық</b> (stability).</p>
+<h3>Quicksort</h3>
+<p>Тірек элемент (pivot) таңдап, тізімді «кішілер / теңдер / үлкендер» деп бөледі де, бөліктерді рекурсивті сұрыптайды. Орташа O(n log n), бірақ pivot әрдайым ең кіші/үлкен болса (мысалы, сұрыпталған тізімде бірінші элементті алсақ) — O(n²). Сондықтан pivot кездейсоқ таңдалады.</p>
+<h3>Python-да key арқылы сұрыптау</h3>
+<pre><code>students = [('Айгерім', 92), ('Бауыржан', 85), ('Әлия', 92), ('Данияр', 78)]
+# Ұпай бойынша кемуі, тең болса аты бойынша өсуі
+sorted(students, key=lambda r: (-r[1], r[0]))
+# [('Айгерім', 92), ('Әлия', 92), ('Бауыржан', 85), ('Данияр', 78)]</code></pre>
+<p>Кортеж-кілт бірінші элемент бойынша, тең болса екіншісі бойынша салыстырылады. Сандық өрісті кему ретімен алу үшін алдына минус қоямыз. Ескерту: қазақ әріптерінің Unicode реті әліпбилік ретпен толық сәйкес келмейді (<code>'Ә'</code> кодтары кириллицадан кейін тұр), шын жобада арнайы кілт керек.</p>
+<div class="tip"><b>Есте сақтаңыз:</b> салыстыруға негізделген кез келген сұрыптау ең нашар жағдайда кемінде ~n log n салыстыру жасайды. Ал мәндер шағын аралықта болса (мысалы, 0–100 ұпай), <b>counting sort</b> O(n + k)-де сұрыптайды.</div></div>
+<p><a href="../../#lesson/dsa-1/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-10">
+<h2>10. Ағаштар: binary tree және BST</h2>
+<div class="prose">
+<p><b>Ағаш</b> (tree) — түйіндер иерархиясы: бір түбір (root), әр түйіннің балалары бар, циклдер жоқ. Файл жүйесі, ұйым құрылымы, HTML DOM — бәрі ағаш. <b>Binary tree</b>-де әр түйінде ең көбі екі бала: <code>left</code> және <code>right</code>.</p>
+<pre><code>class TreeNode:
+    def __init__(self, val, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+#        8
+#       / #      3   10
+#     /     #    1   6    14
+root = TreeNode(8, TreeNode(3, TreeNode(1), TreeNode(6)), TreeNode(10, None, TreeNode(14)))</code></pre>
+<h3>Аралау (traversal)</h3>
+<ul>
+<li><b>Preorder</b> (түбір, сол, оң): 8, 3, 1, 6, 10, 14 — ағашты көшіру үшін.</li>
+<li><b>Inorder</b> (сол, түбір, оң): 1, 3, 6, 8, 10, 14 — BST-де сұрыпталған рет береді.</li>
+<li><b>Postorder</b> (сол, оң, түбір): 1, 6, 3, 14, 10, 8 — өшіру, қалталар көлемін есептеу.</li>
+<li><b>Level order</b> (деңгей-деңгеймен, BFS, <code>deque</code> арқылы): [8], [3, 10], [1, 6, 14].</li>
+</ul>
+<pre><code>def height(node):
+    if node is None:
+        return 0
+    return 1 + max(height(node.left), height(node.right))</code></pre>
+<h3>Binary Search Tree (BST)</h3>
+<p>BST ережесі: әр түйіннің сол жақ ішкі ағашындағы мәндер одан кіші, оң жағындағылар үлкен. Сонда іздеу binary search сияқты: түбірден бастап, кіші болса солға, үлкен болса оңға жүреміз. Ағаш теңгерілген болса, биіктігі ≈ log n, іздеу мен кірістіру O(log n). Бірақ сұрыпталған мәндерді ретімен кірістірсек, ағаш «тізімге» айналады — биіктік n, операциялар O(n). Сондықтан өндірісте өзін-өзі теңгеретін ағаштар (red-black, AVL, B-tree — дерекқор индекстері) қолданылады.</p>
+<pre><code>def bst_insert(node, x):
+    if node is None:
+        return TreeNode(x)
+    if x &lt; node.val:
+        node.left = bst_insert(node.left, x)
+    elif x &gt; node.val:
+        node.right = bst_insert(node.right, x)
+    return node            # тең мән қайта қосылмайды</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>None</code> түйінді тексермей <code>node.left</code>-ке жүгіну — AttributeError. (2) Рекурсивті кірістірудің нәтижесін <code>node.left = ...</code> деп сақтамау — жаңа түйін ағашқа ілінбей қалады.</div></div>
+<p><a href="../../#lesson/dsa-1/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-11">
+<h2>11. Heap және priority queue: top-k</h2>
+<div class="prose">
+<p><b>Heap</b> (үйме) — ең кіші (немесе ең үлкен) элементті әрдайым O(1)-де көрсетіп, қосу мен алуды O(log n)-де жасайтын құрылым. Ол «толық» binary tree, бірақ массивте сақталады: <code>i</code> түйінінің балалары — <code>2i+1</code> және <code>2i+2</code>. Ереже: ата-ана балаларынан кіші (min-heap).</p>
+<p>Python-да <code>heapq</code> модулі кәдімгі тізімді min-heap ретінде басқарады:</p>
+<pre><code>import heapq
+h = []
+heapq.heappush(h, 5000)
+heapq.heappush(h, 1200)
+heapq.heappush(h, 3400)
+h[0]                 # 1200 — ең кішісі, O(1)
+heapq.heappop(h)     # 1200, O(log n)
+heapq.heapify(arr)   # тізімді орнында heap-ке айналдыру, O(n)</code></pre>
+<p>Max-heap керек болса, мәндерді теріс таңбамен саламыз: <code>heappush(h, -x)</code>. Кортеждер де салуға болады: <code>(басымдық, аты)</code> — бірінші элемент бойынша салыстырылады.</p>
+<h3>Мысал: top-k</h3>
+<p>Kaspi-дегі 1 000 000 тауардан ең көп сатылған 10-ын табу керек. Бәрін сұрыптау — O(n log n). Жақсырақ: өлшемі <code>k</code> болатын <b>min-heap</b> ұстаймыз. Heap-тің түбірі — «үздік k-ның ең әлсізі». Жаңа сан одан үлкен болса, әлсізін шығарып, жаңасын саламыз. Барлығы O(n log k).</p>
+<pre><code>def top_k(nums, k):
+    h = []
+    for x in nums:
+        if len(h) &lt; k:
+            heapq.heappush(h, x)
+        elif x &gt; h[0]:
+            heapq.heapreplace(h, x)   # pop + push бір қадамда
+    return sorted(h, reverse=True)</code></pre>
+<p>Дайын нұсқасы: <code>heapq.nlargest(k, nums)</code>, <code>heapq.nsmallest(k, nums)</code>. Heap сонымен қатар Dijkstra алгоритмінде, тапсырмалар жоспарлаушысында, k сұрыпталған тізімді біріктіруде қолданылады.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>heapq</code> — тек min-heap; max үшін теріс таңба. (2) Heap-тізім толық сұрыпталған емес: <code>h[1]</code> міндетті түрде екінші ең кіші емес. (3) Кортеж салғанда бірінші өрістер тең болса, екіншілері салыстырылады — олар салыстырылмайтын объект болса, қате шығады; арасына реттік нөмір қойыңыз.</div></div>
+<p><a href="../../#lesson/dsa-1/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-12">
+<h2>12. Графтар: BFS, DFS, ең қысқа жол</h2>
+<div class="prose">
+<p><b>Граф</b> — төбелер (vertices) мен оларды қосатын қырлар (edges). Қалалар мен жолдар, әлеуметтік желідегі достар, тәуелділіктер — бәрі граф. Көбіне <b>adjacency list</b> түрінде сақтаймыз: әр төбеге көршілер тізімі. Жады — O(V + E).</p>
+<pre><code>roads = [('Алматы', 'Қонаев'), ('Алматы', 'Талдықорған'), ('Қонаев', 'Талдықорған'), ('Астана', 'Қарағанды')]
+from collections import defaultdict
+adj = defaultdict(list)
+for a, b in roads:          # бағытсыз граф: екі жаққа да
+    adj[a].append(b)
+    adj[b].append(a)</code></pre>
+<h3>BFS — енінен іздеу</h3>
+<p>Бастапқы төбеден кезек (<code>deque</code>) арқылы деңгей-деңгеймен тарайды: алдымен 1 қадамдағылар, сосын 2 қадамдағылар… Сондықтан <b>салмақсыз</b> графта BFS ең қысқа жолды (қадам санын) береді. Күрделілігі O(V + E).</p>
+<pre><code>from collections import deque
+def bfs_dist(adj, start):
+    dist = {start: 0}
+    q = deque([start])
+    while q:
+        u = q.popleft()
+        for v in adj[u]:
+            if v not in dist:           # әр төбеге бір рет кіреміз
+                dist[v] = dist[u] + 1
+                q.append(v)
+    return dist</code></pre>
+<h3>DFS — тереңнен іздеу</h3>
+<p>Бір жолмен мүмкіндігінше тереңге барып, тұйыққа тірелгенде артқа қайтады (стек немесе рекурсия). Байланыс компоненттерін санау, цикл табу, топологиялық сұрыптау үшін қолданылады. Әр төбені <code>visited</code>-ке белгілеуді ұмытпаңыз — әйтпесе циклде шексіз айналасыз.</p>
+<h3>Тор (grid) — да граф</h3>
+<p>Қала картасы <code>'.'</code> (жол) және <code>'#'</code> (ғимарат) таңбаларымен берілсе, әр ұяшық — төбе, ал жоғары/төмен/солға/оңға көршілер — қырлар. Курьердің (0, 0)-ден оң жақ төменгі бұрышқа ең аз қадаммен жетуі — BFS есебі. Көршілерді <code>for dr, dc in ((1,0), (-1,0), (0,1), (0,-1))</code> арқылы аралаймыз, шекарадан шықпауын тексереміз.</p>
+<div class="tip"><b>Салмақты граф</b> (жол ұзындығы әртүрлі) үшін BFS жарамайды — <b>Dijkstra</b> алгоритмі керек: BFS сияқты, бірақ deque орнына ең жақын төбені беретін heap. Оны «Қиын» есептер жинағында жазасыз.</div></div>
+<p><a href="../../#lesson/dsa-1/11">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-13">
+<h2>13. Динамикалық бағдарламалау</h2>
+<div class="prose">
+<p><b>Динамикалық бағдарламалау</b> (DP) — есеп бірдей ішкі есептерге бөлінсе және олар қайта-қайта кездессе, әр ішкі есепті <b>бір рет</b> шешіп, жауабын сақтау. Екі жолы бар: <b>memoization</b> (жоғарыдан төмен: рекурсия + кэш) және <b>tabulation</b> (төменнен жоғары: кестені кіші есептерден бастап толтыру).</p>
+<h3>Мысал 1: баспалдақ</h3>
+<p>Көктөбеге баратын баспалдақта <code>n</code> саты бар, бір қадамда 1 немесе 2 саты көтерілеміз. Неше тәсіл бар? Соңғы қадам 1 саты болса, оған дейін <code>n−1</code> сатыға жету тәсілдері; 2 саты болса — <code>n−2</code>. Демек <code>ways(n) = ways(n−1) + ways(n−2)</code>.</p>
+<pre><code># Аңғал рекурсия: O(2ⁿ) — ways(40) өте баяу, бір ішкі есеп миллион рет шешіледі
+from functools import lru_cache
+@lru_cache(maxsize=None)            # memoization: O(n)
+def ways(n):
+    if n &lt;= 1:
+        return 1
+    return ways(n - 1) + ways(n - 2)
+
+def ways_tab(n):                    # tabulation: O(n), рекурсиясыз
+    a, b = 1, 1                     # ways(0), ways(1)
+    for _ in range(n - 1):
+        a, b = b, a + b
+    return b if n &gt;= 1 else 1</code></pre>
+<h3>Мысал 2: тиындар (coin change)</h3>
+<p>Тиындар номиналы берілген, <code>amount</code> теңгені ең аз тиынмен жинау керек. Ашкөз тәсіл (ең үлкен тиыннан бастау) әрдайым дұрыс емес: [1, 3, 4] тиындарымен 6 = 4+1+1 (3 тиын), ал дұрысы 3+3 (2 тиын). DP: <code>dp[x]</code> — <code>x</code> сомасына ең аз тиын. <code>dp[0] = 0</code>, <code>dp[x] = min(dp[x − c] + 1)</code> барлық <code>c ≤ x</code> үшін. Күрделілігі O(amount · тиын саны).</p>
+<h3>Мысал 3: ең ұзын өспелі ішкі тізбек (LIS)</h3>
+<p>Теңге бағамының күндік мәндерінен (міндетті түрде қатар емес) қатаң өсетін ең ұзын тізбек. O(n²) DP: <code>dp[i] = 1 + max(dp[j])</code>, <code>j &lt; i</code> және <code>a[j] &lt; a[i]</code>. Жылдамырақ O(n log n) әдіс: <code>tails[k]</code> — ұзындығы <code>k+1</code> өспелі тізбектердің ең кіші соңғы элементі. Әр жаңа <code>x</code> үшін <code>bisect_left(tails, x)</code> орнын тауып, ауыстырамыз немесе соңына қосамыз; жауап — <code>len(tails)</code>.</p>
+<div class="tip"><b>DP есебін шешу рецепті:</b> (1) күйді анықта (<code>dp[i]</code> нені білдіреді?); (2) өту формуласын жаз; (3) базалық мәндер; (4) толтыру реті; (5) жауап қай ұяшықта. Python-да терең рекурсия шектелген — үлкен n үшін tabulation қауіпсіз.</div></div>
+<p><a href="../../#lesson/dsa-1/12">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-p1">
+<h2>14. Есептер: Оңай</h2>
+<div class="prose">
+<p>Бұл сабақ — LeetCode стиліндегі есептер жинағы. Барлығы <b>Оңай</b> деңгейде: бір өту (O(n)), hash map, екі көрсеткіш, prefix sum. Әр есепте функция сигнатурасы берілген; тесттер шеткі жағдайларды (бос тізім, бір элемент, бәрі бірдей) және кейбірінде 100 000 элементтік кірісті тексереді.</p>
+<h3>Есепті шешу тәртібі</h3>
+<ol>
+<li><b>Шартты өз сөзіңізбен айтыңыз.</b> Кіріс не, шығыс не? Мысалдарды қолмен тексеріңіз.</li>
+<li><b>Шеткі жағдайлар:</b> бос кіріс, бір элемент, теріс сандар, қайталанулар.</li>
+<li><b>Алдымен аңғал шешім</b>, оның күрделілігін бағалаңыз. n = 10⁵ болса, O(n²) жарамайды.</li>
+<li><b>Жақсартыңыз:</b> «бұрын не көрдім?» → set/dict; «сұрыпталған» → екі көрсеткіш немесе binary search; «аралық қосындысы» → prefix sum.</li>
+<li><b>Кодтан кейін</b> мысалдарды бойынан өткізіп, «Іске қосу» батырмасымен тексеріңіз.</li>
+</ol>
+<h3>Prefix sum — бір жаңа құрал</h3>
+<p>Көп сұрау «<code>l</code>-ден <code>r</code>-ге дейінгі қосынды қанша?» деп сұраса, әр сұрауда цикл жүргізу — O(n) әрқайсысына. Оның орнына бір рет <code>pre[i+1] = pre[i] + a[i]</code> массивін құрамыз; сонда <code>sum(a[l..r]) = pre[r+1] − pre[l]</code> — O(1).</p>
+<pre><code>a   = [5, 2, 7, 1]
+pre = [0, 5, 7, 14, 15]
+# a[1..2] = 2 + 7 = pre[3] - pre[1] = 14 - 5 = 9</code></pre></div>
+<p><a href="../../#lesson/dsa-1/13">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-p2">
+<h2>15. Есептер: Орташа</h2>
+<div class="prose">
+<p><b>Орташа</b> деңгейдегі есептерде бір құрал жетпейді: sliding window, prefix sum + hash map, monotonic stack, топологиялық сұрыптау, торда BFS және 2D DP. Көбінде аңғал O(n²) шешім оңай ойға келеді, бірақ тесттер 10⁵ көлемде тексереді.</p>
+<h3>Sliding window (жылжымалы терезе)</h3>
+<p>Ішкі жол/ішкі тізім туралы сұрақтарда (ең ұзын, ең қысқа, шартқа сай) екі көрсеткіш <code>l</code>, <code>r</code> терезені анықтайды. <code>r</code> оңға жылжып, элемент қосады; шарт бұзылса, <code>l</code> оңға жылжып, элемент шығарады. Әр элемент терезеге бір рет кіріп, бір рет шығады — O(n).</p>
+<pre><code># Қайталанбайтын таңбалы ең ұзын ішкі жол
+last = {}; l = best = 0
+for r, ch in enumerate(s):
+    if ch in last and last[ch] &gt;= l:
+        l = last[ch] + 1          # терезені қайталанудан кейін бастаймыз
+    last[ch] = r
+    best = max(best, r - l + 1)</code></pre>
+<h3>Monotonic stack</h3>
+<p>«Әр элемент үшін оң жақтағы бірінші үлкенірегі қай жерде?» — стекте әлі жауабы табылмаған индекстерді <b>кему</b> ретімен ұстаймыз. Жаңа элемент стектің үстіндегісінен үлкен болса, соның жауабы — осы элемент; оны шығарамыз. Әр индекс бір рет кіріп, бір рет шығады — O(n).</p>
+<h3>Топологиялық сұрыптау (Kahn)</h3>
+<p>Пәндер мен пререквизиттер — бағытталған граф. Кіріс дәрежесі (in-degree) 0 болған пәндерді кезекке саламыз; біреуін алған сайын оның көршілерінің дәрежесін азайтамыз. Барлық пән шықпаса — циклдік тәуелділік бар.</p></div>
+<p><a href="../../#lesson/dsa-1/14">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-p3">
+<h2>16. Есептер: Қиын</h2>
+<div class="prose">
+<p><b>Қиын</b> деңгейдегі есептер бірнеше идеяны біріктіреді және аңғал шешім мүлде жарамайды. Әр есептің астында тексерілген үлгі жатыр — оны танысаңыз, жартысы шешілді.</p>
+<table>
+<tr><th>Есеп</th><th>Негізгі идея</th><th>Мақсатты күрделілік</th></tr>
+<tr><td>Жаңбыр суы</td><td>екі көрсеткіш + сол/оң максимум</td><td>O(n)</td></tr>
+<tr><td>Терезедегі максимум</td><td>monotonic deque</td><td>O(n)</td></tr>
+<tr><td>Ең қысқа терезе</td><td>sliding window + жиілік dict</td><td>O(n)</td></tr>
+<tr><td>Редакциялық қашықтық</td><td>2D DP</td><td>O(n·m)</td></tr>
+<tr><td>Қалалар арасындағы жол</td><td>Dijkstra + heap</td><td>O((V + E) log V)</td></tr>
+<tr><td>Ең үлкен тіктөртбұрыш</td><td>monotonic stack</td><td>O(n)</td></tr>
+</table>
+<h3>Monotonic deque</h3>
+<p>Терезеде максимумды ұстау үшін deque-де индекстерді мәндері <b>кему</b> ретімен сақтаймыз. Жаңа элемент келгенде, одан кіші мәндерді артынан шығарамыз (олар енді ешқашан максимум болмайды). Алдыңғы индекс терезеден шықса, алдынан шығарамыз. Сонда <code>dq[0]</code> — әрдайым терезенің максимумы.</p>
+<h3>Dijkstra</h3>
+<p>Салмағы теріс емес графта ең қысқа жол: heap-те <code>(қашықтық, төбе)</code>. Ең жақын төбені алып, көршілерін «босаңсытамыз» (relax): <code>d + w &lt; dist[v]</code> болса, жаңартып heap-ке саламыз. Heap-тен алынған ескірген жазбаларды (<code>d &gt; dist[u]</code>) өткізіп жібереміз.</p>
+<pre><code>dist = [INF] * n; dist[src] = 0
+h = [(0, src)]
+while h:
+    d, u = heapq.heappop(h)
+    if d &gt; dist[u]:
+        continue
+    for v, w in adj[u]:
+        if d + w &lt; dist[v]:
+            dist[v] = d + w
+            heapq.heappush(h, (dist[v], v))</code></pre>
+<div class="tip"><b>Кеңес:</b> алдымен шағын мысалды қағазда қадамдап жүріп шығыңыз. Қиын есептердегі қателердің көбі — шекаралар: бос кіріс, <code>k = 1</code>, барлық мән бірдей, жету мүмкін емес төбе.</div></div>
+<p><a href="../../#lesson/dsa-1/15">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="dsa-gate">
+<h2>17. Модуль емтиханы: Data Structures &amp; Algorithms</h2>
+<div class="prose">
+<p>Модульдің қорытынды емтиханы: құрылымды таңдау, күрделілікті бағалау және үш алгоритмдік есеп (heap, DP, merge sort негізіндегі санау). Өту шегі — 75%. Python тапсырмаларында тест үлкен кіріспен де тексереді, сондықтан алдымен күрделілікті ойлаңыз.</p>
+<ul>
+<li>Шешім жазбас бұрын: кіріс өлшемі қандай, қандай Big-O жеткілікті?</li>
+<li>Шеткі жағдайлар: бос кіріс, бір элемент, тең мәндер.</li>
+<li>Алдымен кішкентай мысалды қолмен тексеріңіз, сосын іске қосыңыз.</li>
+</ul></div>
+<p><a href="../../#lesson/dsa-1/16">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#module/dsa-1">Тапсырмаларды орындау</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+</main>
+</body>
+</html>

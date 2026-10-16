@@ -108,7 +108,7 @@
       this.ready.catch(() => {});
       return this.ready;
     },
-    restart() { if (this.worker) this.worker.terminate(); this.worker = null; this.pandas = false; this.sklearn = false; this.pending.forEach(p => p.resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.' })); this.pending.clear(); return this.start(); },
+    restart() { if (this.worker) this.worker.terminate(); this.worker = null; this.pandas = false; this.sklearn = false; this.pending.forEach(p => p.resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл немесе тым баяу алгоритм болуы мүмкін: циклдарды және алгоритмнің күрделілігін тексеріңіз.' })); this.pending.clear(); return this.start(); },
     pandas: false, sklearn: false,
     needsPandas(code) { return /\b(pandas|numpy)\b/.test(code || ''); },
     needsSklearn(code) { return /\bsklearn\b/.test(code || ''); },
@@ -122,7 +122,7 @@
       const sk = this.needsSklearn(all), firstSk = sk && !this.sklearn;
       const files = /\.csv/.test(all) && DJ.csv ? DJ.csv : null;
       const slow = 'Кітапханалар әлі жүктеліп жатқан кезде уақыт бітті: интернет баяу болуы мүмкін. Қайта іске қосып көріңіз.';
-      const loop = sk ? 'Код 25 секундтан артық орындалды. Деректер көлемін немесе модель параметрлерін (мысалы n_estimators) азайтып көріңіз.' : 'Код 8 секундтан артық орындалды. Шексіз цикл болуы мүмкін: while шартын тексеріңіз.';
+      const loop = sk ? 'Код 25 секундтан артық орындалды. Деректер көлемін немесе модель параметрлерін (мысалы n_estimators) азайтып көріңіз.' : 'Код 8 секундтан артық орындалды. Шексіз цикл немесе тым баяу алгоритм болуы мүмкін: циклдарды және алгоритмнің күрделілігін тексеріңіз.';
       return new Promise(resolve => {
         const timer = setTimeout(() => { this.pending.delete(id); this.restart(); resolve({ ok: false, stdout: '', error: firstSk || firstPandas ? slow : loop }); }, firstSk ? 180000 : firstPandas ? 90000 : sk ? 25000 : 8000);
         this.pending.set(id, { resolve: d => { if (firstPandas && !/pandas жүктелмеді/.test(d.error || '')) this.pandas = true; if (firstSk && !/scikit-learn жүктелмеді/.test(d.error || '')) this.sklearn = this.pandas = true; resolve(d); }, timer });

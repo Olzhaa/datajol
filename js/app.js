@@ -1034,9 +1034,18 @@
   // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
   window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module'].includes(route.view)) render(); });
   window.addEventListener('dj:storage-full', () => toast('Браузер жады толды: прогресс сақталмауы мүмкін. Аккаунтпен кіріңіз немесе ескі деректі тазалаңыз.', 'bolt'));
-  // With cloud accounts on, wait for the Supabase session (including a return from Google or an email link).
+  // With cloud accounts on, only a return from Google or an email link waits for the Supabase session.
+  // Otherwise the app opens at once from this browser's copy and the cloud session is checked in the background,
+  // so a slow network or a waking Supabase project never leaves the learner on a blank page.
   if (DJ.cloud && DJ.cloud.enabled) {
-    $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';
-    DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (/access_token|error_description/.test(location.hash)) history.replaceState(null, '', location.pathname); if (route.view === 'auth' && S.current()) route = pendingRoute || { view: 'dash' }; if (DJ.cloud.recovery && DJ.cloud.user) route = { view: 'profile' }; render(); });
+    const finish = () => { if (/access_token|error_description/.test(location.hash)) history.replaceState(null, '', location.pathname); if (route.view === 'auth' && S.current()) route = pendingRoute || { view: 'dash' }; if (DJ.cloud.recovery && DJ.cloud.user) route = { view: 'profile' }; render(); };
+    if (/access_token|error_description|type=recovery/.test(location.hash)) {
+      $('#app').innerHTML = '<p class="muted" style="padding:40px 0">Жүктелуде…</p>';
+      DJ.cloud.load().catch(e => console.warn(e)).finally(finish);
+    } else {
+      const before = S.current();
+      render();
+      DJ.cloud.load().catch(e => console.warn(e)).finally(() => { if (S.current() !== before) finish(); });
+    }
   } else render();
 })();

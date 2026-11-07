@@ -4,7 +4,7 @@
 -- but they return only a display name, XP and completed lessons, never emails.
 
 -- Limits on what a learner can store in their own row (they write it directly with the anon key).
--- XP cap: the whole curriculum gives 14 835 XP (Stage 6 included), so 25 000 leaves room to grow.
+-- XP cap: the whole curriculum gives 19 145 XP (Stage 6 and the Languages courses included), so 25 000 leaves room to grow.
 -- Raise it here, in leaderboard() below and in schema.sql if the curriculum grows past that.
 alter table public.progress drop constraint if exists progress_name_len;
 alter table public.progress drop constraint if exists progress_data_size;

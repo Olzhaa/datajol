@@ -1183,6 +1183,7 @@
   route = parseHash(location.hash) || route;
   // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
   window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module', 'catalog', 'course'].includes(route.view)) render(); });
+  window.addEventListener('dj:sync-failed', () => toast('Прогресс бұлтқа сақталмады: дерекқор шегі асып кетті. Прогресс осы браузерде сақтаулы. Кері байланыс арқылы хабарлаңыз.', 'bolt'), { once: true });
   window.addEventListener('dj:storage-full', () => toast('Браузер жады толды: прогресс сақталмауы мүмкін. Аккаунтпен кіріңіз немесе ескі деректі тазалаңыз.', 'bolt'));
   // With cloud accounts on, only a return from Google or an email link waits for the Supabase session.
   // Otherwise the app opens at once from this browser's copy and the cloud session is checked in the background,

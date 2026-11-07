@@ -186,9 +186,14 @@
         }
         if (!this.user) return;
         const name = String((DJ.store.profile() || {}).name || '').slice(0, 40) || null;
-        const { error } = await this.client.from('progress').upsert({ user_id: this.user.id, name, data: p, updated_at: new Date().toISOString() });
+        // Code drafts stay in this browser: they are the bulk of the row and would push it toward the 300 KB limit.
+        const { error } = await this.client.from('progress').upsert({ user_id: this.user.id, name, data: Object.assign({}, p, { code: undefined }), updated_at: new Date().toISOString() });
         if (error) throw error;
-      } catch (e) { console.warn('progress push failed', e); this.failed = p; }   // retried on reconnect or when the tab is hidden
+      } catch (e) {
+        console.warn('progress push failed', e); this.failed = p;   // retried on reconnect or when the tab is hidden
+        // 23514 = a database limit refused the row: retrying cannot help, so tell the learner instead of failing silently.
+        if (e && e.code === '23514') try { window.dispatchEvent(new CustomEvent('dj:sync-failed')); } catch (_) {}
+      }
     },
     async leaderboard(period) {
       const { data, error } = await (await this.need()).rpc('leaderboard', { period, lim: 50 });

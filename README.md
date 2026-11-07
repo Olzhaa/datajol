@@ -8,15 +8,15 @@ A free, Kazakh-language site for learning data analytics and data science from z
 
 ## Мазмұн
 
-21 модуль, 202 сабақ, 569 тапсырма (320-ы SQL, Python немесе формула ретінде браузерде тексеріледі).
+32 модуль, 333 сабақ, 1 082 тапсырма, барлығы 19 145 XP (620-ы SQL, Python, Java, C++ немесе формула ретінде браузерде тексеріледі).
 
 | Бағыт | Кезеңдер | Модульдер |
 | --- | --- | --- |
 | Data Analyst | 0–3 | Дерек әлемі, Math refresher, Spreadsheets, SQL Core, Python, pandas & NumPy, Git & GitHub, Statistics, Cleaning & EDA, Advanced SQL, Visualization, Power BI, Business Analytics, DA Capstone |
 | Data Scientist | 4–5 | Probability, Inference & A/B Testing, Math for ML, ML Foundations және ML in Practice (scikit-learn браузерде), DS Capstone |
+| ML Engineer | 6 | Software Engineering, Deployment & Docker, MLOps, Deep Learning, Data Engineering, GenAI, MLE Capstone |
+| Тілдер мен CS | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++ |
 | Мансап | 7 | Портфолио, резюме, LinkedIn, сұхбатқа дайындық |
-
-ML Engineer кезеңі (6) жоспарда.
 
 ## Тапсырмалар қалай тексеріледі
 
@@ -26,6 +26,7 @@ ML Engineer кезеңі (6) жоспарда.
 | Python, pandas, scikit-learn | [Pyodide](https://pyodide.org) Web Worker ішінде; пакеттер `vendor/pyodide/` ішінен жүктеледі |
 | Excel формулалары | `js/sheet.js` — өз формула қозғалтқышы (EN және RU атаулар) |
 | Git командалары | үлгімен (regex) салыстыру |
+| Java, C++ | javac + TeaVM және clang/lld (WebAssembly) Web Worker ішінде |
 | Тест, сандық жауап | бірден |
 
 ## Құрылым

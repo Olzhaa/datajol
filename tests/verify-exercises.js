@@ -1,11 +1,13 @@
 // Checks every exercise in the browser: each reference solution must pass and each starter must fail.
 // Run: python3 -m http.server 8765 (in the repo root), then `node tests/verify-exercises.js`.
+// UI_LANG=ru or en runs it with that interface language (translated lesson text and test messages).
 // Needs the `playwright` package; set CHROMIUM_PATH if Playwright cannot find a browser.
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  if (process.env.UI_LANG) await pg.addInitScript(l => localStorage.setItem('dj.lang', l), process.env.UI_LANG);
   await pg.goto((process.env.BASE_URL || 'http://localhost:8765/') + 'index.html');
   await pg.fill('[name=name]', 'Т'); await pg.fill('[name=username]', 'user' + Date.now() % 100000); await pg.fill('[name=pw]', 'secret12');
   await pg.click('#auth-submit'); await pg.waitForSelector('.quest-hero');

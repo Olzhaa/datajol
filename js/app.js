@@ -161,7 +161,8 @@
     const el = $('#topbar');
     const u = S.profile();
     const logo = `<button class="logo" data-go="dash">${LOGO}<span>tolqyn</span></button>`;
-    if (!u) { el.innerHTML = logo; return; }
+    const lp = DJ.i18n ? DJ.i18n.picker() : '';
+    if (!u) { el.innerHTML = `${logo}<div class="stats">${lp}</div>`; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
     const cur = v => (route.view === v || (v === 'dash' && ['module', 'lesson'].includes(route.view))) ? 'aria-current="page"' : '';
     el.innerHTML = `${logo}
@@ -177,6 +178,7 @@
         <span class="hud-xp" title="${p.xp} XP, келесі деңгейге ${lv.next - p.xp} XP" aria-label="Деңгей ${lv.level}, ${p.xp} XP">
           <span class="hud-lv">${lv.level}</span><span class="hud-bar"><i style="width:${lv.pct}%"></i></span><span class="hud-n">${p.xp}<small>XP</small></span>
         </span>
+        ${lp}
         <button class="icon-btn" id="snd" aria-pressed="${G.soundOn()}" aria-label="Дыбыс">${G.soundOn() ? ICON.sound : ICON.mute}</button>
         <button class="avatar" data-go="profile" aria-label="Профиль">${esc((u.name || u.username).slice(0, 1).toUpperCase())}</button>
       </div>`;
@@ -346,7 +348,7 @@
 
   // ---------- dashboard ----------
   const COURSE_ICON = { python: 'Py', 'python-2': 'Py', sql: 'SQL', java: 'J', cpp: 'C++', dsa: '{ }', git: 'Git' };
-  function courseGlyph(c) { return COURSE_ICON[c.id] || c.title.replace(/[^A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
+  function courseGlyph(c) { return COURSE_ICON[c.id] || (DJ.i18n ? DJ.i18n.tr(c.title) : c.title).replace(/[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
   function questCard(p) {
     const t = lastDays(1)[0].key;
     const tasks = Object.values(p.done).filter(d => d && d.d === t).length;

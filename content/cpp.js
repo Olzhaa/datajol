@@ -232,7 +232,7 @@ int main() {
 }
 `,
             hints: ['Бүкіл жолды <code>getline(cin, line)</code> арқылы оқыңыз: <code>cin &gt;&gt;</code> тек бірінші сөзді алады.', 'Әр символды <code>tolower(c)</code> арқылы кіші әріпке айналдырып, бес дауыстымен салыстырыңыз.'],
-            check: { cases: [ { stdin: 'Hello World\n', out: '3\n' }, { stdin: 'Tolqyn Academy\n', out: '6\n' }, { stdin: 'xyz\n', out: '0\n' }, { stdin: 'AEIOU aeiou\n', out: '10\n' } ] } },
+            check: { cases: [ { stdin: 'Hello World\n', out: '3\n' }, { stdin: 'Tolqyn Academy\n', out: '4\n' }, { stdin: 'xyz\n', out: '0\n' }, { stdin: 'AEIOU aeiou\n', out: '10\n' } ] } },
           { type: 'quiz', level: 'easy', xp: 10, prompt: 'Кіріс: <code>Нұр Сұлтан</code>. <code>string s; cin &gt;&gt; s;</code> орындалғаннан кейін <code>s</code> не болады?', options: ['<code>"Нұр Сұлтан"</code>', '<code>"Нұр"</code>', '<code>"Сұлтан"</code>', 'Бос жол'], answer: 1, explain: '<code>cin &gt;&gt;</code> бос орынға дейін бір сөзді оқиды. Толық жол үшін <code>getline(cin, s)</code>.' },
           { type: 'quiz', level: 'medium', xp: 10, prompt: '<code>string s = "Astana";</code> болса, <code>s.substr(1, 3)</code> нені қайтарады?', options: ['<code>"Ast"</code>', '<code>"sta"</code>', '<code>"st"</code>', '<code>"stan"</code>'], answer: 1, explain: '<code>substr(pos, len)</code>: 1-индекстен (екінші символ <code>s</code>) бастап 3 символ — <code>"sta"</code>.' }
         ]

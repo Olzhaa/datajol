@@ -993,6 +993,13 @@ button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge
   .node { --step: 6vw; margin-left: calc(28% - 30px); max-width: calc(72% - 16vw); width: auto; }
 }
 
+/* ---------- language picker ---------- */
+.lang-pick { position: relative; display: inline-flex; }
+.lang-pick select { appearance: none; -webkit-appearance: none; height: 36px; padding: 0 26px 0 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink); font: 700 .78rem/1 var(--font-display, inherit); letter-spacing: .04em; cursor: pointer; }
+.lang-pick::after { content: ""; position: absolute; right: 10px; top: 50%; width: 6px; height: 6px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+.lang-pick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-pick select option { background: var(--surface); color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -1025,55 +1032,57 @@ button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = '4b32732eca';</script>
-<script src="vendor/codemirror/codemirror.js?v=4b32732eca"></script>
-<script src="vendor/codemirror/sql.js?v=4b32732eca"></script>
-<script src="vendor/codemirror/python.js?v=4b32732eca"></script>
-<script src="vendor/codemirror/clike.js?v=4b32732eca"></script>
-<script src="vendor/codemirror/closebrackets.js?v=4b32732eca"></script>
-<script src="vendor/codemirror/matchbrackets.js?v=4b32732eca"></script>
-<script src="content/curriculum.js?v=4b32732eca"></script>
-<script src="content/catalog.js?v=4b32732eca"></script>
-<script src="content/datasets.js?v=4b32732eca"></script>
-<script src="content/csv.js?v=4b32732eca"></script>
-<script src="content/mldata.js?v=4b32732eca"></script>
-<script src="content/m0.js?v=4b32732eca"></script>
-<script src="content/sheets.js?v=4b32732eca"></script>
-<script src="content/spreadsheets.js?v=4b32732eca"></script>
-<script src="content/sql.js?v=4b32732eca"></script>
-<script src="content/python.js?v=4b32732eca"></script>
-<script src="content/pandas.js?v=4b32732eca"></script>
-<script src="content/git.js?v=4b32732eca"></script>
-<script src="content/stats.js?v=4b32732eca"></script>
-<script src="content/cleaning.js?v=4b32732eca"></script>
-<script src="content/viz.js?v=4b32732eca"></script>
-<script src="content/advanced.js?v=4b32732eca"></script>
-<script src="content/powerbi.js?v=4b32732eca"></script>
-<script src="content/business.js?v=4b32732eca"></script>
-<script src="content/capstone.js?v=4b32732eca"></script>
-<script src="content/probability.js?v=4b32732eca"></script>
-<script src="content/inference.js?v=4b32732eca"></script>
-<script src="content/mathml.js?v=4b32732eca"></script>
-<script src="content/ml.js?v=4b32732eca"></script>
-<script src="content/mlpractice.js?v=4b32732eca"></script>
-<script src="content/dscapstone.js?v=4b32732eca"></script>
-<script src="content/swe.js?v=4b32732eca"></script>
-<script src="content/mlops.js?v=4b32732eca"></script>
-<script src="content/deeplearning.js?v=4b32732eca"></script>
-<script src="content/genai.js?v=4b32732eca"></script>
-<script src="content/pyint.js?v=4b32732eca"></script>
-<script src="content/dsa.js?v=4b32732eca"></script>
-<script src="content/java.js?v=4b32732eca"></script>
-<script src="content/cpp.js?v=4b32732eca"></script>
-<script src="content/career.js?v=4b32732eca"></script>
-<script src="content/diagnostic.js?v=4b32732eca"></script>
-<script src="js/config.js?v=4b32732eca"></script>
-<script src="js/store.js?v=4b32732eca"></script>
-<script src="js/cloud.js?v=4b32732eca"></script>
-<script src="js/runners.js?v=4b32732eca"></script>
-<script src="js/sheet.js?v=4b32732eca"></script>
-<script src="js/game.js?v=4b32732eca"></script>
-<script src="js/app.js?v=4b32732eca"></script>
+<script>window.DJ_VERSION = '456639ca45';</script>
+<script src="vendor/codemirror/codemirror.js?v=456639ca45"></script>
+<script src="vendor/codemirror/sql.js?v=456639ca45"></script>
+<script src="vendor/codemirror/python.js?v=456639ca45"></script>
+<script src="vendor/codemirror/clike.js?v=456639ca45"></script>
+<script src="vendor/codemirror/closebrackets.js?v=456639ca45"></script>
+<script src="vendor/codemirror/matchbrackets.js?v=456639ca45"></script>
+<script src="content/curriculum.js?v=456639ca45"></script>
+<script src="content/catalog.js?v=456639ca45"></script>
+<script src="content/datasets.js?v=456639ca45"></script>
+<script src="content/csv.js?v=456639ca45"></script>
+<script src="content/mldata.js?v=456639ca45"></script>
+<script src="content/m0.js?v=456639ca45"></script>
+<script src="content/sheets.js?v=456639ca45"></script>
+<script src="content/spreadsheets.js?v=456639ca45"></script>
+<script src="content/sql.js?v=456639ca45"></script>
+<script src="content/python.js?v=456639ca45"></script>
+<script src="content/pandas.js?v=456639ca45"></script>
+<script src="content/git.js?v=456639ca45"></script>
+<script src="content/stats.js?v=456639ca45"></script>
+<script src="content/cleaning.js?v=456639ca45"></script>
+<script src="content/viz.js?v=456639ca45"></script>
+<script src="content/advanced.js?v=456639ca45"></script>
+<script src="content/powerbi.js?v=456639ca45"></script>
+<script src="content/business.js?v=456639ca45"></script>
+<script src="content/capstone.js?v=456639ca45"></script>
+<script src="content/probability.js?v=456639ca45"></script>
+<script src="content/inference.js?v=456639ca45"></script>
+<script src="content/mathml.js?v=456639ca45"></script>
+<script src="content/ml.js?v=456639ca45"></script>
+<script src="content/mlpractice.js?v=456639ca45"></script>
+<script src="content/dscapstone.js?v=456639ca45"></script>
+<script src="content/swe.js?v=456639ca45"></script>
+<script src="content/mlops.js?v=456639ca45"></script>
+<script src="content/deeplearning.js?v=456639ca45"></script>
+<script src="content/genai.js?v=456639ca45"></script>
+<script src="content/pyint.js?v=456639ca45"></script>
+<script src="content/dsa.js?v=456639ca45"></script>
+<script src="content/java.js?v=456639ca45"></script>
+<script src="content/cpp.js?v=456639ca45"></script>
+<script src="content/career.js?v=456639ca45"></script>
+<script src="content/diagnostic.js?v=456639ca45"></script>
+<script src="js/i18n-dict.js?v=456639ca45"></script>
+<script src="js/i18n.js?v=456639ca45"></script>
+<script src="js/config.js?v=456639ca45"></script>
+<script src="js/store.js?v=456639ca45"></script>
+<script src="js/cloud.js?v=456639ca45"></script>
+<script src="js/runners.js?v=456639ca45"></script>
+<script src="js/sheet.js?v=456639ca45"></script>
+<script src="js/game.js?v=456639ca45"></script>
+<script src="js/app.js?v=456639ca45"></script>
 
 </body>
 </html>

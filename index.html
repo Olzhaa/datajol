@@ -1123,6 +1123,51 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
   .lesson > .reading > .lesson-nav, .lesson > .reading > .fb-foot { order: 2; }
 }
 
+/* ---------- second pass of the block style: language picker, nav, map, catalog, feedback ---------- */
+/* Language picker: globe + code in the heading font (the pixel font draws Cyrillic badly). */
+.lang-pick { align-items: center; height: 36px; padding-left: 8px; background: var(--surface-2); border: 2px solid var(--line); border-radius: 2px; box-shadow: var(--bevel-sm); }
+.lang-pick .lp-globe { width: 16px; height: 16px; color: var(--ink-2); pointer-events: none; }
+.lang-pick select { height: 32px; border: 0; background: transparent; box-shadow: none; padding: 0 22px 0 6px; font: 700 .8rem/1 var(--font-display); letter-spacing: .03em; }
+.lang-pick::after { right: 9px; }
+.lang-pick:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-pick select:focus-visible { outline: none; }
+/* Nav icons only in the phone tab bar; the desktop bar stays on one line. */
+@media (min-width: 701px) { .nav button svg { display: none; } .topbar .wrap { flex-wrap: nowrap; } .topbar .stats { margin-left: auto; flex-wrap: nowrap; } }
+@media (min-width: 701px) and (max-width: 1100px) { .hud-bar { display: none; } .nav button { padding: 6px 8px; } }
+@media (max-width: 700px) {
+  .topbar .wrap { flex-wrap: nowrap; gap: 8px; }
+  .topbar .wordmark { display: none; }
+  .topbar .stats { gap: 6px; flex-wrap: nowrap; }
+  .topbar .hud-bar { display: none; }
+  .topbar .btn.sm { padding: 6px 10px; }
+}
+/* Map: track switch and square region headers in the piece colours. */
+.track-tabs { display: inline-flex; gap: 6px; padding: 4px; margin: 0 0 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 2px; }
+.track-tabs button { padding: 8px 14px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font: 700 .92rem var(--font-display); cursor: pointer; }
+.track-tabs button[aria-selected="true"] { background: var(--b0); color: var(--edge); box-shadow: var(--bevel-sm); }
+.region-h { border-radius: 2px; background: var(--surface); border: 2px solid var(--line); box-shadow: inset 6px 0 0 var(--ph); padding-left: 20px; }
+.r-n { border-radius: 2px; box-shadow: var(--bevel-sm); }
+.n-label { border-radius: 2px; }
+.paths .path { border-radius: 2px; box-shadow: inset 0 4px 0 var(--b0); }
+.path .hrs { color: var(--b0); }
+/* Catalog uses the same block tiles as the dashboard. */
+.world.soon { opacity: .55; }
+.world.soon .glyph { background: var(--surface-3); color: var(--ink-2); box-shadow: none; }
+/* Feedback: a small block card instead of a bare link. */
+.fb-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width: 640px; margin: 36px auto 8px; padding: 12px 14px; text-align: left; background: var(--surface); border: 2px dashed var(--line); border-radius: 2px; }
+.fb-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; background: var(--b3); color: var(--edge); font: 700 1rem var(--font-pixel); box-shadow: var(--bevel-sm); }
+.fb-q { flex: 1 1 200px; font-size: .92rem; color: var(--ink-2); }
+/* Module header: a big block with the module number, in its phase colour. */
+:root { --phL: var(--b1); }
+.mod-hero { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.mod-ico { width: 72px; height: 72px; flex: none; display: grid; place-items: center; background: var(--ph, var(--b0)); color: var(--edge); border: 2px solid var(--edge); border-radius: 2px; box-shadow: var(--bevel); font: .9rem var(--font-pixel); }
+.mod-hero h1 { margin: 4px 0 0 !important; }
+.badge-s.open { color: var(--b0); font-weight: 700; }
+:root[data-theme="light"] .badge-s.open { color: #3F6B00; }
+@media (max-width: 560px) { .mod-ico { width: 56px; height: 56px; font-size: .75rem; } }
+:root[data-theme="light"] .path .hrs { color: #3F6B00; }
+@media (max-width: 560px) { .worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .world { padding: 12px; } .world .w-t { font-size: .92rem; } }
+
 </style>
 </head>
 <body>
@@ -1155,24 +1200,24 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = 'e5dde23445';</script>
-<script src="content/curriculum.js?v=e5dde23445"></script>
-<script src="content/index.js?v=e5dde23445"></script>
-<script src="content/catalog.js?v=e5dde23445"></script>
-<script src="content/datasets.js?v=e5dde23445"></script>
-<script src="content/csv.js?v=e5dde23445"></script>
-<script src="content/mldata.js?v=e5dde23445"></script>
-<script src="content/sheets.js?v=e5dde23445"></script>
-<script src="content/diagnostic.js?v=e5dde23445"></script>
-<script src="js/i18n-dict.js?v=e5dde23445"></script>
-<script src="js/i18n.js?v=e5dde23445"></script>
-<script src="js/config.js?v=e5dde23445"></script>
-<script src="js/store.js?v=e5dde23445"></script>
-<script src="js/cloud.js?v=e5dde23445"></script>
-<script src="js/runners.js?v=e5dde23445"></script>
-<script src="js/sheet.js?v=e5dde23445"></script>
-<script src="js/game.js?v=e5dde23445"></script>
-<script src="js/app.js?v=e5dde23445"></script>
+<script>window.DJ_VERSION = 'f35e476d9a';</script>
+<script src="content/curriculum.js?v=f35e476d9a"></script>
+<script src="content/index.js?v=f35e476d9a"></script>
+<script src="content/catalog.js?v=f35e476d9a"></script>
+<script src="content/datasets.js?v=f35e476d9a"></script>
+<script src="content/csv.js?v=f35e476d9a"></script>
+<script src="content/mldata.js?v=f35e476d9a"></script>
+<script src="content/sheets.js?v=f35e476d9a"></script>
+<script src="content/diagnostic.js?v=f35e476d9a"></script>
+<script src="js/i18n-dict.js?v=f35e476d9a"></script>
+<script src="js/i18n.js?v=f35e476d9a"></script>
+<script src="js/config.js?v=f35e476d9a"></script>
+<script src="js/store.js?v=f35e476d9a"></script>
+<script src="js/cloud.js?v=f35e476d9a"></script>
+<script src="js/runners.js?v=f35e476d9a"></script>
+<script src="js/sheet.js?v=f35e476d9a"></script>
+<script src="js/game.js?v=f35e476d9a"></script>
+<script src="js/app.js?v=f35e476d9a"></script>
 
 </body>
 </html>

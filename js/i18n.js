@@ -137,7 +137,7 @@
     location.reload();
   }
   function picker(cls) {
-    return `<label class="lang-pick ${cls || ''}" data-noi18n><span class="sr-only">Language</span><select data-lang-pick aria-label="Тіл / Язык / Language">${
+    return `<label class="lang-pick ${cls || ''}" data-noi18n><span class="sr-only">Language</span><svg class="lp-globe" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><select data-lang-pick aria-label="Тіл / Язык / Language">${
       Object.keys(LANGS).map(k => `<option value="${k}" ${k === lang ? 'selected' : ''}>${SHORT[k]}</option>`).join('')}</select></label>`;
   }
   document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-lang-pick]')) set(e.target.value); });

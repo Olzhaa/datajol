@@ -54,18 +54,18 @@ for (const p of DJ.phases) {
     const url = SITE + 'm/' + m.id + '/';
     urls.push(url);
     const topic = TOPIC[m.id] || m.desc.split(',')[0];
-    const title = `${topic} — ${m.code} ${m.title} | DataJol`;
+    const title = `${topic} — ${m.code} ${m.title} | Tolqyn`;
     const intro = d.intro || m.desc;
     let desc = clip(text(intro));
     if (desc.length < 100) desc = clip(`${m.code} ${m.title}: ${desc}. Қазақша тегін сабақтар мен браузерде тексерілетін тапсырмалар.`);
     const ld = [{
       '@context': 'https://schema.org', '@type': 'Course', name: `${m.code} ${m.title}`, description: desc, url,
       inLanguage: 'kk', isAccessibleForFree: true,
-      provider: { '@type': 'EducationalOrganization', name: 'DataJol', url: SITE },
+      provider: { '@type': 'EducationalOrganization', name: 'Tolqyn', url: SITE },
       hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: 'PT' + String(m.hours).split('–')[0] + 'H' }
     }, {
       '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'DataJol', item: SITE },
+        { '@type': 'ListItem', position: 1, name: 'Tolqyn', item: SITE },
         { '@type': 'ListItem', position: 2, name: `Кезең ${p.n}: ${p.kz}`, item: SITE + '#map' },
         { '@type': 'ListItem', position: 3, name: `${m.code} ${m.title}`, item: url }
       ]
@@ -104,9 +104,9 @@ ${css}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>DataJol</span></a></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>tolqyn</span></a></div></header>
 <main class="wrap static-page">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">DataJol</a> / Кезең ${p.n}: ${esc(p.kz)} / ${esc(m.code)}</nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең ${p.n}: ${esc(p.kz)} / ${esc(m.code)}</nav>
 <article class="reading">
 <p class="eyebrow">${esc(m.code)} · ${esc(m.hours)} сағат · ${d.lessons.length} сабақ</p>
 <h1>${esc(m.code)} ${esc(m.title)}: ${esc(topic)}</h1>
@@ -115,7 +115,7 @@ ${css}
 ${lessons}
 <p class="static-cta">${cta}</p>
 </article>
-<p class="muted" style="margin:40px 0"><a href="../../">← DataJol басты беті</a></p>
+<p class="muted" style="margin:40px 0"><a href="../../">← Tolqyn басты беті</a></p>
 </main>
 </body>
 </html>

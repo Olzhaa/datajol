@@ -1,4 +1,4 @@
-// Full curriculum map, mirrors the "DataJol: Curriculum және Product Blueprint" doc.
+// Full curriculum map, mirrors the "Tolqyn: Curriculum және Product Blueprint" doc.
 // Modules with `lessons` filled by content/*.js are playable; the rest show as "жақында".
 window.DJ = window.DJ || {};
 DJ.modules = DJ.modules || {};

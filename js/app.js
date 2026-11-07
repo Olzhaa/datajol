@@ -21,30 +21,40 @@
     check: sv('<path d="M5 12l5 5L20 7"/>'),
     play: sv('<path d="M7 4l13 8-13 8z"/>'),
     lock: sv('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
-    trophy: sv('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H3c0 3 2 5 4 5M17 6h4c0 3-2 5-4 5"/>')
+    trophy: sv('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H3c0 3 2 5 4 5M17 6h4c0 3-2 5-4 5"/>'),
+    sound: sv('<path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>'),
+    mute: sv('<path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6"/>'),
+    chest: sv('<path d="M3 10h18v10H3zM3 10l2-5h14l2 5M12 10v4M10 14h4"/>'),
+    map: sv('<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>')
   };
-  const LOGO = `<svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><rect x="7" y="17" width="4" height="8" rx="1.5" fill="var(--accent-ink)"/><rect x="14" y="12" width="4" height="13" rx="1.5" fill="var(--accent-ink)"/><rect x="21" y="15" width="4" height="10" rx="1.5" fill="var(--accent-ink)"/><circle cx="23" cy="8" r="3" fill="var(--gold)"/></svg>`;
+  const G = DJ.game;
+  const LOGO = `<svg class="logo-mark" viewBox="0 0 110 110" aria-hidden="true"><rect width="110" height="110" rx="26" fill="#121019"/><path d="M14 66 C26 66 28 38 42 38 S56 66 68 66 S84 38 96 38" transform="translate(0 3)" fill="none" stroke="#C8F04A" stroke-width="14" stroke-linecap="round"/></svg>`;
 
   // ---------- theme ----------
   function applyTheme(t) { if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
   applyTheme(lsGet('dj.theme'));
 
   // ---------- toasts ----------
-  function toast(html, icon = 'bolt') {
+  function toast(html, icon = 'bolt', kind = '') {
     const root = $('#toast-root');
     const el = document.createElement('div');
-    el.className = 'toast';
+    el.className = 'toast ' + kind;
     el.innerHTML = ICON[icon] + `<span>${html}</span>`;
     const n = root.children.length;
     el.style.bottom = `calc(${24 + n * 58}px + env(safe-area-inset-bottom, 0px))`;
     root.appendChild(el);
     setTimeout(() => el.remove(), 3200);
   }
-  function celebrate(r) {
-    if (r.xp) toast(`+${r.xp} XP`, 'bolt');
-    (r.newBadges || []).forEach(b => b && toast(`Жаңа белгі: ${esc(b.name)}`, b.icon));
-    if (r.levelUp) toast(`${r.levelUp}-деңгейге көтерілдіңіз!`, 'trophy');
+  // Rewards for a passed task: floating XP from the button that was pressed, a chime, badge toasts, a level-up dialog.
+  function celebrate(r, from) {
+    if (r.xp) { G.floatXp(from, r.xp); G.confetti(from, 18); G.play('ok'); bumpHud(); }
+    (r.newBadges || []).forEach((b, i) => b && setTimeout(() => { toast(`<b>Жаңа белгі!</b> ${esc(b.name)}`, b.icon, 'badge'); G.play('badge'); }, 500 + i * 400));
+    if (r.levelUp) setTimeout(() => {
+      G.play('level');
+      G.reward({ title: `${r.levelUp}-деңгей!`, text: 'Жаңа деңгейге көтерілдіңіз. Үкі сізбен мақтанады.', stats: [{ v: S.progress().xp, l: 'барлық XP', cls: 'gold' }] });
+    }, 700);
   }
+  function bumpHud() { const h = $('.hud-xp'); if (h) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); } }
 
   // ---------- routing ----------
   let route = { view: 'dash' }, pendingRoute = null;
@@ -139,7 +149,7 @@
     const m = route.mod && DJ.findModule(route.mod);
     const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
       : route.view === 'module' && m ? `${m.code} ${m.title}` : route.view === 'course' && DJ.findCourse(route.course) ? DJ.findCourse(route.course).title : TITLES[route.view];
-    document.title = t ? `${t} · DataJol` : 'DataJol';
+    document.title = t ? `${t} · Tolqyn` : 'Tolqyn';
     // After a screen change, move keyboard and screen-reader focus to the new heading.
     if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag', 'catalog', 'course'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Пікір қалдыру немесе қате туралы хабарлау</button></p>');
     if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
@@ -150,7 +160,7 @@
   function topbar() {
     const el = $('#topbar');
     const u = S.profile();
-    const logo = `<button class="logo" data-go="dash">${LOGO}<span>DataJol</span></button>`;
+    const logo = `<button class="logo" data-go="dash">${LOGO}<span>tolqyn</span></button>`;
     if (!u) { el.innerHTML = logo; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
     const cur = v => (route.view === v || (v === 'dash' && ['module', 'lesson'].includes(route.view))) ? 'aria-current="page"' : '';
@@ -163,11 +173,14 @@
         <button data-go="board" ${cur('board')}>Рейтинг</button>
       </nav>
       <div class="stats">
-        <span class="pill gold" title="Күндер қатарынан" aria-label="Күндер қатарынан: ${st}">${ICON.flame}${st}</span>
-        <span class="pill xp" title="Тәжірибе ұпайы" aria-label="Тәжірибе ұпайы: ${p.xp} XP">${ICON.bolt}${p.xp} XP</span>
-        <span class="pill hide-sm" title="Деңгей" aria-label="Деңгей ${lv.level}">Lv ${lv.level}</span>
+        <span class="pill streak ${st ? 'lit' : ''}" title="Күндер қатарынан" aria-label="Күндер қатарынан: ${st}">${ICON.flame}${st}</span>
+        <span class="hud-xp" title="${p.xp} XP, келесі деңгейге ${lv.next - p.xp} XP" aria-label="Деңгей ${lv.level}, ${p.xp} XP">
+          <span class="hud-lv">${lv.level}</span><span class="hud-bar"><i style="width:${lv.pct}%"></i></span><span class="hud-n">${p.xp}<small>XP</small></span>
+        </span>
+        <button class="icon-btn" id="snd" aria-pressed="${G.soundOn()}" aria-label="Дыбыс">${G.soundOn() ? ICON.sound : ICON.mute}</button>
         <button class="avatar" data-go="profile" aria-label="Профиль">${esc((u.name || u.username).slice(0, 1).toUpperCase())}</button>
       </div>`;
+    $('#snd').onclick = () => { G.setSound(!G.soundOn()); topbar(); };
   }
 
   // ---------- auth ----------
@@ -177,9 +190,9 @@
     app.innerHTML = `
     <section class="auth">
       <div class="auth-hero">
-        <div class="eyebrow">Data Analytics · Data Science · ML</div>
-        <h1>Дерек тілін <em>нөлден</em> үйреніңіз</h1>
-        <p class="muted">Қазақша мәтіндік сабақтар, браузерде бірден тексерілетін SQL мен Python тапсырмалары, нақты жобалар. Әр орындалған тапсырма XP береді, күн сайынғы оқу streak-ке қосылады.</p>
+        <div class="auth-owl">${G.owl('owl-lg owl-bob', 'Үкі')}<p class="bubble">Сәлем! Мен Үкімін. Бірге шыңға шығайық!</p></div>
+        <h1>Бағдарламалау мен деректі ойнап үйрен</h1>
+        <p class="muted">Python, SQL, Java, C++, алгоритмдер және Data Science қазақша. Әр тапсырма браузерде бірден тексеріледі, XP береді, деңгейіңізді көтереді, ал күнделікті оқу streak отын жағады.</p>
         <div class="terminal" aria-label="SQL мысалы"><span class="k">SELECT</span> city, <span class="k">COUNT</span>(*) <span class="k">AS</span> clients
 <span class="k">FROM</span> customers
 <span class="k">GROUP BY</span> city <span class="k">ORDER BY</span> clients <span class="k">DESC</span>;
@@ -332,52 +345,67 @@
   }
 
   // ---------- dashboard ----------
+  const COURSE_ICON = { python: 'Py', 'python-2': 'Py', sql: 'SQL', java: 'J', cpp: 'C++', dsa: '{ }', git: 'Git' };
+  function courseGlyph(c) { return COURSE_ICON[c.id] || c.title.replace(/[^A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
+  function questCard(p) {
+    const t = lastDays(1)[0].key;
+    const tasks = Object.values(p.done).filter(d => d && d.d === t).length;
+    const lessons = Object.values(p.lessons).filter(d => d === t).length;
+    const xp = S.xpToday(p);
+    const qs = [
+      { n: 'Бүгін 50 XP жина', v: xp, max: GOAL, icon: 'bolt' },
+      { n: '3 тапсырма орында', v: tasks, max: 3, icon: 'check' },
+      { n: '1 сабақты аяқта', v: lessons, max: 1, icon: 'flag' }
+    ];
+    const all = qs.every(q => q.v >= q.max);
+    return `<section class="panel quests" aria-labelledby="q-h">
+      <div class="panel-h"><h2 id="q-h">Күндік квесттер</h2><span class="chest ${all ? 'open' : ''}" title="${all ? 'Бүгінгі квесттер орындалды' : 'Үшеуін орындасаңыз, сандық ашылады'}">${ICON.chest}</span></div>
+      ${qs.map(q => { const ok = q.v >= q.max; return `<div class="quest ${ok ? 'ok' : ''}"><span class="q-ico">${ok ? ICON.check : ICON[q.icon]}</span><div><b>${q.n}</b><div class="seg" style="--n:${q.max > 5 ? 10 : q.max}">${Array.from({ length: q.max > 5 ? 10 : q.max }, (_, i) => `<i class="${(q.max > 5 ? q.v / q.max * 10 : q.v) > i ? 'on' : ''}"></i>`).join('')}</div></div><span class="q-n">${Math.min(q.v, q.max)}/${q.max}</span></div>`; }).join('')}
+      <p class="note" style="margin:8px 0 0">${all ? 'Тамаша! Ертең жаңа квесттер шығады.' : 'Квесттер күн сайын түн ортасында жаңарады.'}</p>
+    </section>`;
+  }
+  function streakCard(p, st) {
+    const days = lastDays(7), set = new Set(p.days || []);
+    return `<section class="panel streak-card" aria-labelledby="s-h">
+      <div class="panel-h"><h2 id="s-h">Streak</h2><span class="big-flame ${st ? 'lit' : ''}">${ICON.flame}<b>${st}</b></span></div>
+      <div class="week">${days.map((d, i) => `<div class="day ${set.has(d.key) ? 'on' : ''} ${i === 6 ? 'today' : ''}"><span>${set.has(d.key) ? ICON.flame : ''}</span><small>${d.label}</small></div>`).join('')}</div>
+      <p class="note" style="margin:8px 0 0">${st ? `Қатарынан ${st} күн. Ең ұзағы: ${p.best || st}. ${set.has(days[6].key) ? 'Бүгінгі от жанды, ертең де келіңіз!' : 'Бүгін бір тапсырма орындасаңыз, от сөнбейді.'}` : 'Бүгін бір тапсырма орындап, отты жағыңыз.'}</p>
+    </section>`;
+  }
   function viewDash() {
     const u = S.profile(), p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
     const nx = nextLesson(p), career = S.careerLevel(p);
-    const today = S.xpToday(p);
-    const cont = nx ? `
-      <div class="continue">
-        <div><div class="eyebrow">${Object.keys(p.lessons).length ? 'Жалғастыру' : 'Бастау'} · ${esc(nx.mod.code)} ${esc(nx.mod.title)}</div>
-        <h2>${esc(nx.mod.lessons[nx.li].title)}</h2>
-        <p>Сабақ ${nx.li + 1} / ${nx.mod.lessons.length} · ${nx.mod.lessons[nx.li].minutes || 10} мин</p></div>
-        <button class="btn" data-go="lesson" data-mod="${nx.mod.id}" data-li="${nx.li}">Ашу ${ICON.play}</button>
-      </div>` : `<div class="continue"><div><h2>Ашық сабақтардың бәрі өтілді</h2><p>Жаңа модульдер жақында қосылады.</p></div></div>`;
-    const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-    const phases = DJ.phases.filter(ph => !ph.extra).map(ph => `
-      <section class="phase">
-        <div class="phase-head"><span class="phase-tag">${ph.n}-кезең</span><h3>${esc(ph.kz)}</h3><span class="muted">${esc(ph.goal)}</span></div>
-        <div class="modules">${ph.modules.map(m0 => {
-          const m = DJ.findModule(m0.id), s = S.moduleState(m, p);
-          const soon = s.state === 'soon';
-          const attrs = soon ? 'disabled aria-disabled="true"' : `data-go="module" data-mod="${m.id}"`;
-          const prog = soon ? '<span class="badge-s">Жақында</span>'
-            : s.state === 'done' ? '<span class="badge-s done">Аяқталды</span>'
-            : `<span class="badge-s open">${s.done} / ${s.total} сабақ</span><div class="bar"><i style="width:${s.pct}%"></i></div>`;
-          return `<button class="module ${soon ? 'soon' : ''}" ${attrs}>
-            <span class="code">${esc(m.code)}</span>
-            <span style="min-width:0"><h3>${esc(m.title)}</h3><p>${esc(m.desc)}</p></span>
-            <span class="prog">${prog}</span>
-            <span class="chev">${soon ? '' : chev}</span>
-          </button>`;
-        }).join('')}</div>
-      </section>`).join('');
-    $('#app').innerHTML = `
-      <div class="hello">
-        <div><div class="eyebrow">${esc(career.id)} · ${esc(career.name)}</div><h1>Сәлем, ${esc(u.name)}</h1></div>
-        ${p.diag && p.diag.v === 2 ? '' : `<button class="btn ghost" data-go="diag">Деңгейді анықтау тесті</button>`}
+    const started = Object.keys(p.lessons).length > 0;
+    const say = !nx ? 'Ашық сабақтардың бәрін өттіңіз! Жаңа курстар жақында қосылады.'
+      : started ? `Қайта келгеніңіз қандай жақсы! Келесі қадам: <b>${esc(nx.mod.lessons[nx.li].title)}</b>.`
+      : `Мен Үкімін, саяхатта сізге жол көрсетемін. Бірінші қадам: <b>${esc(nx.mod.lessons[nx.li].title)}</b>.`;
+    const hero = `<section class="quest-hero">
+      <div class="qh-owl">${G.owl('owl-lg owl-bob', 'Үкі')}</div>
+      <div class="qh-body">
+        <h1>Сәлем, ${esc(u.name)}!</h1>
+        <p class="bubble">${say}</p>
+        ${nx ? `<div class="qh-meta"><span class="tag">${esc(nx.mod.code)} ${esc(nx.mod.title)}</span><span class="tag">Сабақ ${nx.li + 1}/${nx.mod.lessons.length}</span><span class="tag">${nx.mod.lessons[nx.li].minutes || 10} мин</span></div>
+        <div class="actions" style="margin-top:16px"><button class="btn big" data-go="lesson" data-mod="${nx.mod.id}" data-li="${nx.li}">${started ? 'Жалғастыру' : 'Саяхатты бастау'} ${ICON.play}</button>${p.diag && p.diag.v === 2 ? '' : '<button class="btn ghost" data-go="diag">Деңгейді анықтау</button>'}</div>` : ''}
       </div>
-      <div class="kpis">
-        <div class="kpi"><span class="v flame">${ICON.flame}${st}</span><span class="l">күн қатарынан</span></div>
-        <div class="kpi"><span class="v">${today} / ${GOAL}</span><span class="l">бүгінгі XP мақсаты</span><div class="bar gold"><i style="width:${Math.min(100, today / GOAL * 100)}%"></i></div></div>
-        <div class="kpi"><span class="v xp">${ICON.bolt}${p.xp}</span><span class="l">барлық XP</span></div>
-        <div class="kpi"><span class="v">Деңгей ${lv.level}</span><span class="l">келесіге ${lv.next - p.xp} XP</span><div class="bar"><i style="width:${lv.pct}%"></i></div></div>
+      <div class="lvl-card" aria-label="Деңгей ${lv.level}">
+        <div class="shield"><span>LV</span><b>${lv.level}</b></div>
+        <div class="lvl-bar"><i style="width:${lv.pct}%"></i></div>
+        <div class="note">${p.xp} XP · келесі деңгейге ${lv.next - p.xp} XP</div>
+        <div class="note">${esc(career.id)} · ${esc(career.name)}</div>
       </div>
-      ${cont}
-      <div class="section-title"><h2>Курстар</h2><button class="btn ghost" data-go="catalog">Барлық курстар</button></div>
-      ${catalogGrid(p)}
-      <div class="section-title"><h2>Data мансап жолы</h2><button class="btn ghost" data-go="map">Толық карта</button></div>
-      ${phases}`;
+    </section>`;
+    const worlds = DJ.catalog.map(g => `<section class="world-group"><h3>${esc(g.title)}</h3><div class="worlds">${g.courses.map(c => {
+      const cs = courseState(c, p);
+      const attrs = cs.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
+      const state = cs.soon ? 'soon' : cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
+      return `<button class="world ${state}" ${attrs}><span class="glyph">${esc(courseGlyph(c))}</span><span class="w-t">${esc(c.title)}</span>
+        <span class="w-m">${cs.soon ? 'Жақында' : state === 'done' ? 'Аяқталды' : `${esc(c.level)} · ${cs.done}/${cs.total} сабақ`}</span>
+        ${cs.soon ? '' : `<span class="seg-bar"><i style="width:${cs.pct}%"></i></span>`}${state === 'done' ? `<span class="w-star">${ICON.star}</span>` : ''}</button>`;
+    }).join('')}</div></section>`).join('');
+    $('#app').innerHTML = `${hero}
+      <div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>
+      <div class="section-title"><h2>Әлемдер</h2><button class="btn ghost" data-go="map">${ICON.map} Мансап картасы</button></div>
+      ${worlds}`;
   }
 
   // ---------- module ----------
@@ -445,9 +473,24 @@
   }
   function finishLesson() {
     const nb = S.markLesson(L.lesson.id, L.mod.id);
-    nb.forEach(b => b && toast(`Жаңа белгі: ${esc(b.name)}`, b.icon));
-    toast(L.lesson.gate ? 'Модуль емтиханы тапсырылды!' : 'Сабақ аяқталды', L.lesson.gate ? 'trophy' : 'check');
     topbar(); nextSlot();
+    const p = S.progress(), mod = L.mod, li = L.li, exs = L.lesson.exercises || [];
+    const got = i => p.done[exId(L.lesson, i)];
+    const xp = exs.reduce((t, _, i) => t + ((got(i) || {}).xp || 0), 0);
+    const clean = exs.filter((_, i) => got(i) && !got(i).hint).length;
+    const modDone = mod.lessons.every(l => p.lessons[l.id]);
+    const hasNext = li + 1 < mod.lessons.length;
+    setTimeout(() => {
+      G.play('lesson');
+      G.reward({
+        title: modDone ? 'Модуль бағындырылды!' : L.lesson.gate ? 'Емтихан тапсырылды!' : 'Сабақ аяқталды!',
+        text: modDone ? `${esc(mod.code)} ${esc(mod.title)} толық өтілді. Картада жаңа шың ашылды.` : esc(L.lesson.title),
+        stats: [{ v: '+' + xp, l: 'XP', cls: 'gold' }, { v: S.streakNow(p), l: 'күн streak', cls: 'flame' }].concat(exs.length ? [{ v: `${clean}/${exs.length}`, l: 'кеңессіз' }] : []),
+        actions: hasNext ? [{ label: 'Келесі сабақ', primary: true, onClick: () => go('lesson', { mod: mod.id, li: li + 1 }) }, { label: 'Модульге', onClick: () => go('module', { mod: mod.id }) }]
+          : [{ label: 'Картаға', primary: true, onClick: () => go('map') }, { label: 'Модульге', onClick: () => go('module', { mod: mod.id }) }]
+      });
+      nb.forEach((b, i) => b && setTimeout(() => { toast(`<b>Жаңа белгі!</b> ${esc(b.name)}`, b.icon, 'badge'); G.play('badge'); }, 600 + i * 400));
+    }, 450);
   }
 
   // Exercise types solved in the code editor; java/cpp are compiled in a worker (DJ.run.java / DJ.run.cpp).
@@ -809,7 +852,7 @@
       const st = gateState();
       st.res[L.ei] = 'ok'; S.setGate(L.lesson.id, st);
       const r = S.complete(id, ex.xp || 10, false, kind);
-      celebrate(r); topbar();
+      celebrate(r, $('#check') || $('#q-check')); topbar();
       const target = isCodeType(kind) ? $('#verdict') : $('#qv');
       target.innerHTML = `<div class="verdict ok">Дұрыс!${r.xp ? ` +${r.xp} XP` : ''}</div>` + gateNextHtml();
       if (target.id === 'verdict') { $('#qv').innerHTML = ''; }
@@ -818,12 +861,13 @@
     }
     const usedHint = !!(L.hints[id] || wasHinted(id) || (!isCodeType(kind) && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
-    celebrate(r);
+    celebrate(r, $('#check') || $('#q-check'));
     topbar();
     const exs = L.lesson.exercises;
     const p = S.progress();
     const nextI = exs.findIndex((_, i) => !p.done[exId(L.lesson, i)]);
-    const msg = `<div class="verdict ok">Дұрыс!${r.xp ? ` +${r.xp} XP` : ''}${explain ? ' ' + explain : ''}</div>`;
+    const PRAISE = ['Дұрыс!', 'Керемет!', 'Тамаша!', 'Жарайсыз!', 'Дәл таптыңыз!'];
+    const msg = `<div class="verdict ok"><b>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}</b>${r.xp ? ` <span class="xp-tag">+${r.xp} XP</span>` : ''}${explain ? ' ' + explain : ''}</div>`;
     const target = isCodeType(kind) ? $('#verdict') : $('#qv');
     target.innerHTML = msg + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
     $$('[data-step]').forEach(b => b.classList.toggle('ok', !!p.done[exId(L.lesson, Number(b.dataset.step))]));
@@ -832,23 +876,42 @@
   }
 
   // ---------- map ----------
+  // A winding trail of module nodes, one region per phase. The connecting path is drawn after layout.
+  const ZIG = [0, 1, 2, 1, 0, -1, -2, -1];
   function viewMap() {
     const p = S.progress();
+    const nx = nextLesson(p), curMod = nx && nx.mod.id;
+    let k = 0;
     $('#app').innerHTML = `
-      <div class="eyebrow">Оқу картасы</div>
-      <h1 style="margin:6px 0 8px">Нөлден Junior/Middle деңгейіне дейін</h1>
-      <p class="muted" style="max-width:70ch">Бағдарлама тәуелділік графы бойынша құрылған: әр модуль алдыңғысына сүйенеді. Phase 0–3 бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.</p>
-      <div class="paths">${DJ.paths.map(x => `<div class="path"><h3>${esc(x.title)}</h3><p>${esc(x.desc)}</p><div class="hrs">${esc(x.hours)} · ${esc(x.months)} · Phase ${x.phases.join(', ')}</div></div>`).join('')}</div>
+      <h1 style="margin:0 0 8px">Мансап картасы</h1>
+      <p class="muted" style="max-width:70ch">Нөлден Junior/Middle деңгейіне дейінгі жол. Әр аймақ бір кезең, әр нүкте бір модуль. Алғашқы төрт аймақ бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.</p>
+      <div class="paths">${DJ.paths.map(x => `<div class="path"><h3>${esc(x.title)}</h3><p>${esc(x.desc)}</p><div class="hrs">${esc(x.hours)} · ${esc(x.months)}</div></div>`).join('')}</div>
+      <div class="trail" id="trail"><svg class="trail-line" aria-hidden="true"><path id="trail-path"/></svg>
       ${DJ.phases.filter(ph => !ph.extra).map(ph => `
-        <section class="map-phase" style="--ph: var(--ph${ph.n})">
-          <div><div class="ph">PHASE ${ph.n}</div><h3>${esc(ph.kz)}</h3><div class="muted" style="font-size:.88rem">${esc(ph.goal)}</div><div class="note" style="margin-top:6px">Шығу деңгейі: <b>${esc(ph.level)}</b></div></div>
-          <div class="map-mods">${ph.modules.map(m0 => {
-            const m = DJ.findModule(m0.id), s = S.moduleState(m, p);
-            const title = s.state === 'soon' ? `<b>${esc(m.title)}</b>` : `<button data-go="module" data-mod="${m.id}" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;text-align:left">${esc(m.title)}</button>`;
-            return `<div class="map-mod"><span class="c">${esc(m.code)}</span><div>${title}<p>${esc(m.desc)} · ${esc(m.hours)} сағ</p></div>${stateBadge(m, s)}</div>`;
-          }).join('')}</div>
-        </section>`).join('')}`;
+        <section class="region" style="--ph: var(--ph${ph.n})">
+          <div class="region-h"><span class="r-n">${ph.n}</span><div><h2>${esc(ph.kz)}</h2><p>${esc(ph.goal)} · шығу деңгейі ${esc(ph.level)}</p></div></div>
+          <ol class="nodes">${ph.modules.map(m0 => {
+            const m = DJ.findModule(m0.id), s = S.moduleState(m, p), z = ZIG[k++ % ZIG.length];
+            const state = s.state === 'soon' ? 'soon' : s.state === 'done' ? 'done' : m.id === curMod ? 'cur' : s.done ? 'going' : 'open';
+            const inner = state === 'done' ? ICON.star : state === 'soon' ? ICON.lock : esc(m.code.replace(/^M/, ''));
+            const label = `<span class="n-t">${esc(m.title)}</span><span class="n-s">${state === 'soon' ? 'Жақында' : state === 'done' ? 'Аяқталды' : `${s.done}/${s.total} сабақ`}</span>`;
+            return `<li class="node ${state}" style="--z:${z}">${state === 'soon' ? `<span class="n-dot">${inner}</span>` : `<button class="n-dot" data-go="module" data-mod="${m.id}" aria-label="${esc(m.code)} ${esc(m.title)}">${inner}</button>`}
+              ${state === 'cur' ? G.owl('owl-sm owl-bob') : ''}<div class="n-label">${label}</div></li>`;
+          }).join('')}</ol>
+        </section>`).join('')}</div>`;
+    drawTrail();
   }
+  function drawTrail() {
+    const t = $('#trail'), path = $('#trail-path'); if (!t || !path) return;
+    const box = t.getBoundingClientRect();
+    const pts = $$('.n-dot', t).map(d => { const r = d.getBoundingClientRect(); return [r.left - box.left + r.width / 2, r.top - box.top + r.height / 2]; });
+    if (pts.length < 2) return;
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], my = (y0 + y1) / 2; d += ` C${x0},${my} ${x1},${my} ${x1},${y1}`; }
+    path.setAttribute('d', d);
+    const svg = path.parentNode; svg.setAttribute('width', box.width); svg.setAttribute('height', box.height);
+  }
+  window.addEventListener('resize', () => { if (route.view === 'map') drawTrail(); });
 
   // ---------- diagnostic ----------
   // Adaptive placement: one block per module (easy, medium, hard item). Two misses on the first two items end the
@@ -1024,14 +1087,14 @@
       if (!c.ok) { $('#app').innerHTML = `<div class="diag"><div class="card"><p style="margin:0">${esc(c.level.id)} ${esc(c.level.name)} сертификаты әлі берілмеген: барлық модуль аяқталмаған.</p></div></div>`; return; }
       $('#app').innerHTML = `<div class="cert-wrap">
         <article class="cert">
-          <div class="cert-top">${LOGO}<span>DataJol</span><span class="cert-id">${esc(c.level.id)}</span></div>
+          <div class="cert-top">${LOGO}<span>tolqyn</span><span class="cert-id">${esc(c.level.id)}</span></div>
           <div class="eyebrow">Сертификат</div>
           <p class="cert-lead">Осы сертификат</p>
           <h1 class="cert-name">${esc(c.name)}</h1>
-          <p class="cert-lead">DataJol-дағы <b>${esc(c.level.name)}</b> деңгейіне кіретін барлық модульді аяқтағанын растайды.</p>
+          <p class="cert-lead">Tolqyn-дағы <b>${esc(c.level.name)}</b> деңгейіне кіретін барлық модульді аяқтағанын растайды.</p>
           <ul class="cert-mods">${c.mods.map(x => `<li><span>${esc(x.m.code)} ${esc(x.m.title)}</span><span>${esc(x.date)}</span></li>`).join('')}</ul>
-          <div class="cert-foot"><span>Берілген күні: <b>${esc(c.date)}</b></span>${verified ? `<span class="chip done">DataJol-да тіркелген</span>` : ''}</div>
-          ${verified ? `<p class="note" style="margin:0">Бұл сертификат оқушының DataJol аккаунтындағы прогреске сүйенеді.</p>` : ''}
+          <div class="cert-foot"><span>Берілген күні: <b>${esc(c.date)}</b></span>${verified ? `<span class="chip done">Tolqyn-да тіркелген</span>` : ''}</div>
+          ${verified ? `<p class="note" style="margin:0">Бұл сертификат оқушының Tolqyn аккаунтындағы прогреске сүйенеді.</p>` : ''}
         </article>
         <div class="actions noprint">
           ${link ? `<button class="btn" id="cert-copy">Сілтемені көшіру</button>` : ''}
@@ -1102,6 +1165,14 @@
       $('#yes-reset').onclick = () => { if (S.resetProgress) S.resetProgress(); else S.save({ xp: 0, done: {}, lessons: {}, days: [], streak: 0, best: 0, lastDay: null, badges: {}, noHint: 0, diag: null, code: {}, prefs: p.prefs }); topbar(); go('dash'); };
     };
   }
+
+  // ---------- wrong answers ----------
+  // Every checker writes its own .verdict.bad; one observer adds the shake and the low tone to all of them.
+  new MutationObserver(ms => {
+    for (const m of ms) for (const n of m.addedNodes) {
+      if (n.nodeType === 1 && n.matches && n.matches('.verdict.bad') && n.closest('.lesson')) { G.shake(n); G.play('bad'); return; }
+    }
+  }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   // ---------- boot ----------
   route = parseHash(location.hash) || route;

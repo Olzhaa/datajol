@@ -33,7 +33,7 @@ int a, b;
 cin >> a >> b;           // "3 4" немесе "3\n4" — екеуі де жұмыс істейді
 cout << a + b << endl;   // 7`)}
 <p><code>cin &gt;&gt;</code> бос орын мен жаңа жолды өткізіп жібереді де, келесі мәнді айнымалының типіне қарай оқиды. Айнымалыны қолданбас бұрын оның типін жариялау міндетті: <code>int a;</code>.</p>
-<div class="tip">DataJol-да әр тапсырма — толық бағдарлама. Тексеру кезінде оған дайын кіріс (stdin) беріледі, ал сіздің шығысыңыз (stdout) күтілген жауаппен жол-жолымен салыстырылады. Сондықтан артық мәтін («Санды енгізіңіз:» сияқты) шығармаңыз.</div>`,
+<div class="tip">Tolqyn-да әр тапсырма — толық бағдарлама. Тексеру кезінде оған дайын кіріс (stdin) беріледі, ал сіздің шығысыңыз (stdout) күтілген жауаппен жол-жолымен салыстырылады. Сондықтан артық мәтін («Санды енгізіңіз:» сияқты) шығармаңыз.</div>`,
         exercises: [
           { type: 'cpp', level: 'easy', xp: 10, prompt: 'Бағдарлама бір сөзді — адамның атын оқып, <code>Сәлем, &lt;аты&gt;!</code> деп шығарсын. Мысалы, кіріс <code>Айгерім</code> → <code>Сәлем, Айгерім!</code>',
             starter: P`#include <iostream>
@@ -232,7 +232,7 @@ int main() {
 }
 `,
             hints: ['Бүкіл жолды <code>getline(cin, line)</code> арқылы оқыңыз: <code>cin &gt;&gt;</code> тек бірінші сөзді алады.', 'Әр символды <code>tolower(c)</code> арқылы кіші әріпке айналдырып, бес дауыстымен салыстырыңыз.'],
-            check: { cases: [ { stdin: 'Hello World\n', out: '3\n' }, { stdin: 'DataJol Academy\n', out: '6\n' }, { stdin: 'xyz\n', out: '0\n' }, { stdin: 'AEIOU aeiou\n', out: '10\n' } ] } },
+            check: { cases: [ { stdin: 'Hello World\n', out: '3\n' }, { stdin: 'Tolqyn Academy\n', out: '6\n' }, { stdin: 'xyz\n', out: '0\n' }, { stdin: 'AEIOU aeiou\n', out: '10\n' } ] } },
           { type: 'quiz', level: 'easy', xp: 10, prompt: 'Кіріс: <code>Нұр Сұлтан</code>. <code>string s; cin &gt;&gt; s;</code> орындалғаннан кейін <code>s</code> не болады?', options: ['<code>"Нұр Сұлтан"</code>', '<code>"Нұр"</code>', '<code>"Сұлтан"</code>', 'Бос жол'], answer: 1, explain: '<code>cin &gt;&gt;</code> бос орынға дейін бір сөзді оқиды. Толық жол үшін <code>getline(cin, s)</code>.' },
           { type: 'quiz', level: 'medium', xp: 10, prompt: '<code>string s = "Astana";</code> болса, <code>s.substr(1, 3)</code> нені қайтарады?', options: ['<code>"Ast"</code>', '<code>"sta"</code>', '<code>"st"</code>', '<code>"stan"</code>'], answer: 1, explain: '<code>substr(pos, len)</code>: 1-индекстен (екінші символ <code>s</code>) бастап 3 символ — <code>"sta"</code>.' }
         ]
@@ -1331,7 +1331,7 @@ try {
 <li><code>stoi("abc")</code> — <code>invalid_argument</code>, <code>v.at(100)</code> — <code>out_of_range</code> лақтырады.</li>
 <li>Exception ешкім ұстамаса, бағдарлама <code>std::terminate</code> арқылы апатты түрде тоқтайды. Стек «шешілген» (stack unwinding) кезде жергілікті нысандардың destructor-лары шақырылады — RAII сондықтан маңызды.</li>
 </ul>
-<div class="tip">DataJol-дағы браузер компиляторы <code>-fno-exceptions</code> режимінде жұмыс істейді: <code>try</code>/<code>throw</code> компиляцияланбайды. Ойын қозғалтқыштары мен embedded жүйелер де жиі осылай жасайды. Сондықтан тапсырмаларда қатені <code>bool</code> қайтару немесе арнайы мән (мысалы, <code>-1</code>) арқылы хабарлаймыз.</div>`,
+<div class="tip">Tolqyn-дағы браузер компиляторы <code>-fno-exceptions</code> режимінде жұмыс істейді: <code>try</code>/<code>throw</code> компиляцияланбайды. Ойын қозғалтқыштары мен embedded жүйелер де жиі осылай жасайды. Сондықтан тапсырмаларда қатені <code>bool</code> қайтару немесе арнайы мән (мысалы, <code>-1</code>) арқылы хабарлаймыз.</div>`,
         exercises: [
           { type: 'cpp', level: 'easy', xp: 10, prompt: 'Рекурсивті <code>int digitSum(int n)</code> функциясын жазыңыз: теріс емес санның цифрларының қосындысы. Цикл қолданбаңыз: <code>digitSum(n) = n % 10 + digitSum(n / 10)</code>.',
             starter: P`#include <iostream>

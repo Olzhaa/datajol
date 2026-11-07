@@ -186,9 +186,10 @@
       : route.view === 'module' && m ? `${m.code} ${m.title}` : route.view === 'course' && DJ.findCourse(route.course) ? DJ.findCourse(route.course).title : TITLES[route.view];
     document.title = t ? `${t} · Tolqyn` : 'Tolqyn';
     // After a screen change, move keyboard and screen-reader focus to the new heading.
-    if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag', 'catalog', 'course'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Пікір қалдыру немесе қате туралы хабарлау</button></p>');
+    if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag', 'catalog', 'course'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', fbFoot('Сайт туралы ойыңыз бар ма, әлде қате таптыңыз ба?'));
     if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
   }
+  const fbFoot = q => `<aside class="fb-foot"><span class="fb-ico" aria-hidden="true">?</span><span class="fb-q">${q}</span><button type="button" class="btn ghost sm" data-feedback>Жазу</button></aside>`;
   function afterAuth() { const r = pendingRoute; pendingRoute = null; if (r) go(r.view, r); else go('dash'); }
 
   // ---------- topbar ----------
@@ -358,17 +359,21 @@
     const done = lessons.filter(l => p.lessons[l.id]).length;
     return { mods, total: lessons.length, done, soon: !lessons.length, pct: lessons.length ? Math.round(done / lessons.length * 100) : 0 };
   }
+  // A course tile (dashboard and catalog). gi picks the piece colour of its group.
+  function courseTile(c, gi, cs) {
+    const attrs = cs.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
+    const state = cs.soon ? 'soon' : cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
+    return `<button class="world ${state}" style="--blk:var(--b${gi % 4})" ${attrs}><span class="glyph">${esc(courseGlyph(c))}</span><span class="w-t">${esc(c.title)}</span>
+      <span class="w-m">${cs.soon ? 'Жақында' : state === 'done' ? 'Аяқталды' : `${esc(c.level)} · ${cs.done}/${cs.total} сабақ`}</span>
+      ${cs.soon ? '' : `<span class="seg-bar"><i style="width:${cs.pct}%"></i></span>`}${state === 'done' ? `<span class="w-star">${ICON.star}</span>` : ''}</button>`;
+  }
   function catalogGrid(p) {
-    return `<div class="catalog">${DJ.catalog.map(g => `<section class="cat-group"><h3 class="cat-h">${esc(g.title)}</h3>${g.courses.map(c => {
-      const st = courseState(c, p);
-      const attrs = st.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
-      const tag = st.soon ? '<span class="badge-s">Жақында</span>' : st.done === st.total ? '<span class="badge-s done">Аяқталды</span>' : st.done ? `<span class="badge-s open">${st.pct}%</span>` : `<span class="badge-s">${esc(c.level)}</span>`;
-      return `<button class="cat-course ${st.soon ? 'soon' : ''}" ${attrs}><span>${esc(c.title)}</span>${tag}</button>`;
-    }).join('')}</section>`).join('')}</div>`;
+    return DJ.catalog.map((g, gi) => `<section class="world-group" style="--blk:var(--b${gi % 4})"><h3>${esc(g.title)}</h3><div class="worlds">${
+      g.courses.map(c => courseTile(c, gi, courseState(c, p))).join('')}</div></section>`).join('');
   }
   function viewCatalog() {
     $('#app').innerHTML = `<div class="eyebrow">Курстар</div><h1 style="margin:6px 0 8px">Не үйренгіңіз келеді?</h1>
-      <p class="muted" style="max-width:70ch">Кез келген курсты бөлек өтуге болады. Data мансабына толық жол керек болса, «Карта» бетіндегі бағдарламаны қараңыз.</p>
+      <p class="muted" style="max-width:70ch">Кез келген курсты бөлек өтуге болады. Қай ретпен оқу керегін «Карта» беті көрсетеді: дата мамандығы немесе бағдарламалаушы жолы.</p>
       ${catalogGrid(S.progress())}`;
   }
   function viewCourse() {
@@ -443,13 +448,7 @@
     const open = all.filter(x => !x.cs.soon);
     const mine = open.filter(x => x.cs.done && x.cs.done < x.cs.total);
     const pick = mine.concat(open.filter(x => !x.cs.done).slice(0, Math.max(0, 4 - mine.length)));
-    const tile = ({ c, gi, cs }) => {
-      const attrs = c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
-      const state = cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
-      return `<button class="world ${state}" style="--blk:var(--b${gi % 4})" ${attrs}><span class="glyph">${esc(courseGlyph(c))}</span><span class="w-t">${esc(c.title)}</span>
-        <span class="w-m">${state === 'done' ? 'Аяқталды' : `${esc(c.level)} · ${cs.done}/${cs.total} сабақ`}</span>
-        <span class="seg-bar"><i style="width:${cs.pct}%"></i></span>${state === 'done' ? `<span class="w-star">${ICON.star}</span>` : ''}</button>`;
-    };
+    const tile = ({ c, gi, cs }) => courseTile(c, gi, cs);
     const finished = open.filter(x => x.cs.done === x.cs.total).length;
     $('#app').innerHTML = `${hero}
       <div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>
@@ -514,7 +513,7 @@
           <div class="prose">${lesson.body || ''}</div>
           <section class="task" id="task"></section>
           <div class="lesson-nav">${prev}<span id="next-slot"></span></div>
-          ${DJ.cloud && DJ.cloud.enabled ? '<p class="fb-foot"><button type="button" class="linkbtn" data-feedback>Осы сабақ туралы пікір немесе қате туралы хабарлау</button></p>' : ''}
+          ${DJ.cloud && DJ.cloud.enabled ? fbFoot('Осы сабақта түсініксіз жер немесе қате бар ма?') : ''}
         </article>
         <aside class="workbench" id="wb"></aside>
       </div>`;
@@ -938,20 +937,35 @@
   // ---------- map ----------
   // A winding trail of module nodes, one region per phase. The connecting path is drawn after layout.
   const ZIG = [0, 1, 2, 1, 0, -1, -2, -1];
+  // Two tracks over the same modules: the data career (phases) and a developer path (DJ.devTrack).
   function viewMap() {
     const p = S.progress();
     const nx = nextLesson(p), curMod = nx && nx.mod.id;
+    const track = (p.prefs || {}).mapTrack === 'dev' ? 'dev' : 'data';
+    const regions = track === 'dev'
+      ? DJ.devTrack.map((r, i) => ({ n: i + 1, kz: r.kz, goal: r.goal, mods: r.mods }))
+      : DJ.phases.filter(ph => !ph.extra).map(ph => ({ n: ph.n, kz: ph.kz, goal: `${ph.goal} · шығу деңгейі ${ph.level}`, mods: ph.modules.map(m => m.id) }));
+    const cards = track === 'dev'
+      ? [{ title: 'Software Developer', desc: 'Python, Java немесе C++, алгоритмдер, Git, тесттер, API', hrs: 'Кез келген тілден бастауға болады' }]
+      : DJ.paths.map(x => ({ title: x.title, desc: x.desc, hrs: `${x.hours} · ${x.months}` }));
     let k = 0;
     $('#app').innerHTML = `
-      <h1 style="margin:0 0 8px">Мансап картасы</h1>
-      <p class="muted" style="max-width:70ch">Нөлден Junior/Middle деңгейіне дейінгі жол. Әр аймақ бір кезең, әр нүкте бір модуль. Алғашқы төрт аймақ бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.</p>
-      <div class="paths">${DJ.paths.map(x => `<div class="path"><h3>${esc(x.title)}</h3><p>${esc(x.desc)}</p><div class="hrs">${esc(x.hours)} · ${esc(x.months)}</div></div>`).join('')}</div>
+      <h1 style="margin:0 0 12px">Оқу картасы</h1>
+      <div class="track-tabs" role="tablist" aria-label="Жол">
+        <button role="tab" data-track="data" aria-selected="${track === 'data'}">Дата мамандығы</button>
+        <button role="tab" data-track="dev" aria-selected="${track === 'dev'}">Бағдарламалаушы</button>
+      </div>
+      <p class="muted" style="max-width:70ch">${track === 'dev'
+        ? 'Тілдерден алгоритмдерге, одан командалық инженерияға дейінгі жол. Әр аймақ бір қадам, әр нүкте бір курс.'
+        : 'Нөлден Junior/Middle деңгейіне дейінгі жол. Әр аймақ бір кезең, әр нүкте бір модуль. Алғашқы төрт аймақ бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.'}</p>
+      <div class="paths">${cards.map(x => `<div class="path"><h3>${esc(x.title)}</h3><p>${esc(x.desc)}</p><div class="hrs">${esc(x.hrs)}</div></div>`).join('')}</div>
       <div class="trail" id="trail"><svg class="trail-line" aria-hidden="true"><path id="trail-path"/></svg>
-      ${DJ.phases.filter(ph => !ph.extra).map(ph => `
-        <section class="region" style="--ph: var(--ph${ph.n})">
-          <div class="region-h"><span class="r-n">${ph.n}</span><div><h2>${esc(ph.kz)}</h2><p>${esc(ph.goal)} · шығу деңгейі ${esc(ph.level)}</p></div></div>
-          <ol class="nodes">${ph.modules.map(m0 => {
-            const m = DJ.findModule(m0.id), s = S.moduleState(m, p), z = ZIG[k++ % ZIG.length];
+      ${regions.map((r, ri) => `
+        <section class="region" style="--ph: var(--b${ri % 7})">
+          <div class="region-h"><span class="r-n">${r.n}</span><div><h2>${esc(r.kz)}</h2><p>${esc(r.goal)}</p></div></div>
+          <ol class="nodes">${r.mods.map(id => {
+            const m = DJ.findModule(id); if (!m) return '';
+            const s = S.moduleState(m, p), z = ZIG[k++ % ZIG.length];
             const state = s.state === 'soon' ? 'soon' : s.state === 'done' ? 'done' : m.id === curMod ? 'cur' : s.done ? 'going' : 'open';
             const inner = state === 'done' ? ICON.star : state === 'soon' ? ICON.lock : esc(m.code.replace(/^M/, ''));
             const label = `<span class="n-t">${esc(m.title)}</span><span class="n-s">${state === 'soon' ? 'Жақында' : state === 'done' ? 'Аяқталды' : `${s.done}/${s.total} сабақ`}</span>`;
@@ -959,6 +973,7 @@
               ${state === 'cur' ? G.owl('owl-sm owl-bob') : ''}<div class="n-label">${label}</div></li>`;
           }).join('')}</ol>
         </section>`).join('')}</div>`;
+    $$('[data-track]').forEach(b => b.onclick = () => { if (S.setPref) S.setPref('mapTrack', b.dataset.track); viewMap(); });
     drawTrail();
   }
   function drawTrail() {

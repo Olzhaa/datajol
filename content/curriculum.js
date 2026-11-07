@@ -75,6 +75,15 @@ DJ.paths = [
   { id: 'mle', title: 'ML Engineer', phases: [0, 1, 2, 3, 4, 5, 6, 7], hours: '695–990 сағ', months: '15–21 ай', desc: 'DS негізі + software engineering, deployment, MLOps, DL' }
 ];
 
+// Map track for programmers (not data): the same modules, grouped as a developer path.
+DJ.devTrack = [
+  { kz: 'Python негізі', goal: 'Бағдарламалаудың алғашқы қадамдары', mods: ['m2-1', 'py-2'] },
+  { kz: 'Екінші тіл', goal: 'Типтері қатаң тілдер: Java немесе C++', mods: ['java-1', 'cpp-1'] },
+  { kz: 'Алгоритмдер', goal: 'Есеп шығару және техникалық сұхбат', mods: ['dsa-1'] },
+  { kz: 'Инженерлік құралдар', goal: 'Git, тесттер, API және деплой', mods: ['m2-3', 'm6-1', 'm6-2'] },
+  { kz: 'Мансап', goal: 'Портфолио, резюме және сұхбат', mods: ['m7-1'] }
+];
+
 DJ.careerLevels = [
   { id: 'L0', name: 'Absolute Beginner' },
   { id: 'L1', name: 'Data Literate', needs: ['m0-1', 'm0-2'] },

@@ -29,7 +29,7 @@ page = re.sub(r'<script src="((?:js|content|vendor)/[^"?]+)"', rf'<script src="\
 title = 'Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен'
 desc = ('Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. '
         'Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.')
-favicon = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110"><rect width="110" height="110" rx="26" fill="#121019"/><path d="M14 66 C26 66 28 38 42 38 S56 66 68 66 S84 38 96 38" transform="translate(0 3)" fill="none" stroke="#C8F04A" stroke-width="14" stroke-linecap="round"/></svg>')
+favicon = (root / 'assets/favicon.svg').read_text().strip()
 favicon_uri = 'data:image/svg+xml,' + favicon.replace('"', "'").replace('#', '%23').replace('<', '%3C').replace('>', '%3E')
 ld = json.dumps({'@context': 'https://schema.org', '@type': 'EducationalOrganization', 'name': 'Tolqyn', 'url': SITE,
                  'logo': SITE + 'assets/favicon.svg', 'inLanguage': 'kk', 'description': desc}, ensure_ascii=False)
@@ -52,7 +52,7 @@ head = f'''<!doctype html>
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#17143F">
+<meta name="theme-color" content="#0E0B26">
 <meta name="google-site-verification" content="l_U-4sfewaJLofvtbXVWj0JbSObWigipLcgbEoYuwRo">
 <link rel="icon" href="{favicon_uri}" type="image/svg+xml">
 <script type="application/ld+json">{ld}</script>

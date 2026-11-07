@@ -93,7 +93,7 @@ for (const p of DJ.phases) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap">
 <script type="application/ld+json">${json(ld)}</script>
 <style>
 ${css}
@@ -104,7 +104,7 @@ ${css}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>tolqyn</span></a></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span class="wordmark">TOLQYN</span></a></div></header>
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең ${p.n}: ${esc(p.kz)} / ${esc(m.code)}</nav>
 <article class="reading">

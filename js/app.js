@@ -28,7 +28,10 @@
     map: sv('<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>')
   };
   const G = DJ.game;
-  const LOGO = `<svg class="logo-mark" viewBox="0 0 110 110" aria-hidden="true"><rect width="110" height="110" rx="26" fill="#121019"/><path d="M14 66 C26 66 28 38 42 38 S56 66 68 66 S84 38 96 38" transform="translate(0 3)" fill="none" stroke="#C8F04A" stroke-width="14" stroke-linecap="round"/></svg>`;
+  // Logo: four falling-block pieces packed into one square (data, code, tools, career).
+  const LOGO_CELLS = [[1,0,'l'],[2,0,'l'],[0,1,'s'],[1,1,'l'],[2,1,'l'],[3,1,'g'],[0,2,'s'],[1,2,'s'],[2,2,'g'],[3,2,'g'],[1,3,'p'],[2,3,'g']];
+  const LOGO_COL = { l: ['#C8F04A', '#8DB51E'], s: ['#47D1E8', '#1F98AE'], g: ['#FFC83D', '#C9921A'], p: ['#B79CFF', '#7F62D6'] };
+  const LOGO = `<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">${LOGO_CELLS.map(([x, y, c]) => `<rect x="${x * 10 + .5}" y="${y * 10 + .5}" width="9" height="9" rx="1.2" fill="${LOGO_COL[c][1]}"/><rect x="${x * 10 + .5}" y="${y * 10 + .5}" width="9" height="7.4" rx="1.2" fill="${LOGO_COL[c][0]}"/><rect x="${x * 10 + 1.8}" y="${y * 10 + 1.6}" width="3.4" height="1.2" rx=".6" fill="#fff" opacity=".55"/>`).join('')}</svg>`;
 
   // ---------- theme ----------
   function applyTheme(t) { if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
@@ -160,7 +163,7 @@
   function topbar() {
     const el = $('#topbar');
     const u = S.profile();
-    const logo = `<button class="logo" data-go="dash">${LOGO}<span>tolqyn</span></button>`;
+    const logo = `<button class="logo" data-go="dash">${LOGO}<span class="wordmark">TOLQYN</span></button>`;
     const lp = DJ.i18n ? DJ.i18n.picker() : '';
     if (!u) { el.innerHTML = `${logo}<div class="stats">${lp}</div>`; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
@@ -347,7 +350,7 @@
   }
 
   // ---------- dashboard ----------
-  const COURSE_ICON = { python: 'Py', 'python-2': 'Py', sql: 'SQL', java: 'J', cpp: 'C++', dsa: '{ }', git: 'Git' };
+  const COURSE_ICON = { python: 'Py', 'python-2': 'Py2', sql: 'SQL', pandas: 'pd', stats: 'σ', viz: 'BI', ml: 'ML', dl: 'DL', genai: 'AI', dsa: '{ }', java: 'J', cpp: 'C++', swe: 'SE', git: 'Git', excel: 'fx', deploy: 'Dkr', mlops: 'Ops', dataeng: 'ETL', basics: '01', business: '$', capstones: 'PRJ', jobs: 'CV' };
   function courseGlyph(c) { return COURSE_ICON[c.id] || (DJ.i18n ? DJ.i18n.tr(c.title) : c.title).replace(/[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
   function questCard(p) {
     const t = lastDays(1)[0].key;
@@ -396,7 +399,7 @@
         <div class="note">${esc(career.id)} · ${esc(career.name)}</div>
       </div>
     </section>`;
-    const worlds = DJ.catalog.map(g => `<section class="world-group"><h3>${esc(g.title)}</h3><div class="worlds">${g.courses.map(c => {
+    const worlds = DJ.catalog.map((g, gi) => `<section class="world-group" style="--blk:var(--b${gi % 4})"><h3>${esc(g.title)}</h3><div class="worlds">${g.courses.map(c => {
       const cs = courseState(c, p);
       const attrs = cs.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
       const state = cs.soon ? 'soon' : cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
@@ -1089,7 +1092,7 @@
       if (!c.ok) { $('#app').innerHTML = `<div class="diag"><div class="card"><p style="margin:0">${esc(c.level.id)} ${esc(c.level.name)} сертификаты әлі берілмеген: барлық модуль аяқталмаған.</p></div></div>`; return; }
       $('#app').innerHTML = `<div class="cert-wrap">
         <article class="cert">
-          <div class="cert-top">${LOGO}<span>tolqyn</span><span class="cert-id">${esc(c.level.id)}</span></div>
+          <div class="cert-top">${LOGO}<span class="wordmark">TOLQYN</span><span class="cert-id">${esc(c.level.id)}</span></div>
           <div class="eyebrow">Сертификат</div>
           <p class="cert-lead">Осы сертификат</p>
           <h1 class="cert-name">${esc(c.name)}</h1>

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-TWf8PiF4U2z3iEIXBo3NRC/JkmusYqr5SqHPiWv2/mM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен</title>
 <meta name="description" content="Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.">
 <link rel="canonical" href="https://olzhaa.github.io/datajol/">
@@ -22,7 +23,7 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "EducationalOrganization", "name": "Tolqyn", "url": "https://olzhaa.github.io/datajol/", "logo": "https://olzhaa.github.io/datajol/assets/favicon.svg", "inLanguage": "kk", "description": "Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар."}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
 <style>
 /* BASICS */
 
@@ -386,7 +387,7 @@ span.CodeMirror-selectedtext { background: none; }
   --ph0: #47D1E8; --ph1: #C8F04A; --ph2: #FFC83D; --ph3: #FF8A4C; --ph4: #FF6B81; --ph5: #B79CFF; --ph6: #6BE594; --ph7: #8FE3F2;
   --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;   /* system mono: one web font family fewer */
   --radius: 10px;
   --t: 150ms cubic-bezier(0.23, 1, 0.32, 1);
   color-scheme: dark;
@@ -1168,6 +1169,18 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 :root[data-theme="light"] .path .hrs { color: #3F6B00; }
 @media (max-width: 560px) { .worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .world { padding: 12px; } .world .w-t { font-size: .92rem; } }
 
+/* Interface in ru/en, lesson text only in Kazakh. */
+.kk-only { display: inline-block; margin: 6px 0 12px; padding: 6px 10px; font-size: .85rem; color: var(--ink-2); background: var(--surface-2); border-left: 4px solid var(--b2); border-radius: 2px; }
+
+/* Day one goal on the dashboard. */
+.first-goal { margin-top: 16px; padding: 20px; background: var(--surface); border: 2px solid var(--line); border-radius: 2px; box-shadow: inset 0 4px 0 var(--b2); }
+.fg-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fg-h h2 { margin: 0; font-size: 1.25rem; }
+.fg-tag { padding: 4px 8px; background: var(--b2); color: var(--edge); font: .6rem var(--font-pixel); box-shadow: var(--bevel-sm); }
+.first-goal ol { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 10px; }
+.first-goal li { display: flex; align-items: center; gap: 12px; }
+.fg-n { width: 28px; height: 28px; flex: none; display: grid; place-items: center; background: var(--surface-3); border: 2px solid var(--edge); font: .65rem var(--font-pixel); }
+
 </style>
 </head>
 <body>
@@ -1200,24 +1213,24 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = 'f35e476d9a';</script>
-<script src="content/curriculum.js?v=f35e476d9a"></script>
-<script src="content/index.js?v=f35e476d9a"></script>
-<script src="content/catalog.js?v=f35e476d9a"></script>
-<script src="content/datasets.js?v=f35e476d9a"></script>
-<script src="content/csv.js?v=f35e476d9a"></script>
-<script src="content/mldata.js?v=f35e476d9a"></script>
-<script src="content/sheets.js?v=f35e476d9a"></script>
-<script src="content/diagnostic.js?v=f35e476d9a"></script>
-<script src="js/i18n-dict.js?v=f35e476d9a"></script>
-<script src="js/i18n.js?v=f35e476d9a"></script>
-<script src="js/config.js?v=f35e476d9a"></script>
-<script src="js/store.js?v=f35e476d9a"></script>
-<script src="js/cloud.js?v=f35e476d9a"></script>
-<script src="js/runners.js?v=f35e476d9a"></script>
-<script src="js/sheet.js?v=f35e476d9a"></script>
-<script src="js/game.js?v=f35e476d9a"></script>
-<script src="js/app.js?v=f35e476d9a"></script>
+<script>window.DJ_VERSION = 'bb32568b6a';</script>
+<script src="content/curriculum.js?v=bb32568b6a"></script>
+<script src="content/index.js?v=bb32568b6a"></script>
+<script src="content/catalog.js?v=bb32568b6a"></script>
+<script src="content/datasets.js?v=bb32568b6a"></script>
+<script src="content/csv.js?v=bb32568b6a"></script>
+<script src="content/mldata.js?v=bb32568b6a"></script>
+<script src="content/sheets.js?v=bb32568b6a"></script>
+<script src="content/diagnostic.js?v=bb32568b6a"></script>
+<script src="js/i18n-dict.js?v=bb32568b6a"></script>
+<script src="js/i18n.js?v=bb32568b6a"></script>
+<script src="js/config.js?v=bb32568b6a"></script>
+<script src="js/store.js?v=bb32568b6a"></script>
+<script src="js/cloud.js?v=bb32568b6a"></script>
+<script src="js/runners.js?v=bb32568b6a"></script>
+<script src="js/sheet.js?v=bb32568b6a"></script>
+<script src="js/game.js?v=bb32568b6a"></script>
+<script src="js/app.js?v=bb32568b6a"></script>
 
 </body>
 </html>

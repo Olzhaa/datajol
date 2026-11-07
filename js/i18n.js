@@ -108,9 +108,9 @@
   // Lesson patches: { lessonId: { title, body, ex: [{ prompt, hints, options, explain, ... }] } } and
   // { moduleId: { intro } } under modules. Called by content/i18n/<lang>.js, which loads before js/app.js.
   // Patches are kept: a course file that loads later (DJ.loadModule) replaces its module, and reapply() patches it again.
-  const patches = [];
+  const patches = [], textFor = new Set();   // lesson ids that have text in this language
   function patch(p, again) {
-    if (!again) patches.push(p);
+    if (!again) { patches.push(p); Object.keys(p.lessons || {}).forEach(id => textFor.add(id)); }
     const byId = {};
     for (const id in DJ.modules) (DJ.modules[id].lessons || []).forEach(l => { byId[l.id] = l; });
     for (const id in p.modules || {}) if (DJ.modules[id]) Object.assign(DJ.modules[id], p.modules[id]);
@@ -129,6 +129,8 @@
     }
   }
 
+  // False when the interface is ru/en but this module's lessons exist only in Kazakh.
+  function hasText(mod) { return lang === 'kk' || !!(mod && mod.lessons && mod.lessons.some(l => textFor.has(l.id))); }
   function reapply() { patches.forEach(p => patch(p, true)); }
 
   function set(l) {
@@ -145,7 +147,7 @@
   // Native dialogs get the same lookup.
   ['alert', 'confirm'].forEach(f => { const o = window[f]; if (o) window[f] = msg => o.call(window, typeof msg === 'string' ? tr(msg) : msg); });
 
-  DJ.i18n = { lang, LANGS, tr, patch, reapply, set, picker };
+  DJ.i18n = { lang, LANGS, tr, patch, reapply, hasText, set, picker };
   if (lang !== 'kk') {
     const v = window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '';
     // Parser-inserted, so they run before js/app.js. One file per translated course.

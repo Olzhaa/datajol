@@ -205,6 +205,8 @@
       if (error) throw error;
       return (data || [])[0] || null;
     },
+    // Deletes the signed-in account and its cloud row (supabase/account.sql).
+    async deleteMe() { const r = await (await this.need()).rpc('delete_me'); if (!r.error) await this.signOut(); return r; },
     async signOut() { clearTimeout(this.timer); this.queued = this.failed = null; if (this.client) await this.client.auth.signOut(); this.user = null; }
   };
   // Sends a failed push again, or a pending one before the tab may be closed.

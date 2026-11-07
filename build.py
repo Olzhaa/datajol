@@ -16,6 +16,13 @@ for d in ('js', 'content', 'vendor'):
             h.update(str(f.relative_to(root)).encode()); h.update(f.read_bytes())
 version = h.hexdigest()[:10]
 
+# Service worker: app files cached per version, vendor/ (Pyodide, compilers) per vendor hash so it downloads once.
+hv = hashlib.sha256()
+for f in sorted((root / 'vendor').rglob('*')):
+    if f.is_file():
+        hv.update(str(f.relative_to(root)).encode()); hv.update(f.read_bytes())
+(root / 'sw.js').write_text((root / 'src/sw.js').read_text().replace('__VERSION__', version).replace('__VENDOR__', hv.hexdigest()[:10]))
+
 page = (root / 'src/index.html').read_text()
 page = page.replace('/*APP_CSS*/', (root / 'src/app.css').read_text())
 page = page.replace('/*CODEMIRROR_CSS*/', (root / 'vendor/codemirror/codemirror.css').read_text())
@@ -23,7 +30,20 @@ page = page.replace('<!--MODULE_LIST-->', modules_html)
 # The artifact host serves files by exact path, so ?v= (and DJ_VERSION, which versions the Python worker URL) is only added to the GitHub Pages build.
 (root / 'artifact.html').write_text(page)
 first_script = page.index('<script src=')
-page = page[:first_script] + f"<script>window.DJ_VERSION = '{version}';</script>\n" + page[first_script:]
+inline = f"window.DJ_VERSION = '{version}';"
+page = page[:first_script] + f"<script>{inline}</script>\n" + page[first_script:]
+# Content Security Policy for the GitHub Pages page. Workers (Python, Java, C++) get no CSP from a meta tag,
+# so only the page's own needs are listed: sql.js compiles WebAssembly, styles are inline, Supabase is the only API.
+import base64
+csp = '; '.join([
+    "default-src 'self'",
+    "script-src 'self' 'wasm-unsafe-eval' 'sha256-" + base64.b64encode(hashlib.sha256(inline.encode()).digest()).decode() + "'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+    "worker-src 'self' blob:",
+    "object-src 'none'", "base-uri 'self'", "form-action 'self'"])
 page = re.sub(r'<script src="((?:js|content|vendor)/[^"?]+)"', rf'<script src="\1?v={version}"', page)
 
 title = 'Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен'
@@ -39,6 +59,7 @@ head = f'''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="{csp}">
 <title>{e(title)}</title>
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{SITE}">

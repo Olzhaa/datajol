@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tolqyn дизайн жүйесі</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<!-- The app's own stylesheet: every sample below uses the real classes and tokens, so this page cannot drift. -->
+<link rel="stylesheet" href="../src/app.css">
+<style>
+  .ds section { margin: 40px 0; }
+  .ds h2 { margin-bottom: 6px; }
+  .ds .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 14px; }
+  .sw { width: 120px; }
+  .sw i { display: block; height: 56px; border: 2px solid var(--edge); box-shadow: var(--bevel); }
+  .sw b { display: block; margin-top: 6px; font-size: .85rem; }
+  .sw code { font-size: .75rem; color: var(--ink-2); }
+  .type p { margin: 6px 0; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink)"><img src="../assets/favicon.svg" width="28" height="28" alt=""><span class="wordmark">TOLQYN</span></a>
+  <div class="stats"><button class="btn ghost sm" id="theme" type="button">Ашық / қараңғы тема</button></div></div></header>
+<main class="wrap ds">
+  <p class="eyebrow">Дизайн жүйесі</p>
+  <h1>Tolqyn: құлайтын блоктар стилі</h1>
+  <p class="muted" style="max-width:70ch">Сайттағы әр элемент осы токендер мен класстардан құралады. Мұндағы үлгілер нақты <code>src/app.css</code> файлын қолданады. Жаңа экран жасағанда осы бетке қарап, бар класты пайдаланыңыз, жаңа түс немесе қаріп қоспаңыз.</p>
+
+  <section>
+    <h2>Түстер: блок бөлшектері</h2>
+    <p class="muted">Әр бағыттың өз бөлшек түсі бар: дата (лайм), код (көк), құралдар (алтын), мансап (күлгін). Қызыл мен қызғылт сары тек қате мен streak үшін.</p>
+    <div class="row" id="swatches"></div>
+  </section>
+
+  <section>
+    <h2>Беттер мен мәтін</h2>
+    <div class="row" id="surfaces"></div>
+  </section>
+
+  <section class="type">
+    <h2>Қаріптер (3 семья)</h2>
+    <p style="font:800 2rem var(--font-display)">Exo 2: тақырыптар, батырмалар. Әә Ғғ Ққ Ңң Өө Ұұ Үү Һһ Іі</p>
+    <p style="font:.8rem var(--font-pixel)">PRESS START 2P: HUD, XP, ДЕҢГЕЙ</p>
+    <p>Golos Text: негізгі мәтін. Деректі оқу, сұрау жазу, нәтижені тексеру.</p>
+    <p><code>Код: system monospace (ui-monospace, Menlo, Consolas)</code></p>
+  </section>
+
+  <section>
+    <h2>Батырмалар: үш нұсқа</h2>
+    <div class="row">
+      <button class="btn">Негізгі әрекет</button>
+      <button class="btn ghost">Екінші әрекет</button>
+      <button class="btn ghost sm">Кіші</button>
+      <button class="linkbtn">Мәтін сілтеме</button>
+      <button class="btn" disabled>Өшірулі</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Курс плиткасы және прогресс</h2>
+    <div class="worlds" style="max-width:900px">
+      <button class="world" style="--blk:var(--b0)"><span class="glyph">SQL</span><span class="w-t">SQL</span><span class="w-m">Бастауыш · 0/25 сабақ</span><span class="seg-bar"><i style="width:0%"></i></span></button>
+      <button class="world going" style="--blk:var(--b1)"><span class="glyph">J</span><span class="w-t">Java</span><span class="w-m">Бастауыш · 6/16 сабақ</span><span class="seg-bar"><i style="width:38%"></i></span></button>
+      <button class="world done" style="--blk:var(--b2)"><span class="glyph">Git</span><span class="w-t">Git &amp; GitHub</span><span class="w-m">Аяқталды</span><span class="seg-bar"><i style="width:100%"></i></span></button>
+      <button class="world soon" style="--blk:var(--b3)" disabled><span class="glyph">CV</span><span class="w-t">Жақында</span><span class="w-m">Жақында</span></button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Чиптер, белгілер, хабарлар</h2>
+    <div class="row"><span class="tag">M1.2 SQL Core</span><span class="tag">Сабақ 1/15</span><span class="badge-s open">Ашық</span><span class="badge-s done">Аяқталды</span><span class="badge-s">Жақында</span></div>
+    <div class="verdict ok" style="margin-top:14px"><b>Дұрыс!</b> <span class="xp-tag">+15 XP</span></div>
+    <div class="verdict bad" style="margin-top:10px">Нәтиже күтілгеннен басқа: 3 жол керек, 5 жол шықты.</div>
+    <p class="kk-only">Бұл курстың сабақтары әзірге тек қазақ тілінде.</p>
+    <aside class="fb-foot"><span class="fb-ico" aria-hidden="true">?</span><span class="fb-q">Сайт туралы ойыңыз бар ма, әлде қате таптыңыз ба?</span><button type="button" class="btn ghost sm">Жазу</button></aside>
+  </section>
+
+  <section>
+    <h2>Ауыстырғыш</h2>
+    <div class="track-tabs" role="tablist"><button role="tab" aria-selected="true">Дата мамандығы</button><button role="tab" aria-selected="false">Бағдарламалаушы</button></div>
+  </section>
+
+  <section>
+    <h2>Ережелер</h2>
+    <ul class="muted" style="max-width:70ch">
+      <li>Бұрыштар тік (2px), домалақ емес. Көлем <code>--bevel</code> көлеңкесімен беріледі.</li>
+      <li>Түсті тек токен арқылы алыңыз (<code>--b0…--b6</code>, <code>--surface</code>, <code>--ink</code>), HEX жазбаңыз.</li>
+      <li>Пиксель қаріп тек қысқа латын мәтінге (XP, LV, кодтар): кириллицаны нашар салады.</li>
+      <li>Мәтін контрасты кемінде 4,5:1 (CI-дағы axe тексереді).</li>
+      <li>Tetris атауы мен оның нақты көрінісі қолданылмайды: стиль тек жанрдан шабыт алады.</li>
+    </ul>
+  </section>
+</main>
+<script>
+  const css = getComputedStyle(document.documentElement);
+  const sw = (id, list) => { document.getElementById(id).innerHTML = list.map(([v, name]) => `<div class="sw"><i style="background:var(${v})"></i><b>${name}</b><code>${v} ${css.getPropertyValue(v).trim()}</code></div>`).join(''); };
+  const draw = () => {
+    sw('swatches', [['--b0', 'Дата'], ['--b1', 'Код'], ['--b2', 'Құралдар'], ['--b3', 'Мансап'], ['--b4', 'Қате'], ['--b5', 'Streak'], ['--b6', 'Сілтеме']]);
+    sw('surfaces', [['--bg', 'Фон'], ['--surface', 'Карта'], ['--surface-2', 'Карта 2'], ['--line', 'Жиек'], ['--ink', 'Мәтін'], ['--ink-2', 'Әлсіз мәтін'], ['--gold', 'XP']]);
+  };
+  draw();
+  document.getElementById('theme').onclick = () => {
+    const r = document.documentElement; r.setAttribute('data-theme', r.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); draw();
+  };
+</script>
+</body>
+</html>

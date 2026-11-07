@@ -48,7 +48,7 @@
     users() { return read('dj.users', {}); },
     current() { const u = ls.get('dj.session'); return u && this.users()[u] ? u : null; },
     // Guest: try lessons before signing up. Progress lives under '~guest' (not a valid login) and moves to the
-    // account made or signed in to next in this browser when that account has no progress here (a cloud pull then merges).
+    // account made or signed in to next in this browser, merged with what that account already has here.
     GUEST: '~guest',
     isGuest() { return this.current() === this.GUEST; },
     guest() {
@@ -60,7 +60,11 @@
     takeGuest(username) {
       if (ls.get('dj.session') !== this.GUEST || username === this.GUEST) return;
       const g = ls.get('dj.p.' + this.GUEST);
-      if (g && !ls.get('dj.p.' + username)) ls.set('dj.p.' + username, g);
+      const mine = ls.get('dj.p.' + username);
+      if (g && !mine) ls.set('dj.p.' + username, g);
+      else if (g && DJ.cloud && DJ.cloud.merge) {   // both have progress: keep the union (same merge as two devices)
+        try { ls.set('dj.p.' + username, JSON.stringify(DJ.cloud.merge(JSON.parse(mine), JSON.parse(g)))); } catch (e) {}
+      }
       ls.del('dj.p.' + this.GUEST);
       const users = this.users(); delete users[this.GUEST]; write('dj.users', users);
     },
@@ -87,6 +91,12 @@
       return null;
     },
     logout() { ls.del('dj.session'); },
+    // Forgets the current account and its progress in this browser.
+    removeAccount() {
+      const u = this.current(); if (!u) return;
+      const users = this.users(); delete users[u]; write('dj.users', users);
+      ls.del('dj.p.' + u); ls.del('dj.session');
+    },
     profile() { const u = this.current(); return u ? Object.assign({ username: u }, this.users()[u]) : null; },
 
     key() { return 'dj.p.' + this.current(); },

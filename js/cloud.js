@@ -186,9 +186,14 @@
         }
         if (!this.user) return;
         const name = String((DJ.store.profile() || {}).name || '').slice(0, 40) || null;
-        const { error } = await this.client.from('progress').upsert({ user_id: this.user.id, name, data: p, updated_at: new Date().toISOString() });
+        // Code drafts stay in this browser: they are the bulk of the row and would push it toward the 300 KB limit.
+        const { error } = await this.client.from('progress').upsert({ user_id: this.user.id, name, data: Object.assign({}, p, { code: undefined }), updated_at: new Date().toISOString() });
         if (error) throw error;
-      } catch (e) { console.warn('progress push failed', e); this.failed = p; }   // retried on reconnect or when the tab is hidden
+      } catch (e) {
+        console.warn('progress push failed', e); this.failed = p;   // retried on reconnect or when the tab is hidden
+        // 23514 = a database limit refused the row: retrying cannot help, so tell the learner instead of failing silently.
+        if (e && e.code === '23514') try { window.dispatchEvent(new CustomEvent('dj:sync-failed')); } catch (_) {}
+      }
     },
     async leaderboard(period) {
       const { data, error } = await (await this.need()).rpc('leaderboard', { period, lim: 50 });
@@ -206,5 +211,37 @@
   const retry = () => { const p = cloud.queued || cloud.failed; if (p && cloud.user) cloud.push(p); };
   window.addEventListener('online', retry);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') retry(); });
+
+  // Product events and browser errors (supabase/analytics.sql): no names or emails, a random id per tab.
+  // Sent in small batches once the client is up; dropped without retry if the tables are missing.
+  let sid = '';
+  try { sid = sessionStorage.getItem('dj.sid') || ''; } catch (e) {}
+  if (!sid) { sid = Math.random().toString(36).slice(2, 12); try { sessionStorage.setItem('dj.sid', sid); } catch (e) {} }
+  const outbox = { events: [], client_errors: [] };
+  let timer = null, sent = 0, errs = 0;
+  function flush() {
+    clearTimeout(timer); timer = null;
+    if (!cloud.client) return;
+    for (const t in outbox) {
+      const rows = outbox[t].splice(0);
+      if (rows.length) cloud.client.from(t).insert(rows).then(r => { if (r.error) console.warn(t + ' insert failed', r.error.message); }, () => {});
+    }
+  }
+  const soon = () => { if (!timer) timer = setTimeout(() => cloud.load().then(flush, () => {}), 5000); };
+  cloud.track = function (name, props) {
+    if (!enabled || sent++ > 200) return;   // one tab never sends more than 200 events
+    outbox.events.push({ sid, name, props: props || {}, lang: document.documentElement.lang || 'kk' });
+    soon();
+  };
+  function report(message, source, line) {
+    if (!enabled || errs++ >= 5 || !message) return;   // the first five errors of a page are enough
+    outbox.client_errors.push({ sid, message: String(message).slice(0, 500), source: String(source || '').slice(0, 300), line: line || null,
+      page: (location.hash || '/').slice(0, 300), ua: navigator.userAgent.slice(0, 300), version: String(window.DJ_VERSION || '').slice(0, 20) });
+    soon();
+  }
+  window.addEventListener('error', e => { if (e.message) report(e.message, e.filename, e.lineno); });
+  window.addEventListener('unhandledrejection', e => { const r = e.reason; report(r && r.message ? r.message : String(r), r && r.stack ? r.stack.split('\n')[1] : '', null); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+
   DJ.cloud = cloud;
 })();

@@ -15,10 +15,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M4.2 Inference & A/B Testing","description":"Inference — шағын таңдамадан бүкіл популяция туралы сенімді қорытынды жасау. Модуль соңында A/B тестті жоспарлап, талдап, нәтижесін бизнеске түсінікті шешім…","url":"https://olzhaa.github.io/datajol/m/m4-2/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT30H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 4: DS негізі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M4.2 Inference & A/B Testing","item":"https://olzhaa.github.io/datajol/m/m4-2/"}]}]</script>
 <style>
-/* Game theme: a night sky over the steppe, a lime "go" colour, gold for XP, pixel type for game numbers. */
+/* Block theme: a dark playfield grid, bevelled square blocks in four piece colours, pixel type for the HUD. */
 [hidden] { display: none !important; }
 :root {
   --bg: #100E2B; --surface: #1A1740; --surface-2: #242056; --surface-3: #2E2A6B;
@@ -647,6 +647,129 @@ button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge
 .lang-pick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lang-pick select option { background: var(--surface); color: var(--ink); }
 
+/* ================= block theme ================= */
+/* Every surface is a block or a playfield: square corners, a light top edge and a dark bottom edge.
+   Piece colours: --b0 lime (data), --b1 sky (code), --b2 gold (tools), --b3 purple (career); red/orange for errors and streaks. */
+:root {
+  --bg: #0E0B26; --surface: #15123A; --surface-2: #1E1A4E; --surface-3: #2A2566;
+  --line: #2C2870; --line-strong: #4C46A6; --edge: #050414;
+  --grid: rgba(120, 130, 255, .07);
+  --b0: #C8F04A; --b1: #47D1E8; --b2: #FFC83D; --b3: #B79CFF; --b4: #FF6B81; --b5: #FF9A3C; --b6: #3D7BFF;
+  --font-display: "Exo 2", "Golos Text", system-ui, sans-serif;
+  --font-pixel: "Press Start 2P", "Exo 2", monospace;
+  --radius: 4px;
+  --bevel: inset 0 3px 0 rgba(255, 255, 255, .35), inset 0 -4px 0 rgba(0, 0, 0, .28);
+  --bevel-sm: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -3px 0 rgba(0, 0, 0, .28);
+}
+:root[data-theme="light"] { --bg: #EEF0FF; --surface: #FFFFFF; --surface-2: #E6E8FB; --surface-3: #D6D9F7; --grid: rgba(40, 40, 140, .06); --gold: #8A5A00; }
+body { background-color: var(--bg); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 32px 32px; }
+h1, h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: 0; }
+h3 { font-family: var(--font-display); font-weight: 700; }
+:focus-visible { border-radius: 2px; }
+
+/* logo */
+.logo { font-family: var(--font-pixel); font-weight: 400; font-size: .95rem; letter-spacing: .04em; gap: 10px; }
+.logo-mark { width: 30px; height: 30px; }
+.wordmark { font-family: var(--font-pixel); letter-spacing: .04em; }
+
+/* top bar = the HUD strip above the playfield */
+.topbar { background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom: 2px solid var(--line-strong); }
+.nav button { font-family: var(--font-display); font-weight: 700; border-radius: 2px; }
+.nav button[aria-current="page"] { background: var(--surface-2); box-shadow: inset 0 -3px 0 var(--b0); border-radius: 2px; }
+.hud-xp, .pill.streak, .icon-btn, .lang-pick select { border-radius: 2px; }
+.hud-lv { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
+.hud-n, .pill.streak, .q-n, .big-flame { font-family: var(--font-pixel); font-size: .78rem; }
+.hud-bar, .lvl-bar, .bar, .seg-bar { border-radius: 0; }
+.hud-bar i { background: repeating-linear-gradient(90deg, var(--b2) 0 7px, transparent 7px 9px); }
+.avatar { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
+.lang-pick select { font-family: var(--font-pixel); font-size: .62rem; }
+
+/* blocks: buttons */
+.btn { font-family: var(--font-display); font-weight: 700; border-radius: 2px; border: 2px solid var(--edge); box-shadow: var(--bevel), 0 4px 0 var(--edge); }
+.btn:active:not(:disabled) { box-shadow: var(--bevel-sm), 0 1px 0 var(--edge); }
+.btn.ghost { background: var(--surface-3); }
+.btn.ghost:hover { background: color-mix(in srgb, var(--surface-3) 80%, #fff); }
+
+/* playfields: cards and panels */
+.card, .panel, .auth-card, .task, .quest-hero, .lvl-card, .editor-shell, .output, .reward-in, .path, .paths .path, .region-h, .fb-dialog, .cert, .bubble {
+  border-radius: var(--radius); }
+.panel, .card, .task, .auth-card { border: 2px solid var(--line-strong); background: color-mix(in srgb, var(--surface) 92%, transparent); }
+.panel-h h2, .task h3 { font-family: var(--font-display); font-weight: 800; }
+.eyebrow, .kpi .l, .phase-tag, .cat-h, .world-group h3, .day small, .rs span { font-family: var(--font-pixel); font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.6; }
+
+/* dashboard hero */
+.quest-hero { background: var(--surface); border: 2px solid var(--line-strong); }
+.quest-hero::after { height: 10px; opacity: .55; background: linear-gradient(90deg, var(--b1) 0 40px, var(--b0) 40px 80px, transparent 80px 120px, var(--b3) 120px 160px, var(--b2) 160px 200px, transparent 200px 240px) 0 0 / 240px 10px repeat-x; }
+.lvl-card { border-color: var(--line-strong); }
+.shield { clip-path: none; width: 72px; height: 72px; border-radius: 2px; box-shadow: var(--bevel); }
+.shield span { font-family: var(--font-pixel); font-size: .55rem; }
+.shield b { font-family: var(--font-pixel); font-size: 1.6rem; }
+.tag { border-radius: 2px; }
+.q-ico, .chest { border-radius: 2px; }
+.quest.ok .q-ico, .chest.open { box-shadow: var(--bevel-sm); }
+.seg i { border-radius: 0; }
+.day span { border-radius: 2px; }
+.day.on span { background: var(--b5); border-color: var(--edge); box-shadow: var(--bevel-sm); color: #3A1400; }
+
+/* worlds: each group gets its piece colour */
+.world { border-radius: var(--radius); border-color: var(--line-strong); }
+.world .glyph { border-radius: 2px; background: var(--blk, var(--b0)); color: var(--edge); font-family: var(--font-pixel); font-size: .72rem; box-shadow: var(--bevel); border: 2px solid var(--edge); }
+.world.going .glyph, .world.done .glyph { background: var(--blk, var(--b0)); color: var(--edge); }
+.world.done { border-color: var(--b2); }
+@media (hover: hover) and (pointer: fine) { .world:not(.soon):hover { border-color: var(--blk, var(--b0)); } }
+.world .seg-bar i, .world-group .seg-bar i { background: var(--blk, var(--b0)); }
+.world .w-t { font-family: var(--font-display); }
+
+/* lists */
+.lesson-row .num, .task-steps button { border-radius: 2px; font-family: var(--font-pixel); font-size: .6rem; }
+.lesson-row.done .num, .task-steps button.ok { background: var(--b0); color: var(--edge); box-shadow: var(--bevel-sm); }
+.task-steps button.cur { box-shadow: var(--bevel-sm), 0 3px 0 var(--edge); }
+.xp-tag { font-family: var(--font-pixel); font-size: .6rem; padding: 4px 6px 3px; border-radius: 2px; box-shadow: var(--bevel-sm); }
+.opt { border-radius: 2px; }
+.verdict, .hint, .prose .tip, .prose pre, .prose code, .chip, .lvl, .fb-kinds .chip, .rs, .tabs, .tabs button, .term, .code-area, textarea, input[type="text"], input[type="password"], input[type="number"], input[type="email"] { border-radius: 2px !important; }
+.verdict.ok b { font-family: var(--font-pixel); font-size: .75rem; }
+.editor-bar .lang { font-family: var(--font-display); font-weight: 700; }
+
+/* map: square blocks instead of round nodes */
+.n-dot { border-radius: 4px; font-family: var(--font-pixel); font-size: .8rem; box-shadow: var(--bevel), 0 6px 0 var(--edge); }
+button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
+.r-n { border-radius: 2px; font-family: var(--font-pixel); font-size: .8rem; box-shadow: var(--bevel-sm); }
+
+/* rewards */
+.xp-float { font-family: var(--font-pixel); font-size: 1.1rem; }
+.rs b { font-family: var(--font-pixel); font-size: 1rem; }
+.toast { border-radius: 2px; }
+.fx-layer i { border-radius: 0; box-shadow: inset 0 2px 0 rgba(255,255,255,.4); width: 10px; height: 10px; }
+
+/* ---------- nav icons; on phones the nav is a bottom tab bar ---------- */
+.nav button { display: inline-flex; align-items: center; gap: 6px; }
+.nav button svg { width: 16px; height: 16px; flex: none; opacity: .8; }
+@media (max-width: 700px) {
+  :root { --tabbar: 62px; }
+  body { padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom, 0px)); }
+  .topbar { backdrop-filter: none; background: var(--surface); }   /* a filter would trap the fixed bar inside the header */
+  .topbar .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; order: 0; width: auto; margin: 0; overflow: visible;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; padding: 4px 4px env(safe-area-inset-bottom, 0px);
+    background: var(--surface); border-top: 2px solid var(--line); box-shadow: 0 -6px 18px rgb(0 0 0 / .18); }
+  .topbar .nav button { flex-direction: column; gap: 3px; min-height: 52px; padding: 6px 2px; font-size: .68rem; white-space: nowrap; justify-content: center; }
+  .topbar .nav button svg { width: 20px; height: 20px; }
+  .topbar .nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .nav button[aria-current="page"] { background: none; box-shadow: inset 0 3px 0 var(--b0); color: var(--ink); }
+  .topbar .nav button[aria-current="page"] svg { opacity: 1; color: var(--b0); }
+  html { scroll-padding-top: 76px; }
+}
+.guest-try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 22px; }
+.guest-try .muted { font-size: .88rem; }
+.guest-save { margin: 10px 0 0; padding: 10px 12px; border: 2px dashed var(--line); border-radius: 2px; font-size: .92rem; color: var(--ink-2); }
+/* One column: the editor sits right under the task text, before the lesson navigation. */
+@media (max-width: 900px) {
+  .lesson { gap: 0; }
+  .lesson > .reading { display: contents; }
+  .lesson > .reading > * { min-width: 0; }
+  .lesson > .workbench { order: 1; margin-top: 14px; }
+  .lesson > .reading > .lesson-nav, .lesson > .reading > .fb-foot { order: 2; }
+}
+
 .static-page section { margin-top: 36px; }
 .static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .static-cta { margin: 18px 0 8px; }
@@ -654,7 +777,7 @@ button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge
 </style>
 </head>
 <body>
-<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span>tolqyn</span></a></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span class="wordmark">TOLQYN</span></a></div></header>
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 4: DS негізі / M4.2</nav>
 <article class="reading">

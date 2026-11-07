@@ -14,6 +14,7 @@ const { chromium } = require('playwright');
   // MODULES=m6-1,m6-2 limits the run to those modules.
   const only = (process.env.MODULES || '').split(',').filter(Boolean);
   const res = await pg.evaluate(async (only) => {
+    await DJ.loadAll();   // course files load on demand in the app
     const out = { pass: 0, fail: [], starterPass: [], quiz: 0 };
     for (const id of Object.keys(DJ.modules).filter(m => !only.length || only.includes(m))) for (const l of DJ.modules[id].lessons) for (const [i, ex] of (l.exercises || []).entries()) {
       if (ex.type === 'quiz') { if (!(ex.answer < ex.options.length)) out.fail.push(l.id + '#' + i + ' bad answer idx'); out.quiz++; continue; }

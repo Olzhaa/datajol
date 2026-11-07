@@ -8,15 +8,15 @@ A free, Kazakh-language site for learning data analytics and data science from z
 
 ## Мазмұн
 
-21 модуль, 202 сабақ, 569 тапсырма (320-ы SQL, Python немесе формула ретінде браузерде тексеріледі).
+32 модуль, 333 сабақ, 1 082 тапсырма, барлығы 19 145 XP (620-ы SQL, Python, Java, C++ немесе формула ретінде браузерде тексеріледі).
 
 | Бағыт | Кезеңдер | Модульдер |
 | --- | --- | --- |
 | Data Analyst | 0–3 | Дерек әлемі, Math refresher, Spreadsheets, SQL Core, Python, pandas & NumPy, Git & GitHub, Statistics, Cleaning & EDA, Advanced SQL, Visualization, Power BI, Business Analytics, DA Capstone |
 | Data Scientist | 4–5 | Probability, Inference & A/B Testing, Math for ML, ML Foundations және ML in Practice (scikit-learn браузерде), DS Capstone |
+| ML Engineer | 6 | Software Engineering, Deployment & Docker, MLOps, Deep Learning, Data Engineering, GenAI, MLE Capstone |
+| Тілдер мен CS | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++ |
 | Мансап | 7 | Портфолио, резюме, LinkedIn, сұхбатқа дайындық |
-
-ML Engineer кезеңі (6) жоспарда.
 
 ## Тапсырмалар қалай тексеріледі
 
@@ -26,6 +26,7 @@ ML Engineer кезеңі (6) жоспарда.
 | Python, pandas, scikit-learn | [Pyodide](https://pyodide.org) Web Worker ішінде; пакеттер `vendor/pyodide/` ішінен жүктеледі |
 | Excel формулалары | `js/sheet.js` — өз формула қозғалтқышы (EN және RU атаулар) |
 | Git командалары | үлгімен (regex) салыстыру |
+| Java, C++ | javac + TeaVM және clang/lld (WebAssembly) Web Worker ішінде |
 | Тест, сандық жауап | бірден |
 
 ## Құрылым
@@ -63,7 +64,7 @@ node tests/verify-exercises.js   # BASE_URL, CHROMIUM_PATH айнымалыла�
 
 Бұлтсыз прогресс браузердің localStorage-інде сақталады. Аккаунт, синхрондау және көшбасшылар кестесі үшін:
 
-1. Supabase жобасының SQL Editor-ында алдымен `supabase/schema.sql`, сосын `supabase/leaderboard.sql` және `supabase/feedback.sql` іске қосыңыз. Пікірлер Table Editor → `feedback` кестесінде көрінеді.
+1. Supabase жобасының SQL Editor-ында алдымен `supabase/schema.sql`, сосын `supabase/leaderboard.sql`, `supabase/feedback.sql` және `supabase/analytics.sql` іске қосыңыз. Пікірлер Table Editor → `feedback` кестесінде, оқиғалар мен браузер қателері `events` және `client_errors` кестелерінде көрінеді (пайдалы сұраулар файлдың соңында).
 2. Authentication → URL Configuration: Site URL және Redirect URLs ішіне `https://olzhaa.github.io/datajol/**` қосыңыз.
 3. `js/config.js` ішінде Supabase URL/кілтін және `cloudHosts` тізімін (бұлт қосылатын домендер) тексеріңіз.
 

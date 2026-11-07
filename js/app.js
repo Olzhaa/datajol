@@ -7,6 +7,35 @@
   const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
+  const track = (name, props) => { if (DJ.cloud && DJ.cloud.track) DJ.cloud.track(name, props); };
+
+  // ---------- course files and the editor on demand ----------
+  // content/index.js holds titles and counts only; a module's full lessons load when one of its lessons opens,
+  // together with CodeMirror (the editor falls back to a textarea if it cannot load).
+  const loaded = {};
+  function loadScript(src) {
+    if (!loaded[src]) loaded[src] = new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = src + (window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '');
+      s.onload = ok;
+      s.onerror = () => { delete loaded[src]; s.remove(); fail(new Error('load ' + src)); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  const CM = ['codemirror', 'sql', 'python', 'clike', 'closebrackets', 'matchbrackets'].map(f => `vendor/codemirror/${f}.js`);
+  let editor = null, noEditor = false;
+  function loadEditor() {
+    if (window.CodeMirror || noEditor) return Promise.resolve();
+    // codemirror.js first, then its modes and addons. On failure the lesson opens with a textarea.
+    return editor = editor || loadScript(CM[0]).then(() => Promise.all(CM.slice(1).map(loadScript))).catch(() => { editor = null; noEditor = true; });
+  }
+  DJ.loadModule = function (id) {
+    const m = DJ.modules[id];
+    return m && m.file ? loadScript(m.file).then(() => { if (DJ.i18n) DJ.i18n.reapply(); }) : Promise.resolve();
+  };
+  DJ.loadAll = () => Promise.all(Object.keys(DJ.modules).map(DJ.loadModule));
+
   const sv = (d, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
   const ICON = {
     spark: sv('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>'),
@@ -28,7 +57,10 @@
     map: sv('<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>')
   };
   const G = DJ.game;
-  const LOGO = `<svg class="logo-mark" viewBox="0 0 110 110" aria-hidden="true"><rect width="110" height="110" rx="26" fill="#121019"/><path d="M14 66 C26 66 28 38 42 38 S56 66 68 66 S84 38 96 38" transform="translate(0 3)" fill="none" stroke="#C8F04A" stroke-width="14" stroke-linecap="round"/></svg>`;
+  // Logo: four falling-block pieces packed into one square (data, code, tools, career).
+  const LOGO_CELLS = [[1,0,'l'],[2,0,'l'],[0,1,'s'],[1,1,'l'],[2,1,'l'],[3,1,'g'],[0,2,'s'],[1,2,'s'],[2,2,'g'],[3,2,'g'],[1,3,'p'],[2,3,'g']];
+  const LOGO_COL = { l: ['#C8F04A', '#8DB51E'], s: ['#47D1E8', '#1F98AE'], g: ['#FFC83D', '#C9921A'], p: ['#B79CFF', '#7F62D6'] };
+  const LOGO = `<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">${LOGO_CELLS.map(([x, y, c]) => `<rect x="${x * 10 + .5}" y="${y * 10 + .5}" width="9" height="9" rx="1.2" fill="${LOGO_COL[c][1]}"/><rect x="${x * 10 + .5}" y="${y * 10 + .5}" width="9" height="7.4" rx="1.2" fill="${LOGO_COL[c][0]}"/><rect x="${x * 10 + 1.8}" y="${y * 10 + 1.6}" width="3.4" height="1.2" rx=".6" fill="#fff" opacity=".55"/>`).join('')}</svg>`;
 
   // ---------- theme ----------
   function applyTheme(t) { if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
@@ -41,7 +73,7 @@
     el.className = 'toast ' + kind;
     el.innerHTML = ICON[icon] + `<span>${html}</span>`;
     const n = root.children.length;
-    el.style.bottom = `calc(${24 + n * 58}px + env(safe-area-inset-bottom, 0px))`;
+    el.style.bottom = `calc(${24 + n * 58}px + var(--tabbar, 0px) + env(safe-area-inset-bottom, 0px))`;
     root.appendChild(el);
     setTimeout(() => el.remove(), 3200);
   }
@@ -57,7 +89,7 @@
   function bumpHud() { const h = $('.hud-xp'); if (h) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); } }
 
   // ---------- routing ----------
-  let route = { view: 'dash' }, pendingRoute = null;
+  let route = { view: 'dash' }, pendingRoute = null, lastView = '';
   // Routes live in the URL hash, so Back/Forward, reload and shared links land on the same screen.
   function hashFor(r) {
     if (r.view === 'module') return '#module/' + r.mod;
@@ -79,6 +111,7 @@
   }
   function go(view, params = {}) {
     flushSave();
+    if (view === 'auth' && S.isGuest() && route.view !== 'auth') pendingRoute = route;   // a guest signing up comes back here
     if (cm) cm = null;
     route = Object.assign({ view }, params);
     const h = hashFor(route);
@@ -146,6 +179,8 @@
     topbar();
     const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
     (views[route.view] || viewDash)();
+    const seen = JSON.stringify(route.mod && route.view !== 'cert' ? { v: route.view, mod: route.mod, li: route.li } : { v: route.view });
+    if (seen !== lastView) { lastView = seen; track('view', JSON.parse(seen)); }   // a re-render of the same screen is not a new view
     const m = route.mod && DJ.findModule(route.mod);
     const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
       : route.view === 'module' && m ? `${m.code} ${m.title}` : route.view === 'course' && DJ.findCourse(route.course) ? DJ.findCourse(route.course).title : TITLES[route.view];
@@ -160,18 +195,18 @@
   function topbar() {
     const el = $('#topbar');
     const u = S.profile();
-    const logo = `<button class="logo" data-go="dash">${LOGO}<span>tolqyn</span></button>`;
+    const logo = `<button class="logo" data-go="dash">${LOGO}<span class="wordmark">TOLQYN</span></button>`;
     const lp = DJ.i18n ? DJ.i18n.picker() : '';
     if (!u) { el.innerHTML = `${logo}<div class="stats">${lp}</div>`; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
     const cur = v => (route.view === v || (v === 'dash' && ['module', 'lesson'].includes(route.view))) ? 'aria-current="page"' : '';
     el.innerHTML = `${logo}
       <nav class="nav" aria-label="Негізгі">
-        <button data-go="dash" ${cur('dash')}>Оқу</button>
-        <button data-go="catalog" ${route.view === 'catalog' || route.view === 'course' ? 'aria-current="page"' : ''}>Курстар</button>
-        <button data-go="map" ${cur('map')}>Карта</button>
-        <button data-go="diag" ${cur('diag')}>Диагностика</button>
-        <button data-go="board" ${cur('board')}>Рейтинг</button>
+        <button data-go="dash" ${cur('dash')}>${ICON.play}<span>Оқу</span></button>
+        <button data-go="catalog" ${route.view === 'catalog' || route.view === 'course' ? 'aria-current="page"' : ''}>${ICON.db}<span>Курстар</span></button>
+        <button data-go="map" ${cur('map')}>${ICON.map}<span>Карта</span></button>
+        <button data-go="diag" ${cur('diag')}>${ICON.compass}<span>Диагностика</span></button>
+        <button data-go="board" ${cur('board')}>${ICON.trophy}<span>Рейтинг</span></button>
       </nav>
       <div class="stats">
         <span class="pill streak ${st ? 'lit' : ''}" title="Күндер қатарынан" aria-label="Күндер қатарынан: ${st}">${ICON.flame}${st}</span>
@@ -180,7 +215,7 @@
         </span>
         ${lp}
         <button class="icon-btn" id="snd" aria-pressed="${G.soundOn()}" aria-label="Дыбыс">${G.soundOn() ? ICON.sound : ICON.mute}</button>
-        <button class="avatar" data-go="profile" aria-label="Профиль">${esc((u.name || u.username).slice(0, 1).toUpperCase())}</button>
+        ${S.isGuest() ? '<button class="btn sm" data-go="auth" title="Прогресті сақтау үшін тіркеліңіз">Сақтау</button>' : `<button class="avatar" data-go="profile" aria-label="Профиль">${esc((u.name || u.username).slice(0, 1).toUpperCase())}</button>`}
       </div>`;
     $('#snd').onclick = () => { G.setSound(!G.soundOn()); topbar(); };
   }
@@ -195,6 +230,7 @@
         <div class="auth-owl">${G.owl('owl-lg owl-bob', 'Үкі')}<p class="bubble">Сәлем! Мен Үкімін. Бірге шыңға шығайық!</p></div>
         <h1>Бағдарламалау мен деректі ойнап үйрен</h1>
         <p class="muted">Python, SQL, Java, C++, алгоритмдер және Data Science қазақша. Әр тапсырма браузерде бірден тексеріледі, XP береді, деңгейіңізді көтереді, ал күнделікті оқу streak отын жағады.</p>
+        <p class="guest-try"><button type="button" class="btn" id="guest">Тіркелмей, бірінші тапсырманы байқау →</button><span class="muted">Тіркелу кейін, прогресс сақталады.</span></p>
         <div class="terminal" aria-label="SQL мысалы"><span class="k">SELECT</span> city, <span class="k">COUNT</span>(*) <span class="k">AS</span> clients
 <span class="k">FROM</span> customers
 <span class="k">GROUP BY</span> city <span class="k">ORDER BY</span> clients <span class="k">DESC</span>;
@@ -237,14 +273,16 @@
       $('#auth-err').textContent = '';
     };
     $$('.tabs button', app).forEach(b => b.onclick = () => setMode(b.dataset.mode));
-    setMode(Object.keys(S.users()).length ? 'login' : 'register');
+    setMode(Object.keys(S.users()).some(k => k !== S.GUEST) ? 'login' : 'register');
+    if (S.isGuest()) { $('#guest').hidden = true; setMode('register'); }
+    $('#guest').onclick = () => { S.guest(); track('guest_start'); if (pendingRoute) afterAuth(); else go('lesson', { mod: 'm1-2', li: 0 }); };
     if (DJ.cloud && DJ.cloud.enabled) {
       const C = DJ.cloud, cerr = $('#cloud-err');
       $('#auth-form').hidden = true;
       if (C.returnError()) { cerr.textContent = C.explain(C.returnError()); history.replaceState(null, '', location.pathname); }
       C.providers().then(pv => { if (pv && !pv.google && $('#g-login')) { $('#g-login').hidden = true; $('#g-login').nextElementSibling.hidden = true; } });
       $('#local-mode').onclick = () => { $('#cloud-form').hidden = true; $('#auth-form').hidden = false; };
-      $('#g-login').onclick = async () => { try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
+      $('#g-login').onclick = async () => { track('login_start', { via: 'google', guest: S.isGuest() }); try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
       const form = $('#cloud-form');
       const sent = (email, what) => { form.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне ${what}</p>`; };
       const getEmail = () => { const v = form.email.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { cerr.textContent = 'Email дұрыс емес.'; return null; } return v; };
@@ -260,11 +298,12 @@
       form.onsubmit = async (e) => {
         e.preventDefault();
         const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
-        if (await busy(() => C.password(email, pw))) afterAuth();
+        if (await busy(() => C.password(email, pw))) { track('login', { via: 'email' }); afterAuth(); }
       };
       $('#c-signup').onclick = async () => {
         const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
-        const r = await busy(() => C.signUp(email, pw)); if (!r) return;
+        const guest = S.isGuest(), r = await busy(() => C.signUp(email, pw)); if (!r) return;
+        track('signup', { via: 'email', guest });
         if (r.data && r.data.session) afterAuth();
         else sent(email, 'тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.');
       };
@@ -280,8 +319,10 @@
     $('#auth-form').onsubmit = async (e) => {
       e.preventDefault();
       const f = e.target;
+      const guest = S.isGuest();
       const err = mode === 'login' ? await S.login(f.username.value, f.pw.value) : await S.register(f.username.value, f.name.value, f.pw.value);
       if (err) { $('#auth-err').textContent = err; return; }
+      track(mode === 'login' ? 'login' : 'signup', { via: 'local', guest });
       afterAuth();
     };
   }
@@ -347,7 +388,7 @@
   }
 
   // ---------- dashboard ----------
-  const COURSE_ICON = { python: 'Py', 'python-2': 'Py', sql: 'SQL', java: 'J', cpp: 'C++', dsa: '{ }', git: 'Git' };
+  const COURSE_ICON = { python: 'Py', 'python-2': 'Py2', sql: 'SQL', pandas: 'pd', stats: 'σ', viz: 'BI', ml: 'ML', dl: 'DL', genai: 'AI', dsa: '{ }', java: 'J', cpp: 'C++', swe: 'SE', git: 'Git', excel: 'fx', deploy: 'Dkr', mlops: 'Ops', dataeng: 'ETL', basics: '01', business: '$', capstones: 'PRJ', jobs: 'CV' };
   function courseGlyph(c) { return COURSE_ICON[c.id] || (DJ.i18n ? DJ.i18n.tr(c.title) : c.title).replace(/[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
   function questCard(p) {
     const t = lastDays(1)[0].key;
@@ -396,24 +437,32 @@
         <div class="note">${esc(career.id)} · ${esc(career.name)}</div>
       </div>
     </section>`;
-    const worlds = DJ.catalog.map(g => `<section class="world-group"><h3>${esc(g.title)}</h3><div class="worlds">${g.courses.map(c => {
-      const cs = courseState(c, p);
-      const attrs = cs.soon ? 'disabled aria-disabled="true"' : c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
-      const state = cs.soon ? 'soon' : cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
-      return `<button class="world ${state}" ${attrs}><span class="glyph">${esc(courseGlyph(c))}</span><span class="w-t">${esc(c.title)}</span>
-        <span class="w-m">${cs.soon ? 'Жақында' : state === 'done' ? 'Аяқталды' : `${esc(c.level)} · ${cs.done}/${cs.total} сабақ`}</span>
-        ${cs.soon ? '' : `<span class="seg-bar"><i style="width:${cs.pct}%"></i></span>`}${state === 'done' ? `<span class="w-star">${ICON.star}</span>` : ''}</button>`;
-    }).join('')}</div></section>`).join('');
+    // Only the learner's own courses (started first), topped up to four suggestions; the full list is in Courses.
+    const all = [];
+    DJ.catalog.forEach((g, gi) => g.courses.forEach(c => all.push({ c, gi, cs: courseState(c, p) })));
+    const open = all.filter(x => !x.cs.soon);
+    const mine = open.filter(x => x.cs.done && x.cs.done < x.cs.total);
+    const pick = mine.concat(open.filter(x => !x.cs.done).slice(0, Math.max(0, 4 - mine.length)));
+    const tile = ({ c, gi, cs }) => {
+      const attrs = c.mods.length > 1 ? `data-go="course" data-course="${c.id}"` : `data-go="module" data-mod="${c.mods[0]}"`;
+      const state = cs.done === cs.total ? 'done' : cs.done ? 'going' : '';
+      return `<button class="world ${state}" style="--blk:var(--b${gi % 4})" ${attrs}><span class="glyph">${esc(courseGlyph(c))}</span><span class="w-t">${esc(c.title)}</span>
+        <span class="w-m">${state === 'done' ? 'Аяқталды' : `${esc(c.level)} · ${cs.done}/${cs.total} сабақ`}</span>
+        <span class="seg-bar"><i style="width:${cs.pct}%"></i></span>${state === 'done' ? `<span class="w-star">${ICON.star}</span>` : ''}</button>`;
+    };
+    const finished = open.filter(x => x.cs.done === x.cs.total).length;
     $('#app').innerHTML = `${hero}
       <div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>
-      <div class="section-title"><h2>Әлемдер</h2><button class="btn ghost" data-go="map">${ICON.map} Мансап картасы</button></div>
-      ${worlds}`;
+      <div class="section-title"><h2>${mine.length ? 'Менің курстарым' : 'Неден бастаймыз?'}</h2><button class="btn ghost" data-go="catalog">Барлық курстар (${open.length}) →</button></div>
+      <section class="world-group"><div class="worlds">${pick.map(tile).join('')}</div></section>
+      ${finished ? `<p class="muted">Аяқталған курстар: ${finished}. Барлығы «Курстар» бетінде.</p>` : ''}`;
   }
 
   // ---------- module ----------
   function viewModule() {
     const mod = DJ.findModule(route.mod);
     if (!mod || !mod.lessons) return go('dash');
+    DJ.loadModule(mod.id).catch(() => {}); loadEditor();   // fetch the lessons while the learner reads the module page
     const p = S.progress(), s = S.moduleState(mod, p);
     $('#app').innerHTML = `
       <div class="crumbs">${(() => { const c = courseOf(mod.id); return c ? `<button data-go="catalog">Курстар</button><span>/</span>${c.mods.length > 1 ? `<button data-go="course" data-course="${c.id}">${esc(c.title)}</button>` : `<span>${esc(c.title)}</span>`}` : `<button data-go="dash">Оқу</button><span>/</span><span>Phase ${mod.phase.n} · ${esc(mod.phase.kz)}</span>`; })()}</div>
@@ -439,6 +488,13 @@
   function exId(lesson, i) { return lesson.id + '#' + i; }
 
   function viewLesson() {
+    if ((DJ.modules[route.mod] && DJ.modules[route.mod].file) || (!window.CodeMirror && !noEditor)) {
+      const want = route;
+      $('#app').innerHTML = '<p class="muted" style="padding:40px 0" role="status">Сабақ жүктелуде…</p>';
+      Promise.all([DJ.loadModule(route.mod), loadEditor()]).then(() => { if (route === want) render(); })
+        .catch(() => { if (route === want) $('#app').innerHTML = '<p class="muted" style="padding:40px 0" role="alert">Сабақ жүктелмеді. Интернетті тексеріп, бетті жаңартыңыз.</p>'; });
+      return;
+    }
     const mod = DJ.findModule(route.mod);
     if (!mod || !mod.lessons || !mod.lessons[route.li]) return go('dash');
     const lesson = mod.lessons[route.li];
@@ -863,6 +919,7 @@
     }
     const usedHint = !!(L.hints[id] || wasHinted(id) || (!isCodeType(kind) && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
+    track('exercise_pass', { ex: id, type: kind, hint: usedHint, first: !!r.xp, guest: S.isGuest() });
     celebrate(r, $('#check') || $('#q-check'));
     topbar();
     const exs = L.lesson.exercises;
@@ -871,7 +928,8 @@
     const PRAISE = ['Дұрыс!', 'Керемет!', 'Тамаша!', 'Жарайсыз!', 'Дәл таптыңыз!'];
     const msg = `<div class="verdict ok"><b>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}</b>${r.xp ? ` <span class="xp-tag">+${r.xp} XP</span>` : ''}${explain ? ' ' + explain : ''}</div>`;
     const target = isCodeType(kind) ? $('#verdict') : $('#qv');
-    target.innerHTML = msg + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
+    const save = S.isGuest() && r.xp ? '<p class="guest-save">XP жинала бастады. Прогресс жоғалмасын десеңіз, <button type="button" class="linkbtn" data-go="auth">тіркеліңіз</button>: жиналғаны аккаунтқа көшеді.</p>' : '';
+    target.innerHTML = msg + save + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
     $$('[data-step]').forEach(b => b.classList.toggle('ok', !!p.done[exId(L.lesson, Number(b.dataset.step))]));
     if (nextI >= 0) $('#next-ex').onclick = () => { L.ei = nextI; renderTask(); $('#task').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     if (nextI < 0 && !p.lessons[L.lesson.id]) finishLesson();
@@ -1089,7 +1147,7 @@
       if (!c.ok) { $('#app').innerHTML = `<div class="diag"><div class="card"><p style="margin:0">${esc(c.level.id)} ${esc(c.level.name)} сертификаты әлі берілмеген: барлық модуль аяқталмаған.</p></div></div>`; return; }
       $('#app').innerHTML = `<div class="cert-wrap">
         <article class="cert">
-          <div class="cert-top">${LOGO}<span>tolqyn</span><span class="cert-id">${esc(c.level.id)}</span></div>
+          <div class="cert-top">${LOGO}<span class="wordmark">TOLQYN</span><span class="cert-id">${esc(c.level.id)}</span></div>
           <div class="eyebrow">Сертификат</div>
           <p class="cert-lead">Осы сертификат</p>
           <h1 class="cert-name">${esc(c.name)}</h1>
@@ -1180,6 +1238,7 @@
   route = parseHash(location.hash) || route;
   // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
   window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module', 'catalog', 'course'].includes(route.view)) render(); });
+  window.addEventListener('dj:sync-failed', () => toast('Прогресс бұлтқа сақталмады: дерекқор шегі асып кетті. Прогресс осы браузерде сақтаулы. Кері байланыс арқылы хабарлаңыз.', 'bolt'), { once: true });
   window.addEventListener('dj:storage-full', () => toast('Браузер жады толды: прогресс сақталмауы мүмкін. Аккаунтпен кіріңіз немесе ескі деректі тазалаңыз.', 'bolt'));
   // With cloud accounts on, only a return from Google or an email link waits for the Supabase session.
   // Otherwise the app opens at once from this browser's copy and the cloud session is checked in the background,

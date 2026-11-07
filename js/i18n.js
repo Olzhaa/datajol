@@ -1,7 +1,7 @@
 // Interface language: Kazakh (source), Russian or English.
 // The pages are written in Kazakh. For ru/en this file swaps interface text in the DOM using DJ.I18N_UI
 // (text nodes and a few attributes, as they appear), and loads content/i18n/<lang>/*.js, which replaces
-// lesson text in DJ.modules before the app starts. Code, starters, solutions and datasets stay as they are.
+// lesson text in DJ.modules before the app starts (and again when a course file loads later). Code, starters, solutions and datasets stay as they are.
 (function () {
   const LANGS = { kk: 'Қазақша', ru: 'Русский', en: 'English' };
   const SHORT = { kk: 'ҚАЗ', ru: 'РУС', en: 'ENG' };
@@ -107,7 +107,10 @@
 
   // Lesson patches: { lessonId: { title, body, ex: [{ prompt, hints, options, explain, ... }] } } and
   // { moduleId: { intro } } under modules. Called by content/i18n/<lang>.js, which loads before js/app.js.
-  function patch(p) {
+  // Patches are kept: a course file that loads later (DJ.loadModule) replaces its module, and reapply() patches it again.
+  const patches = [];
+  function patch(p, again) {
+    if (!again) patches.push(p);
     const byId = {};
     for (const id in DJ.modules) (DJ.modules[id].lessons || []).forEach(l => { byId[l.id] = l; });
     for (const id in p.modules || {}) if (DJ.modules[id]) Object.assign(DJ.modules[id], p.modules[id]);
@@ -126,6 +129,8 @@
     }
   }
 
+  function reapply() { patches.forEach(p => patch(p, true)); }
+
   function set(l) {
     if (!LANGS[l] || l === lang) return;
     try { localStorage.setItem('dj.lang', l); } catch (e) { /* private mode: applies to this page only */ }
@@ -140,7 +145,7 @@
   // Native dialogs get the same lookup.
   ['alert', 'confirm'].forEach(f => { const o = window[f]; if (o) window[f] = msg => o.call(window, typeof msg === 'string' ? tr(msg) : msg); });
 
-  DJ.i18n = { lang, LANGS, tr, patch, set, picker };
+  DJ.i18n = { lang, LANGS, tr, patch, reapply, set, picker };
   if (lang !== 'kk') {
     const v = window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '';
     // Parser-inserted, so they run before js/app.js. One file per translated course.

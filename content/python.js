@@ -14,7 +14,7 @@ print("Жыл:", 2026)</code></pre>
 <pre><code># Бұл жол орындалмайды: ол адамдарға арналған</code></pre>
 <div class="tip">Python бос орынға (indentation) сезімтал. Әзірге әр команданы жолдың басынан бастаңыз.</div>`,
       exercises: [
-        { type: 'python', xp: 10, prompt: 'Экранға дәл осы мәтінді шығарыңыз: <code>Сәлем, DataJol!</code>', starter: '# Кодыңызды осында жазыңыз\n', solution: 'print("Сәлем, DataJol!")', hints: ['<code>print("...")</code>'] },
+        { type: 'python', xp: 10, prompt: 'Экранға дәл осы мәтінді шығарыңыз: <code>Сәлем, Tolqyn!</code>', starter: '# Кодыңызды осында жазыңыз\n', solution: 'print("Сәлем, Tolqyn!")', hints: ['<code>print("...")</code>'] },
         { type: 'python', xp: 10, prompt: 'Екі жол шығарыңыз: бірінші жолда <code>SQL</code>, екінші жолда <code>Python</code>.', starter: '', solution: 'print("SQL")\nprint("Python")', hints: ['Екі бөлек <code>print</code> жазыңыз.'] }
       ]
     },

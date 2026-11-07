@@ -26,14 +26,12 @@ first_script = page.index('<script src=')
 page = page[:first_script] + f"<script>window.DJ_VERSION = '{version}';</script>\n" + page[first_script:]
 page = re.sub(r'<script src="((?:js|content|vendor)/[^"?]+)"', rf'<script src="\1?v={version}"', page)
 
-title = 'DataJol — дата аналитика, SQL және Python қазақша'
-desc = ('Дата аналитика мен Data Science-ті қазақша тегін үйреніңіз: SQL, Python, Excel, Power BI, '
-        'статистика және ML. Тапсырмалар браузерде бірден тексеріледі.')
-favicon = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#0F766E"/>'
-           '<rect x="7" y="17" width="4" height="8" rx="1.5" fill="#fff"/><rect x="14" y="12" width="4" height="13" rx="1.5" fill="#fff"/>'
-           '<rect x="21" y="15" width="4" height="10" rx="1.5" fill="#fff"/><circle cx="23" cy="8" r="3" fill="#F5B451"/></svg>')
+title = 'Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен'
+desc = ('Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. '
+        'Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.')
+favicon = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110"><rect width="110" height="110" rx="26" fill="#121019"/><path d="M14 66 C26 66 28 38 42 38 S56 66 68 66 S84 38 96 38" transform="translate(0 3)" fill="none" stroke="#C8F04A" stroke-width="14" stroke-linecap="round"/></svg>')
 favicon_uri = 'data:image/svg+xml,' + favicon.replace('"', "'").replace('#', '%23').replace('<', '%3C').replace('>', '%3E')
-ld = json.dumps({'@context': 'https://schema.org', '@type': 'EducationalOrganization', 'name': 'DataJol', 'url': SITE,
+ld = json.dumps({'@context': 'https://schema.org', '@type': 'EducationalOrganization', 'name': 'Tolqyn', 'url': SITE,
                  'logo': SITE + 'assets/favicon.svg', 'inLanguage': 'kk', 'description': desc}, ensure_ascii=False)
 e = html.escape
 head = f'''<!doctype html>
@@ -45,7 +43,7 @@ head = f'''<!doctype html>
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{SITE}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="DataJol">
+<meta property="og:site_name" content="Tolqyn">
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{SITE}">
@@ -54,7 +52,7 @@ head = f'''<!doctype html>
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0F766E">
+<meta name="theme-color" content="#17143F">
 <meta name="google-site-verification" content="l_U-4sfewaJLofvtbXVWj0JbSObWigipLcgbEoYuwRo">
 <link rel="icon" href="{favicon_uri}" type="image/svg+xml">
 <script type="application/ld+json">{ld}</script>

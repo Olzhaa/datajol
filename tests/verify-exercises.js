@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
   await pg.goto((process.env.BASE_URL || 'http://localhost:8765/') + 'index.html');
   await pg.fill('[name=name]', 'Т'); await pg.fill('[name=username]', 'user' + Date.now() % 100000); await pg.fill('[name=pw]', 'secret12');
-  await pg.click('#auth-submit'); await pg.waitForSelector('.continue');
+  await pg.click('#auth-submit'); await pg.waitForSelector('.quest-hero');
   // MODULES=m6-1,m6-2 limits the run to those modules.
   const only = (process.env.MODULES || '').split(',').filter(Boolean);
   const res = await pg.evaluate(async (only) => {

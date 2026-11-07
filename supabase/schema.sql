@@ -1,4 +1,4 @@
--- DataJol cloud progress. Run once in the Supabase SQL editor, then run leaderboard.sql.
+-- Tolqyn cloud progress. Run once in the Supabase SQL editor, then run leaderboard.sql.
 -- One row per learner; the whole progress object (XP, done tasks, lessons, badges, streak) is stored as JSON.
 create table if not exists public.progress (
   user_id uuid primary key references auth.users (id) on delete cascade,

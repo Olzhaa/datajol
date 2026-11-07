@@ -1,4 +1,4 @@
--- DataJol leaderboard, certificate checks and progress limits. Run in the Supabase SQL editor, after schema.sql.
+-- Tolqyn leaderboard, certificate checks and progress limits. Run in the Supabase SQL editor, after schema.sql.
 -- Safe to re-run: functions are replaced and constraints are dropped and added again.
 -- Both functions run as the table owner, so they can read other learners' rows,
 -- but they return only a display name, XP and completed lessons, never emails.

@@ -102,7 +102,7 @@ git pull                                     # басқалардың өзгер
 </ol>
 <p><b>Fork</b> — басқа адамның репозиторийін өз аккаунтыңызға көшіру (ашық жобаларға үлес қосу үшін).</p>`,
       exercises: [
-        { type: 'cmd', xp: 15, prompt: '<code>https://github.com/datajol/cafe.git</code> репозиторийін компьютеріңізге көшіріңіз.', solution: 'git clone https://github.com/datajol/cafe.git', accept: ['git clone https://github\\.com/datajol/cafe(\\.git)?( cafe)?'] },
+        { type: 'cmd', xp: 15, prompt: '<code>https://github.com/tolqyn/cafe.git</code> репозиторийін компьютеріңізге көшіріңіз.', solution: 'git clone https://github.com/tolqyn/cafe.git', accept: ['git clone https://github\\.com/tolqyn/cafe(\\.git)?( cafe)?'] },
         { type: 'cmd', xp: 15, prompt: '<code>cohort-report</code> тармағын GitHub-қа (<code>origin</code>) бірінші рет жіберіңіз және байланыс орнатыңыз.', solution: 'git push -u origin cohort-report', accept: ['git push (-u|--set-upstream) origin cohort-report'] },
         { type: 'cmd', xp: 10, prompt: 'Әріптестер main-ге жаңа commit-тер қосты. Оларды өз компьютеріңізге алыңыз.', solution: 'git pull', accept: ['git pull( origin main)?', 'git pull --rebase( origin main)?'] },
         { type: 'quiz', xp: 10, prompt: 'Pull request не үшін керек?', options: ['Файлды жүктеп алу үшін', 'Өзгерістерді негізгі тармаққа қоспас бұрын талқылау және тексеру (code review) үшін', 'Репозиторийді жою үшін', 'Commit хабарламасын өзгерту үшін'], answer: 1 }

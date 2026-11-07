@@ -47,6 +47,23 @@
     XP_LEVELS, BADGES,
     users() { return read('dj.users', {}); },
     current() { const u = ls.get('dj.session'); return u && this.users()[u] ? u : null; },
+    // Guest: try lessons before signing up. Progress lives under '~guest' (not a valid login) and moves to the
+    // account made or signed in to next in this browser when that account has no progress here (a cloud pull then merges).
+    GUEST: '~guest',
+    isGuest() { return this.current() === this.GUEST; },
+    guest() {
+      const users = this.users();
+      if (!users[this.GUEST]) { users[this.GUEST] = { name: 'Қонақ', guest: true, created: today() }; write('dj.users', users); }
+      ls.set('dj.session', this.GUEST);
+    },
+    // Called with the account that is about to become current.
+    takeGuest(username) {
+      if (ls.get('dj.session') !== this.GUEST || username === this.GUEST) return;
+      const g = ls.get('dj.p.' + this.GUEST);
+      if (g && !ls.get('dj.p.' + username)) ls.set('dj.p.' + username, g);
+      ls.del('dj.p.' + this.GUEST);
+      const users = this.users(); delete users[this.GUEST]; write('dj.users', users);
+    },
     async register(username, name, pw) {
       username = username.trim().toLowerCase();
       if (!/^[a-z0-9_.-]{3,24}$/.test(username)) return 'Логин 3–24 таңба: латын әріптері, сандар, _ . -';
@@ -56,6 +73,7 @@
       const salt = Math.random().toString(36).slice(2);
       users[username] = { name: name.trim() || username, salt, hash: await hash(pw, salt), created: today() };
       write('dj.users', users);
+      this.takeGuest(username);
       ls.set('dj.session', username);
       return null;
     },
@@ -64,6 +82,7 @@
       const u = this.users()[username];
       if (!u) return 'Мұндай логин табылмады. Алдымен тіркеліңіз.';
       if (u.hash !== await hash(pw, u.salt)) return 'Құпиясөз дұрыс емес.';
+      this.takeGuest(username);
       ls.set('dj.session', username);
       return null;
     },
@@ -82,6 +101,7 @@
       if (!old) users[username] = { name: name || username, email: email || '', cloud: true, created: today() };
       else if (email && old.name === email.split('@')[0]) old.name = name || username;   // older builds showed the email prefix
       write('dj.users', users);
+      this.takeGuest(username);
       ls.set('dj.session', username);
     },
     level(xp) {

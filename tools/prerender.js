@@ -83,6 +83,9 @@ const TOPIC = {
   'm6-5': 'Data engineering негіздері: warehouse, ETL, dbt, Spark', 'm6-6': 'ML қорытынды жобасы: end-to-end ML сервисі',
   'm6-g': 'Generative AI қазақша: LLM, prompt, RAG және агенттер',
   'py-2': 'Intermediate Python қазақша: OOP, генераторлар, декораторлар, файлдар',
+  'py-3': 'Python backend қазақша: HTTP, REST API, роутинг, ORM, аутентификация, тесттер',
+  'dsa-2': 'Күрделі алгоритмдер: Dijkstra, union-find, MST, KMP, trie, динамикалық бағдарламалау',
+  'm6-ai': 'AI Engineering қазақша: RAG сапасы, ReAct агент, guardrails, LLM сервисі',
   'dsa-1': 'Алгоритмдер мен деректер құрылымдары: Big-O, hash map, ағаш, граф, DP есептері',
   'java-1': 'Java қазақша: синтаксис, класстар, коллекциялар, exceptions, браузерде код жазу',
   'cpp-1': 'C++ қазақша: функциялар, vector, pointer, класстар, STL, браузерде код жазу'

@@ -10,13 +10,15 @@ DJ.catalog = [
     { id: 'viz', title: 'Визуализация және Power BI', level: 'Бастауыш', mods: ['m3-4', 'm3-5'] },
     { id: 'ml', title: 'Machine Learning', level: 'Орта', mods: ['m4-3', 'm5-1', 'm5-2', 'm5-3'] },
     { id: 'dl', title: 'Deep Learning', level: 'Жоғары', mods: ['m6-4'] },
-    { id: 'genai', title: 'GenAI', level: 'Орта', mods: ['m6-g'] }
+    { id: 'genai', title: 'GenAI', level: 'Орта', mods: ['m6-g'] },
+    { id: 'aieng', title: 'AI Engineering', level: 'Жоғары', mods: ['m6-ai'] }
   ] },
   { id: 'cs', title: 'Computer Science', courses: [
-    { id: 'dsa', title: 'Data Structures & Algorithms', level: 'Орта', mods: ['dsa-1'] },
+    { id: 'dsa', title: 'Data Structures & Algorithms', level: 'Орта', mods: ['dsa-1', 'dsa-2'] },
     { id: 'java', title: 'Java', level: 'Бастауыш', mods: ['java-1'] },
     { id: 'cpp', title: 'C++', level: 'Бастауыш', mods: ['cpp-1'] },
-    { id: 'swe', title: 'Software Engineering', level: 'Орта', mods: ['m6-1'] }
+    { id: 'swe', title: 'Software Engineering', level: 'Орта', mods: ['m6-1'] },
+    { id: 'backend', title: 'Python Backend', level: 'Орта', mods: ['py-3'] }
   ] },
   { id: 'tools', title: 'Құралдар', courses: [
     { id: 'git', title: 'Git & GitHub', level: 'Бастауыш', mods: ['m2-3'] },

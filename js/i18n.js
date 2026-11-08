@@ -138,11 +138,32 @@
     try { localStorage.setItem('dj.lang', l); } catch (e) { /* private mode: applies to this page only */ }
     location.reload();
   }
+  // Language menu: a button that opens a small block-style list (the native <select> popup could not be styled).
+  const GLOBE = '<svg class="lp-globe" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>';
   function picker(cls) {
-    return `<label class="lang-pick ${cls || ''}" data-noi18n><span class="sr-only">Language</span><svg class="lp-globe" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><select data-lang-pick aria-label="Тіл / Язык / Language">${
-      Object.keys(LANGS).map(k => `<option value="${k}" ${k === lang ? 'selected' : ''}>${SHORT[k]}</option>`).join('')}</select></label>`;
+    return `<div class="lang-pick ${cls || ''}" data-noi18n><button type="button" class="lp-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Тіл / Язык / Language: ${LANGS[lang]}">${GLOBE}<span class="lp-cur">${SHORT[lang]}</span><span class="lp-caret" aria-hidden="true"></span></button>` +
+      `<div class="lp-menu" role="menu" hidden>${Object.keys(LANGS).map(k => `<button type="button" role="menuitemradio" aria-checked="${k === lang}" data-lang="${k}"><b>${SHORT[k]}</b><span>${LANGS[k]}</span></button>`).join('')}</div></div>`;
   }
-  document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-lang-pick]')) set(e.target.value); });
+  function closeMenus(except) {
+    document.querySelectorAll('.lang-pick .lp-menu:not([hidden])').forEach(m => { if (m !== except) { m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false'); } });
+  }
+  document.addEventListener('click', e => {
+    const item = e.target.closest && e.target.closest('.lp-menu [data-lang]');
+    if (item) { closeMenus(); if (item.dataset.lang !== lang) set(item.dataset.lang); return; }
+    const btn = e.target.closest && e.target.closest('.lp-btn');
+    if (!btn) return closeMenus();
+    const menu = btn.nextElementSibling, open = menu.hidden;
+    closeMenus(menu); menu.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+    if (open) (menu.querySelector('[aria-checked="true"]') || menu.firstElementChild).focus();
+  });
+  document.addEventListener('keydown', e => {
+    const menu = e.target.closest && e.target.closest('.lp-menu');
+    if (!menu) return;
+    const items = [...menu.querySelectorAll('[data-lang]')], i = items.indexOf(document.activeElement);
+    if (e.key === 'Escape' || e.key === 'Tab') { menu.hidden = true; menu.previousElementSibling.setAttribute('aria-expanded', 'false'); if (e.key === 'Escape') menu.previousElementSibling.focus(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); items[e.key === 'Home' ? 0 : items.length - 1].focus(); }
+  });
 
   // Native dialogs get the same lookup.
   ['alert', 'confirm'].forEach(f => { const o = window[f]; if (o) window[f] = msg => o.call(window, typeof msg === 'string' ? tr(msg) : msg); });

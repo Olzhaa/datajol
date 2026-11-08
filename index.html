@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-TWf8PiF4U2z3iEIXBo3NRC/JkmusYqr5SqHPiWv2/mM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-kdWk7rZROmYkpWa+FUY6dM71xPYkmspWKxsm9G+s3Bs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен</title>
 <meta name="description" content="Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.">
 <link rel="canonical" href="https://olzhaa.github.io/datajol/">
@@ -996,10 +996,6 @@ button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge
 
 /* ---------- language picker ---------- */
 .lang-pick { position: relative; display: inline-flex; }
-.lang-pick select { appearance: none; -webkit-appearance: none; height: 36px; padding: 0 26px 0 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink); font: 700 .78rem/1 var(--font-display, inherit); letter-spacing: .04em; cursor: pointer; }
-.lang-pick::after { content: ""; position: absolute; right: 10px; top: 50%; width: 6px; height: 6px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-.lang-pick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.lang-pick select option { background: var(--surface); color: var(--ink); }
 
 /* ================= block theme ================= */
 /* Every surface is a block or a playfield: square corners, a light top edge and a dark bottom edge.
@@ -1030,13 +1026,12 @@ h3 { font-family: var(--font-display); font-weight: 700; }
 .topbar { background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom: 2px solid var(--line-strong); }
 .nav button { font-family: var(--font-display); font-weight: 700; border-radius: 2px; }
 .nav button[aria-current="page"] { background: var(--surface-2); box-shadow: inset 0 -3px 0 var(--b0); border-radius: 2px; }
-.hud-xp, .pill.streak, .icon-btn, .lang-pick select { border-radius: 2px; }
+.hud-xp, .pill.streak, .icon-btn { border-radius: 2px; }
 .hud-lv { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
 .hud-n, .pill.streak, .q-n, .big-flame { font-family: var(--font-pixel); font-size: .78rem; }
 .hud-bar, .lvl-bar, .bar, .seg-bar { border-radius: 0; }
 .hud-bar i { background: repeating-linear-gradient(90deg, var(--b2) 0 7px, transparent 7px 9px); }
 .avatar { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
-.lang-pick select { font-family: var(--font-pixel); font-size: .62rem; }
 
 /* blocks: buttons */
 .btn { font-family: var(--font-display); font-weight: 700; border-radius: 2px; border: 2px solid var(--edge); box-shadow: var(--bevel), 0 4px 0 var(--edge); }
@@ -1126,12 +1121,6 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 
 /* ---------- second pass of the block style: language picker, nav, map, catalog, feedback ---------- */
 /* Language picker: globe + code in the heading font (the pixel font draws Cyrillic badly). */
-.lang-pick { align-items: center; height: 36px; padding-left: 8px; background: var(--surface-2); border: 2px solid var(--line); border-radius: 2px; box-shadow: var(--bevel-sm); }
-.lang-pick .lp-globe { width: 16px; height: 16px; color: var(--ink-2); pointer-events: none; }
-.lang-pick select { height: 32px; border: 0; background: transparent; box-shadow: none; padding: 0 22px 0 6px; font: 700 .8rem/1 var(--font-display); letter-spacing: .03em; }
-.lang-pick::after { right: 9px; }
-.lang-pick:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-.lang-pick select:focus-visible { outline: none; }
 /* Nav icons only in the phone tab bar; the desktop bar stays on one line. */
 @media (min-width: 701px) { .nav button svg { display: none; } .topbar .wrap { flex-wrap: nowrap; } .topbar .stats { margin-left: auto; flex-wrap: nowrap; } }
 @media (min-width: 701px) and (max-width: 1100px) { .hud-bar { display: none; } .nav button { padding: 6px 8px; } }
@@ -1181,6 +1170,28 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 .first-goal li { display: flex; align-items: center; gap: 12px; }
 .fg-n { width: 28px; height: 28px; flex: none; display: grid; place-items: center; background: var(--surface-3); border: 2px solid var(--edge); font: .65rem var(--font-pixel); }
 
+/* Combo counter and the quest chest bonus. */
+.combo-float { position: fixed; z-index: 90; transform: translate(-50%, 0); pointer-events: none; font: .8rem var(--font-pixel); color: var(--b2); text-shadow: 2px 2px 0 #000; animation: combo-rise 1.3s ease-out forwards; }
+@keyframes combo-rise { 0% { transform: translate(-50%, 8px) scale(.8); opacity: 0; } 20% { transform: translate(-50%, 0) scale(1.15); opacity: 1; } 100% { transform: translate(-50%, -40px) scale(1); opacity: 0; } }
+.chest { position: relative; }
+.chest-xp { position: absolute; right: -8px; bottom: -8px; font: .5rem var(--font-pixel); padding: 3px 4px; background: var(--surface); color: var(--ink); border: 2px solid var(--edge); }
+.rank { font-size: .85rem; color: var(--ink-2); }
+
+/* Language menu (js/i18n.js picker): a button plus a block-style popup list. */
+.lp-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 8px; background: var(--surface-2); color: var(--ink); border: 2px solid var(--line); border-radius: 2px; box-shadow: var(--bevel-sm); cursor: pointer; font: .6rem/1 var(--font-pixel); }
+.lp-btn:hover, .lp-btn[aria-expanded="true"] { border-color: var(--b0); }
+.lp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lp-globe { width: 16px; height: 16px; color: var(--ink-2); }
+.lp-caret { width: 6px; height: 6px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: translateY(-2px) rotate(45deg); }
+.lp-btn[aria-expanded="true"] .lp-caret { transform: translateY(2px) rotate(-135deg); }
+.lp-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; min-width: 168px; padding: 4px; background: var(--surface); border: 2px solid var(--edge); border-radius: 2px; box-shadow: var(--bevel), 0 10px 24px rgba(0, 0, 0, .35); display: grid; gap: 2px; }
+.lp-menu[hidden] { display: none; }
+.lp-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; background: transparent; color: var(--ink); border: 0; border-left: 4px solid transparent; border-radius: 0; text-align: left; cursor: pointer; font: 500 .9rem var(--font-body); }
+.lp-menu button b { width: 34px; font: .58rem var(--font-pixel); color: var(--ink-2); }
+.lp-menu button:hover, .lp-menu button:focus-visible { background: var(--surface-2); outline: none; }
+.lp-menu button[aria-checked="true"] { border-left-color: var(--b0); background: var(--surface-2); }
+.lp-menu button[aria-checked="true"] b { color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -1213,24 +1224,26 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = 'bb32568b6a';</script>
-<script src="content/curriculum.js?v=bb32568b6a"></script>
-<script src="content/index.js?v=bb32568b6a"></script>
-<script src="content/catalog.js?v=bb32568b6a"></script>
-<script src="content/datasets.js?v=bb32568b6a"></script>
-<script src="content/csv.js?v=bb32568b6a"></script>
-<script src="content/mldata.js?v=bb32568b6a"></script>
-<script src="content/sheets.js?v=bb32568b6a"></script>
-<script src="content/diagnostic.js?v=bb32568b6a"></script>
-<script src="js/i18n-dict.js?v=bb32568b6a"></script>
-<script src="js/i18n.js?v=bb32568b6a"></script>
-<script src="js/config.js?v=bb32568b6a"></script>
-<script src="js/store.js?v=bb32568b6a"></script>
-<script src="js/cloud.js?v=bb32568b6a"></script>
-<script src="js/runners.js?v=bb32568b6a"></script>
-<script src="js/sheet.js?v=bb32568b6a"></script>
-<script src="js/game.js?v=bb32568b6a"></script>
-<script src="js/app.js?v=bb32568b6a"></script>
+<script>window.DJ_VERSION = 'd752346f11';</script>
+<script src="content/curriculum.js?v=d752346f11"></script>
+<script src="content/index.js?v=d752346f11"></script>
+<script src="content/catalog.js?v=d752346f11"></script>
+<script src="content/datasets.js?v=d752346f11"></script>
+<script src="content/csv.js?v=d752346f11"></script>
+<script src="content/mldata.js?v=d752346f11"></script>
+<script src="content/sheets.js?v=d752346f11"></script>
+<script src="content/diagnostic.js?v=d752346f11"></script>
+<script src="js/util.js?v=d752346f11"></script>
+<script src="js/i18n-dict.js?v=d752346f11"></script>
+<script src="js/i18n.js?v=d752346f11"></script>
+<script src="js/config.js?v=d752346f11"></script>
+<script src="js/store.js?v=d752346f11"></script>
+<script src="js/cloud.js?v=d752346f11"></script>
+<script src="js/runners.js?v=d752346f11"></script>
+<script src="js/sheet.js?v=d752346f11"></script>
+<script src="js/game.js?v=d752346f11"></script>
+<script src="js/lesson.js?v=d752346f11"></script>
+<script src="js/app.js?v=d752346f11"></script>
 
 </body>
 </html>

@@ -1,0 +1,40 @@
+# Publishes the site to GitHub Pages from main after a fresh build.
+# One-time owner step: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+name: Deploy to Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        run: python3 build.py
+      - name: Collect the files the site serves
+        run: |
+          mkdir _site
+          cp -r index.html 404.html sw.js sitemap.xml assets content js m vendor design _site/
+          mkdir -p _site/src && cp src/app.css _site/src/
+          [ -f robots.txt ] && cp robots.txt _site/ || true
+          [ -f CNAME ] && cp CNAME _site/ || true
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

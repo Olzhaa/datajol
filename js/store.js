@@ -40,11 +40,26 @@
     { id: 'streak-7', name: 'Апталық от', desc: '7 күндік streak', icon: 'flame' },
     { id: 'no-hints', name: 'Өз бетімен', desc: '10 тапсырманы кеңессіз орындадыңыз', icon: 'star' },
     { id: 'xp-500', name: '500 XP', desc: '500 XP жинадыңыз', icon: 'bolt' },
-    { id: 'diagnostic', name: 'Өзін білген', desc: 'Диагностикалық тестті тапсырдыңыз', icon: 'compass' }
+    { id: 'diagnostic', name: 'Өзін білген', desc: 'Диагностикалық тестті тапсырдыңыз', icon: 'compass' },
+    { id: 'first-java', name: 'Hello, Java', desc: 'Бірінші Java тапсырмасы', icon: 'code' },
+    { id: 'first-cpp', name: 'Hello, C++', desc: 'Бірінші C++ тапсырмасы', icon: 'code' },
+    { id: 'combo-5', name: 'Комбо ×5', desc: '5 тапсырманы қатарынан бірінші әрекетте шештіңіз', icon: 'bolt' },
+    { id: 'combo-10', name: 'Тоқтаусыз', desc: '10 тапсырманы қатарынан бірінші әрекетте шештіңіз', icon: 'bolt' },
+    { id: 'chest-1', name: 'Бірінші сандық', desc: 'Бір күннің барлық квестін орындадыңыз', icon: 'chest' },
+    { id: 'chest-7', name: 'Сандық аңшысы', desc: '7 күн квесттерді толық орындадыңыз', icon: 'chest' },
+    { id: 'streak-30', name: 'Ай бойы', desc: '30 күндік streak', icon: 'flame' },
+    { id: 'lessons-25', name: 'Тұрақты оқушы', desc: '25 сабақ аяқталды', icon: 'flag' },
+    { id: 'lessons-100', name: 'Жүз сабақ', desc: '100 сабақ аяқталды', icon: 'flag' },
+    { id: 'modules-5', name: 'Бес шың', desc: '5 модульді толық аяқтадыңыз', icon: 'flag' },
+    { id: 'exam-ace', name: 'Мінсіз емтихан', desc: 'Модуль емтиханынан 100%', icon: 'star' },
+    { id: 'xp-2000', name: '2000 XP', desc: '2000 XP жинадыңыз', icon: 'bolt' },
+    { id: 'xp-5000', name: '5000 XP', desc: '5000 XP жинадыңыз', icon: 'bolt' }
   ];
+  const CHEST_XP = 20;
+  const isTask = id => !id.startsWith('chest:');   // p.done also holds the daily chest bonus
 
   const store = {
-    XP_LEVELS, BADGES,
+    XP_LEVELS, BADGES, CHEST_XP, isTask,
     users() { return read('dj.users', {}); },
     current() { const u = ls.get('dj.session'); return u && this.users()[u] ? u : null; },
     // Guest: try lessons before signing up. Progress lives under '~guest' (not a valid login) and moves to the
@@ -114,6 +129,8 @@
       this.takeGuest(username);
       ls.set('dj.session', username);
     },
+    // A title for each XP level band, shown with the level number.
+    rank(lv) { return ['Жаңа бастаушы', 'Жаңа бастаушы', 'Шәкірт', 'Шәкірт', 'Ізденуші', 'Ізденуші', 'Практик', 'Практик', 'Шебер', 'Шебер', 'Сарапшы', 'Сарапшы', 'Ұстаз', 'Ұстаз', 'Аңыз'][Math.min(lv, 15) - 1] || 'Аңыз'; },
     level(xp) {
       let lv = 1; for (let i = 0; i < XP_LEVELS.length; i++) if (xp >= XP_LEVELS[i]) lv = i + 1;
       const cur = XP_LEVELS[lv - 1] || 0, next = XP_LEVELS[lv] || (cur + 1000);
@@ -148,6 +165,11 @@
       give('first-run');
       if (kind === 'sql') give('first-query');
       if (kind === 'python') give('first-python');
+      if (kind === 'java') give('first-java');
+      if (kind === 'cpp') give('first-cpp');
+      if (p.streak >= 30) give('streak-30');
+      if (p.xp >= 2000) give('xp-2000');
+      if (p.xp >= 5000) give('xp-5000');
       if (p.streak >= 3) give('streak-3');
       if (p.streak >= 7) give('streak-7');
       if (p.noHint >= 10) give('no-hints');
@@ -164,8 +186,38 @@
         if (!p.badges['module-done']) { p.badges['module-done'] = today(); newBadges.push(BADGES.find(b => b.id === 'module-done')); }
       }
       if (['sql-10', 'sql-11'].every(id => p.lessons[id]) && !p.badges['join-master']) { p.badges['join-master'] = today(); newBadges.push(BADGES.find(b => b.id === 'join-master')); }
+      const give = id => { if (!p.badges[id]) { p.badges[id] = today(); newBadges.push(BADGES.find(b => b.id === id)); } };
+      const n = Object.keys(p.lessons).length;
+      if (n >= 25) give('lessons-25');
+      if (n >= 100) give('lessons-100');
+      if (Object.keys(DJ.modules || {}).filter(id => { const m = DJ.findModule(id); return m && m.lessons && m.lessons.length && m.lessons.every(l => p.lessons[l.id]); }).length >= 5) give('modules-5');
       this.save(p);
       return newBadges;
+    },
+    // Gives one badge by id (combo, exam). Returns the badge if it is new, else null.
+    give(id) { const p = this.progress(); if (p.badges[id]) return null; p.badges[id] = today(); this.save(p); return BADGES.find(b => b.id === id) || null; },
+    // Today's three quests. When all are done the chest opens once a day for CHEST_XP (stored in p.done, so devices merge it).
+    quests(p) {
+      const t = today(), ids = Object.keys(p.done);
+      const tasks = ids.filter(id => isTask(id) && p.done[id] && p.done[id].d === t).length;
+      const xp = (p.xpLog || []).filter(e => e.d === t && isTask(e.id || '')).reduce((s, e) => s + e.xp, 0);
+      const lessons = Object.values(p.lessons).filter(d => d === t).length;
+      return [{ n: 'Бүгін 50 XP жина', v: xp, max: 50, icon: 'bolt' }, { n: '3 тапсырма орында', v: tasks, max: 3, icon: 'check' }, { n: '1 сабақты аяқта', v: lessons, max: 1, icon: 'flag' }];
+    },
+    chestOpened(p) { return !!p.done['chest:' + today()]; },
+    // Opens today's chest if every quest is done and it is still shut. Returns {xp, newBadges, levelUp} or null.
+    claimChest() {
+      const p = this.progress(), id = 'chest:' + today();
+      if (p.done[id] || !this.quests(p).every(q => q.v >= q.max)) return null;
+      const before = this.level(p.xp).level;
+      p.done[id] = { d: today(), hint: false, xp: CHEST_XP };
+      p.xp += CHEST_XP;
+      p.xpLog = (p.xpLog || []).concat([{ d: today(), xp: CHEST_XP, id }]).slice(-300);
+      const newBadges = [], give = b => { if (!p.badges[b]) { p.badges[b] = today(); newBadges.push(BADGES.find(x => x.id === b)); } };
+      give('chest-1');
+      if (Object.keys(p.done).filter(k => !isTask(k)).length >= 7) give('chest-7');
+      this.save(p);
+      return { xp: CHEST_XP, newBadges, levelUp: this.level(p.xp).level > before ? this.level(p.xp).level : null };
     },
     gate(lessonId) { const p = this.progress(); const g = (p.gates || {})[lessonId]; return g ? JSON.parse(JSON.stringify(g)) : { attempt: 1, res: {}, tries: {}, best: 0 }; },
     setGate(lessonId, st) { const p = this.progress(); p.gates = p.gates || {}; p.gates[lessonId] = st; this.save(p); },

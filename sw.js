@@ -4,7 +4,7 @@
 // - js/, content/, assets/: cache first per site version (their URLs carry ?v=), older versions are dropped.
 // - The page itself: network first, the cached copy when offline.
 // Other hosts (fonts, Supabase) are not touched.
-const APP = 'tolqyn-app-bb32568b6a', VENDOR = 'tolqyn-vendor-bfb2c920f6';
+const APP = 'tolqyn-app-d752346f11', VENDOR = 'tolqyn-vendor-bfb2c920f6';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {

@@ -12,7 +12,19 @@ print("Жыл:", 2026)</code></pre>
 <p>Мәтін (string) тырнақшаға алынады: <code>"..."</code> немесе <code>'...'</code>. Сандар тырнақшасыз жазылады. <code>print</code> ішінде бірнеше мәнді үтірмен берсеңіз, олар бос орынмен бөлініп шығады.</p>
 <h3>Түсініктеме (comment)</h3>
 <pre><code># Бұл жол орындалмайды: ол адамдарға арналған</code></pre>
-<div class="tip">Python бос орынға (indentation) сезімтал. Әзірге әр команданы жолдың басынан бастаңыз.</div>`,
+<div class="tip">Python бос орынға (indentation) сезімтал. Әзірге әр команданы жолдың басынан бастаңыз.</div>
+<h3>Бағдарлама қалай орындалады?</h3>
+<p>Python әр жолды кезекпен оқып, орындайды. Төмендегі код екі жол шығарады, себебі екі <code>print</code> бар:</p>
+<pre><code>print("Бірінші жол")
+print("Екінші жол")</code></pre>
+<p>Бір <code>print</code> ішінде бірнеше мән берсеңіз, олар бос орынмен бір жолға шығады: <code>print("Табыс:", 2500, "₸")</code> → <code>Табыс: 2500 ₸</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Тырнақша жабылмады</b>: <code>print("Сәлем)</code> → <code>SyntaxError</code>. Ашылған тырнақша жабылуы керек.</li>
+<li><b>Бас әріп</b>: <code>Print("...")</code> жұмыс істемейді. Python бас және кіші әріптерді ажыратады.</li>
+<li><b>Жақша жоқ</b>: <code>print "Сәлем"</code> — Python 2-нің ескі жазуы, қазір қате.</li>
+</ul>
+<div class="tip">Тапсырма дәл мәтінді күтсе, үтір, бос орын және әріптердің бәрі сәйкес келуі керек. Нәтижені «Іске қосу» батырмасымен алдымен өзіңіз тексеріңіз.</div>`,
       exercises: [
         { type: 'python', xp: 10, prompt: 'Экранға дәл осы мәтінді шығарыңыз: <code>Сәлем, Tolqyn!</code>', starter: '# Кодыңызды осында жазыңыз\n', solution: 'print("Сәлем, Tolqyn!")', hints: ['<code>print("...")</code>'] },
         { type: 'python', xp: 10, prompt: 'Екі жол шығарыңыз: бірінші жолда <code>SQL</code>, екінші жолда <code>Python</code>.', starter: '', solution: 'print("SQL")\nprint("Python")', hints: ['Екі бөлек <code>print</code> жазыңыз.'] }
@@ -35,7 +47,16 @@ is_active = True</code></pre>
 <tr><td><code>bool</code></td><td>True / False</td><td>ақиқат / жалған</td></tr>
 </table>
 <p>Типті <code>type()</code> көрсетеді. Типтер арасында түрлендіруге болады: <code>int("42")</code>, <code>float("3.5")</code>, <code>str(100)</code>.</p>
-<div class="tip">Айнымалы атауы латынша, кіші әріппен, сөздер <code>_</code> арқылы: <code>total_revenue</code>. Ол саннан басталмайды.</div>`,
+<div class="tip">Айнымалы атауы латынша, кіші әріппен, сөздер <code>_</code> арқылы: <code>total_revenue</code>. Ол саннан басталмайды.</div>
+<h3>Айнымалының мәні өзгереді</h3>
+<p>Айнымалыға жаңа мән берсеңіз, ескісі ұмытылады:</p>
+<pre><code>orders = 120
+orders = orders + 5     # енді 125
+orders += 5             # қысқа жазу, енді 130</code></pre>
+<p><code>=</code> белгісі математикадағы «тең» емес, «сақта» дегенді білдіреді: оң жақтағы мәнді есептеп, сол жақтағы атауға жазады.</p>
+<h3>Типтер неге маңызды?</h3>
+<p>Мәтін мен санды қосу мүмкін емес: <code>"1250" + 5</code> → <code>TypeError</code>. CSV файлдарынан немесе пайдаланушыдан келген деректің бәрі мәтін болып келеді, сондықтан есептеу алдында оны <code>int()</code> немесе <code>float()</code> арқылы санға айналдырамыз. Ал мәтінді бір-біріне қосу оларды біріктіреді: <code>"Ал" + "маты"</code> → <code>"Алматы"</code>.</p>
+<div class="tip"><code>print(type(x))</code> — айнымалының типін тексерудің ең жылдам тәсілі. Күтпеген нәтиже шықса, алдымен типті қараңыз.</div>`,
       exercises: [
         { type: 'python', xp: 10, prompt: '<code>product</code> айнымалысына <code>"Ноутбук"</code>, <code>price</code> айнымалысына <code>350000</code> мәнін беріңіз. Сосын <code>print(product, price)</code> орындаңыз.', starter: '', solution: 'product = "Ноутбук"\nprice = 350000\nprint(product, price)', check: { tests: 'assert product == "Ноутбук", "product айнымалысы \\"Ноутбук\\" болуы керек"\nassert price == 350000 and isinstance(price, int), "price бүтін сан 350000 болуы керек"', stdout: true }, hints: ['<code>product = "Ноутбук"</code>'] },
         { type: 'python', xp: 15, prompt: '<code>raw = "1250"</code> мәтін түрінде берілген. Оны бүтін санға айналдырып, <code>qty</code> айнымалысына жазыңыз және <code>qty * 2</code> мәнін шығарыңыз.', starter: 'raw = "1250"\n', solution: 'raw = "1250"\nqty = int(raw)\nprint(qty * 2)', check: { tests: 'assert isinstance(qty, int), "qty int типі болуы керек: int(raw) қолданыңыз"', stdout: true }, hints: ['<code>int(raw)</code>'] }
@@ -55,7 +76,17 @@ is_active = True</code></pre>
 <pre><code>revenue_aug = 80_000_000
 revenue_sep = 100_000_000
 growth = (revenue_sep - revenue_aug) / revenue_aug * 100
-print(round(growth, 1))   # 25.0</code></pre>`,
+print(round(growth, 1))   # 25.0</code></pre>
+<h3>Амалдардың реті</h3>
+<p>Python математикадағыдай ретті сақтайды: алдымен <code>**</code>, сосын <code>* / // %</code>, соңында <code>+ -</code>. Күмәндансаңыз, жақша қойыңыз: <code>(a + b) / 2</code> мен <code>a + b / 2</code> әртүрлі нәтиже береді.</p>
+<h3>Аналитиктің күнделікті формулалары</h3>
+<pre><code>conversion = buyers / visitors * 100          # конверсия, %
+aov = revenue / orders                        # орташа чек
+share = part / total * 100                    # үлес, %
+change = (new - old) / old * 100              # өзгеріс, %</code></pre>
+<h3>Бөлшек сандардың ерекшелігі</h3>
+<p><code>0.1 + 0.2</code> нәтижесі <code>0.30000000000000004</code> болады. Бұл Python-ның қатесі емес, компьютер бөлшек сандарды екілік жүйеде сақтайды. Нәтижені көрсеткенде <code>round()</code> қолданыңыз, ал ақшаны дәл есептеу керек болса, тиынмен бүтін сан ретінде санаңыз.</p>
+<div class="tip">Нөлге бөлу <code>ZeroDivisionError</code> береді. Конверсияны есептегенде келушілер саны 0 болуы мүмкін бе, ойланыңыз.</div>`,
       exercises: [
         { type: 'python', xp: 10, prompt: 'Тапсырыс 3 тауардан тұрады: 4500, 12000 және 800 теңге. Жалпы соманы <code>total</code> айнымалысына жазып, шығарыңыз.', starter: '', solution: 'total = 4500 + 12000 + 800\nprint(total)', check: { tests: 'assert total == 17300, "total = 17300 болуы керек"', stdout: true }, hints: [] },
         { type: 'python', xp: 15, prompt: 'Сайтқа 1840 адам кіріп, 46-сы сатып алды. Конверсияны пайызбен есептеп, 2 ондық белгіге дейін дөңгелектеп шығарыңыз.', starter: 'visitors = 1840\nbuyers = 46\n', solution: 'visitors = 1840\nbuyers = 46\nprint(round(buyers / visitors * 100, 2))', hints: ['<code>buyers / visitors * 100</code>', '<code>round(..., 2)</code>'] }
@@ -78,7 +109,22 @@ print(len("SQL"))            # 3</code></pre>
 <pre><code>city = "Астана"
 orders = 42
 print(f"{city}: {orders} тапсырыс")
-print(f"Орташа чек: {8450.567:.2f}")   # 8450.57</code></pre>`,
+print(f"Орташа чек: {8450.567:.2f}")   # 8450.57</code></pre>
+<h3>Пайдалы әдістер</h3>
+<table>
+<tr><th>Әдіс</th><th>Мысал</th><th>Нәтиже</th></tr>
+<tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
+<tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
+</table>
+<p>Жол әдістері бастапқы жолды өзгертпейді, жаңа жол қайтарады. Сондықтан нәтижені сақтау керек: <code>name = name.strip()</code>.</p>
+<h3>f-string форматтары</h3>
+<pre><code>revenue = 1234567.891
+print(f"{revenue:,.0f}")    # 1,234,568  (мыңдық бөлгішпен)
+print(f"{0.2537:.1%}")      # 25.4%
+print(f"{'Алматы':&lt;10}|")    # мәтінді 10 таңбаға сол жақтан туралау</code></pre>
+<div class="tip">Әдістерді тізбектеп жазуға болады: <code>raw.strip().lower().replace(" ", "_")</code>. Олар солдан оңға қарай орындалады.</div>`,
       exercises: [
         { type: 'python', xp: 10, prompt: '<code>raw = "  ШЫМКЕНТ "</code>. Бос орындарды алып, тек бірінші әрпі бас әріп болатындай етіп шығарыңыз: <code>Шымкент</code>.', starter: 'raw = "  ШЫМКЕНТ "\n', solution: 'raw = "  ШЫМКЕНТ "\nprint(raw.strip().title())', hints: ['<code>.strip()</code> және <code>.title()</code> тізбектеп жазыңыз.'] },
         { type: 'python', xp: 15, prompt: 'f-string арқылы дәл осындай жол шығарыңыз: <code>Алматы: 925600 ₸</code>. Айнымалылар берілген.', starter: 'city = "Алматы"\nrevenue = 925600\n', solution: 'city = "Алматы"\nrevenue = 925600\nprint(f"{city}: {revenue} ₸")', check: { mustInclude: ['f"', '{city}'] }, hints: ['<code>print(f"{city}: {revenue} ₸")</code>'] },
@@ -99,7 +145,17 @@ else:
 print(segment)   # орташа</code></pre>
 <p>Шарттан кейін <code>:</code> қойылады, ал ішкі блок <b>4 бос орынмен</b> шегініп жазылады. SQL-дегі CASE WHEN-нің дәл баламасы.</p>
 <h3>Салыстыру және логика</h3>
-<p><code>==</code> (тең), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Біріктіру: <code>and</code>, <code>or</code>, <code>not</code>. Тізімде бар ма: <code>city in ["Алматы", "Астана"]</code>.</p>`,
+<p><code>==</code> (тең), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Біріктіру: <code>and</code>, <code>or</code>, <code>not</code>. Тізімде бар ма: <code>city in ["Алматы", "Астана"]</code>.</p>
+<h3>Шарттардың реті</h3>
+<p>Python <code>if</code>/<code>elif</code> шарттарын жоғарыдан төмен тексеріп, бірінші ақиқат шарттың блогын ғана орындайды. Сондықтан ең қатаң шартты бірінші жазамыз. Егер <code>price &gt;= 10000</code> бірінші тұрса, 250 000 ₸-лік тауар да «орташа» болып кетеді.</p>
+<h3>Бос орынның маңызы</h3>
+<pre><code>if orders &gt; 100:
+    print("Көп")      # шарт ақиқат болса ғана
+print("Тексерілді")  # әрқашан орындалады</code></pre>
+<p>Шегініс (indentation) қай жол шартқа тиесілі екенін көрсетеді. Шегіністер араласып кетсе, <code>IndentationError</code> шығады.</p>
+<h3>Шартты қысқа жазу</h3>
+<p>Бір мәнді таңдау үшін бір жолдық өрнек бар: <code>label = "үлкен" if amount &gt; 3000 else "кіші"</code>. Ол Excel-дегі <code>IF</code> функциясына ұқсайды.</p>
+<div class="tip"><code>=</code> мен <code>==</code> шатастырмаңыз: біріншісі мән береді, екіншісі салыстырады. <code>if x = 5:</code> синтаксис қатесін береді.</div>`,
       exercises: [
         { type: 'python', xp: 15, prompt: '<code>score</code> мәніне қарай баға шығарыңыз: 85 және жоғары — <code>A</code>, 70 және жоғары — <code>B</code>, 50 және жоғары — <code>C</code>, әйтпесе <code>F</code>. <code>score = 72</code> үшін <code>B</code> шығуы керек.', starter: 'score = 72\n', solution: 'score = 72\nif score >= 85:\n    print("A")\nelif score >= 70:\n    print("B")\nelif score >= 50:\n    print("C")\nelse:\n    print("F")', check: { mustInclude: ['elif'] }, hints: ['Шарттарды жоғарыдан төмен, үлкенінен бастаңыз.'] },
         { type: 'python', xp: 15, prompt: 'Тапсырыс сомасы 20 000-нан жоғары <b>және</b> клиент Алматыдан болса <code>Тегін жеткізу</code>, әйтпесе <code>Жеткізу 1500 ₸</code> шығарыңыз.', starter: 'amount = 23500\ncity = "Алматы"\n', solution: 'amount = 23500\ncity = "Алматы"\nif amount > 20000 and city == "Алматы":\n    print("Тегін жеткізу")\nelse:\n    print("Жеткізу 1500 ₸")', check: { mustInclude: ['and'] }, hints: ['<code>if amount > 20000 and city == "Алматы":</code>'] }
@@ -205,7 +261,20 @@ while balance &lt; 150000:
     months += 1
 print(months)   # 9</code></pre>
 <p><code>break</code> — циклді бірден тоқтатады. <code>continue</code> — қалған бөлігін өткізіп, келесі айналымға өтеді.</p>
-<div class="tip">Шарт ешқашан жалған болмаса, цикл шексіз жүреді. Бұл платформада 8 секундтан кейін код тоқтатылады.</div>`,
+<div class="tip">Шарт ешқашан жалған болмаса, цикл шексіз жүреді. Бұл платформада 8 секундтан кейін код тоқтатылады.</div>
+<h3>for пен while айырмасы</h3>
+<p><code>for</code> белгілі тізімді немесе санды аралайды: «әр тапсырыс үшін». <code>while</code> шарт орындалғанша жалғасады: «баланс 150 000-ға жеткенше». Қайталау саны алдын ала белгілі болса, <code>for</code> таңдаңыз: ол қарапайым әрі шексіз циклге түсу қаупі жоқ.</p>
+<h3>break пен continue мысалы</h3>
+<pre><code>amounts = [2500, 3100, -50, 4200, 0, 1800]
+for a in amounts:
+    if a == 0:
+        break          # 0 — дерек соңы деген белгі
+    if a &lt; 0:
+        continue       # теріс соманы өткізіп жібереміз
+    print(a)
+# 2500, 3100, 4200</code></pre>
+<p>Цикл 0-ге жеткенде толық тоқтайды, сондықтан 1800 шықпайды. Ал −50 өткізіліп, цикл келесі элементке өтеді.</p>
+<div class="tip">Әр <code>while</code> циклінің ішінде шартқа әсер ететін айнымалы өзгеретініне көз жеткізіңіз. Мысалдағы <code>balance</code> әр айналымда өседі, сондықтан цикл бір күні аяқталады.</div>`,
       exercises: [
         { type: 'python', xp: 15, prompt: 'Компанияның пайдаланушылары 1 000. Ол ай сайын 20%-ға өседі. Пайдаланушылар саны 10 000-нан асуы үшін қанша ай керек? Айлар санын шығарыңыз.', starter: 'users = 1000\nmonths = 0\n', solution: 'users = 1000\nmonths = 0\nwhile users <= 10000:\n    users = users * 1.2\n    months += 1\nprint(months)', check: { mustInclude: ['while'] }, hints: ['Шарт: <code>while users <= 10000:</code>', 'Цикл ішінде <code>users</code> мен <code>months</code> екеуін де өзгертіңіз.'] },
         { type: 'python', xp: 15, prompt: 'Тізімде бірінші теріс санды тауып шығарып, циклді <code>break</code> арқылы тоқтатыңыз.', starter: 'values = [12, 7, 0, -3, 5, -8]\n', solution: 'values = [12, 7, 0, -3, 5, -8]\nfor v in values:\n    if v < 0:\n        print(v)\n        break', check: { mustInclude: ['break'] }, hints: [] }
@@ -275,7 +344,21 @@ counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
 print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
-<p>Кілттер мен мәндерді аралау: <code>for key, value in counts.items():</code></p>`,
+<p>Кілттер мен мәндерді аралау: <code>for key, value in counts.items():</code></p>
+<h3>Сөздіктер тізімі: деректер кестесі</h3>
+<p>Бір сөздік бір жазбаны сипаттаса, сөздіктер тізімі бүтін кестені сипаттайды. Әр сөздік — бір жол, кілттер — баған атаулары:</p>
+<pre><code>orders = [
+    {"id": 1, "city": "Алматы", "amount": 2500},
+    {"id": 2, "city": "Астана", "amount": 3100},
+    {"id": 3, "city": "Алматы", "amount": 1800},
+]
+revenue = {}
+for o in orders:
+    revenue[o["city"]] = revenue.get(o["city"], 0) + o["amount"]
+print(revenue)   # {'Алматы': 4300, 'Астана': 3100}</code></pre>
+<p>Бұл SQL-дегі <code>SELECT city, SUM(amount) ... GROUP BY city</code> сұрауымен бірдей.</p>
+<h3>Жиі қате</h3>
+<p>Жоқ кілтті <code>d["phone"]</code> арқылы оқысаңыз, <code>KeyError</code> шығады. Кілт болмауы мүмкін болса, <code>d.get("phone")</code> немесе <code>if "phone" in d:</code> қолданыңыз.</p>`,
       exercises: [
         { type: 'python', xp: 20, prompt: 'Тапсырыс статустарын сөздік арқылы санап, <code>counts</code> айнымалысына жазыңыз және шығарыңыз.', starter: 'statuses = ["delivered", "shipped", "delivered", "cancelled", "delivered", "shipped"]\ncounts = {}\n', solution: 'statuses = ["delivered", "shipped", "delivered", "cancelled", "delivered", "shipped"]\ncounts = {}\nfor s in statuses:\n    counts[s] = counts.get(s, 0) + 1\nprint(counts)', check: { tests: 'assert counts == {"delivered": 3, "shipped": 2, "cancelled": 1}, "counts сөздігі дұрыс емес: " + str(counts)', stdout: true }, hints: ['<code>counts[s] = counts.get(s, 0) + 1</code>'] },
         { type: 'python', xp: 20, prompt: 'Тауарлар бағасы сөздікте берілген. Бағасы 10 000-нан жоғары тауарлардың атауын <code>атауы: баға</code> форматында шығарыңыз (сөздіктегі ретпен).', starter: 'prices = {"Ноутбук": 350000, "Блокнот": 1200, "Рюкзак": 15000, "Термос": 9000}\n', solution: 'prices = {"Ноутбук": 350000, "Блокнот": 1200, "Рюкзак": 15000, "Термос": 9000}\nfor name, price in prices.items():\n    if price > 10000:\n        print(f"{name}: {price}")', check: { mustInclude: ['.items()'] }, hints: ['<code>for name, price in prices.items():</code>'] }
@@ -298,7 +381,19 @@ with_vat = [p * 1.12 for p in prices]
 # сүзгімен
 expensive = [p for p in prices if p &gt; 7000]</code></pre>
 <p>Үлгі: <code>[өрнек for элемент in тізім if шарт]</code>. Сөздікке де бар: <code>{k: v for k, v in d.items() if v &gt; 0}</code>.</p>
-<div class="tip">pandas-та мұндай операциялар бағандармен бірден жасалады, бірақ comprehension Python-ның «тілін» түсінуге көмектеседі.</div>`,
+<div class="tip">pandas-та мұндай операциялар бағандармен бірден жасалады, бірақ comprehension Python-ның «тілін» түсінуге көмектеседі.</div>
+<h3>Қашан comprehension, қашан цикл?</h3>
+<p>Comprehension бір тізімнен жаңа тізім жасағанда жақсы: түрлендіру немесе сүзу. Бірнеше әрекет, <code>print</code> немесе күрделі шарт керек болса, қарапайым <code>for</code> циклі оқуға жеңіл. Ереже: comprehension бір жолға сыймаса, оны циклге айналдырыңыз.</p>
+<h3>Мысалдар</h3>
+<pre><code>emails = ["A@MAIL.KZ ", "b@mail.kz"]
+clean = [e.strip().lower() for e in emails]
+
+dates = ["2024-11-02", "2024-10-30", "2024-11-15"]
+nov = [d for d in dates if d.startswith("2024-11")]
+
+prices = {"латте": 1500, "су": 300}
+cheap = {k: v for k, v in prices.items() if v &lt; 1000}</code></pre>
+<div class="tip">Тізімнің орнына қосынды керек болса, жақшасыз жазуға болады: <code>sum(p * 1.12 for p in prices)</code>. Бұл аралық тізім жасамайды.</div>`,
       exercises: [
         { type: 'python', xp: 15, prompt: 'Comprehension арқылы <code>names</code> тізіміндегі атауларды бос орынсыз және бас әріппен (<code>.strip().title()</code>) жазып, <code>clean</code> тізімін жасаңыз. Шығарыңыз.', starter: 'names = ["  айгерім", "НҰРЛАН ", " дана "]\n', solution: 'names = ["  айгерім", "НҰРЛАН ", " дана "]\nclean = [n.strip().title() for n in names]\nprint(clean)', check: { tests: 'assert clean == ["Айгерім", "Нұрлан", "Дана"], "clean тізімі: " + str(clean)', stdout: true, mustInclude: [' for '] }, hints: ['<code>[n.strip().title() for n in names]</code>'] },
         { type: 'python', xp: 15, prompt: 'Тек 2024 жылғы қарашадағы күндерді (<code>"2024-11"</code> басталатындар) comprehension арқылы <code>nov</code> тізіміне жинап, санын шығарыңыз.', starter: 'dates = ["2024-10-28", "2024-11-04", "2024-11-09", "2024-11-21", "2024-12-01"]\n', solution: 'dates = ["2024-10-28", "2024-11-04", "2024-11-09", "2024-11-21", "2024-12-01"]\nnov = [d for d in dates if d.startswith("2024-11")]\nprint(len(nov))', check: { tests: 'assert nov == ["2024-11-04", "2024-11-09", "2024-11-21"], "nov тізімі дұрыс емес"', stdout: true }, hints: ['<code>d.startswith("2024-11")</code>'] }
@@ -320,7 +415,22 @@ for r in raw:
     except ValueError:
         print("Өткізілді:", r)
 print(sum(values))   # 355</code></pre>
-<div class="tip">Барлық қатені <code>except:</code> деп жасыруға болмайды. Нақты қате түрін жазыңыз, әйтпесе нағыз қатені байқамай қаласыз.</div>`,
+<div class="tip">Барлық қатені <code>except:</code> деп жасыруға болмайды. Нақты қате түрін жазыңыз, әйтпесе нағыз қатені байқамай қаласыз.</div>
+<h3>Traceback-ты оқу</h3>
+<p>Қате шыққанда Python «ізін» (traceback) көрсетеді. Оны төменнен жоғары оқимыз:</p>
+<ol>
+<li>Соңғы жол — қатенің түрі мен себебі.</li>
+<li>Оның үстінде — қате болған код жолы және оның нөмірі.</li>
+<li>Жоғарыдағы жолдар — сол жерге қалай жеттік (функциялар тізбегі).</li>
+</ol>
+<h3>Қатені өзіміз көтеру</h3>
+<p>Функцияға мағынасыз мән келсе, оны үнсіз өткізіп жібергеннен гөрі, анық қате берген дұрыс:</p>
+<pre><code>def conversion(visitors, buyers):
+    if visitors &lt; 0 or buyers &lt; 0:
+        raise ValueError("сандар теріс болмауы керек")
+    return buyers / visitors * 100 if visitors else 0</code></pre>
+<p><code>raise</code> қатені бірден тоқтатып, себебін хабарлайды. Мұндай функцияны қолданған адам қатесін бірден көреді.</p>
+<div class="tip"><code>try</code> блогын тек қате болуы мүмкін жолға қойыңыз. Бүкіл кодты <code>try</code>-ға орасаңыз, қай жерде қате болғанын табу қиын.</div>`,
       exercises: [
         { type: 'python', xp: 20, prompt: '<code>raw</code> тізімінен тек санға айналатын мәндерді <code>float</code> қылып <code>values</code>-қа жинаңыз (<code>try/except ValueError</code>). Соңында олардың қосындысын шығарыңыз.', starter: 'raw = ["12.5", "abc", "7", "", "30.5", "N/A"]\nvalues = []\n', solution: 'raw = ["12.5", "abc", "7", "", "30.5", "N/A"]\nvalues = []\nfor r in raw:\n    try:\n        values.append(float(r))\n    except ValueError:\n        pass\nprint(sum(values))', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)', stdout: true, mustInclude: ['except'] }, hints: ['<code>except ValueError:</code> ішінде <code>pass</code> жазуға болады.'] },
         { type: 'python', xp: 15, prompt: 'Бұл код қате береді. Түзетіп, <code>Барлығы: 15</code> шығатындай етіңіз.', starter: 'count = "10"\nextra = 5\nprint("Барлығы: " + (count + extra))\n', solution: 'count = "10"\nextra = 5\nprint("Барлығы: " + str(int(count) + extra))', hints: ['<code>count</code> мәтін: оны алдымен <code>int()</code> қылыңыз.', 'Нәтижені мәтінге қосу үшін <code>str()</code> керек, немесе f-string.'] }
@@ -340,7 +450,17 @@ print(rows[0])   # {'date': '2024-09-01', 'city': 'Алматы', ...}</code></p
 <li>Қалалар бойынша табыс (сөздік).</li>
 <li>Ең көп табыс әкелген қала.</li>
 </ol>
-<p>Бұл — SQL-дағы <code>SUM</code>, <code>GROUP BY</code> және <code>ORDER BY ... LIMIT 1</code>-дің Python нұсқасы. Келесі модульде pandas мұны бір-екі жолмен жасайды.</p>`,
+<p>Бұл — SQL-дағы <code>SUM</code>, <code>GROUP BY</code> және <code>ORDER BY ... LIMIT 1</code>-дің Python нұсқасы. Келесі модульде pandas мұны бір-екі жолмен жасайды.</p>
+<h3>Талдауды қадамдарға бөлу</h3>
+<p>Үлкен тапсырманы бір функцияға жазбаңыз. Әр сұраққа бөлек функция жазып, оларды бір-біріне қосамыз:</p>
+<pre><code>def total_revenue(rows): ...
+def revenue_by_city(rows): ...
+def top_city(rows): ...</code></pre>
+<p>Әр функцияны бөлек тексеруге болады, ал <code>top_city</code> ішінде <code>revenue_by_city</code> нәтижесін қайта қолдана аламыз.</p>
+<h3>Ең үлкен мәнді табу</h3>
+<p>Сөздіктегі ең үлкен мәнді беретін кілтті табу үшін: <code>max(d, key=d.get)</code>. <code>max</code> кілттерді аралап, әрқайсысын <code>d.get</code> арқылы салыстырады.</p>
+<h3>Нәтижені тексеру</h3>
+<p>Қалалар бойынша табыстардың қосындысы жалпы табысқа тең болуы керек. Мұндай «тексеру теңдігі» аналитикте маңызды әдет: егер сандар сәйкес келмесе, бір жерде жол жоғалды немесе екі рет саналды.</p>`,
       exercises: [
         { type: 'python', xp: 25, prompt: '<code>total_revenue(rows)</code> функциясын жазыңыз: барлық жолдар бойынша <code>qty × price</code> қосындысын (int) қайтарсын.', starter: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef total_revenue(rows):\n    pass\n\nprint(total_revenue(rows))\n', solution: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef total_revenue(rows):\n    total = 0\n    for r in rows:\n        total += int(r["qty"]) * int(r["price"])\n    return total\n\nprint(total_revenue(rows))', check: { tests: 'assert total_revenue(rows) == 188000, "Жалпы табыс 188000 болуы керек, сізде: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Бос тізім үшін 0 қайтарыңыз"' }, hints: ['Мәтінді санға айналдырыңыз: <code>int(r["qty"])</code>.'] },
         { type: 'python', xp: 30, prompt: '<code>revenue_by_city(rows)</code> функциясы қала → табыс сөздігін қайтарсын. Сосын <code>best_city(rows)</code> ең көп табысты қаланың атауын қайтарсын.', starter: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef revenue_by_city(rows):\n    pass\n\ndef best_city(rows):\n    pass\n\nprint(revenue_by_city(rows))\nprint(best_city(rows))\n', solution: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef revenue_by_city(rows):\n    out = {}\n    for r in rows:\n        out[r["city"]] = out.get(r["city"], 0) + int(r["qty"]) * int(r["price"])\n    return out\n\ndef best_city(rows):\n    rev = revenue_by_city(rows)\n    return max(rev, key=rev.get)\n\nprint(revenue_by_city(rows))\nprint(best_city(rows))', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city Астана болуы керек"' }, hints: ['Сөздікпен санау сабағындағы <code>.get(key, 0)</code> үлгісін қолданыңыз.', 'Ең үлкен мәнді кілт: <code>max(rev, key=rev.get)</code>.'] }

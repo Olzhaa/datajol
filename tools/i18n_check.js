@@ -11,6 +11,7 @@ const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 const ctx = { console }; ctx.window = ctx; vm.createContext(ctx);
 vm.runInContext(read('content/curriculum.js'), ctx);
+for (const f of ['content/datasets.js', 'content/csv.js', 'content/mldata.js', 'content/sheets.js']) vm.runInContext(read(f), ctx, { filename: f });
 const before = new Set(Object.keys(ctx.DJ.modules));
 vm.runInContext(read(`content/${course}.js`), ctx, { filename: course });
 const mods = Object.keys(ctx.DJ.modules).filter(id => !before.has(id) || ctx.DJ.modules[id].lessons);

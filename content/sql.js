@@ -19,7 +19,17 @@ DJ.modules['m1-2'] = {
 <pre><code>SELECT * FROM customers;</code></pre>
 <p>Тек керекті бағандарды үтір арқылы атауға болады:</p>
 <pre><code>SELECT name, city FROM customers;</code></pre>
-<div class="tip">SQL кілт сөздерін (SELECT, FROM) бас әріппен жазу — дәстүр ғана. <code>select</code> да жұмыс істейді. Сұрау соңындағы <code>;</code> бірнеше сұрауды бөлу үшін керек.</div>`,
+<div class="tip">SQL кілт сөздерін (SELECT, FROM) бас әріппен жазу — дәстүр ғана. <code>select</code> да жұмыс істейді. Сұрау соңындағы <code>;</code> бірнеше сұрауды бөлу үшін керек.</div>
+<h3>Сұрау қалай орындалады?</h3>
+<p>Сіз сұрауды жазасыз, дерекқор оны оқып, кестеден жолдарды алып, нәтижені жаңа кесте түрінде қайтарады. Бастапқы кесте өзгермейді: SELECT тек оқиды, сондықтан қорықпай тәжірибе жасай беріңіз.</p>
+<h3>Неге <code>*</code>-ты абайлап қолданамыз?</h3>
+<ul>
+<li>Нақты жұмыста кестеде ондаған, тіпті жүздеген баған болады. <code>SELECT *</code> керексіз деректі тартып, сұрауды баяулатады.</li>
+<li>Кейін кестеге жаңа баған қосылса, <code>*</code> нәтижесі өзгеріп кетеді де, есеп бұзылуы мүмкін.</li>
+<li>Бағандарды атап жазсаңыз, сұрауды оқыған адам не алынып жатқанын бірден түсінеді.</li>
+</ul>
+<p>Сондықтан <code>*</code>-ты кестемен алғаш танысқанда қолданыңыз, ал тұрақты сұрауларда бағандарды атаңыз.</p>
+<div class="tip">Үлкен кестеге алғаш қарағанда соңына <code>LIMIT 10</code> қосыңыз: дерекқор бүкіл кестені емес, тек 10 жолды қайтарады. Бұл туралы ORDER BY сабағында толығырақ.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: '<code>products</code> кестесіндегі барлық бағандар мен жолдарды шығарыңыз.', starter: '-- Сұрауыңызды осында жазыңыз\n', solution: 'SELECT * FROM products;', hints: ['Барлық бағандар үшін <code>*</code> қолданылады.', 'Үлгі: <code>SELECT * FROM кесте_аты;</code>'] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Тауарлардың тек атауы (<code>name</code>) мен бағасын (<code>price</code>) шығарыңыз.', starter: 'SELECT \nFROM products;', solution: 'SELECT name, price FROM products;', hints: ['Бағандарды үтірмен бөліп жазыңыз.', '<code>SELECT name, price FROM products;</code>'] }
@@ -41,7 +51,17 @@ WHERE price > 50000;</code></pre>
 <tr><td><code>&gt;=</code>, <code>&lt;=</code></td><td>үлкен немесе тең, кіші немесе тең</td></tr>
 </table>
 <p>Мәтін мен күн <b>бір тырнақшада</b> жазылады: <code>WHERE city = 'Алматы'</code>. Сандар тырнақшасыз: <code>WHERE price = 9000</code>.</p>
-<div class="tip">Күндер <code>'2024-09-01'</code> форматында сақталған. Бұл форматты мәтін ретінде салыстыру да дұрыс жұмыс істейді: <code>order_date &gt;= '2024-10-01'</code>.</div>`,
+<div class="tip">Күндер <code>'2024-09-01'</code> форматында сақталған. Бұл форматты мәтін ретінде салыстыру да дұрыс жұмыс істейді: <code>order_date &gt;= '2024-10-01'</code>.</div>
+<h3>WHERE қалай жұмыс істейді?</h3>
+<p>Дерекқор кестенің әр жолына шартты тексереді. Шарт <code>TRUE</code> болса, жол нәтижеге кіреді, <code>FALSE</code> немесе белгісіз болса, кірмейді. Сондықтан WHERE ешқашан жаңа жол жасамайды, тек бар жолдарды сүзеді.</p>
+<h3>Жиі кездесетін қателер</h3>
+<ul>
+<li><b>Қос тырнақша</b>: <code>city = "Алматы"</code>. Стандарт SQL-де қос тырнақша баған атауын білдіреді, мәтін үшін бір тырнақша жазыңыз.</li>
+<li><b>Регистр</b>: <code>'алматы'</code> мен <code>'Алматы'</code> әртүрлі мәтін. Деректегі жазылуын алдымен <code>SELECT DISTINCT city</code> арқылы қараңыз.</li>
+<li><b>Артық бос орын</b>: <code>'Алматы '</code> соңындағы бос орынмен сәйкес келмейді. Мұндай деректі тазалау модулінде түзетеміз.</li>
+<li><b>Санды мәтін ретінде салыстыру</b>: <code>price &gt; '50000'</code> кейбір дерекқорда мәтін ретінде салыстырылып, күтпеген нәтиже береді. Санды тырнақшасыз жазыңыз.</li>
+</ul>
+<div class="tip">Шартты тексерудің оңай жолы: алдымен WHERE-сіз сұрау жасап, бірнеше жолды көзбен қараңыз, сосын шартты қосып, жолдар саны қисынды азайғанын тексеріңіз.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Бағасы 50 000 теңгеден жоғары тауарлардың атауы мен бағасын шығарыңыз.', starter: 'SELECT name, price\nFROM products\nWHERE ', solution: 'SELECT name, price FROM products WHERE price > 50000;', hints: ['Шарт: <code>price > 50000</code>'] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Астанадан келген клиенттердің барлық бағандарын шығарыңыз.', starter: '', solution: "SELECT * FROM customers WHERE city = 'Астана';", hints: ['Мәтінді тырнақшаға алыңыз: <code>\'Астана\'</code>.'] },
@@ -64,7 +84,15 @@ WHERE category = 'Электроника' AND price &lt; 100000;</code></pre>
 <pre><code>WHERE price BETWEEN 5000 AND 20000
 WHERE city IN ('Алматы', 'Шымкент')
 WHERE city NOT IN ('Алматы')</code></pre>
-<div class="tip">AND пен OR араласса, жақша қойыңыз: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Жақшасыз AND бірінші орындалады.</div>`,
+<div class="tip">AND пен OR араласса, жақша қойыңыз: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Жақшасыз AND бірінші орындалады.</div>
+<h3>Шарттардың басымдығы</h3>
+<p>SQL алдымен <code>NOT</code>, сосын <code>AND</code>, соңында <code>OR</code> орындайды. Мына шарт:</p>
+<pre><code>WHERE city = 'Алматы' OR city = 'Астана' AND status = 'delivered'</code></pre>
+<p>шын мәнінде <code>city = 'Алматы' OR (city = 'Астана' AND status = 'delivered')</code> деп оқылады: Алматыдан барлық статустағы жолдар келеді. Жақша қою қатені болдырмайды және сұрауды оқуды жеңілдетеді.</p>
+<h3>BETWEEN және күндер</h3>
+<p><code>BETWEEN</code> екі шетін де қамтиды. Күн мен уақыт бірге сақталса (<code>'2024-09-30 14:00'</code>), <code>BETWEEN '2024-09-01' AND '2024-09-30'</code> 30 қыркүйектің түстен кейінгі жазбаларын өткізіп жібереді, себебі ол мәтін ретінде <code>'2024-09-30'</code>-дан үлкен. Мұндай жағдайда келесі айдың басымен шектеген сенімдірек:</p>
+<pre><code>WHERE order_date &gt;= '2024-09-01' AND order_date &lt; '2024-10-01'</code></pre>
+<div class="tip"><code>NOT IN</code> тізімінде NULL болса, шарт ешбір жолға орындалмайды. Тізімді қолмен жазғанда NULL қоспаңыз, ал ішкі сұраудан алсаңыз, <code>WHERE ... IS NOT NULL</code> қосыңыз.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: '«Электроника» санатындағы, бағасы 100 000-нан төмен тауарлардың атауы мен бағасын шығарыңыз.', starter: '', solution: "SELECT name, price FROM products WHERE category = 'Электроника' AND price < 100000;", hints: ['Екі шартты <code>AND</code> арқылы біріктіріңіз.'] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Алматы немесе Шымкенттен келген клиенттердің атауы мен қаласын шығарыңыз. <code>IN</code> қолданыңыз.', starter: '', solution: "SELECT name, city FROM customers WHERE city IN ('Алматы', 'Шымкент');", check: { mustInclude: ['IN'] }, hints: ["<code>WHERE city IN ('Алматы', 'Шымкент')</code>"] },
@@ -83,7 +111,18 @@ WHERE name LIKE '%ал%'     -- ішінде «ал» бар</code></pre>
 <p><code>NULL</code> — «белгісіз» немесе «бос». Ол нөл де, бос мәтін де емес. Сондықтан <code>= NULL</code> жұмыс істемейді, арнайы оператор керек:</p>
 <pre><code>WHERE city IS NULL
 WHERE city IS NOT NULL</code></pre>
-<div class="tip">Нақты деректе NULL өте жиі кездеседі. Талдау алдында қай бағандарда бос мән бар екенін әрқашан тексеріңіз.</div>`,
+<div class="tip">Нақты деректе NULL өте жиі кездеседі. Талдау алдында қай бағандарда бос мән бар екенін әрқашан тексеріңіз.</div>
+<h3>LIKE туралы қосымша</h3>
+<ul>
+<li>SQLite-та <code>LIKE</code> латын әріптері үшін регистрге сезімтал емес: <code>'a%'</code> «Apple»-ді де табады. Бірақ кириллицада бұл ереже жұмыс істемейді, «кітап» пен «Кітап» әртүрлі.</li>
+<li>Регистрге тәуелсіз іздеу үшін екі жағын бірдей түрге келтіріңіз: <code>WHERE LOWER(name) LIKE '%phone%'</code>.</li>
+<li>Басында <code>%</code> тұрған үлгі (<code>'%фон'</code>) индексті қолдана алмайды, үлкен кестеде баяу жұмыс істейді.</li>
+</ul>
+<h3>NULL арифметикада және салыстыруда</h3>
+<p>NULL-мен кез келген амал NULL береді: <code>5 + NULL</code> = NULL, <code>NULL = NULL</code> да TRUE емес, NULL. Сондықтан <code>WHERE city &lt;&gt; 'Алматы'</code> қаласы бос клиенттерді де көрсетпейді: олар үшін шарт белгісіз.</p>
+<p>Бос мәнді басқа мәнмен алмастыру үшін <code>COALESCE</code> бар:</p>
+<pre><code>SELECT name, COALESCE(city, 'белгісіз') AS city FROM customers;</code></pre>
+<div class="tip">Бағандағы бос мәндерді санаудың тез тәсілі: <code>SELECT COUNT(*) - COUNT(city) FROM customers</code>. <code>COUNT(city)</code> NULL-ды санамайды, айырма бос жолдар саны болады.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Атауы «Кітап» сөзінен басталатын тауарлардың барлық бағандарын шығарыңыз.', starter: '', solution: "SELECT * FROM products WHERE name LIKE 'Кітап%';", hints: ["<code>LIKE 'Кітап%'</code>"] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Қаласы көрсетілмеген клиенттердің <code>id</code> мен <code>name</code> бағандарын шығарыңыз.', starter: '', solution: 'SELECT id, name FROM customers WHERE city IS NULL;', hints: ['<code>= NULL</code> емес, <code>IS NULL</code> жазыңыз.'] }
@@ -99,7 +138,19 @@ ORDER BY price DESC;</code></pre>
 <p><code>DISTINCT</code> — қайталанатын жолдарды алып тастайды:</p>
 <pre><code>SELECT DISTINCT category FROM products;</code></pre>
 <h3>Сұрау бөліктерінің реті</h3>
-<pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre>`,
+<pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre>
+<h3>Бірнеше баған бойынша сұрыптау</h3>
+<p>ORDER BY-ға бірнеше бағанды үтірмен беруге болады. Бірінші баған тең болғанда екіншісі қаралады:</p>
+<pre><code>SELECT name, category, price FROM products
+ORDER BY category ASC, price DESC;</code></pre>
+<p>Нәтижеде санаттар әліпби бойынша, ал әр санаттың ішінде тауарлар қымбаттан арзанға қарай тұрады.</p>
+<h3>Жиі кездесетін қателер</h3>
+<ul>
+<li><b>ORDER BY-сыз LIMIT</b>: дерекқор жолдарды кез келген ретпен қайтара алады, сондықтан «алғашқы 5» әр жолы әртүрлі болуы мүмкін. Топ-N алғанда әрқашан ORDER BY жазыңыз.</li>
+<li><b>Тең мәндер</b>: 3-ші және 4-ші тауардың бағасы бірдей болса, LIMIT 3 біреуін кездейсоқ қалдырады. Тұрақты нәтиже үшін екінші сұрыптау бағанын (мысалы, <code>id</code>) қосыңыз.</li>
+<li><b>NULL реті</b>: SQLite-та NULL өсу ретінде бірінші, кему ретінде соңында тұрады. Басқа дерекқорларда керісінше болуы мүмкін.</li>
+</ul>
+<div class="tip"><code>DISTINCT</code> бүкіл жолға қолданылады: <code>SELECT DISTINCT city, signup_date</code> қала мен күннің бірегей жұптарын береді, тек қалаларды емес.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Ең қымбат 3 тауардың атауы мен бағасын, қымбаттан арзанға қарай шығарыңыз.', starter: '', solution: 'SELECT name, price FROM products ORDER BY price DESC LIMIT 3;', check: { ordered: true }, hints: ['<code>ORDER BY price DESC</code>, сосын <code>LIMIT 3</code>.'] },
         { type: 'sql', dataset: 'shop', xp: 10, prompt: 'Клиенттер тұратын қалалардың қайталанбайтын тізімін шығарыңыз. NULL мәнін қоспаңыз.', starter: '', solution: 'SELECT DISTINCT city FROM customers WHERE city IS NOT NULL;', hints: ['<code>SELECT DISTINCT city</code> + <code>WHERE city IS NOT NULL</code>.'] },
@@ -117,7 +168,21 @@ FROM products;</code></pre>
 <p>Кестеге де қысқа атау беруге болады. Бұл JOIN сабағында өте пайдалы болады:</p>
 <pre><code>SELECT p.name FROM products AS p;
 SELECT p.name FROM products p;   -- AS міндетті емес</code></pre>
-<div class="tip">SQLite-та бүтін санды бүтін санға бөлсеңіз, нәтиже де бүтін болады: <code>7 / 2 = 3</code>. Дәл нәтиже үшін біреуін бөлшекке айналдырыңыз: <code>7 / 2.0 = 3.5</code>.</div>`,
+<div class="tip">SQLite-та бүтін санды бүтін санға бөлсеңіз, нәтиже де бүтін болады: <code>7 / 2 = 3</code>. Дәл нәтиже үшін біреуін бөлшекке айналдырыңыз: <code>7 / 2.0 = 3.5</code>.</div>
+<h3>Есептелген бағандардың мысалдары</h3>
+<pre><code>SELECT name,
+       price,
+       ROUND(price * 0.85) AS after_discount,
+       price - 5000       AS minus_coupon
+FROM products;</code></pre>
+<p><code>ROUND(x)</code> бүтінге, <code>ROUND(x, 1)</code> бір ондық таңбаға дейін дөңгелектейді. Мәтінді <code>||</code> арқылы біріктіруге болады: <code>name || ' (' || category || ')'</code>.</p>
+<h3>Alias-ты қай жерде қолдануға болады?</h3>
+<p>Сұрау бөліктері жазылу ретімен орындалмайды: дерекқор алдымен <code>FROM</code> мен <code>WHERE</code>-ді, сосын <code>SELECT</code>-ті, соңында <code>ORDER BY</code>-ды орындайды. Сондықтан alias-ты ORDER BY-да қолдануға болады, ал WHERE-де болмайды:</p>
+<pre><code>SELECT name, price * 1.12 AS price_with_vat
+FROM products
+ORDER BY price_with_vat DESC;   -- дұрыс</code></pre>
+<p>WHERE-де есептеуді қайта жазу керек: <code>WHERE price * 1.12 &gt; 50000</code>.</p>
+<div class="tip">Alias-қа бос орынсыз, латын әріптерімен атау беріңіз: <code>price_with_vat</code>. Бос орын болса, атауды қос тырнақшаға алу керек, ал кейінгі сұрауларда бұл ыңғайсыз.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 10, prompt: '«Кеңсе» санатындағы тауарлар үшін атауын <code>product</code> деп, 10% жеңілдікпен бағасын <code>sale_price</code> деп шығарыңыз.', starter: '', solution: "SELECT name AS product, price * 0.9 AS sale_price FROM products WHERE category = 'Кеңсе';", hints: ['10% жеңілдік = <code>price * 0.9</code>.', 'Атау беру: <code>name AS product</code>.'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Әр тауардың атауын және бағасын мың теңгемен (<code>price_k</code>, бөлшек сан) шығарыңыз. Мысалы 6500 → 6.5.', starter: '', solution: 'SELECT name, price / 1000.0 AS price_k FROM products;', hints: ['Бүтін бөлуден сақтаныңыз: <code>1000.0</code>.'] }
@@ -486,7 +551,21 @@ WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id);</cod
 UPDATE products SET price = price * 1.1 WHERE category = 'Кітаптар';
 DELETE FROM orders WHERE status = 'cancelled';
 ALTER TABLE customers ADD COLUMN phone TEXT;</code></pre>
-<div class="tip">UPDATE мен DELETE-ті <b>WHERE-сіз</b> жазсаңыз, бүкіл кесте өзгереді. Жұмыста алдымен сол WHERE-пен SELECT жасап, қай жолдар өзгеретінін тексеріңіз.</div>`,
+<div class="tip">UPDATE мен DELETE-ті <b>WHERE-сіз</b> жазсаңыз, бүкіл кесте өзгереді. Жұмыста алдымен сол WHERE-пен SELECT жасап, қай жолдар өзгеретінін тексеріңіз.</div>
+<h3>Деректі өзгерткенде қауіпсіздік</h3>
+<ol>
+<li>Өзгертуден бұрын сол <code>WHERE</code>-пен <code>SELECT COUNT(*)</code> жасаңыз: қанша жол өзгеретінін біліңіз.</li>
+<li>Командаларды транзакцияға орап, нәтижені тексергеннен кейін ғана <code>COMMIT</code> жасаңыз (келесі сабақ).</li>
+<li>Өндірістік дерекқорда (production) деректі тікелей өзгертпеңіз: аналитикке әдетте тек оқу рұқсаты беріледі.</li>
+</ol>
+<h3>DROP, DELETE және TRUNCATE айырмасы</h3>
+<table>
+<tr><th>Команда</th><th>Не істейді</th></tr>
+<tr><td><code>DELETE FROM t WHERE ...</code></td><td>Шартқа сай жолдарды өшіреді, кесте қалады</td></tr>
+<tr><td><code>DELETE FROM t</code> / <code>TRUNCATE t</code></td><td>Барлық жолды өшіреді, құрылым қалады (SQLite-та TRUNCATE жоқ)</td></tr>
+<tr><td><code>DROP TABLE t</code></td><td>Кестені құрылымымен бірге толық жояды</td></tr>
+</table>
+<div class="tip">Бірнеше жолды бір INSERT-пен қосуға болады: <code>INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y');</code>. Бұл әр жолға бөлек команда жазғаннан жылдам.</div>`,
       exercises: [
         { type: 'sql', dataset: 'empty', xp: 20, prompt: '<code>courses</code> кестесін құрыңыз: <code>id</code> INTEGER PRIMARY KEY, <code>title</code> TEXT NOT NULL, <code>hours</code> INTEGER. Сосын екі жол қосыңыз: (1, \'SQL\', 40) және (2, \'Python\', 50).', starter: 'CREATE TABLE courses (\n  \n);\n\nINSERT INTO courses VALUES ', solution: "CREATE TABLE courses (id INTEGER PRIMARY KEY, title TEXT NOT NULL, hours INTEGER); INSERT INTO courses VALUES (1, 'SQL', 40), (2, 'Python', 50);", check: { after: 'SELECT * FROM courses ORDER BY id;', ordered: true }, hints: ['Бірнеше жолды бір INSERT-пен қосуға болады: <code>VALUES (...), (...)</code>.'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: '«Кітаптар» санатындағы тауарлардың бағасын 10%-ға көтеріңіз.', starter: '', solution: "UPDATE products SET price = price * 1.1 WHERE category = 'Кітаптар';", check: { after: 'SELECT id, price FROM products ORDER BY id;', ordered: true }, hints: ["<code>UPDATE products SET price = price * 1.1 WHERE ...</code>"] },
@@ -514,7 +593,18 @@ SELECT * FROM big_orders;</code></pre>
 <p>Серверлік дерекқорларда (PostgreSQL, MySQL) кім не істей алатынын <code>GRANT</code> және <code>REVOKE</code> басқарады:</p>
 <pre><code>GRANT SELECT ON orders TO analyst;
 REVOKE DELETE ON orders FROM analyst;</code></pre>
-<p>SQLite файлдық дерекқор болғандықтан, бұл командалар мұнда жоқ. Аналитикке әдетте тек <code>SELECT</code> рұқсаты беріледі.</p>`,
+<p>SQLite файлдық дерекқор болғандықтан, бұл командалар мұнда жоқ. Аналитикке әдетте тек <code>SELECT</code> рұқсаты беріледі.</p>
+<h3>ACID: транзакцияның төрт кепілдігі</h3>
+<ul>
+<li><b>Atomicity</b> (бөлінбейтіндік): транзакциядағы командалар не бәрі орындалады, не ешқайсысы.</li>
+<li><b>Consistency</b> (тұтастық): транзакциядан кейін дерек барлық шектеулерге (constraints) сай болады.</li>
+<li><b>Isolation</b> (оқшаулық): қатар жүрген транзакциялар бір-біріне кедергі келтірмейді.</li>
+<li><b>Durability</b> (тұрақтылық): COMMIT жасалған өзгеріс сервер өшіп қалса да сақталады.</li>
+</ul>
+<h3>VIEW қашан пайдалы?</h3>
+<p>Бір күрделі сұрауды (бірнеше JOIN, сүзгі) әріптестер жиі қолданатын болса, оны VIEW етіп сақтаңыз. Сонда бәрі бір логиканы қолданады, ал ережені өзгерту керек болса, тек VIEW-ді қайта құрасыз. Мысалы, «белсенді клиент» анықтамасын бір VIEW-ге жазсаңыз, әр есепте ол бірдей болады.</p>
+<p>VIEW-ді жою: <code>DROP VIEW big_orders;</code>. Бұл астындағы кестеге әсер етпейді.</p>
+<div class="tip">VIEW әр оқылған сайын сұрауды қайта орындайды. Ауыр есептеулер үшін кейбір дерекқорларда <b>materialized view</b> бар: ол нәтижені сақтап, кесте сияқты жылдам оқылады, бірақ оны мезгіл-мезгіл жаңарту керек.</div>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 15, prompt: '<code>delivered_orders</code> атты VIEW құрыңыз: <code>orders</code> кестесінен тек <code>delivered</code> статусты жолдар (барлық бағандар).', starter: '', solution: "CREATE VIEW delivered_orders AS SELECT * FROM orders WHERE status = 'delivered';", check: { after: 'SELECT * FROM delivered_orders ORDER BY id;', ordered: true }, hints: ['<code>CREATE VIEW delivered_orders AS SELECT ...</code>'] },
         { type: 'sql', dataset: 'shop', xp: 15, prompt: 'Транзакция бастап, барлық тауардың бағасын 0-ге теңестіріңіз, сосын <b>ROLLBACK</b> жасап, бағалардың қосындысын шығарыңыз. Қосынды бастапқыдай болуы керек.', starter: 'BEGIN;\nUPDATE products SET price = 0;\n\nSELECT SUM(price) FROM products;', solution: 'BEGIN; UPDATE products SET price = 0; ROLLBACK; SELECT SUM(price) FROM products;', check: { mustInclude: ['ROLLBACK'] }, hints: ['UPDATE-тен кейін <code>ROLLBACK;</code> жазыңыз.'] },

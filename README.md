@@ -64,12 +64,14 @@ node tests/verify-exercises.js   # BASE_URL, CHROMIUM_PATH айнымалыла�
 
 Бұлтсыз прогресс браузердің localStorage-інде сақталады. Аккаунт, синхрондау және көшбасшылар кестесі үшін:
 
-1. Supabase жобасының SQL Editor-ында алдымен `supabase/schema.sql`, сосын `supabase/leaderboard.sql`, `supabase/feedback.sql`, `supabase/analytics.sql` және `supabase/account.sql` (аккаунтты жою) іске қосыңыз. XP шегі 100 000; ескі базада оны көтеру үшін `supabase/leaderboard.sql`-ды қайта іске қосу жеткілікті. Пікірлер Table Editor → `feedback` кестесінде, оқиғалар мен браузер қателері `events` және `client_errors` кестелерінде көрінеді (пайдалы сұраулар файлдың соңында).
+1. Supabase жобасының SQL Editor-ында файлдарды осы ретпен іске қосыңыз (бәрін қайта іске қосуға болады):
+   `schema.sql` → `leaderboard.sql` → `analytics.sql` → `feedback.sql` → `account.sql` (аккаунтты жою) → `admin.sql` (иесінің дашборды `#admin`) → `social.sql` (жария портфолио `#u/<id>`, оқытушы сыныптары `#teach`, `#join/<код>`) → `xp_guard.sql` (XP-ды сервер жақта тексеру) → `xp_catalog.sql` (әр тапсырманың XP-сы; `python3 build.py` оны қайта жасайды, жаңа тапсырма қосылғанда қайта іске қосыңыз).
+   Дашбордты ашу үшін өзіңізді бір рет admin етіңіз: `insert into public.admins (user_id) select id from auth.users where email = '<сіздің email>' on conflict do nothing;` XP шегі 100 000; ескі базада оны көтеру үшін `supabase/leaderboard.sql`-ды қайта іске қосу жеткілікті. Пікірлер Table Editor → `feedback` кестесінде, оқиғалар мен браузер қателері `events` және `client_errors` кестелерінде көрінеді (пайдалы сұраулар файлдың соңында).
 2. Authentication → URL Configuration: Site URL және Redirect URLs ішіне `https://olzhaa.github.io/datajol/**` қосыңыз.
 3. `js/config.js` ішінде Supabase URL/кілтін және `cloudHosts` тізімін (бұлт қосылатын домендер) тексеріңіз.
 
 ## Жариялау
 
-GitHub Pages: Settings → Pages → Deploy from a branch, `main` / `(root)`. `404.html` белгісіз беттер үшін қолданылады.
+GitHub Pages: Settings → Pages → Build and deployment → Source: **GitHub Actions** (`.github/workflows/pages.yml` әр push-та `build.py`-ды іске қосып, сайтты жариялайды). `404.html` белгісіз беттер үшін қолданылады.
 
 Google Search Console-ға сайтты қосып, `https://olzhaa.github.io/datajol/sitemap.xml` картасын жіберіңіз.

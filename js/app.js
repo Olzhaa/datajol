@@ -99,7 +99,9 @@
     if (r.view === 'course') return '#course/' + r.course;
     if (r.view === 'lesson') return `#lesson/${r.mod}/${r.li}`;
     if (r.view === 'cert') return r.uid ? `#cert/${r.uid}/${r.mod}` : '#cert/' + r.mod;
-    return ['map', 'diag', 'profile', 'board', 'catalog'].includes(r.view) ? '#' + r.view : '';
+    if (r.view === 'u') return '#u/' + r.uid;
+    if (r.view === 'join') return '#join/' + r.code;
+    return ['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(r.view) ? '#' + r.view : '';
   }
   function parseHash(h) {
     h = (h || '').replace(/^#/, '');
@@ -109,7 +111,9 @@
     if ((m = h.match(/^lesson\/([\w-]+)\/(\d+)$/))) return { view: 'lesson', mod: m[1], li: Number(m[2]) };
     if ((m = h.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/))) return { view: 'cert', uid: m[1], mod: m[2] };
     if ((m = h.match(/^cert\/(L\d)$/))) return { view: 'cert', mod: m[1] };
-    if (['map', 'diag', 'profile', 'board', 'catalog'].includes(h)) return { view: h };
+    if ((m = h.match(/^u\/([0-9a-f-]{36})$/))) return { view: 'u', uid: m[1] };
+    if ((m = h.match(/^join\/([A-Za-z2-9]{6})$/))) return { view: 'join', code: m[1].toUpperCase() };
+    if (['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(h)) return { view: h };
     return null;
   }
   function go(view, params = {}) {
@@ -169,16 +173,18 @@
     const b = e.target.closest('[data-go]');
     if (!b) return;
     e.preventDefault();
-    go(b.dataset.go, { mod: b.dataset.mod, course: b.dataset.course, li: b.dataset.li != null ? Number(b.dataset.li) : undefined });
+    go(b.dataset.go, { mod: b.dataset.mod, course: b.dataset.course, li: b.dataset.li != null ? Number(b.dataset.li) : undefined,
+      ei: b.dataset.ei != null ? Number(b.dataset.ei) : undefined, uid: b.dataset.uid, code: b.dataset.code });
   });
 
-  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат' };
+  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат', admin: 'Статистика', u: 'Портфолио', teach: 'Сыныптар', join: 'Сыныпқа қосылу' };
   function render(moveFocus) {
-    if (!S.current() && route.view !== 'cert' && route.view !== 'auth') { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
+    if (!S.current() && !['cert', 'auth', 'u'].includes(route.view)) { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
     topbar();
-    const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert };
+    const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert,
+      admin: () => SO.viewAdmin(), u: () => SO.viewPublic(), teach: () => SO.viewTeach(), join: () => SO.viewJoin() };
     (views[route.view] || viewDash)();
-    const seen = JSON.stringify(route.mod && route.view !== 'cert' ? { v: route.view, mod: route.mod, li: route.li } : { v: route.view });
+    const seen = JSON.stringify(route.mod && !['cert', 'admin'].includes(route.view) ? { v: route.view, mod: route.mod, li: route.li } : { v: route.view });
     if (seen !== lastView) { lastView = seen; track('view', JSON.parse(seen)); }   // a re-render of the same screen is not a new view
     const m = route.mod && DJ.findModule(route.mod);
     const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
@@ -482,7 +488,7 @@
     const tile = ({ c, gi, cs }) => courseTile(c, gi, cs);
     const finished = open.filter(x => x.cs.done === x.cs.total).length;
     $('#app').innerHTML = `${hero}
-      ${p.xp || !nx ? `<div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>` : firstGoal(nx)}
+      ${p.xp || !nx ? `<div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div><div class="dash-grid">${SO.dailyCard()}${SO.leagueCard()}</div>` : firstGoal(nx)}
       <div class="section-title"><h2>${mine.length ? 'Менің курстарым' : 'Неден бастаймыз?'}</h2><button class="btn ghost" data-go="catalog">Барлық курстар (${open.length}) →</button></div>
       <section class="world-group"><div class="worlds">${pick.map(tile).join('')}</div></section>
       ${finished ? `<p class="muted">Аяқталған курстар: ${finished}. Барлығы «Курстар» бетінде.</p>` : ''}`;
@@ -519,6 +525,22 @@
   const LS = DJ.lessonScreen({ $, $$, esc, S, G, ICON, LEVELS, celebrate, fbFoot, go, kkOnly, loadEditor, render, toast, topbar, track,
     get route() { return route; }, get noEditor() { return noEditor; } });
   const viewLesson = LS.viewLesson;
+  // The first exercise not done yet in the next lesson (exams skipped): the daily challenge for a new learner.
+  DJ.nextTask = p => {
+    const nx = nextLesson(p);
+    if (!nx) return null;
+    for (let li = nx.li; li < nx.mod.lessons.length; li++) {
+      const l = nx.mod.lessons[li];
+      if (l.gate) continue;
+      const ei = (l.exercises || []).findIndex((_, i) => !p.done[l.id + '#' + i]);
+      if (ei >= 0) return { id: l.id + '#' + ei, mod: nx.mod.id, li, ei };
+    }
+    return null;
+  };
+
+  // ---------- admin, portfolio, classes, daily challenge, league (js/social.js) ----------
+  let admin = null;   // null until asked once per session
+  const SO = DJ.socialScreens({ $, $$, esc, S, ICON, go, toast, track, certsEarned: p => certsEarned(p), render, get route() { return route; } });
 
   // ---------- map ----------
   // A winding trail of module nodes, one region per phase. The connecting path is drawn after layout.
@@ -758,7 +780,7 @@
           ${verified ? `<p class="note" style="margin:0">Бұл сертификат оқушының Tolqyn аккаунтындағы прогреске сүйенеді.</p>` : ''}
         </article>
         <div class="actions noprint">
-          ${link ? `<button class="btn" id="cert-copy">Сілтемені көшіру</button>` : ''}
+          ${link ? `<button class="btn" id="cert-copy">Сілтемені көшіру</button><a class="btn ghost" target="_blank" rel="noopener" href="https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent('Tolqyn ' + c.level.id + ' ' + c.level.name)}&organizationName=Tolqyn&issueYear=${esc(c.date.slice(0, 4))}&issueMonth=${Number(c.date.slice(5, 7)) || ''}&certUrl=${encodeURIComponent(link)}">LinkedIn профиліне қосу</a>` : ''}
           ${inFrame ? '' : `<button class="btn ghost" id="cert-print">PDF ретінде сақтау</button>`}
           ${S.current() ? `<button class="btn ghost" data-go="profile">Профильге оралу</button>` : ''}
         </div>
@@ -794,6 +816,8 @@
       </div>
       <div class="card"><h3 style="margin-bottom:10px">Мансап деңгейі</h3><div style="display:grid;gap:4px">${DJ.careerLevels.map((l, i) => { const ci = DJ.careerLevels.findIndex(x => x.id === career.id); return `<div style="display:flex;gap:12px;font-size:.92rem;${i === ci ? 'color:var(--accent);font-weight:600' : i < ci ? '' : 'color:var(--ink-2)'}"><span style="font-family:var(--font-mono);width:28px">${l.id}</span><span>${esc(l.name)}</span></div>`; }).join('')}</div></div>
       <div class="card"><h3 style="margin-bottom:10px">Сертификаттар</h3>${(() => { const cs = certsEarned(p); return cs.length ? `<div style="display:grid;gap:8px">${cs.map(l => `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b>${esc(l.id)}</b> ${esc(l.name)}</span><button class="btn ghost sm" data-go="cert" data-mod="${l.id}">Сертификатты ашу</button></div>`).join('')}</div>` : `<p class="note" style="margin:0">Мансап деңгейінің барлық модулін (емтихандарымен) аяқтағанда сертификат беріледі. Алғашқысы: L1 Data Literate (M0.1 және M0.2).</p>`; })()}</div>
+      ${SO.profileCards(p)}
+      <div id="admin-link"></div>
       <div class="card"><h3 style="margin-bottom:12px">Белгілер</h3><div style="display:grid;gap:10px">${S.BADGES.map(b => `<div style="display:flex;gap:12px;align-items:center" class="bdg-row"><div class="bdg ${p.badges[b.id] ? 'got' : ''}"><div class="hex" style="width:40px;height:40px">${ICON[b.icon]}</div></div><div><b>${esc(b.name)}</b><div class="note">${esc(b.desc)}${p.badges[b.id] ? ' · ' + p.badges[b.id] : ''}</div></div></div>`).join('')}</div></div>
       <div class="card" style="display:grid;gap:10px"><h3>Тақырып</h3>
         <div class="tabs" role="tablist">${[['system', 'Жүйелік'], ['light', 'Жарық'], ['dark', 'Қараңғы']].map(([k, n]) => `<button role="tab" data-theme-set="${k}" aria-selected="${theme === k}">${n}</button>`).join('')}</div>
@@ -808,6 +832,10 @@
       </div>
     </div>`;
     $$('[data-theme-set]').forEach(b => b.onclick = () => { const t = b.dataset.themeSet; lsSet('dj.theme', t); applyTheme(t); viewProfile(); });
+    SO.profileWire();
+    // The owner's dashboard link, shown only to accounts listed in public.admins (supabase/admin.sql).
+    const showAdmin = () => { const a = $('#admin-link'); if (a && admin) a.innerHTML = `<div class="card" style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b>Сайт иесі</b><span class="note" style="display:block">Воронка, retention, сабақтар, пікірлер мен қателер</span></span><button class="btn ghost" data-go="admin">Статистиканы ашу</button></div>`; };
+    if (DJ.cloud && DJ.cloud.user) { if (admin === null) DJ.cloud.call('is_admin').then(v => { admin = !!v; showAdmin(); }).catch(() => { admin = false; }); else showAdmin(); }
     $('#rename').onsubmit = e => { e.preventDefault(); const v = e.target.nm.value.trim(); if (v) { S.rename(v); topbar(); toast('Аты сақталды', 'star'); viewProfile(); } };
     const sp = $('#set-pw');
     if (sp) sp.onsubmit = async e => {

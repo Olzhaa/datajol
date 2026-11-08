@@ -1169,6 +1169,42 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 .lp-menu button[aria-checked="true"] { border-left-color: var(--b0); background: var(--surface-2); }
 .lp-menu button[aria-checked="true"] b { color: var(--ink); }
 
+/* ================= daily challenge, league, admin, portfolio, classes (js/social.js) ================= */
+.daily-card, .league-card { border-left: 6px solid var(--b2); box-shadow: var(--bevel-sm); }
+.daily-card .eyebrow svg, .league-card .eyebrow svg { width: 14px; height: 14px; vertical-align: -2px; }
+.daily-card.is-done { border-left-color: var(--b0); }
+.daily-card.is-done h3 { color: var(--ink-2); }
+.league-card { --lg: #C98A4B; border-left-color: var(--lg); }
+.league-card.lg-silver { --lg: #C7CEDC; } .league-card.lg-gold { --lg: var(--b2); } .league-card.lg-diamond { --lg: var(--b1); }
+.league-row { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+.league-gem { width: 34px; height: 34px; flex: none; background: var(--lg); transform: rotate(45deg) scale(.78); box-shadow: var(--bevel-sm); border-radius: 3px; }
+.linkbtn { margin-top: 8px; }
+.admin .tabs { max-width: 320px; }
+#adm, #teach-body { display: grid; gap: 16px; }
+.funnel { display: grid; gap: 6px; }
+.fn-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) 3fr 48px 44px; gap: 10px; align-items: center; font-size: .9rem; }
+.fn-row i { display: block; height: 14px; min-width: 2px; background: var(--b0); box-shadow: var(--bevel-sm); }
+.fn-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.adm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.mini-bars { display: flex; align-items: flex-end; gap: 2px; height: 70px; margin-top: 6px; border-bottom: 2px solid var(--line); }
+.mini-bars span { flex: 1; background: var(--b1); min-width: 2px; }
+.tbl-wrap { overflow-x: auto; margin-top: 8px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tbl th, .tbl td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl th { color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.tbl tr.warn td { background: color-mix(in srgb, var(--b5) 14%, transparent); }
+.fb-item { border-left: 4px solid var(--b4); padding: 8px 12px; margin-top: 10px; background: var(--surface-2); }
+.fb-item.seen { border-left-color: var(--b2); } .fb-item.done { border-left-color: var(--b0); opacity: .75; }
+.pf-head { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.pf-courses, .pf-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.pf-badges svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; }
+.pf-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 10px; align-items: center; }
+.tbl .pf-row { grid-template-columns: 90px auto; }
+.cls-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.cls-code { display: grid; text-align: right; }
+.cls-code b { font: 1.05rem var(--font-pixel); letter-spacing: .12em; color: var(--b2); }
+@media (max-width: 560px) { .fn-row { grid-template-columns: minmax(90px, 1fr) 2fr 40px; } .fn-row .note { display: none; } .cls-code { text-align: left; } }
+
 </style>
 
 <header class="topbar"><div class="wrap" id="topbar"></div></header>
@@ -1217,4 +1253,5 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 <script src="js/sheet.js"></script>
 <script src="js/game.js"></script>
 <script src="js/lesson.js"></script>
+<script src="js/social.js"></script>
 <script src="js/app.js"></script>

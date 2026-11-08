@@ -251,17 +251,26 @@
         <button class="btn" type="submit" id="auth-submit">Тіркеліп, бастау</button>
         <p class="note">Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Сервер нұсқасында олар бұлтқа көшеді.</p>
       </form>
-      ${DJ.cloud && DJ.cloud.enabled ? `<form class="card auth-card" id="cloud-form" novalidate>
-        <h3 style="margin:0">Кіру немесе тіркелу</h3>
+      ${DJ.cloud && DJ.cloud.enabled ? `<form class="card auth-card" id="signup-form" novalidate hidden>
+        <h3 style="margin:0">Тіркелу</h3>
+        <label class="field">Аты-жөніңіз<input type="text" name="fullname" autocomplete="name" placeholder="Айгерім Серікова" maxlength="40"></label>
+        <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
+        <label class="field">Пароль<input type="password" name="spw" autocomplete="new-password" minlength="8" placeholder="кемінде 8 таңба"></label>
+        <div class="err" id="signup-err" role="alert"></div>
+        <button class="btn" type="submit" id="s-submit">Тіркелу</button>
+        <p class="note">Email-ге растау хаты келеді. Сілтемені бір рет басқан соң, email мен парольмен кіресіз. Прогресс бұлтта сақталады.</p>
+        <button type="button" class="linkbtn" id="to-login">Аккаунтыңыз бар ма? Кіру</button>
+      </form>
+      <form class="card auth-card" id="cloud-form" novalidate>
+        <h3 style="margin:0">Кіру</h3>
         <button type="button" class="btn" id="g-login">Google арқылы кіру</button>
         <div class="note" style="text-align:center">немесе email мен пароль</div>
         <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
         <label class="field">Пароль<input type="password" name="cpw" autocomplete="current-password" minlength="8"></label>
         <div class="err" id="cloud-err" role="alert"></div>
         <button class="btn" type="submit" id="c-login">Кіру</button>
-        <button class="btn ghost" type="button" id="c-signup">Тіркелу</button>
+        <button class="btn ghost" type="button" id="c-signup">Аккаунтыңыз жоқ па? Тіркелу</button>
         <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap"><button type="button" class="linkbtn" id="c-forgot">Парольді ұмыттым</button><button type="button" class="linkbtn" id="c-link">Парольсіз, сілтемемен кіру</button></div>
-        <p class="note">Тіркелгенде email-ді бір рет растайсыз, кейін email мен парольмен бірден кіресіз. Прогресс бұлтта сақталады.</p>
         <button type="button" class="linkbtn" id="local-mode">Аккаунтсыз жалғастыру (прогресс осы браузерде)</button>
       </form>` : ''}
     </section>`;
@@ -286,7 +295,13 @@
       $('#g-login').onclick = async () => { track('login_start', { via: 'google', guest: S.isGuest() }); try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
       const form = $('#cloud-form');
       const sent = (email, what) => { form.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне ${what}</p>`; };
-      const getEmail = () => { const v = form.email.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { cerr.textContent = 'Email дұрыс емес.'; return null; } return v; };
+      const getEmail = () => {
+        const v = form.email.value.trim();
+        // A bare login name (often filled in by the browser's password manager) is not an email: say what to do instead.
+        if (v && !v.includes('@')) { cerr.textContent = 'Мұнда логин емес, email жазыңыз, мысалы aigerim@mail.kz. Логин мен парольмен кіру үшін төмендегі «Аккаунтсыз жалғастыру» сілтемесін басыңыз.'; form.email.focus(); return null; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { cerr.textContent = 'Email дұрыс емес.'; form.email.focus(); return null; }
+        return v;
+      };
       const getPw = () => { const v = form.cpw.value; if (v.length < 8) { cerr.textContent = 'Пароль кемінде 8 таңба болсын.'; return null; } return v; };
       // Runs one auth call with the buttons locked; returns the result, or null after showing the error.
       const busy = async fn => {
@@ -301,12 +316,28 @@
         const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
         if (await busy(() => C.password(email, pw))) { track('login', { via: 'email' }); afterAuth(); }
       };
-      $('#c-signup').onclick = async () => {
-        const email = getEmail(); if (!email) return; const pw = getPw(); if (!pw) return;
-        const guest = S.isGuest(), r = await busy(() => C.signUp(email, pw)); if (!r) return;
-        track('signup', { via: 'email', guest });
-        if (r.data && r.data.session) afterAuth();
-        else sent(email, 'тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.');
+      // Sign-up has its own card: name, email and password. The sign-in card only signs in.
+      const sform = $('#signup-form'), serr = $('#signup-err');
+      const showSignup = on => {
+        sform.hidden = !on; form.hidden = on; cerr.textContent = ''; serr.textContent = '';
+        if (on && form.email.value.includes('@')) sform.email.value = form.email.value.trim();
+        (on ? sform.fullname : form.email).focus();
+      };
+      $('#c-signup').onclick = () => showSignup(true);
+      $('#to-login').onclick = () => showSignup(false);
+      sform.onsubmit = async (e) => {
+        e.preventDefault();
+        const name = sform.fullname.value.trim().replace(/\s+/g, ' '), email = sform.email.value.trim(), pw = sform.spw.value;
+        if (name.length < 2) { serr.textContent = 'Аты-жөніңізді жазыңыз.'; sform.fullname.focus(); return; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { serr.textContent = 'Email дұрыс емес.'; sform.email.focus(); return; }
+        if (pw.length < 8) { serr.textContent = 'Пароль кемінде 8 таңба болсын.'; sform.spw.focus(); return; }
+        const bs = $$('button', sform); bs.forEach(b => b.disabled = true); serr.textContent = '';
+        let r; try { r = await C.signUp(email, pw, name); } catch (er) { r = { error: er }; }
+        bs.forEach(b => b.disabled = false);
+        if (r && r.error) { serr.textContent = C.explain(r.error.message); return; }
+        track('signup', { via: 'email', guest: S.isGuest() });
+        if (r && r.data && r.data.session) { afterAuth(); return; }
+        sform.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.</p>`;
       };
       $('#c-forgot').onclick = async () => {
         const email = getEmail(); if (!email) return;
@@ -393,7 +424,7 @@
   }
 
   // ---------- dashboard ----------
-  const COURSE_ICON = { python: 'Py', 'python-2': 'Py2', sql: 'SQL', pandas: 'pd', stats: 'σ', viz: 'BI', ml: 'ML', dl: 'DL', genai: 'AI', dsa: '{ }', java: 'J', cpp: 'C++', swe: 'SE', git: 'Git', excel: 'fx', deploy: 'Dkr', mlops: 'Ops', dataeng: 'ETL', basics: '01', business: '$', capstones: 'PRJ', jobs: 'CV' };
+  const COURSE_ICON = { python: 'Py', 'python-2': 'Py2', sql: 'SQL', pandas: 'pd', stats: 'σ', viz: 'BI', ml: 'ML', dl: 'DL', genai: 'AI', aieng: 'AIE', backend: 'API', dsa: '{ }', java: 'J', cpp: 'C++', swe: 'SE', git: 'Git', excel: 'fx', deploy: 'Dkr', mlops: 'Ops', dataeng: 'ETL', basics: '01', business: '$', capstones: 'PRJ', jobs: 'CV' };
   function courseGlyph(c) { return COURSE_ICON[c.id] || (DJ.i18n ? DJ.i18n.tr(c.title) : c.title).replace(/[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
   function questCard(p) {
     const qs = S.quests(p);

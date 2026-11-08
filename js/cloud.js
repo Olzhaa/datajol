@@ -129,8 +129,10 @@
       if (!r.error && r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
       return r;
     },
-    async signUp(address, pw) {
-      const r = await (await this.need()).auth.signUp({ email: address, password: pw, options: { emailRedirectTo: this.redirect() } });
+    async signUp(address, pw, name) {
+      const options = { emailRedirectTo: this.redirect() };
+      if (name) options.data = { full_name: String(name).slice(0, 40) };
+      const r = await (await this.need()).auth.signUp({ email: address, password: pw, options });
       if (r.error) return r;
       // Supabase answers a sign-up for an existing email with a user that has no identities (and sends nothing).
       if (r.data && r.data.user && Array.isArray(r.data.user.identities) && !r.data.user.identities.length) return { error: { message: 'User already registered' } };

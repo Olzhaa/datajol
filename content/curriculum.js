@@ -50,7 +50,8 @@ DJ.phases = [
       { id: 'm6-4', code: 'M6.4', title: 'Deep Learning Intro', desc: 'PyTorch, training loop, CNN', hours: '50–70' },
       { id: 'm6-5', code: 'M6.5', title: 'Cloud & Data Eng Basics', desc: 'Warehouse, ETL, Spark/dbt шолуы', hours: '20–30' },
       { id: 'm6-6', code: 'M6.6', title: 'ML Capstone', desc: 'End-to-end ML сервисі', hours: '40–60' },
-      { id: 'm6-g', code: 'GenAI', title: 'GenAI Specialization', desc: 'LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps', hours: '40–60' }
+      { id: 'm6-g', code: 'GenAI', title: 'GenAI Specialization', desc: 'LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps', hours: '40–60' },
+      { id: 'm6-ai', code: 'AIE', title: 'AI Engineering', desc: 'Генерацияны басқару, RAG сапасы, ReAct агент, guardrails, LLM сервисі, бағалау, fine-tuning', hours: '40–60' }
     ] },
   { id: 'p7', n: 7, title: 'Career & Portfolio', kz: 'Мансап', goal: 'Жұмысқа өтініш беруге дайын', level: 'Job-ready',
     modules: [
@@ -65,7 +66,9 @@ DJ.phases.push(
       { id: 'py-2', code: 'PY2', title: 'Intermediate Python', desc: 'OOP, генераторлар, декораторлар, файлдар, рекурсия', hours: '20–30' },
       { id: 'java-1', code: 'JV1', title: 'Java', desc: 'Синтаксис, класстар, коллекциялар, қателер', hours: '30–40' },
       { id: 'cpp-1', code: 'CP1', title: 'C++', desc: 'Синтаксис, функциялар, vector, pointer, класстар', hours: '30–40' },
-      { id: 'dsa-1', code: 'DSA', title: 'Data Structures & Algorithms', desc: 'Big-O, іздеу, сұрыптау, рекурсия, stack/queue, hash, ағаш, граф, DP', hours: '40–60' }
+      { id: 'dsa-1', code: 'DSA', title: 'Data Structures & Algorithms', desc: 'Big-O, іздеу, сұрыптау, рекурсия, stack/queue, hash, ағаш, граф, DP', hours: '40–60' },
+      { id: 'dsa-2', code: 'DSA2', title: 'Advanced Algorithms', desc: 'Sliding window, hash table ішінен, heapsort, AVL, union-find, Dijkstra, MST, greedy, DP, KMP, trie', hours: '40–60' },
+      { id: 'py-3', code: 'PY3', title: 'Python Backend', desc: 'HTTP, REST, роутинг, валидация, ORM, аутентификация, тесттер, regex, async, деплой', hours: '35–50' }
     ] }
 );
 
@@ -77,9 +80,9 @@ DJ.paths = [
 
 // Map track for programmers (not data): the same modules, grouped as a developer path.
 DJ.devTrack = [
-  { kz: 'Python негізі', goal: 'Бағдарламалаудың алғашқы қадамдары', mods: ['m2-1', 'py-2'] },
+  { kz: 'Python негізі', goal: 'Бағдарламалаудың алғашқы қадамдары', mods: ['m2-1', 'py-2', 'py-3'] },
   { kz: 'Екінші тіл', goal: 'Типтері қатаң тілдер: Java немесе C++', mods: ['java-1', 'cpp-1'] },
-  { kz: 'Алгоритмдер', goal: 'Есеп шығару және техникалық сұхбат', mods: ['dsa-1'] },
+  { kz: 'Алгоритмдер', goal: 'Есеп шығару және техникалық сұхбат', mods: ['dsa-1', 'dsa-2'] },
   { kz: 'Инженерлік құралдар', goal: 'Git, тесттер, API және деплой', mods: ['m2-3', 'm6-1', 'm6-2'] },
   { kz: 'Мансап', goal: 'Портфолио, резюме және сұхбат', mods: ['m7-1'] }
 ];

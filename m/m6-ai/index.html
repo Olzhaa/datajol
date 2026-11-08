@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Engineering қазақша: RAG сапасы, ReAct агент, guardrails, LLM сервисі — AIE AI Engineering | Tolqyn</title>
+<meta name="description" content="GenAI модулінде LLM қолданбасының негізгі бөліктерін құрдыңыз: prompt, RAG, function calling, агент. Енді инженер көзімен тереңірек қараймыз: модель token-ді…">
+<link rel="canonical" href="https://olzhaa.github.io/datajol/m/m6-ai/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI Engineering қазақша: RAG сапасы, ReAct агент, guardrails, LLM сервисі — AIE AI Engineering | Tolqyn">
+<meta property="og:description" content="GenAI модулінде LLM қолданбасының негізгі бөліктерін құрдыңыз: prompt, RAG, function calling, агент. Енді инженер көзімен тереңірек қараймыз: модель token-ді…">
+<meta property="og:url" content="https://olzhaa.github.io/datajol/m/m6-ai/">
+<meta property="og:locale" content="kk_KZ">
+<meta property="og:image" content="https://olzhaa.github.io/datajol/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F766E">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"AIE AI Engineering","description":"GenAI модулінде LLM қолданбасының негізгі бөліктерін құрдыңыз: prompt, RAG, function calling, агент. Енді инженер көзімен тереңірек қараймыз: модель token-ді…","url":"https://olzhaa.github.io/datajol/m/m6-ai/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT40H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 6: ML инженерия","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"AIE AI Engineering","item":"https://olzhaa.github.io/datajol/m/m6-ai/"}]}]</script>
+<style>
+/* Block theme: a dark playfield grid, bevelled square blocks in four piece colours, pixel type for the HUD. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #100E2B; --surface: #1A1740; --surface-2: #242056; --surface-3: #2E2A6B;
+  --ink: #F4F2FF; --ink-2: #B9B5E0;
+  --line: #312C74; --line-strong: #5B56A8; --edge: #07061A;
+  --accent: #C8F04A; --accent-press: #B2DA34; --accent-ink: #14200A; --accent-soft: #2B3A1F;
+  --link: #8FE3F2; --sky: #47D1E8;
+  --gold: #FFC83D; --gold-soft: #3A2F14; --flame: #FF8A4C; --rose: #FF6B81;
+  --ok: #6BE594; --ok-ink: #062012; --ok-soft: #173A2A;
+  --bad: #FF8597; --bad-soft: #3A1A2A;
+  --code-bg: #0B0A1F; --code-ink: #E8E6FF; --code-key: #8FE3F2; --code-str: #FFD873; --code-num: #FFAE7C; --code-com: #8A86B8;
+  --ph0: #47D1E8; --ph1: #C8F04A; --ph2: #FFC83D; --ph3: #FF8A4C; --ph4: #FF6B81; --ph5: #B79CFF; --ph6: #6BE594; --ph7: #8FE3F2;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;   /* system mono: one web font family fewer */
+  --radius: 10px;
+  --t: 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #EEF0FF; --surface: #FFFFFF; --surface-2: #E4E6FB; --surface-3: #D6D9F7;
+  --ink: #16133A; --ink-2: #4F4C78;
+  --line: #CFD2F2; --line-strong: #8D8FC2; --edge: #16133A;
+  --accent: #C8F04A; --accent-press: #B2DA34; --accent-ink: #14200A; --accent-soft: #EEF8CF;
+  --link: #0B6F86; --sky: #0E9BB8;
+  --gold: #B7780A; --gold-soft: #FFF1CC; --flame: #E2541C; --rose: #D63655;
+  --ok: #157F3B; --ok-ink: #fff; --ok-soft: #E2F7E9; --bad: #C2283F; --bad-soft: #FDE8EC;
+  --code-bg: #16133A;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font-body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--link); }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 700; line-height: 1.25; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h1 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.02rem; }
+code, pre, kbd { font-family: var(--font-mono); font-size: .87em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; min-height: 58px; flex-wrap: wrap; padding-block: 6px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--ink); border: 0; background: none; padding: 0; }
+.logo-mark { width: 26px; height: 26px; }
+.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: 0; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-weight: 500; transition: color var(--t), background var(--t); }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--surface-2); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.pill svg { width: 16px; height: 16px; color: var(--ink-2); }
+.pill.gold svg { color: var(--flame); }
+.pill.xp svg { color: var(--gold); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; font-weight: 600; border: 1px solid var(--line); font-size: .9rem; }
+
+main { padding-block: 32px 80px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 18px; font-weight: 600; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); transition: background var(--t), border-color var(--t); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn:hover { background: var(--accent-press); }
+.btn.ghost { background: var(--bg); color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.gold:hover { background: var(--accent-press); }
+.btn:disabled { opacity: .5; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+/* auth */
+.auth { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; min-height: calc(100vh - 160px); }
+.auth-hero h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.auth-hero h1 em { font-style: normal; color: var(--accent); }
+.auth-hero p { font-size: 1.05rem; max-width: 48ch; color: var(--ink-2); }
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px; }
+.feature-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--ink-2); }
+.feature-chips svg { width: 15px; height: 15px; color: var(--accent); }
+.terminal { background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius); padding: 16px 18px; font-family: var(--font-mono); font-size: .86rem; margin-top: 24px; overflow-x: auto; max-width: 540px; white-space: pre; }
+.terminal .k { color: var(--code-key); } .terminal .s { color: var(--code-str); } .terminal .c { color: var(--code-key); }
+.terminal table { border-collapse: collapse; margin-top: 4px; white-space: normal; }
+.terminal td, .terminal th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+.terminal th { color: var(--code-com); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.auth-card { display: grid; gap: 14px; padding: 28px; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); width: 100%; transition: border-color var(--t); }
+input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.2em; }
+.note { font-size: .82rem; color: var(--ink-2); }
+
+/* dashboard */
+.hello { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
+.kpi { padding: 14px 18px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.kpi .v svg { width: 18px; height: 18px; }
+.kpi .v.flame svg { color: var(--flame); }
+.kpi .v.xp svg { color: var(--gold); }
+.kpi .l { font-size: .8rem; color: var(--ink-2); }
+.kpi .bar { margin-top: 6px; }
+.continue { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; background: var(--surface-2); border-radius: var(--radius); padding: 22px 24px; }
+.continue .eyebrow { color: var(--accent); }
+.continue h2 { margin: 4px 0; }
+.continue p { margin: 0; color: var(--ink-2); font-size: .92rem; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 0; flex-wrap: wrap; }
+.phase { margin-top: 26px; }
+.phase-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-head h3 { font-size: 1rem; }
+.phase-tag { font-size: .78rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.phase-head .muted { font-size: .88rem; }
+.modules { display: grid; border-top: 1px solid var(--line); }
+.module { display: grid; grid-template-columns: 52px minmax(0, 1fr) 130px 20px; gap: 14px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 6px; color: var(--ink); min-width: 0; transition: background var(--t); }
+.module:hover:not(.soon) { background: var(--surface-2); }
+.module.soon { cursor: default; }
+.module .code { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); }
+.module h3 { font-size: .98rem; font-weight: 600; }
+.module.soon h3 { font-weight: 500; color: var(--ink-2); }
+.module p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.module .prog { display: grid; gap: 5px; }
+.module .chev { color: var(--ink-2); display: flex; }
+.module .chev svg { width: 16px; height: 16px; }
+.badge-s { font-size: .78rem; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.badge-s.done { color: var(--ok); }
+.badge-s.open { color: var(--accent); }
+.bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bar.gold > i { background: var(--gold); }
+
+/* badges (profile) */
+.bdg { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .72rem; color: var(--ink-2); }
+.bdg .hex { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bdg .hex svg { width: 20px; height: 20px; }
+.bdg.got .hex { background: var(--gold-soft); color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bdg.got { color: var(--ink); }
+
+/* module page */
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+.crumbs button { background: none; border: 0; color: var(--ink-2); padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.crumbs button:hover { color: var(--ink); }
+.lessons { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.lesson-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); transition: background var(--t); }
+.lesson-row:hover { background: var(--surface-2); }
+.lesson-row .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lesson-row.done .num { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.lesson-row.gate .num { border-color: var(--gold); color: var(--gold); }
+.lesson-row b { font-weight: 600; }
+.lesson-row small { color: var(--ink-2); display: block; font-size: .82rem; }
+
+/* lesson page */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.lesson.solo { grid-template-columns: minmax(0, 1fr); max-width: 720px; }
+.lesson.solo .workbench { display: none; }
+.reading { min-width: 0; }
+.reading h1 { font-size: 1.7rem; margin: 6px 0 16px; }
+.prose { max-width: 68ch; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin-bottom: 4px; }
+.prose h3 { margin: 28px 0 8px; }
+.prose code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; word-break: break-word; }
+.prose pre { background: var(--code-bg); color: var(--code-ink); padding: 13px 15px; border-radius: 10px; overflow-x: auto; margin: 0 0 16px; }
+.prose pre code { background: none; padding: 0; }
+.prose table { border-collapse: collapse; margin: 0 0 16px; font-size: .9rem; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
+.prose th { font-weight: 600; font-size: .84rem; color: var(--ink-2); }
+.prose .tip { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+.task { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.task-steps button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--bg); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.task-steps button.cur { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.task-steps button.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink, #fff); }
+.task-steps button.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.gate-result.pass { border-color: var(--ok); }
+.gate-result.fail { border-color: var(--bad); }
+.task h3 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.xp-tag { font-size: .78rem; font-weight: 600; color: var(--gold); }
+.options { display: grid; gap: 8px; margin-top: 12px; }
+.opt { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); transition: border-color var(--t), background var(--t); }
+.opt:hover { background: var(--surface-2); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt code { word-break: break-word; }
+.opt pre { margin: 6px 0 0; background: var(--code-bg); color: var(--code-ink); padding: 8px 10px; border-radius: 8px; }
+.hints { margin-top: 12px; display: grid; gap: 8px; }
+.hint { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: .92rem; }
+kbd { border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; font-size: .78em; }
+.workbench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 10px; min-width: 0; }
+.editor-shell { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; color: var(--code-com); font-family: var(--font-mono); font-size: .76rem; border-bottom: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+.editor-bar .lang { color: var(--code-ink); }
+.editor-bar .dots { display: none; }
+.CodeMirror { height: 260px; font-family: var(--font-mono); font-size: 14px; background: var(--code-bg); color: var(--code-ink); }
+.CodeMirror-gutters { background: var(--code-bg); border-right: 0; }
+.CodeMirror-linenumber { color: #7D8C8A; }
+.CodeMirror-cursor { border-left-color: var(--code-key); }
+div.CodeMirror-selected, .CodeMirror-focused div.CodeMirror-selected { background: #233a37; }
+.cm-s-default .cm-keyword { color: var(--code-key); }
+.cm-s-default .cm-string { color: var(--code-str); }
+.cm-s-default .cm-number, .cm-s-default .cm-atom { color: var(--code-num); }
+.cm-s-default .cm-bracket { color: var(--code-ink); }
+.cm-s-default .cm-comment { color: var(--code-com); font-style: italic; }
+.cm-s-default .cm-builtin { color: #A7E3CF; }
+.cm-s-default .cm-def, .cm-s-default .cm-variable-2 { color: #EBD9A6; }
+.cm-s-default .cm-operator { color: #A9BAB8; }
+.cm-s-default .cm-variable, .cm-s-default .cm-property { color: var(--code-ink); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-height: 110px; max-height: 360px; overflow: auto; }
+.output pre { margin: 0; font-family: var(--font-mono); font-size: .86rem; white-space: pre-wrap; word-break: break-word; }
+.output table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.output th, .output td { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; white-space: nowrap; }
+.output th { font-family: var(--font-mono); font-size: .76rem; color: var(--ink-2); font-weight: 500; }
+.verdict { border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.info { background: var(--surface-2); color: var(--ink-2); }
+.lesson-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.schema { font-size: .84rem; color: var(--ink-2); }
+.schema summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.schema code { color: var(--ink); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 0 16px; }
+
+/* map */
+.map-phase { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+.map-phase .ph { font-size: .78rem; color: var(--ink-2); }
+.map-phase h3 { margin: 2px 0 4px; }
+.map-mods { display: grid; }
+.map-mod { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 8px 0; }
+.map-mod .c { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-2); padding-top: 2px; }
+.map-mod p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0 12px; }
+.path { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.path h3 { margin-bottom: 6px; }
+.path p { margin: 0; font-size: .88rem; color: var(--ink-2); }
+.path .hrs { font-size: .82rem; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+/* diag + toasts */
+.diag { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 50; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 32px); font-size: .92rem; }
+.toast svg { width: 18px; height: 18px; color: var(--gold); }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+}
+
+@media (max-width: 900px) {
+  .auth, .lesson { grid-template-columns: minmax(0, 1fr); }
+  .workbench { position: static; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stats .pill.hide-sm { display: none; }
+  .module { grid-template-columns: 40px minmax(0, 1fr) 16px; }
+  .module .prog { grid-column: 2; grid-row: 2; }
+  .module .chev { grid-row: 1; grid-column: 3; }
+  .map-mod { grid-template-columns: 48px minmax(0,1fr); }
+  .map-mod .badge-s { grid-column: 2; justify-self: start; }
+  .topbar .wrap { gap: 10px; }
+}
+
+/* Spreadsheet trainer (M1.1) and terminal input (M2.3) */
+.sheet-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.sheet-tabs button { font: inherit; font-size: .82rem; padding: 4px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); color: var(--ink-2); }
+.sheet-tabs button.cur { background: var(--bg); color: var(--ink); border-color: var(--line-strong); font-weight: 600; }
+.sheet-grid { overflow: auto; max-height: 340px; border: 1px solid var(--line-strong); border-radius: 0 8px 8px 8px; }
+.sheet-grid table { border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.sheet-grid th, .sheet-grid td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; text-align: left; }
+.sheet-grid thead th, .sheet-grid tbody th { background: var(--surface-2); color: var(--ink-2); font-weight: 500; text-align: center; position: sticky; }
+.sheet-grid thead th { top: 0; z-index: 1; }
+.sheet-grid tbody th { left: 0; min-width: 32px; }
+.sheet-grid td { cursor: pointer; }
+.sheet-grid td.num { text-align: right; }
+.sheet-grid td:hover { background: var(--accent-soft); }
+.sheet-grid tr:first-child td { font-weight: 600; }
+.fx { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.fx b { font-family: var(--font-mono); font-style: italic; color: var(--ink-2); }
+.fx input, .term input { font-family: var(--font-mono) !important; }
+.fx-result { margin-top: 8px; font-size: .92rem; }
+.fx-result code { font-size: .95rem; }
+.term { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--code-bg); border-radius: 10px; padding: 4px 12px; }
+.term span { font-family: var(--font-mono); color: var(--code-key); }
+.term input[type="text"] { background: transparent; border: 0; color: var(--code-ink); padding: 8px 0; }
+.term input[type="text"]:focus { outline: none; }
+
+/* Capstone rubric (self-assessment) */
+textarea#memo { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; margin-top: 10px; }
+.rubric { display: grid; gap: 10px; margin-top: 12px; }
+.rubric fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.rubric legend { font-weight: 600; padding: 0 4px; }
+.rubric label { display: flex; gap: 8px; align-items: baseline; font-size: .9rem; color: var(--ink-2); cursor: pointer; }
+.rubric label b { color: var(--ink); min-width: 10px; }
+.rubric input:checked + b, .rubric label:has(input:checked) { color: var(--ink); }
+
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;justify-self:center}
+/* adaptive diagnostic */
+.diag-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.diag-row .btn { grid-column: 1 / -1; justify-self: start; }
+.chip { font-size: .8rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.chip.done { border-color: var(--ok); background: var(--ok-soft); color: var(--ink); }
+.chip.part { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.chip.todo { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.btn.sm { padding: 6px 12px; font-size: .85rem; }
+.code-area { width: 100%; margin-top: 10px; font-family: var(--font-mono); font-size: .87rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--code-ink); resize: vertical; tab-size: 4; }
+/* leaderboard */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--accent-soft); border-radius: 8px; }
+.board .pos { color: var(--ink-2); font-family: var(--font-mono); }
+.board .nm { min-width: 0; overflow-wrap: anywhere; }
+/* certificate */
+.cert-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+.cert { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: clamp(24px, 6vw, 56px); background: var(--bg); display: grid; gap: 10px; position: relative; }
+.cert::before { content: ''; position: absolute; inset: 8px; border: 1px solid var(--line); border-radius: calc(var(--radius) - 4px); pointer-events: none; }
+.cert-top { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 18px; }
+.cert-top .logo-mark { width: 28px; height: 28px; }
+.cert-id { margin-left: auto; font-family: var(--font-mono); color: var(--accent); }
+.cert-lead { margin: 0; color: var(--ink-2); max-width: 56ch; }
+.cert-name { margin: 2px 0 6px; font-size: clamp(1.8rem, 5vw, 2.6rem); text-wrap: balance; }
+.cert-mods { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.cert-mods li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.cert-link { width: 100%; font: inherit; font-size: .85rem; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+@media print {
+  .topbar, .noprint { display: none !important; }
+  body { background: #fff; }
+  .cert { border-color: #999; }
+}
+
+/* audit fixes: anchors clear the sticky topbar, visible focus, screen-reader text, no iOS input zoom */
+html { scroll-padding-top: 70px; }
+@media (max-width: 560px) { html { scroll-padding-top: 140px; } }
+.term:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select, .code-area { font-size: 16px; } }
+
+/* feedback dialog */
+.fb-foot { text-align: center; margin: 24px 0 8px; }
+.fb-dialog { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--bg); color: var(--ink); }
+.fb-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.fb-dialog form { display: grid; gap: 12px; padding: 20px; }
+.fb-dialog h2 { margin: 0; font-size: 1.2rem; }
+.fb-dialog textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); resize: vertical; }
+.fb-kinds { display: flex; gap: 8px; flex-wrap: wrap; }
+.fb-kinds .chip { background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; }
+.fb-kinds .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* course catalog */
+.catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 28px; margin-bottom: 8px; }
+.cat-group { display: grid; gap: 2px; align-content: start; }
+.cat-h { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; margin: 14px 0 6px; }
+.cat-course { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-radius: 8px; padding: 9px 10px; margin: 0 -10px; color: var(--ink); font: inherit; font-size: 1.02rem; cursor: pointer; }
+.cat-course:hover { background: var(--surface-2); }
+.cat-course.soon { color: var(--ink-2); cursor: default; }
+.cat-course.soon:hover { background: none; }
+.lvl { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; vertical-align: middle; }
+.lvl-easy { color: var(--ok); }
+.lvl-medium { color: var(--gold); }
+.lvl-hard { color: var(--bad); }
+
+/* ================= game layer ================= */
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.01em; }
+#app h1:focus { outline: none; }
+.topbar { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 2px solid var(--line); }
+.logo { font-family: "Manrope", var(--font-body); font-size: 1.45rem; font-weight: 800; letter-spacing: -.04em; }
+.logo-mark { width: 30px; height: 30px; }
+.nav button { font-weight: 600; }
+.nav button[aria-current="page"] { background: var(--surface-3); color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); border-radius: 8px; }
+
+/* buttons: chunky, pressable */
+.btn { font-family: var(--font-display); font-weight: 600; font-size: .92rem; letter-spacing: 0; border-radius: 8px; border: 2px solid var(--edge); box-shadow: 0 4px 0 var(--edge); padding: 9px 18px 8px; transform: translateY(0); transition: transform 90ms ease-out, box-shadow 90ms ease-out, background var(--t); }
+.btn:hover { background: var(--accent-press); }
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.btn.ghost { background: var(--surface-2); color: var(--ink); border-color: var(--edge); }
+.btn.ghost:hover { background: var(--surface-3); }
+.btn.big { font-size: 1.05rem; padding: 12px 26px 11px; }
+.btn svg { width: 16px; height: 16px; }
+.icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink-2); padding: 0; }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn[aria-pressed="true"] { color: var(--ink); }
+.avatar { background: var(--surface-3); border: 2px solid var(--accent); font-family: var(--font-display); }
+
+/* HUD */
+.stats { gap: 10px; }
+.pill.streak { font-family: var(--font-display); font-size: 1.1rem; color: var(--ink-2); padding: 3px 8px; border-radius: 8px; background: var(--surface-2); }
+.pill.streak svg { width: 18px; height: 18px; color: var(--ink-2); }
+.pill.streak.lit { color: var(--flame); }
+.pill.streak.lit svg { color: var(--flame); fill: color-mix(in srgb, var(--flame) 35%, transparent); }
+.hud-xp { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 8px; padding: 4px 10px 4px 4px; }
+.hud-lv { font-family: var(--font-display); font-weight: 700; min-width: 28px; height: 28px; display: grid; place-items: center; background: var(--gold); color: #2A1E00; border-radius: 6px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); }
+.hud-bar { width: 84px; height: 10px; background: var(--edge); border-radius: 3px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--line); }
+.hud-bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--gold) 0 6px, color-mix(in srgb, var(--gold) 75%, #fff) 6px 8px); transition: width .6s cubic-bezier(0.23, 1, 0.32, 1); }
+.hud-n { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hud-n small { font-size: .7em; margin-left: 2px; color: var(--gold); }
+.hud-xp.bump { animation: bump .45s ease-out; }
+@keyframes bump { 30% { transform: scale(1.12); } }
+
+/* mascot */
+.owl { display: block; image-rendering: pixelated; }
+.owl .owl-shut { display: none; }
+.owl-lg { width: 112px; height: 112px; }
+.owl-xl { width: 128px; height: 128px; }
+.owl-sm { width: 44px; height: 44px; }
+.bubble { position: relative; background: var(--surface-2); border: 2px solid var(--line-strong); border-radius: 10px; padding: 10px 14px; margin: 0; max-width: 56ch; }
+@media (prefers-reduced-motion: no-preference) {
+  .owl-bob { animation: bob 2.4s ease-in-out infinite; }
+  .owl-hop { animation: hop .7s cubic-bezier(0.23, 1, 0.32, 1) 2; }
+  .owl .owl-shut { animation: blink 4s steps(1) infinite; }
+  .owl .owl-open { animation: blinkO 4s steps(1) infinite; }
+  @keyframes bob { 50% { transform: translateY(-5px); } }
+  @keyframes hop { 40% { transform: translateY(-14px); } }
+  @keyframes blink { 0%, 94% { display: none; } 95%, 100% { display: inline; } }
+  @keyframes blinkO { 0%, 94% { opacity: 1; } 95%, 100% { opacity: 0; } }
+}
+
+/* auth */
+.auth-owl { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.auth-owl .bubble::before { content: ''; position: absolute; left: -9px; top: 50%; width: 12px; height: 12px; background: inherit; border-left: 2px solid var(--line-strong); border-bottom: 2px solid var(--line-strong); transform: translateY(-50%) rotate(45deg); }
+.auth-card, .card { background: var(--surface); border: 2px solid var(--line); border-radius: 12px; }
+.tabs { background: var(--surface-2); }
+.tabs button[aria-selected="true"] { background: var(--surface-3); color: var(--ink); box-shadow: none; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea { background: var(--bg) !important; border: 2px solid var(--line-strong) !important; color: var(--ink); }
+
+/* dashboard */
+.quest-hero { display: grid; grid-template-columns: auto minmax(0, 1fr) 240px; gap: 24px; align-items: center; padding: 26px; border-radius: 14px; border: 2px solid var(--line);
+  background: radial-gradient(ellipse at 15% 0%, color-mix(in srgb, var(--sky) 18%, transparent), transparent 60%), linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 70%, var(--bg)));
+  position: relative; overflow: hidden; }
+.quest-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; pointer-events: none; opacity: .5;
+  background: linear-gradient(135deg, transparent 50%, var(--surface-3) 50%) 0 0 / 26px 26px, linear-gradient(225deg, transparent 50%, var(--surface-3) 50%) 0 0 / 26px 26px; }
+.quest-hero h1 { font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 10px; }
+.qh-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag { font-size: .8rem; font-weight: 600; padding: 3px 9px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.lvl-card { display: grid; gap: 8px; justify-items: center; text-align: center; padding: 16px; border-radius: 12px; background: var(--bg); border: 2px solid var(--line); position: relative; z-index: 1; }
+.shield { width: 76px; height: 84px; display: grid; place-items: center; align-content: center; background: var(--gold); color: #2A1E00; clip-path: polygon(50% 0, 100% 14%, 100% 62%, 50% 100%, 0 62%, 0 14%); font-family: var(--font-display); line-height: 1; }
+.shield span { font-size: .8rem; }
+.shield b { font-size: 2rem; }
+.lvl-bar { width: 100%; height: 12px; border-radius: 3px; background: var(--edge); box-shadow: inset 0 0 0 2px var(--line); overflow: hidden; }
+.lvl-bar i { display: block; height: 100%; background: var(--gold); }
+.dash-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-top: 16px; }
+.panel { background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.panel-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.panel-h h2 { font-size: 1.1rem; }
+.quest { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 0; }
+.quest + .quest { border-top: 1px dashed var(--line); }
+.q-ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--gold); }
+.q-ico svg { width: 18px; height: 18px; }
+.quest.ok .q-ico { background: var(--ok); color: var(--ok-ink); }
+.quest b { font-weight: 600; font-size: .95rem; }
+.q-n { font-family: var(--font-display); color: var(--ink-2); }
+.seg { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; margin-top: 6px; max-width: 260px; }
+.seg i { height: 8px; border-radius: 2px; background: var(--surface-3); }
+.seg i.on { background: var(--gold); }
+.quest.ok .seg i.on { background: var(--ok); }
+.chest { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; background: var(--surface-2); color: var(--ink-2); }
+.chest svg { width: 24px; height: 24px; }
+.chest.open { background: var(--gold); color: #2A1E00; }
+.big-flame { display: flex; align-items: center; gap: 4px; font-family: var(--font-display); font-size: 1.6rem; color: var(--ink-2); }
+.big-flame svg { width: 28px; height: 28px; }
+.big-flame.lit { color: var(--flame); }
+.big-flame.lit svg { fill: color-mix(in srgb, var(--flame) 35%, transparent); }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day { display: grid; justify-items: center; gap: 4px; }
+.day span { width: 100%; aspect-ratio: 1; max-width: 44px; border-radius: 8px; background: var(--surface-2); border: 2px solid var(--line); display: grid; place-items: center; color: var(--flame); }
+.day span svg { width: 60%; height: 60%; fill: color-mix(in srgb, var(--flame) 35%, transparent); }
+.day.on span { background: color-mix(in srgb, var(--flame) 18%, var(--surface)); border-color: var(--flame); }
+.day.today span { outline: 2px dashed var(--line-strong); outline-offset: 2px; }
+.day small { font-size: .72rem; color: var(--ink-2); }
+.world-group h3 { font-size: .95rem; color: var(--ink-2); margin: 22px 0 10px; font-weight: 600; }
+.worlds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.world { position: relative; display: grid; gap: 6px; text-align: left; padding: 14px; border-radius: 12px; background: var(--surface); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--edge); color: var(--ink); transition: transform 90ms ease-out, box-shadow 90ms ease-out, border-color var(--t); }
+@media (hover: hover) and (pointer: fine) { .world:not(.soon):hover { border-color: var(--accent); } }
+.world:active:not(.soon) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.world .glyph { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 10px; background: var(--surface-3); font-family: var(--font-display); font-size: 1.05rem; color: var(--accent); }
+.world.going .glyph { background: var(--accent); color: var(--accent-ink); }
+.world.done .glyph { background: var(--gold); color: #2A1E00; }
+.world .w-t { font-weight: 700; }
+.world .w-m { font-size: .8rem; color: var(--ink-2); }
+.world .w-star { position: absolute; top: 12px; right: 12px; color: var(--gold); }
+.world .w-star svg { width: 20px; height: 20px; fill: currentColor; }
+.world.soon { opacity: .55; box-shadow: none; cursor: default; }
+.seg-bar { height: 8px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.seg-bar i { display: block; height: 100%; background: var(--accent); }
+.section-title { align-items: center; margin-top: 36px; }
+.bar { height: 8px; border-radius: 3px; background: var(--surface-3); }
+.bar > i { background: var(--accent); }
+
+/* module & lesson lists */
+.lesson-row, .module { border-color: var(--line); }
+.lesson-row .num { width: 32px; height: 32px; border-radius: 8px; border: 2px solid var(--line-strong); font-family: var(--font-display); }
+.lesson-row.done .num { background: var(--ok); border-color: var(--edge); color: var(--ok-ink); }
+.lesson-row.gate .num { background: var(--gold-soft); border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .lesson-row:hover, .module:hover:not(.soon), .cat-course:hover { background: var(--surface); } }
+.badge-s.open { color: var(--link); }
+
+/* lesson */
+.reading h1 { font-size: 1.6rem; line-height: 1.3; }
+.prose code { background: var(--surface-2); color: var(--ink); }
+.prose pre { border: 2px solid var(--line); }
+.prose .tip { border-left: 4px solid var(--sky); background: var(--surface); border-radius: 0 8px 8px 0; padding: 10px 14px; }
+.task { border-top: 2px dashed var(--line); background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.task h3 { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; }
+.task-steps { gap: 4px; }
+.task-steps button { width: 34px; height: 34px; border-radius: 6px; border: 2px solid var(--line-strong); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-display); }
+.task-steps button.cur { border-color: var(--accent); color: var(--ink); background: var(--surface-3); box-shadow: 0 3px 0 var(--edge); }
+.task-steps button.ok { background: var(--ok); border-color: var(--edge); color: var(--ok-ink); }
+.xp-tag { font-family: var(--font-display); font-size: .9rem; color: #2A1E00; background: var(--gold); padding: 1px 7px; border-radius: 5px; }
+.opt { border: 2px solid var(--line-strong); background: var(--surface-2); color: var(--ink); border-radius: 10px; box-shadow: 0 3px 0 var(--edge); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.editor-shell { border: 2px solid var(--line); border-radius: 12px; }
+.editor-bar { background: var(--surface); color: var(--ink-2); }
+.editor-bar .lang { color: var(--ink); font-family: var(--font-display); font-size: .9rem; }
+.output { background: var(--code-bg); border: 2px solid var(--line); color: var(--code-ink); font-family: var(--font-mono); }
+.verdict { border-radius: 10px; border: 2px solid transparent; }
+.verdict.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ink); }
+.verdict.ok b { font-family: var(--font-display); color: var(--ok); font-size: 1.1rem; }
+.verdict.bad { border-color: var(--bad); color: var(--ink); }
+.hint { border-left: 4px solid var(--gold); background: var(--gold-soft); border-radius: 0 8px 8px 0; padding: 8px 12px; }
+.shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+/* map: trail of nodes */
+.paths .path { background: var(--surface); border: 2px solid var(--line); }
+.path .hrs { color: var(--accent); }
+.trail { position: relative; margin-top: 18px; }
+.trail-line { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.trail-line path { fill: none; stroke: var(--line-strong); stroke-width: 6; stroke-dasharray: 2 12; stroke-linecap: round; }
+.region { position: relative; padding: 18px 0 30px; }
+.region-h { display: flex; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--ph) 14%, var(--surface)); border: 2px solid color-mix(in srgb, var(--ph) 45%, var(--line)); position: relative; z-index: 1; }
+.region-h h2 { font-size: 1.2rem; }
+.region-h p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.r-n { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 8px; background: var(--ph); color: var(--edge); font-family: var(--font-display); font-size: 1.3rem; }
+.nodes { list-style: none; margin: 0; padding: 0; display: grid; gap: 26px; margin-top: 26px; }
+.node { --step: min(9vw, 92px); display: flex; align-items: center; gap: 14px; transform: translateX(calc(var(--z) * var(--step))); margin-left: calc(50% - 40px); position: relative; z-index: 1; width: max-content; max-width: calc(50% + 20px); }
+.n-dot { width: 72px; height: 72px; flex: none; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); background: var(--surface-3); border: 3px solid var(--edge); box-shadow: 0 6px 0 var(--edge), inset 0 -6px 0 rgba(0,0,0,.25); padding: 0; transition: transform 90ms ease-out, box-shadow 90ms ease-out; }
+button.n-dot:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge), inset 0 -6px 0 rgba(0,0,0,.25); }
+.n-dot svg { width: 28px; height: 28px; }
+.node.done .n-dot { background: var(--gold); color: #2A1E00; }
+.node.done .n-dot svg { fill: currentColor; }
+.node.going .n-dot { background: var(--ph); color: var(--edge); }
+.node.cur .n-dot { background: var(--accent); color: var(--accent-ink); outline: 4px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 4px; }
+.node.soon .n-dot { background: var(--surface); color: var(--ink-2); box-shadow: 0 6px 0 var(--edge); opacity: .7; }
+.node .owl { position: absolute; left: -48px; top: -14px; }
+.n-label { display: grid; background: color-mix(in srgb, var(--bg) 80%, transparent); padding: 4px 8px; border-radius: 8px; min-width: 0; }
+.n-t { font-weight: 700; font-size: .95rem; }
+.n-s { font-size: .78rem; color: var(--ink-2); }
+.node.soon .n-t { color: var(--ink-2); font-weight: 500; }
+@media (prefers-reduced-motion: no-preference) { .node.cur .n-dot { animation: pulse 1.8s ease-in-out infinite; } @keyframes pulse { 50% { outline-offset: 8px; outline-color: transparent; } } }
+
+/* reward dialog, confetti, floating XP, toasts */
+.reward { border: 0; padding: 0; background: transparent; color: var(--ink); max-width: min(440px, calc(100vw - 32px)); width: 100%; overflow: visible; }
+.reward::backdrop { background: rgba(8, 6, 26, .72); }
+.reward-in { background: var(--surface); border: 3px solid var(--edge); box-shadow: 0 8px 0 var(--edge), inset 0 0 0 2px var(--line); border-radius: 16px; padding: 26px 24px 22px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+.reward-art { position: relative; margin-top: -70px; }
+.reward-art .owl { position: relative; z-index: 1; }
+.rays { position: absolute; inset: -30px; border-radius: 50%; background: repeating-conic-gradient(color-mix(in srgb, var(--gold) 40%, transparent) 0 10deg, transparent 10deg 30deg); mask: radial-gradient(circle, #000 30%, transparent 70%); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); }
+.reward h2 { font-size: 1.6rem; }
+.reward p { margin: 0; color: var(--ink-2); }
+.reward-stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+.rs { display: grid; min-width: 86px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); border: 2px solid var(--line); }
+.rs b { font-family: var(--font-display); font-size: 1.5rem; }
+.rs span { font-size: .78rem; color: var(--ink-2); }
+.rs.gold b { color: var(--gold); }
+.rs.flame b { color: var(--flame); }
+.reward-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  .reward[open] .reward-in { animation: pop .35s cubic-bezier(0.23, 1, 0.32, 1); }
+  @keyframes pop { from { transform: scale(.92); opacity: 0; } }
+  .rays { animation: spin 12s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+}
+.fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+.fx-layer i { position: fixed; width: 8px; height: 8px; border-radius: 1px; animation: burst .9s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+@keyframes burst { to { transform: translate(var(--dx), calc(var(--dy) + 90px)) rotate(var(--r)); opacity: 0; } }
+.xp-float { position: fixed; z-index: 101; pointer-events: none; transform: translate(-50%, -50%); font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); text-shadow: 0 2px 0 var(--edge), 2px 0 0 var(--edge), -2px 0 0 var(--edge), 0 -2px 0 var(--edge); animation: floatUp 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+@keyframes floatUp { to { transform: translate(-50%, -140%); opacity: 0; } }
+.toast { background: var(--surface-3); color: var(--ink); border: 2px solid var(--edge); box-shadow: 0 4px 0 var(--edge); }
+.toast.badge { background: var(--gold); color: #2A1E00; }
+.toast.badge svg { color: #2A1E00; }
+
+@media (max-width: 900px) {
+  .quest-hero { grid-template-columns: auto minmax(0, 1fr); }
+  .lvl-card { grid-column: 1 / -1; grid-template-columns: auto 1fr; justify-items: start; text-align: left; }
+  .lvl-card .shield { grid-row: span 3; width: 60px; height: 66px; }
+  .lvl-card .shield b { font-size: 1.5rem; }
+  .dash-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .quest-hero { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .qh-owl .owl { width: 72px; height: 72px; }
+  .hud-bar { width: 44px; }
+  .icon-btn { display: none; }
+  .node { --step: 9vw; max-width: calc(50% + 30px); }
+  .n-dot { width: 60px; height: 60px; }
+}
+@media (max-width: 700px) {
+  .topbar .wrap { gap: 6px 10px; }
+  .topbar .stats { margin-left: auto; }
+  .topbar .nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; }
+  .topbar .nav::-webkit-scrollbar { display: none; }
+  .topbar .nav button { white-space: nowrap; }
+  html { scroll-padding-top: 120px; }
+}
+.n-t { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .node { --step: 6vw; margin-left: calc(28% - 30px); max-width: calc(72% - 16vw); width: auto; }
+}
+
+/* ---------- language picker ---------- */
+.lang-pick { position: relative; display: inline-flex; }
+
+/* ================= block theme ================= */
+/* Every surface is a block or a playfield: square corners, a light top edge and a dark bottom edge.
+   Piece colours: --b0 lime (data), --b1 sky (code), --b2 gold (tools), --b3 purple (career); red/orange for errors and streaks. */
+:root {
+  --bg: #0E0B26; --surface: #15123A; --surface-2: #1E1A4E; --surface-3: #2A2566;
+  --line: #2C2870; --line-strong: #4C46A6; --edge: #050414;
+  --grid: rgba(120, 130, 255, .07);
+  --b0: #C8F04A; --b1: #47D1E8; --b2: #FFC83D; --b3: #B79CFF; --b4: #FF6B81; --b5: #FF9A3C; --b6: #3D7BFF;
+  --font-display: "Exo 2", "Golos Text", system-ui, sans-serif;
+  --font-pixel: "Press Start 2P", "Exo 2", monospace;
+  --radius: 4px;
+  --bevel: inset 0 3px 0 rgba(255, 255, 255, .35), inset 0 -4px 0 rgba(0, 0, 0, .28);
+  --bevel-sm: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -3px 0 rgba(0, 0, 0, .28);
+}
+:root[data-theme="light"] { --bg: #EEF0FF; --surface: #FFFFFF; --surface-2: #E6E8FB; --surface-3: #D6D9F7; --grid: rgba(40, 40, 140, .06); --gold: #8A5A00; }
+body { background-color: var(--bg); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 32px 32px; }
+h1, h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: 0; }
+h3 { font-family: var(--font-display); font-weight: 700; }
+:focus-visible { border-radius: 2px; }
+
+/* logo */
+.logo { font-family: var(--font-pixel); font-weight: 400; font-size: .95rem; letter-spacing: .04em; gap: 10px; }
+.logo-mark { width: 30px; height: 30px; }
+.wordmark { font-family: var(--font-pixel); letter-spacing: .04em; }
+
+/* top bar = the HUD strip above the playfield */
+.topbar { background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom: 2px solid var(--line-strong); }
+.nav button { font-family: var(--font-display); font-weight: 700; border-radius: 2px; }
+.nav button[aria-current="page"] { background: var(--surface-2); box-shadow: inset 0 -3px 0 var(--b0); border-radius: 2px; }
+.hud-xp, .pill.streak, .icon-btn { border-radius: 2px; }
+.hud-lv { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
+.hud-n, .pill.streak, .q-n, .big-flame { font-family: var(--font-pixel); font-size: .78rem; }
+.hud-bar, .lvl-bar, .bar, .seg-bar { border-radius: 0; }
+.hud-bar i { background: repeating-linear-gradient(90deg, var(--b2) 0 7px, transparent 7px 9px); }
+.avatar { border-radius: 2px; font-family: var(--font-pixel); font-size: .7rem; box-shadow: var(--bevel-sm); }
+
+/* blocks: buttons */
+.btn { font-family: var(--font-display); font-weight: 700; border-radius: 2px; border: 2px solid var(--edge); box-shadow: var(--bevel), 0 4px 0 var(--edge); }
+.btn:active:not(:disabled) { box-shadow: var(--bevel-sm), 0 1px 0 var(--edge); }
+.btn.ghost { background: var(--surface-3); }
+.btn.ghost:hover { background: color-mix(in srgb, var(--surface-3) 80%, #fff); }
+
+/* playfields: cards and panels */
+.card, .panel, .auth-card, .task, .quest-hero, .lvl-card, .editor-shell, .output, .reward-in, .path, .paths .path, .region-h, .fb-dialog, .cert, .bubble {
+  border-radius: var(--radius); }
+.panel, .card, .task, .auth-card { border: 2px solid var(--line-strong); background: color-mix(in srgb, var(--surface) 92%, transparent); }
+.panel-h h2, .task h3 { font-family: var(--font-display); font-weight: 800; }
+.eyebrow, .kpi .l, .phase-tag, .cat-h, .world-group h3, .day small, .rs span { font-family: var(--font-pixel); font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.6; }
+
+/* dashboard hero */
+.quest-hero { background: var(--surface); border: 2px solid var(--line-strong); }
+.quest-hero::after { height: 10px; opacity: .55; background: linear-gradient(90deg, var(--b1) 0 40px, var(--b0) 40px 80px, transparent 80px 120px, var(--b3) 120px 160px, var(--b2) 160px 200px, transparent 200px 240px) 0 0 / 240px 10px repeat-x; }
+.lvl-card { border-color: var(--line-strong); }
+.shield { clip-path: none; width: 72px; height: 72px; border-radius: 2px; box-shadow: var(--bevel); }
+.shield span { font-family: var(--font-pixel); font-size: .55rem; }
+.shield b { font-family: var(--font-pixel); font-size: 1.6rem; }
+.tag { border-radius: 2px; }
+.q-ico, .chest { border-radius: 2px; }
+.quest.ok .q-ico, .chest.open { box-shadow: var(--bevel-sm); }
+.seg i { border-radius: 0; }
+.day span { border-radius: 2px; }
+.day.on span { background: var(--b5); border-color: var(--edge); box-shadow: var(--bevel-sm); color: #3A1400; }
+
+/* worlds: each group gets its piece colour */
+.world { border-radius: var(--radius); border-color: var(--line-strong); }
+.world .glyph { border-radius: 2px; background: var(--blk, var(--b0)); color: var(--edge); font-family: var(--font-pixel); font-size: .72rem; box-shadow: var(--bevel); border: 2px solid var(--edge); }
+.world.going .glyph, .world.done .glyph { background: var(--blk, var(--b0)); color: var(--edge); }
+.world.done { border-color: var(--b2); }
+@media (hover: hover) and (pointer: fine) { .world:not(.soon):hover { border-color: var(--blk, var(--b0)); } }
+.world .seg-bar i, .world-group .seg-bar i { background: var(--blk, var(--b0)); }
+.world .w-t { font-family: var(--font-display); }
+
+/* lists */
+.lesson-row .num, .task-steps button { border-radius: 2px; font-family: var(--font-pixel); font-size: .6rem; }
+.lesson-row.done .num, .task-steps button.ok { background: var(--b0); color: var(--edge); box-shadow: var(--bevel-sm); }
+.task-steps button.cur { box-shadow: var(--bevel-sm), 0 3px 0 var(--edge); }
+.xp-tag { font-family: var(--font-pixel); font-size: .6rem; padding: 4px 6px 3px; border-radius: 2px; box-shadow: var(--bevel-sm); }
+.opt { border-radius: 2px; }
+.verdict, .hint, .prose .tip, .prose pre, .prose code, .chip, .lvl, .fb-kinds .chip, .rs, .tabs, .tabs button, .term, .code-area, textarea, input[type="text"], input[type="password"], input[type="number"], input[type="email"] { border-radius: 2px !important; }
+.verdict.ok b { font-family: var(--font-pixel); font-size: .75rem; }
+.editor-bar .lang { font-family: var(--font-display); font-weight: 700; }
+
+/* map: square blocks instead of round nodes */
+.n-dot { border-radius: 4px; font-family: var(--font-pixel); font-size: .8rem; box-shadow: var(--bevel), 0 6px 0 var(--edge); }
+button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
+.r-n { border-radius: 2px; font-family: var(--font-pixel); font-size: .8rem; box-shadow: var(--bevel-sm); }
+
+/* rewards */
+.xp-float { font-family: var(--font-pixel); font-size: 1.1rem; }
+.rs b { font-family: var(--font-pixel); font-size: 1rem; }
+.toast { border-radius: 2px; }
+.fx-layer i { border-radius: 0; box-shadow: inset 0 2px 0 rgba(255,255,255,.4); width: 10px; height: 10px; }
+
+/* ---------- nav icons; on phones the nav is a bottom tab bar ---------- */
+.nav button { display: inline-flex; align-items: center; gap: 6px; }
+.nav button svg { width: 16px; height: 16px; flex: none; opacity: .8; }
+@media (max-width: 700px) {
+  :root { --tabbar: 62px; }
+  body { padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom, 0px)); }
+  .topbar { backdrop-filter: none; background: var(--surface); }   /* a filter would trap the fixed bar inside the header */
+  .topbar .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; order: 0; width: auto; margin: 0; overflow: visible;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; padding: 4px 4px env(safe-area-inset-bottom, 0px);
+    background: var(--surface); border-top: 2px solid var(--line); box-shadow: 0 -6px 18px rgb(0 0 0 / .18); }
+  .topbar .nav button { flex-direction: column; gap: 3px; min-height: 52px; padding: 6px 2px; font-size: .68rem; white-space: nowrap; justify-content: center; }
+  .topbar .nav button svg { width: 20px; height: 20px; }
+  .topbar .nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .nav button[aria-current="page"] { background: none; box-shadow: inset 0 3px 0 var(--b0); color: var(--ink); }
+  .topbar .nav button[aria-current="page"] svg { opacity: 1; color: var(--b0); }
+  html { scroll-padding-top: 76px; }
+}
+.guest-try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 22px; }
+.guest-try .muted { font-size: .88rem; }
+.guest-save { margin: 10px 0 0; padding: 10px 12px; border: 2px dashed var(--line); border-radius: 2px; font-size: .92rem; color: var(--ink-2); }
+/* One column: the editor sits right under the task text, before the lesson navigation. */
+@media (max-width: 900px) {
+  .lesson { gap: 0; }
+  .lesson > .reading { display: contents; }
+  .lesson > .reading > * { min-width: 0; }
+  .lesson > .workbench { order: 1; margin-top: 14px; }
+  .lesson > .reading > .lesson-nav, .lesson > .reading > .fb-foot { order: 2; }
+}
+
+/* ---------- second pass of the block style: language picker, nav, map, catalog, feedback ---------- */
+/* Language picker: globe + code in the heading font (the pixel font draws Cyrillic badly). */
+/* Nav icons only in the phone tab bar; the desktop bar stays on one line. */
+@media (min-width: 701px) { .nav button svg { display: none; } .topbar .wrap { flex-wrap: nowrap; } .topbar .stats { margin-left: auto; flex-wrap: nowrap; } }
+@media (min-width: 701px) and (max-width: 1100px) { .hud-bar { display: none; } .nav button { padding: 6px 8px; } }
+@media (max-width: 700px) {
+  .topbar .wrap { flex-wrap: nowrap; gap: 8px; }
+  .topbar .wordmark { display: none; }
+  .topbar .stats { gap: 6px; flex-wrap: nowrap; }
+  .topbar .hud-bar { display: none; }
+  .topbar .btn.sm { padding: 6px 10px; }
+}
+/* Map: track switch and square region headers in the piece colours. */
+.track-tabs { display: inline-flex; gap: 6px; padding: 4px; margin: 0 0 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 2px; }
+.track-tabs button { padding: 8px 14px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font: 700 .92rem var(--font-display); cursor: pointer; }
+.track-tabs button[aria-selected="true"] { background: var(--b0); color: var(--edge); box-shadow: var(--bevel-sm); }
+.region-h { border-radius: 2px; background: var(--surface); border: 2px solid var(--line); box-shadow: inset 6px 0 0 var(--ph); padding-left: 20px; }
+.r-n { border-radius: 2px; box-shadow: var(--bevel-sm); }
+.n-label { border-radius: 2px; }
+.paths .path { border-radius: 2px; box-shadow: inset 0 4px 0 var(--b0); }
+.path .hrs { color: var(--b0); }
+/* Catalog uses the same block tiles as the dashboard. */
+.world.soon { opacity: .55; }
+.world.soon .glyph { background: var(--surface-3); color: var(--ink-2); box-shadow: none; }
+/* Feedback: a small block card instead of a bare link. */
+.fb-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width: 640px; margin: 36px auto 8px; padding: 12px 14px; text-align: left; background: var(--surface); border: 2px dashed var(--line); border-radius: 2px; }
+.fb-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; background: var(--b3); color: var(--edge); font: 700 1rem var(--font-pixel); box-shadow: var(--bevel-sm); }
+.fb-q { flex: 1 1 200px; font-size: .92rem; color: var(--ink-2); }
+/* Module header: a big block with the module number, in its phase colour. */
+:root { --phL: var(--b1); }
+.mod-hero { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.mod-ico { width: 72px; height: 72px; flex: none; display: grid; place-items: center; background: var(--ph, var(--b0)); color: var(--edge); border: 2px solid var(--edge); border-radius: 2px; box-shadow: var(--bevel); font: .9rem var(--font-pixel); }
+.mod-hero h1 { margin: 4px 0 0 !important; }
+.badge-s.open { color: var(--b0); font-weight: 700; }
+:root[data-theme="light"] .badge-s.open { color: #3F6B00; }
+@media (max-width: 560px) { .mod-ico { width: 56px; height: 56px; font-size: .75rem; } }
+:root[data-theme="light"] .path .hrs { color: #3F6B00; }
+@media (max-width: 560px) { .worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .world { padding: 12px; } .world .w-t { font-size: .92rem; } }
+
+/* Interface in ru/en, lesson text only in Kazakh. */
+.kk-only { display: inline-block; margin: 6px 0 12px; padding: 6px 10px; font-size: .85rem; color: var(--ink-2); background: var(--surface-2); border-left: 4px solid var(--b2); border-radius: 2px; }
+
+/* Day one goal on the dashboard. */
+.first-goal { margin-top: 16px; padding: 20px; background: var(--surface); border: 2px solid var(--line); border-radius: 2px; box-shadow: inset 0 4px 0 var(--b2); }
+.fg-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fg-h h2 { margin: 0; font-size: 1.25rem; }
+.fg-tag { padding: 4px 8px; background: var(--b2); color: var(--edge); font: .6rem var(--font-pixel); box-shadow: var(--bevel-sm); }
+.first-goal ol { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 10px; }
+.first-goal li { display: flex; align-items: center; gap: 12px; }
+.fg-n { width: 28px; height: 28px; flex: none; display: grid; place-items: center; background: var(--surface-3); border: 2px solid var(--edge); font: .65rem var(--font-pixel); }
+
+/* Combo counter and the quest chest bonus. */
+.combo-float { position: fixed; z-index: 90; transform: translate(-50%, 0); pointer-events: none; font: .8rem var(--font-pixel); color: var(--b2); text-shadow: 2px 2px 0 #000; animation: combo-rise 1.3s ease-out forwards; }
+@keyframes combo-rise { 0% { transform: translate(-50%, 8px) scale(.8); opacity: 0; } 20% { transform: translate(-50%, 0) scale(1.15); opacity: 1; } 100% { transform: translate(-50%, -40px) scale(1); opacity: 0; } }
+.chest { position: relative; }
+.chest-xp { position: absolute; right: -8px; bottom: -8px; font: .5rem var(--font-pixel); padding: 3px 4px; background: var(--surface); color: var(--ink); border: 2px solid var(--edge); }
+.rank { font-size: .85rem; color: var(--ink-2); }
+
+/* Language menu (js/i18n.js picker): a button plus a block-style popup list. */
+.lp-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 8px; background: var(--surface-2); color: var(--ink); border: 2px solid var(--line); border-radius: 2px; box-shadow: var(--bevel-sm); cursor: pointer; font: .6rem/1 var(--font-pixel); }
+.lp-btn:hover, .lp-btn[aria-expanded="true"] { border-color: var(--b0); }
+.lp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lp-globe { width: 16px; height: 16px; color: var(--ink-2); }
+.lp-caret { width: 6px; height: 6px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: translateY(-2px) rotate(45deg); }
+.lp-btn[aria-expanded="true"] .lp-caret { transform: translateY(2px) rotate(-135deg); }
+.lp-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; min-width: 168px; padding: 4px; background: var(--surface); border: 2px solid var(--edge); border-radius: 2px; box-shadow: var(--bevel), 0 10px 24px rgba(0, 0, 0, .35); display: grid; gap: 2px; }
+.lp-menu[hidden] { display: none; }
+.lp-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; background: transparent; color: var(--ink); border: 0; border-left: 4px solid transparent; border-radius: 0; text-align: left; cursor: pointer; font: 500 .9rem var(--font-body); }
+.lp-menu button b { width: 34px; font: .58rem var(--font-pixel); color: var(--ink-2); }
+.lp-menu button:hover, .lp-menu button:focus-visible { background: var(--surface-2); outline: none; }
+.lp-menu button[aria-checked="true"] { border-left-color: var(--b0); background: var(--surface-2); }
+.lp-menu button[aria-checked="true"] b { color: var(--ink); }
+
+.static-page section { margin-top: 36px; }
+.static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.static-cta { margin: 18px 0 8px; }
+.static-cta .btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span class="wordmark">TOLQYN</span></a></div></header>
+<main class="wrap static-page">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 6: ML инженерия / AIE</nav>
+<article class="reading">
+<p class="eyebrow">AIE · 40–60 сағат · 13 сабақ</p>
+<h1>AIE AI Engineering: AI Engineering қазақша: RAG сапасы, ReAct агент, guardrails, LLM сервисі</h1>
+<p class="prose">GenAI модулінде LLM қолданбасының негізгі бөліктерін құрдыңыз: prompt, RAG, function calling, агент. Енді инженер көзімен тереңірек қараймыз: модель token-ді қалай таңдайды, генерацияны қалай басқарамыз, құн мен latency-ді қалай есептейміз, RAG сапасын қалай өлшейміз, агент пен сервисті өндіріске қалай шығарамыз. Браузерде шын модель жоқ, сондықтан бәрін таза Python симуляциясымен жасаймыз: сценарий бойынша жауап беретін fake LLM, қолдан жазылған logits және шағын embedding векторлары.</p>
+<p class="static-cta"><a class="btn" href="../../#try/m6-ai">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m6-ai">Барлық тапсырмалар</a></p>
+<section id="aie-1">
+<h2>1. LLM ішінде: token, logits, softmax, келесі token циклі</h2>
+<div class="prose">
+<p>GenAI модулінде LLM «келесі token-ді болжайды» деп айттық. Енді осы сөйлемнің ішіне кіреміз: модельдің шығысы қандай сандар, олар қалай ықтималдыққа айналады және ұзын жауап қандай циклмен жазылады.</p>
+<h3>Token-нен logits-ке дейін</h3>
+<p>Tokenizer мәтінді token-дерге бөледі, әр token-нің сөздіктегі нөмірі (id) бар. Модель осы id тізбегін алып, сөздіктегі <b>әр</b> token үшін бір сан қайтарады. Бұл сандар <b>logits</b> деп аталады: олар кез келген нақты сан болуы мүмкін (теріс те), қосындысы 1 емес. Сөздік 100 000 token болса, әр қадамда 100 000 logit шығады.</p>
+<h3>Softmax: logits-ті ықтималдыққа айналдыру</h3>
+<p>Softmax әр logit-ті <code>exp</code> арқылы оң санға айналдырып, бәрінің қосындысына бөледі. Нәтижеде барлық ықтималдық 0 мен 1 арасында, қосындысы 1.</p>
+<pre><code>import math
+
+def softmax(logits):
+    m = max(logits.values())                 # тұрақтылық үшін
+    exps = {t: math.exp(v - m) for t, v in logits.items()}
+    total = sum(exps.values())
+    return {t: e / total for t, e in exps.items()}
+
+print(softmax({"латте": 2.0, "капучино": 1.0, "шай": 0.0}))
+# {'латте': 0.665, 'капучино': 0.245, 'шай': 0.090}</code></pre>
+<p>Неге <code>max</code>-ты аламыз? <code>math.exp(1000)</code> OverflowError береді. Барлық logit-тен бірдей санды алу нәтижені өзгертпейді (бөлшектің алымы мен бөлімі бірдей көбейткішке қысқарады), бірақ сандар қауіпсіз аймақта қалады.</p>
+<h3>Келесі token циклі (autoregressive)</h3>
+<ol>
+<li>Контекстті модельге беріп, logits аламыз.</li>
+<li>Logits-тен бір token таңдаймыз (greedy: ең үлкенін; sampling: ықтималдықпен).</li>
+<li>Token-ді контекстке қосамыз.</li>
+<li>Арнайы <code>&lt;eos&gt;</code> (end of sequence) token шықса немесе <code>max_tokens</code> шегіне жетсек, тоқтаймыз.</li>
+</ol>
+<p>Әр жаңа token үшін модель бүкіл есептеуді қайталайды, сондықтан output token-дері input-тан қымбат әрі баяу. Жауап 500 token болса, бұл 500 рет қайталанатын цикл.</p>
+<h3>Context window</h3>
+<p>Модель бір рет көре алатын token саны шектеулі: prompt пен жауап бірге осы терезеге сыюы керек. 128K терезе болса және 4K жауап күтсек, prompt-қа 124K қалады. Терезеден асқанын модель мүлдем көрмейді: ол «ұмытпайды», оған жай берілмейді.</p>
+<h3>Perplexity: модель қаншалық «таңданды»</h3>
+<p>Мәтіннің әр token-іне модель берген ықтималдықтарды алып, <code>exp(-орташа log p)</code> есептесек, <b>perplexity</b> шығады. Ол 1-ге жақын болса, модель мәтінді сенімді болжаған; үлкен болса, мәтін модель үшін «күтпеген». Бұл тілдік модельдерді салыстырудың классикалық метрикасы.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Logits-ті ықтималдық деп қабылдау: оларды тек softmax-тан кейін салыстыруға болады.</li>
+<li>Softmax-ты <code>max</code>-сыз жазу: үлкен logit-те overflow болады.</li>
+<li><code>&lt;eos&gt;</code> token-ін жауап мәтініне қосып жіберу.</li>
+</ul>
+<div class="tip">Greedy decode үшін softmax міндетті емес: logits-тің ең үлкені ықтималдықтың да ең үлкені. Softmax sampling, top-p және ықтималдықты көрсету үшін керек.</div></div>
+<p><a href="../../#lesson/m6-ai/0">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-2">
+<h2>2. Генерацияны басқару: temperature, top-k, top-p, penalty, stop</h2>
+<div class="prose">
+<p>GenAI модулінде temperature-ді «шығармашылық тұтқасы» ретінде қолдандық. Енді ол және оның серіктері logits пен ықтималдыққа нақты не істейтінін көреміз. Провайдерлердің API-інде бұлар жай параметр, бірақ ішінде бәрі бірнеше жол Python.</p>
+<h3>Temperature</h3>
+<p>Softmax алдында әр logit-ті <code>T</code>-ға бөлеміз: <code>softmax(logit / T)</code>. <code>T &lt; 1</code> үлестірімді «өткір» етеді (ең ықтималы одан да ықтимал), <code>T &gt; 1</code> «тегістейді». <code>T = 0</code> іс жүзінде greedy: әрқашан ең үлкені.</p>
+<h3>Top-k және top-p (nucleus)</h3>
+<ul>
+<li><b>Top-k</b>: ең ықтимал <code>k</code> token-ді қалдырып, қалғанын өшіреміз, сосын қайта қалыпқа келтіреміз (қосынды 1 болсын).</li>
+<li><b>Top-p</b>: token-дерді ықтималдығы бойынша кемуі ретімен тізіп, жинақталған қосынды <code>p</code>-ге жеткенше аламыз. Модель сенімді болса, 1-2 token қалады; сенімсіз болса, көп token қалады. Яғни top-p өзі бейімделеді.</li>
+</ul>
+<pre><code>probs = {"кофе": 0.5, "шай": 0.3, "су": 0.15, "шырын": 0.05}
+# top_k=2  → {"кофе": 0.625, "шай": 0.375}
+# top_p=0.9 → кофе (0.5) + шай (0.8) + су (0.95 ≥ 0.9)
+#           → {"кофе": 0.526, "шай": 0.316, "су": 0.158}</code></pre>
+<h3>Repetition penalty</h3>
+<p>Модель кейде бір сөзді қайталай береді. Жауапта бұрын шыққан token-дердің logit-ін әлсіретеміз: оң logit-ті <code>penalty</code>-ге бөлеміз, теріс logit-ті <code>penalty</code>-ге көбейтеміз (екі жағдайда да ол кішірейеді). OpenAI-стильдегі API-де ұқсас идея <code>presence_penalty</code> және <code>frequency_penalty</code> деп аталады: олар logit-тен тұрақты сан немесе қайталану санына пропорционал сан алады.</p>
+<h3>max_tokens, stop sequences, seed</h3>
+<ul>
+<li><code>max_tokens</code>: жауаптың ұзындық шегі. Шекке жетсе, жауап сөйлемнің ортасында үзіледі (<code>finish_reason = "length"</code>).</li>
+<li><b>Stop sequences</b>: осы жол пайда болса, генерация тоқтайды, ал жолдың өзі жауапқа кірмейді. Мысалы, <code>"\nПайдаланушы:"</code> модельдің пайдаланушы атынан жазып кетуін тоқтатады.</li>
+<li><b>Seed</b>: sampling кездейсоқ сандарға сүйенеді. Seed бекітілсе, бірдей сұрау бірдей жауап береді (көп провайдер мұны «мүмкіндігінше» деп уәде етеді).</li>
+</ul>
+<pre><code>import random
+rng = random.Random(42)     # бекітілген seed
+def sample(probs, rng):
+    r = rng.random()
+    acc = 0.0
+    for tok, p in sorted(probs.items(), key=lambda kv: -kv[1]):
+        acc += p
+        if r &lt; acc:
+            return tok
+    return tok</code></pre>
+<h3>Әдеттегі тізбек</h3>
+<p>penalty → temperature → softmax → top-k → top-p → қайта қалыпқа келтіру → sample → stop тексеру. Бұл ретті шатастырсаңыз, параметрлер күткендей әсер етпейді.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Сүзгіден кейін қайта қалыпқа келтіруді ұмыту: қосынды 1-ден кіші болып қалады.</li>
+<li>Temperature мен top-p-ны бір уақытта қатты өзгерту: әсерлерін ажырату қиын. Біреуін ғана реттеген дұрыс.</li>
+<li>JSON немесе жіктеу тапсырмасында жоғары temperature қою.</li>
+</ul>
+<div class="tip">Детерминистік тапсырмада (экстракция, жіктеу) temperature 0 және бекітілген seed; мәтін жазуда temperature 0.7 шамасы және top-p 0.9. Әр өзгерісті eval жиынында тексеріңіз.</div></div>
+<p><a href="../../#lesson/m6-ai/1">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-3">
+<h2>3. Ұзын контекст және құн</h2>
+<div class="prose">
+<p>GenAI модулінде тарихты token бюджетіне сыйғыздық және бір сұраудың құнын есептедік. Өндірісте сұрақ басқаша қойылады: «контекстке не кіргізсек, сапа жоғары, құн төмен болады?» Ұзын контекст тегін емес: input token-дерге ақша төлейміз, latency өседі, ал модель ортадағы ақпаратты нашар пайдаланады.</p>
+<h3>Token бюджеті</h3>
+<p>Бюджет = context window − күтілетін жауап (<code>max_tokens</code>) − system prompt − құралдар сипаттамасы. Қалғаны тарих пен RAG үзінділеріне бөлінеді. Әр бөлікке алдын ала үлес беріңіз: мысалы, тарихқа 30%, үзінділерге 60%.</p>
+<h3>Қысқарту стратегиялары</h3>
+<table>
+<tr><th>Стратегия</th><th>Қалай</th><th>Кемшілігі</th></tr>
+<tr><td>Sliding window</td><td>Тек соңғы N хабарлама</td><td>Басындағы маңызды дерек жоғалады</td></tr>
+<tr><td>Басы мен соңы</td><td>Ұзын құжаттың басы мен соңын қалдырып, ортасын кесу</td><td>Ортадағы дерек жоғалады</td></tr>
+<tr><td>Rolling summary</td><td>Ескі хабарламаларды қысқаша мазмұнға айналдыру</td><td>Қосымша LLM шақыруы, ұсақ деталь жоғалуы мүмкін</td></tr>
+<tr><td>Retrieval жады</td><td>Ескі хабарламаларды vector store-ға салып, керегін іздеу</td><td>Күрделірек</td></tr>
+</table>
+<h3>Lost in the middle</h3>
+<p>Зерттеулер көрсеткендей, модельдер ұзын контекстің басы мен соңындағы ақпаратты жақсы, ал ортасындағыны нашар пайдаланады. Практикалық салдары: ең маңызды үзінділерді шетке қойыңыз. Ең релевантты chunk бірінші, екіншісі соңғы, үшіншісі екінші орында, тағы сол сияқты; ең әлсіздері ортада қалады.</p>
+<pre><code>chunks = ["A", "B", "C", "D", "E"]   # релевантты бойынша кему
+# шеттерге орналастыру → ["A", "C", "E", "D", "B"]</code></pre>
+<h3>Құн және prompt caching</h3>
+<p>Көп провайдер бірдей <b>префиксті</b> (system prompt, құралдар, тұрақты құжаттар) кэштейді, ал кэштен оқылған input token-дер әлдеқайда арзан, мысалы, бағаның 10%-ы. Сондықтан prompt-тың тұрақты бөлігін басына, өзгеретін бөлігін (пайдаланушы сұрағы) соңына қойыңыз.</p>
+<pre><code>uncached = 500 * 0.40 / 1_000_000      # $0.40 / 1M input
+cached   = 1500 * 0.04 / 1_000_000     # кэштелген: 10%
+output   = 200 * 1.60 / 1_000_000      # $1.60 / 1M output
+per_request = uncached + cached + output   # $0.00058</code></pre>
+<h3>Модельді құн мен сапа бойынша таңдау</h3>
+<p>Бір сұраудың бағасы аз модель әрқашан арзан емес. Маңыздысы: <b>бір дұрыс жауаптың құны</b> = сұрау құны / accuracy. Арзан модель жиі қателессе, қате жауаптарды оператор түзетеді, ол да ақша. Алдымен сапа шегін қойыңыз (мысалы, accuracy ≥ 0.85), сосын шектен өткендердің ішінен бір дұрыс жауабы ең арзанын таңдаңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>«Context window 1M, бәрін сала береміз»: құн мен latency өседі, сапа көбіне төмендейді.</li>
+<li>Өзгермелі мәтінді (күн, уақыт, пайдаланушы аты) system prompt-тың басына қою: кэш жұмыс істемейді.</li>
+<li>Rolling summary-ді тексермеу: қысқаша мазмұнда тапсырыс нөмірі сияқты маңызды дерек сақталуы керек.</li>
+</ul>
+<div class="tip">Әр сұрауда input, cached және output token санын логқа жазыңыз. Айлық шотты болжаудың ең сенімді жолы: нақты трафиктің бір күнін алып, 30-ға көбейту.</div></div>
+<p><a href="../../#lesson/m6-ai/2">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-4">
+<h2>4. Inference: latency, batching, KV-cache, кэш</h2>
+<div class="prose">
+<p>Пайдаланушы үшін модельдің ақылы ғана емес, жылдамдығы да маңызды. Бұл сабақта модель жауапты қалай «шығаратынын» (inference) және оны қалай тездетіп, арзандататынымызды көреміз.</p>
+<h3>Екі кезең: prefill және decode</h3>
+<ul>
+<li><b>Prefill</b>: модель бүкіл prompt-ты бір рет параллель өңдейді. Prompt ұзын болса, бұл кезең ұзарады.</li>
+<li><b>Decode</b>: жауап token-ден token-ге жазылады (1-сабақтағы цикл). Әр қадам алдыңғысын күтеді, сондықтан параллельдеу қиын.</li>
+</ul>
+<p>Осыдан екі негізгі метрика шығады: <b>TTFT</b> (time to first token, бірінші token-ге дейінгі уақыт) және <b>tokens/sec</b> (decode жылдамдығы). Жалпы уақыт ≈ <code>TTFT + output_tokens / tokens_per_sec</code>. TTFT 400 мс, жылдамдық 50 token/с, жауап 300 token болса: 0.4 + 6 = 6.4 секунд. Streaming жалпы уақытты азайтпайды, бірақ пайдаланушы 0.4 секундта мәтінді көре бастайды.</p>
+<h3>KV-cache</h3>
+<p>Әр жаңа token үшін attention алдыңғы барлық token-дердің key және value векторларын қажет етеді. Оларды әр қадамда қайта есептемеу үшін жадта сақтайды: бұл <b>KV-cache</b>. Ол decode-ты қатты тездетеді, бірақ GPU жадын жейді: ұзын контекст пен көп қатар сұрау жадқа сыймай қалуы мүмкін.</p>
+<h3>Batching</h3>
+<p>GPU бір сұрауды өңдегенде толық жүктелмейді. Бірнеше сұрауды бірге (batch) өңдесек, бір секундтағы token саны (throughput) өседі. <b>Continuous batching</b>: бір сұрау біткенде оның орнына кезектегі жаңа сұрау бірден қосылады, бүкіл batch-тің бітуін күтпейді.</p>
+<h3>Quantization</h3>
+<p>Модель салмақтары әдетте 16 бит (fp16/bf16). Оларды 8 немесе 4 битке қысу жадты 2-4 есе азайтады, сапа сәл ғана төмендейді. Жад ≈ параметр саны × бит / 8: 7B модель fp16-да ≈ 14 GB, int4-те ≈ 3.5 GB (KV-cache бөлек).</p>
+<h3>Serving engines</h3>
+<ul>
+<li><b>vLLM</b>: PagedAttention арқылы KV-cache-ті беттерге бөліп, жадты үнемдейді; continuous batching; OpenAI-үйлесімді API береді.</li>
+<li><b>TGI</b>, <b>SGLang</b>: ұқсас серверлер. <b>llama.cpp</b> және <b>Ollama</b>: ноутбук пен CPU-да quantized модельдер.</li>
+</ul>
+<p>Бұлар браузерде жұмыс істемейді, бірақ архитектураны түсіну маңызды: өз модельді хостингке қойғанда, GPU құнын осылар анықтайды.</p>
+<h3>Бірдей сұрауларды кэштеу</h3>
+<p>Қолдау чатында «интернет баяу» деген сұрақ күніне жүздеген рет келеді. Prompt-ты қалыпқа келтіріп (бос орын, регистр), кілт ретінде қолдансақ, бірдей сұрауға модельді қайта шақырмаймыз. Шын жүйеде кілтке модель аты мен prompt нұсқасын да қосып, <code>hashlib.sha256</code> арқылы қысқартады, ал жазбаға TTL (жарамдылық мерзімі) береді.</p>
+<pre><code>import re
+def normalize(prompt):
+    return re.sub(r"\s+", " ", prompt.strip().lower())
+normalize("  Интернет   БАЯУ ")   # 'интернет баяу'</code></pre>
+<h3>Latency-ді өлшеу: p50 және p95</h3>
+<p>Орташа мән алдайды: 99 сұрау 1 секунд, біреуі 60 секунд болса, орташа 1.6 с, ал бір клиент бір минут күтті. Сондықтан <b>перцентиль</b> қараймыз: p50 (медиана, қалыпты тәжірибе) және p95 (ең баяу 5%). Nearest-rank әдісі: сұрыптаймыз, <code>rank = ceil(p × n / 100)</code>, мән = <code>sorted[rank - 1]</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Тек орташа latency-ді бақылау.</li>
+<li>Кэш кілтіне модель атын қоспау: модель ауысқанда ескі жауаптар қайтарылады.</li>
+<li>Жеке деректі (тапсырыс, телефон) бар жауаптарды ортақ кэшке салу.</li>
+</ul>
+<div class="tip">Чатта TTFT-ты, ал фондық тапсырмада (мыңдаған құжатты жіктеу) throughput-ты оңтайландырыңыз. Фондық тапсырмаға провайдерлердің арзан batch API-і бар.</div></div>
+<p><a href="../../#lesson/m6-ai/3">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-5">
+<h2>5. Векторлық іздеу тереңірек: ANN, hybrid search, reranking</h2>
+<div class="prose">
+<p>GenAI модулінде cosine similarity арқылы top-k іздеуді жаздық. Ол бірнеше мың құжатқа жетеді. Миллион chunk болғанда немесе сұрауда нақты код (тариф атауы, қате нөмірі) кездескенде басқа құралдар керек.</p>
+<h3>Cosine, dot product және нормализация</h3>
+<p>Cosine = dot(a, b) / (|a| · |b|). Егер барлық векторды алдын ала ұзындығы 1 болатындай нормаласақ, cosine кәдімгі dot product-қа айналады: бөлу керек емес. Сондықтан векторлық базалар векторды индекске салғанда бір рет нормалайды, ал іздеуде тек dot есептейді. Кейбір embedding модельдері нормаланған вектор қайтарады; құжатын оқыңыз.</p>
+<pre><code>import math
+def normalize(v):
+    n = math.sqrt(sum(x * x for x in v))
+    return [x / n for x in v]
+
+normalize([3, 4])   # [0.6, 0.8]</code></pre>
+<h3>Brute force және ANN</h3>
+<p>Brute force әр сұрауда барлық N векторды салыстырады: O(N·d). Дәл, бірақ миллиондаған векторда баяу. <b>ANN</b> (approximate nearest neighbors) индекстері сәл дәлдікті жылдамдыққа айырбастайды:</p>
+<ul>
+<li><b>IVF</b>: векторларды алдын ала кластерлерге бөледі (k-means). Іздеуде сұрауға ең жақын <code>nprobe</code> кластерді ғана тексереді. nprobe көп болса, дәлірек, бірақ баяу.</li>
+<li><b>HNSW</b>: векторлардан көп деңгейлі граф құрады. Жоғарғы сирек деңгейде «ұзын секірістер», төменгі деңгейде жақын көршілер. Іздеу графпен жүріп, жақындай береді. Жылдам және дәл, бірақ жадты көп алады.</li>
+</ul>
+<p>ANN сапасы <b>recall</b>-мен өлшенеді: ANN тапқан top-10 ішінде шын top-10-ның қаншасы бар.</p>
+<h3>Құралдар</h3>
+<table>
+<tr><th>Құрал</th><th>Не</th><th>Қашан</th></tr>
+<tr><td>FAISS</td><td>Кітапхана (IVF, HNSW, PQ)</td><td>Өз сервисіңізге ендіру, үлкен көлем</td></tr>
+<tr><td>Chroma</td><td>Жеңіл embedded база</td><td>Прототип, шағын жоба</td></tr>
+<tr><td>Qdrant, Weaviate, Milvus</td><td>Бөлек сервер, metadata сүзгілері</td><td>Өндіріс, көп пайдаланушы</td></tr>
+<tr><td>pgvector</td><td>PostgreSQL кеңейтуі</td><td>Деректер онсыз да Postgres-те болса</td></tr>
+</table>
+<h3>Hybrid search</h3>
+<p>Embedding мағынаны жақсы ұстайды, бірақ «Турбо-500» тарифі немесе «E-651» қате коды сияқты нақты сөздерді жіберіп алуы мүмкін. Keyword іздеу (BM25) керісінше. Екеуін біріктіреміз. BM25-тің жеңілдетілген түрі:</p>
+<pre><code>idf(t)   = log(1 + (N - df + 0.5) / (df + 0.5))
+score(d) = Σ idf(t) · tf · (k1 + 1) / (tf + k1)    # k1 ≈ 1.5</code></pre>
+<p>Мұнда <code>df</code> сөз кездесетін құжат саны, <code>tf</code> құжаттағы сөз саны. Сирек сөз көп ұпай береді, ал бір сөздің қайталануы ұпайды шексіз өсірмейді (saturation).</p>
+<p>Екі тізімді біріктірудің қарапайым әрі сенімді тәсілі: <b>Reciprocal Rank Fusion</b> (RRF). Әр құжат әр тізімдегі орнына қарай <code>1 / (60 + rank)</code> ұпай алады, ұпайлар қосылады. Сандардың шкаласы әртүрлі болса да жұмыс істейді, себебі тек орынды қолданады.</p>
+<h3>Reranking</h3>
+<p>Бірінші кезең (bi-encoder немесе BM25) 50 кандидатты тез табады. Екінші кезеңде <b>cross-encoder</b> reranker әр (сұрақ, chunk) жұбын бірге оқып, дәлірек ұпай береді, біз top-5-ін LLM-ге жібереміз. Reranker баяу, сондықтан тек кандидаттарға қолданылады.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Нормаланбаған векторларда dot product қолдану: ұзын вектор әрқашан «ұқсас» болып шығады.</li>
+<li>Индекс пен сұрауды әртүрлі embedding моделімен жасау.</li>
+<li>Тек векторлық іздеуге сену: кодтар мен атаулар бар доменде hybrid міндетті.</li>
+</ul>
+<div class="tip">Алдымен brute force және шағын eval жиынымен бастаңыз. ANN индексін тек latency шынымен мәселе болғанда қосыңыз және оның recall-ын brute force нәтижесімен салыстырыңыз.</div></div>
+<p><a href="../../#lesson/m6-ai/4">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-6">
+<h2>6. RAG сапасын бағалау: recall@k, MRR, faithfulness</h2>
+<div class="prose">
+<p>RAG-ты «көзбен» тексеру ең жиі кездесетін қате: бес сұрақ қойып, жауаптар жақсы көрінсе, дайын деп есептейміз. Өндірісте chunk өлшемін, embedding моделін немесе prompt-ты өзгерткен сайын сапа сандармен өлшенуі керек. Ол үшін RAG-ты екі бөлек бөлікке бөліп бағалаймыз: <b>retrieval</b> және <b>generation</b>.</p>
+<h3>Golden question set</h3>
+<p>Бұл сұрақтар мен оларға жауап беретін chunk id-лерінің тізімі. Оны құжатты білетін адам (қолдау операторы) жасайды. 30-50 сұрақ бастауға жетеді.</p>
+<pre><code>GOLDEN = [
+    {"q": "Роутер жанбаса не істеймін?",  "relevant": {"faq1"}},
+    {"q": "Kaspi арқылы төлеуге бола ма?", "relevant": {"faq4"}},
+    {"q": "Тарифті қалай өзгертемін?",     "relevant": {"faq2", "faq7"}},
+    {"q": "Ұшақ билеті қанша тұрады?",     "relevant": set()},   # жауабы жоқ
+]</code></pre>
+<p>Жауабы жоқ сұрақтарды да қосыңыз: жүйе «білмеймін» дей ала ма, соны тексереді.</p>
+<h3>Retrieval метрикалары</h3>
+<ul>
+<li><b>recall@k</b>: релевантты chunk-тардың қандай үлесі top-k ішіне түсті. Retrieved = [faq7, faq3, faq2], relevant = {faq2, faq7}, k = 3: recall@3 = 2/2 = 1.0. k = 1 болса: 1/2 = 0.5.</li>
+<li><b>MRR</b> (mean reciprocal rank): бірінші релевантты chunk қай орында. 1-орын → 1, 2-орын → 0.5, 3-орын → 0.33, табылмаса 0. Барлық сұрақ бойынша орташа.</li>
+<li><b>Hit rate@k</b>: кемінде бір релевантты chunk top-k-да ма.</li>
+</ul>
+<p>Recall төмен болса, LLM-ді немесе prompt-ты түзетудің мәні жоқ: модель керекті ақпаратты көрмеді.</p>
+<h3>Generation: faithfulness</h3>
+<p>Жауаптың әр тұжырымы берілген контекстке сүйене ме? Қатаң әрі арзан тексеріс: модельден әр сөйлемнен кейін <code>[faq3]</code> түрінде дерек көзін жазуды талап етіп, кодпен тексереміз:</p>
+<ol>
+<li>Жауапты сөйлемдерге бөлеміз.</li>
+<li>Әр сөйлемде кемінде бір citation бар ма?</li>
+<li>Әр citation шынымен retrieved chunk-тардың бірі ме (модель жоқ id ойлап таппады ма)?</li>
+</ol>
+<pre><code>import re
+sentences = re.split(r"(?&lt;=[.!?])\s+", answer.strip())
+cites = re.findall(r"\[([\w-]+)\]", sentence)</code></pre>
+<p>Бұл тексеріс тұжырымның <b>мағынасы</b> chunk-қа сай ма, оны білмейді. Ол үшін LLM-as-judge керек (11-сабақ). Бірақ citation жоқ немесе жалған citation бар сөйлемдерді бірден ұстайды.</p>
+<h3>Chunk size эксперименті</h3>
+<p>Бір golden жиынында бірнеше конфигурацияны салыстырыңыз: chunk 200, 400, 800 token. Әрқайсысы үшін recall@k есептеп, кестеге жазыңыз. Тең нәтижеде кішісін таңдаңыз: ол prompt-қа аз token қосады, демек арзан әрі жылдам.</p>
+<table>
+<tr><th>Chunk</th><th>recall@3</th><th>MRR</th><th>Prompt token</th></tr>
+<tr><td>200</td><td>0.72</td><td>0.61</td><td>~700</td></tr>
+<tr><td>400</td><td>0.86</td><td>0.74</td><td>~1300</td></tr>
+<tr><td>800</td><td>0.86</td><td>0.70</td><td>~2500</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Golden жиынды бір рет жасап, ешқашан толықтырмау. Өнімдегі сәтсіз сұрақтарды жиынға қосып отырыңыз.</li>
+<li>Тек соңғы жауапты бағалау: қате retrieval-дан ба, generation-нан ба, белгісіз қалады.</li>
+<li>Бір метрикаға ғана қарау: recall жоғары, бірақ MRR төмен болса, дұрыс chunk соңғы орындарда.</li>
+</ul>
+<div class="tip">Eval-ды CI-ға қосыңыз: chunk өлшемін немесе embedding моделін өзгертетін әр pull request recall@k мен faithfulness кестесін шығарсын. Сан төмендесе, merge жасалмайды.</div></div>
+<p><a href="../../#lesson/m6-ai/5">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-7">
+<h2>7. ReAct агент: Thought, Action, Observation</h2>
+<div class="prose">
+<p>GenAI модулінде агент циклін JSON құрал-шақыруларымен жаздық. Енді дәл сол идеяның классикалық мәтіндік түрін, <b>ReAct</b>-ты (Reason + Act) толық құрамыз: модель ойын жазады, әрекет таңдайды, біз әрекетті орындап, нәтижені қайтарамыз. Мәтіндік форматты түсіну пайдалы: function calling жоқ шағын open-source модельдерде, сондай-ақ агент логын оқығанда дәл осы құрылым кездеседі.</p>
+<h3>Формат</h3>
+<pre><code>Question: А-1024 тапсырысының 3 данасы қанша тұрады?
+Thought: Алдымен тапсырыстың бағасын білу керек.
+Action: order_lookup[А-1024]
+Observation: латте, 1450 ₸
+Thought: Енді 3-ке көбейтемін.
+Action: calculator[1450*3]
+Observation: 4350
+Thought: Жауап дайын.
+Final Answer: 3 латте 4350 ₸ тұрады.</code></pre>
+<p>Модель <code>Thought</code> және <code>Action</code> жолдарын жазады. <code>Observation</code> жолын <b>біз</b> жазамыз: құралды орындап, нәтижесін транскриптке қосып, модельді қайта шақырамыз.</p>
+<h3>Цикл</h3>
+<ol>
+<li>Транскрипт (сұрақ + бұрынғы қадамдар) модельге беріледі.</li>
+<li>Модельдің жауабын талдаймыз (parsing): <code>Final Answer</code> болса, тоқтаймыз; <code>Action: tool[input]</code> болса, құралды орындаймыз.</li>
+<li><code>Observation: ...</code> жолын қосып, 1-қадамға ораламыз.</li>
+<li><code>max_steps</code> шегінен асса, тоқтап, «жауап табылмады» дейміз.</li>
+</ol>
+<h3>Action-ды талдау</h3>
+<pre><code>import re
+m = re.search(r"Action:\s*(\w+)\[(.*?)\]", text)
+if m:
+    tool, arg = m.group(1), m.group(2)</code></pre>
+<p>Модель форматты бұзуы мүмкін: <code>Action: calculator(2+2)</code> немесе мүлдем Action жоқ. Мұндай жағдайда үнсіз құламаймыз, Observation ретінде түзету нұсқауын қайтарамыз: «Формат қате: Action: tool[input] немесе Final Answer: ... жазыңыз». Көбіне модель келесі қадамда түзеледі.</p>
+<h3>Stop sequence маңызы</h3>
+<p>Модель Action жазғаннан кейін Observation-ды да <b>өзі ойдан</b> жалғастырып кетуі мүмкін: «Observation: 5000 ₸». Сондықтан шын жүйеде <code>stop=["\nObservation:"]</code> қоямыз (2-сабақ): модель Action-нан кейін тоқтайды, ал Observation-ды тек құрал жазады.</p>
+<h3>Құралдар қауіпсіз болуы керек</h3>
+<p>Калькулятор үшін <code>eval</code> өте ыңғайлы, бірақ модель (немесе prompt injection) <code>__import__("os")</code> жазуы мүмкін. Сондықтан алдымен кіріс тек цифр, амал белгілері, жақша мен бос орыннан тұратынын тексереміз, тек содан кейін есептейміз. Тапсырысты іздеу құралы тек оқиды, ештеңе өзгертпейді.</p>
+<pre><code>ALLOWED = re.compile(r"[0-9+\-*/(). ]+")
+if not ALLOWED.fullmatch(expr):
+    return "Қате: рұқсат етілмеген таңба"</code></pre>
+<h3>Сынау: scripted fake LLM</h3>
+<p>Агентті шын модельсіз тексеру үшін алдын ала жазылған жауаптарды кезекпен қайтаратын fake LLM қолданамыз. Ол модельге қандай транскрипт келгенін де сақтайды, сондықтан Observation дұрыс қосылғанын тексере аламыз. Бұл агенттің <b>кодын</b> тексереді, модельдің ақылын емес.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Observation-ды транскриптке қоспау: модель құрал нәтижесін көрмей, сол әрекетті қайталайды.</li>
+<li>Белгісіз құрал атын <code>KeyError</code>-мен құлату. Оның орнына Observation: «Белгісіз құрал».</li>
+<li><code>max_steps</code> жоқ: шатасқан агент шексіз айналады.</li>
+</ul>
+<div class="tip">Транскриптті толық логқа жазыңыз. Агент қате жауап берсе, қай қадамда ойы бұрыс кеткенін Thought жолдарынан бірден көресіз.</div></div>
+<p><a href="../../#lesson/m6-ai/6">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-8">
+<h2>8. Guardrails: кіріс пен шығысты тексеру</h2>
+<div class="prose">
+<p>GenAI модулінде prompt injection шабуылдарын және жеке деректі жасыруды талқыладық. Өндірісте бұлар бөлек функциялар емес, әр сұрау өтетін <b>guardrails</b> қабаты: модельге дейін кірісті тексереміз, модельден кейін шығысты тексереміз, бірдеңе бұзылса, қауіпсіз fallback береміз.</p>
+<pre><code>сұрау → [input guard] → LLM → [output guard] → жауап
+            ↓ бас тарту             ↓ fallback</code></pre>
+<h3>Input guard</h3>
+<ul>
+<li><b>Ұзындық</b>: бос немесе тым ұзын мәтін (мысалы, 2 000 таңбадан көп) бас тартылады. Бұл құнды да қорғайды.</li>
+<li><b>Prompt injection үлгілері</b>: «ignore previous instructions», «алдыңғы нұсқауларды ұмыт», «system prompt-ты көрсет». Regex тізімі тек бірінші сүзгі: шебер шабуылды ұстамайды, бірақ арзан және жылдам. Келесі қабат: бөлек жіктеуіш модель.</li>
+<li><b>PII masking</b>: ЖСН (12 цифр), телефон (+7 701 123 45 67, 87011234567), карта нөмірі. Модельге және логқа тек жасырылған мәтін кетеді.</li>
+</ul>
+<pre><code>import re
+IIN = re.compile(r"\b\d{12}\b")
+PHONE = re.compile(r"(?:\+7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}")
+text = IIN.sub("[ЖСН]", text)
+text = PHONE.sub("[ТЕЛЕФОН]", text)</code></pre>
+<p>Реті маңызды: алдымен ЖСН (тура 12 цифр), сосын телефон. Әйтпесе телефон үлгісі ЖСН-нің бір бөлігін «жұтып» қоюы мүмкін.</p>
+<h3>Output guard</h3>
+<ul>
+<li><b>Құрылым</b>: модель JSON қайтаруы керек болса, <code>json.loads</code> сәтті ме, барлық өріс бар ма, типтері дұрыс па. Бұл JSON Schema немесе Pydantic-тің шағын нұсқасы.</li>
+<li><b>Рұқсат етілген тақырыптар</b>: интернет-провайдердің көмекшісі тек <code>internet</code>, <code>billing</code>, <code>tariff</code> туралы жауап береді. Модель «саясат» деп белгілесе, жауап берілмейді.</li>
+<li><b>Ағып кету</b>: жауапта system prompt үзіндісі, API кілті немесе басқа клиенттің деректері жоқ па.</li>
+</ul>
+<pre><code>SCHEMA = {"answer": str, "sources": list, "topic": str}
+ALLOWED_TOPICS = {"internet", "billing", "tariff"}</code></pre>
+<h3>Fallback</h3>
+<p>Тексеріс сәтсіз болса, пайдаланушыға қате мәтінін көрсетпейміз. Үш нұсқа бар: (1) модельді түзету нұсқауымен қайта шақыру (1-2 рет); (2) дайын қауіпсіз жауап: «Кешіріңіз, бұл сұраққа жауап бере алмаймын. Оператор 24/7: 7010»; (3) сұрауды адамға (операторға) беру. Қайсысы болса да, логқа себебімен жазылады.</p>
+<h3>Дайын құралдар</h3>
+<p>NeMo Guardrails, Guardrails AI, Llama Guard сияқты жобалар осы қабаттарды дайын береді: схема валидациясы, тақырып сүзгілері, қауіпті мазмұнды жіктеу. Бірақ олардың ішінде дәл осы идеялар: тексеру, бас тарту, fallback. Ережелерді өз доменіңізге бейімдеу бәрібір сіздің жұмысыңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Тек input-ты тексеру: модель шығысы да қауіпті болуы мүмкін (жалған сілтеме, құпия).</li>
+<li>PII-ді модельге жасырып, логқа ашық жазу.</li>
+<li>Guard-тың әр бас тартуын пайдаланушыға «injection анықталды» деп көрсету: шабуылдаушыға қай ереже жұмыс істегенін айтпаңыз.</li>
+<li>Guardrail-дардың өзін тестілемеу: жалған бас тартулар (false positive) да пайдаланушыны ренжітеді.</li>
+</ul>
+<div class="tip">Әр guard үшін екі тест жиыны ұстаңыз: ұсталуы керек мысалдар және өтуі керек қалыпты сұраулар. Ережені өзгерткенде екеуін де тексеріңіз.</div></div>
+<p><a href="../../#lesson/m6-ai/7">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-9">
+<h2>9. Оркестрация және көп агентті жүйелер</h2>
+<div class="prose">
+<p>Нақты LLM қолданбасы бір шақырудан тұрмайды: сұрауды жіктеу, іздеу, жауап жазу, тексеру, қажет болса қайталау. Осы қадамдарды қалай байланыстыратынымыз <b>оркестрация</b> деп аталады. Екі негізгі тәсіл бар: қатаң <b>pipeline</b> (граф, state machine) және өз бетінше шешетін <b>агенттер</b>.</p>
+<h3>Граф ретінде pipeline</h3>
+<p>LangGraph сияқты құралдардың идеясы қарапайым: жүйе <b>түйіндерден</b> (node) және <b>қырлардан</b> (edge) тұрады. Барлық түйін бір ортақ <b>state</b> сөздігін оқып, оған өз нәтижесін қосады. Қыр не тұрақты (A-дан кейін әрқашан B), не шартты (state-ке қарап келесі түйінді таңдайтын функция). Арнайы <code>END</code> түйіні жұмысты аяқтайды.</p>
+<pre><code>def classify(state):  return {"intent": "tech"}
+def retrieve(state):  return {"docs": ["faq3"]}
+def answer(state):    return {"answer": "Роутерді қайта қосыңыз [faq3]"}
+
+NODES = {"classify": classify, "retrieve": retrieve, "answer": answer}
+EDGES = {
+    "classify": lambda s: "retrieve" if s["intent"] != "chitchat" else "answer",
+    "retrieve": "answer",
+    "answer": "END",
+}</code></pre>
+<p>Неге бұл тиімді? Әр қадам бөлек тестіленеді, логта қай түйіннен өткені көрінеді, ал шартты қырлар «жауап тексерістен өтпесе, қайта жаз» сияқты циклдерді анық сипаттайды. Циклдер болғандықтан, мұнда да қадам шегі міндетті.</p>
+<h3>Router: сұрауды маманға жіберу</h3>
+<p>Көп агентті жүйенің ең қарапайым әрі пайдалы түрі: <b>router</b> сұрауды жіктеп, оны маман агентке жібереді. Интернет-провайдерде: <code>billing</code> (төлем, шот), <code>tech</code> (роутер, жылдамдық), <code>sales</code> (тариф, қосылу). Әр маманның өз system prompt-ы, өз құралдары және өз құжаттары бар. Router арзан модель немесе тіпті кілт сөз ережелері болуы мүмкін; сенімсіз болса, жалпы (<code>general</code>) агентке береді.</p>
+<h3>Басқа үлгілер</h3>
+<ul>
+<li><b>Planner / executor</b>: бір агент жоспар жазады, басқалары қадамдарды орындайды.</li>
+<li><b>Generator / critic</b>: бірі жауап жазады, екіншісі критерий бойынша тексереді, сәтсіз болса қайта жаздырады.</li>
+<li><b>Parallel</b>: бірнеше маман бір уақытта жұмыс істеп, нәтижелер біріктіріледі.</li>
+</ul>
+<h3>Retries</h3>
+<p>LLM қадамы кейде сәтсіз болады: JSON бұзылады, тексерістен өтпейді. Pipeline-да әр осындай түйінге шағын retry саясатын береміз: нәтижені тексеріп, сәтсіз болса 2-3 рет қайталау, сосын fallback. Желі қателеріне арналған backoff келесі сабақта.</p>
+<h3>Қашан көп агент керек емес</h3>
+<p>Әр агент: қосымша LLM шақыруы, latency, құн және жаңа қате көзі. Көп жағдайда жақсы құрылған бір pipeline (router + RAG + тексеріс) бірнеше «сөйлесетін» агенттен сенімдірек. Агенттерді тапсырма шынымен ашық болғанда (қадамдар саны мен реті алдын ала белгісіз) қолданыңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Түйіндер state-ті толық ауыстырады: басқа түйіндердің нәтижесі жоғалады. Тек жаңа кілттерді қосыңыз.</li>
+<li>Шартты қыр жоқ түйін атын қайтарады: граф құлайды. Атауларды тексеріңіз.</li>
+<li>Router-дің қате жіктеуін бағаламау: оған да eval жиыны керек.</li>
+</ul>
+<div class="tip">Графтың өтілген жолын (path) әр сұрауда логқа жазыңыз: «classify → retrieve → answer → check → answer». Бұл агенттің ойын түсінудің ең жылдам жолы.</div></div>
+<p><a href="../../#lesson/m6-ai/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-10">
+<h2>10. LLM сервисін өндіріске шығару</h2>
+<div class="prose">
+<p>Notebook-та жұмыс істейтін RAG көмекшісін мобильді қосымша немесе сайт шақыратын <b>сервиске</b> айналдыру керек. Бұл сабақта сервистің пішінін, сенімділік тәсілдерін және бақылауды қарастырамыз. Веб-сервер браузерде іске қоспаймыз, сондықтан код мәтін ретінде беріледі, ал жаттығуларда сервистің логикасын fake сағатпен (fake clock) сынаймыз.</p>
+<h3>Endpoint пішіні</h3>
+<pre><code>from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    request_id: str
+
+@app.post("/v1/chat", response_model=ChatResponse)
+async def chat(req: ChatRequest):
+    guard = input_guard(req.message)
+    if not guard["allowed"]:
+        return ChatResponse(answer=FALLBACK, sources=[], request_id=new_id())
+    reply = await llm_client.generate(build_prompt(guard["text"]), timeout=20)
+    return ChatResponse(**parse_reply(reply), request_id=new_id())</code></pre>
+<p>Pydantic кіріс пен шығыстың схемасын тексереді, ал <code>/v1/</code> нұсқасы API-ді клиенттерді бұзбай өзгертуге мүмкіндік береді.</p>
+<h3>Async және streaming</h3>
+<p>LLM-ге сұрау секундтар алады, ал осы уақыт ішінде сервер тек <b>күтеді</b> (желі I/O). <code>async def</code> және <code>await</code> бір процеске күту кезінде басқа сұрауларға қызмет етуге мүмкіндік береді: жүздеген чат бір уақытта. Streaming кезінде жауапты бөліктермен жібереміз, көбіне <b>Server-Sent Events</b> (SSE) форматында: әр бөлік <code>data: ...</code> жолы және бос жол, соңында <code>data: [DONE]</code>.</p>
+<pre><code>data: {"delta": "Роутерді"}
+
+data: {"delta": " қайта қосыңыз"}
+
+data: [DONE]</code></pre>
+<h3>Timeout, retry және backoff</h3>
+<p>Провайдер API-і кейде баяулайды немесе 429 (rate limit), 503 қайтарады. Ережелер: (1) әр шақыруда <b>timeout</b> болсын; (2) уақытша қателерде (timeout, 429, 5xx) қайталаймыз, ал 400 (сұрау қате) және 401 (кілт қате) қайталанбайды; (3) кідіріс экспоненциалды өседі: 0.5, 1, 2 секунд, көбіне кездейсоқ <b>jitter</b> қосылады, әйтпесе мың клиент бір сәтте қайта ұрады; (4) қайталау саны шектеулі.</p>
+<p>Уақытқа тәуелді кодты тестілеу үшін нақты <code>time.sleep</code> орнына <b>сағатты инъекциялаймыз</b>: функция <code>clock.sleep(d)</code> шақырады, ал тестте fake сағат тек уақытты жазып алады. Тест бір миллисекундта өтеді.</p>
+<h3>Rate limit</h3>
+<p>Өз сервисіңізді де қорғау керек: бір пайдаланушы минутына мың сұрау жіберсе, бүкіл бюджет кетеді. Классикалық алгоритм <b>token bucket</b>: себетте ең көбі <code>capacity</code> белгі бар, ол секундына <code>rate</code> белгімен толады; әр сұрау бір белгі алады, белгі жоқ болса, 429 қайтарамыз.</p>
+<h3>Мониторинг</h3>
+<ul>
+<li><b>Prometheus</b> метрикаларды жинайды: counter (сұрау саны, қате саны), histogram (latency, token саны), gauge (кезектегі сұраулар). <b>Grafana</b> оларды графикке салып, alert жібереді: «p95 latency 10 с-тан асты».</li>
+<li><b>Tracing</b>: бір сұраудың ішіндегі әр қадам (guard, retrieval, LLM, тексеріс) уақытымен және кірісімен жазылады. LangSmith, Langfuse, OpenTelemetry осыған арналған. Пайдаланушы «қате жауап» десе, request_id бойынша бүкіл трассаны ашасыз.</li>
+<li>LLM-ге тән метрикалар: input/output token, құн, cache hit rate, fallback үлесі, пайдаланушы бағасы.</li>
+</ul>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Timeout қоймау: бір ілініп қалған сұрау worker-ді мәңгі ұстайды.</li>
+<li>Барлық қатені қайталау, оның ішінде 400: ақша мен уақыт босқа кетеді.</li>
+<li>Async функцияның ішінде синхрон, баяу кітапхана шақыру: бүкіл сервер тоқтайды.</li>
+<li>Логқа пайдаланушы мәтінін PII-сіз жазуды ұмыту (8-сабақ).</li>
+</ul>
+<div class="tip">Әр жауапқа <code>request_id</code> қосыңыз және оны логта, трассада, пайдаланушы бағасында бірдей қолданыңыз. Сонда «осы жауап неге қате болды?» деген сұраққа бір минутта жауап табасыз.</div></div>
+<p><a href="../../#lesson/m6-ai/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-11">
+<h2>11. Сапа, қауіпсіздік және fine-tuning</h2>
+<div class="prose">
+<p>GenAI модулінде eval жиынын жасап, accuracy есептедік және fine-tuning қашан керек екенін талқыладық. Енді сапаны жүйелі түрде басқарамыз: offline және online бағалау, рубрикасы бар LLM-as-judge, prompt-тарға регрессия тесттері және fine-tuning деректерін дайындау.</p>
+<h3>Offline eval және online feedback</h3>
+<table>
+<tr><th></th><th>Offline</th><th>Online</th></tr>
+<tr><td>Қашан</td><td>Шығарар алдында, CI-да</td><td>Өнімде, нақты пайдаланушылармен</td></tr>
+<tr><td>Дерек</td><td>Golden жиын, тұрақты</td><td>👍/👎, қайта сұрау, операторға өту үлесі</td></tr>
+<tr><td>Не береді</td><td>Қайталанатын салыстыру</td><td>Шын сапа, жаңа сұрақ түрлері</td></tr>
+</table>
+<p>Екеуі бір-бірін толықтырады: online-да сәтсіз болған сұрақтар offline жиынға қосылады. A/B тестте трафиктің бір бөлігі жаңа prompt-қа кетеді, ал метрикалар салыстырылады.</p>
+<h3>LLM-as-judge рубрикамен</h3>
+<p>«Жауап жақсы ма?» деп сұрау тұрақсыз баға береді. Оның орнына нақты критерийлер мен шкала береміз және жауапты қатаң форматта сұраймыз:</p>
+<pre><code>Жауапты бағала. Әр критерийге 1-ден 5-ке дейін.
+Дәлдік: контекстке сай ма?
+Толықтық: сұрақтың барлық бөлігіне жауап бар ма?
+Сыпайылық: тон сыпайы ма?
+Формат:
+Дәлдік: X/5
+Толықтық: X/5
+Сыпайылық: X/5</code></pre>
+<p>Судья жауабын кодпен талдаймыз; формат бұзылса, бағаны жарамсыз деп есептейміз. Судьяның өзін тексеріңіз: 30-50 мысалда адам бағасымен сәйкестігін өлшеңіз. Белгілі ауытқулар: ұзын жауапқа жоғары баға беру, өз жауабын жоғары бағалау, бірінші тұрған нұсқаны таңдау.</p>
+<h3>Prompt регрессия тесттері</h3>
+<p>Prompt код сияқты: оны git-те сақтаймыз және әр өзгерісте тесттерді іске қосамыз. Ескі және жаңа нұсқаның нәтижесін мысал бойынша салыстырамыз: қайсысы бұзылды (regressed), қайсысы түзелді (fixed). Жалпы accuracy өссе де, маңызды мысал бұзылса, шығаруды тоқтатуға болады.</p>
+<h3>Prompt, RAG немесе fine-tuning?</h3>
+<ul>
+<li><b>Prompt</b>: алдымен әрқашан осы. Арзан, жылдам, өзгерту оңай.</li>
+<li><b>RAG</b>: модельге жаңа немесе жеке <b>білім</b> керек (тарифтер, ережелер), ол жиі өзгереді, дерек көзін көрсету керек.</li>
+<li><b>Fine-tuning</b>: модельге тұрақты <b>мінез-құлық</b> керек: белгілі формат, стиль, домендік терминдер, немесе ұзын prompt-ты қысқарту арқылы құнды азайту. Fine-tuning жаңа фактілерді сенімді үйретпейді.</li>
+</ul>
+<p><b>LoRA</b> (Low-Rank Adaptation) модельдің барлық салмағын өзгертпейді: әр қабатқа екі шағын матрица қосып, тек соларды үйретеді. Үйретілетін параметрлер 0.1-1%, сондықтан бір GPU жеткілікті, ал адаптер файлы бірнеше MB. QLoRA бұған 4-биттік quantization қосады.</p>
+<h3>Fine-tuning деректері</h3>
+<p>Көп провайдер мен кітапхана <b>JSONL</b> форматын қабылдайды: әр жолда бір JSON, ішінде chat форматындағы <code>messages</code>.</p>
+<pre><code>{"messages": [{"role": "system", "content": "Сен Жылдам Нет көмекшісісің."}, {"role": "user", "content": "Роутер жанбайды"}, {"role": "assistant", "content": "Розетканы тексеріңіз..."}]}</code></pre>
+<p>Тексерілетіндер: әр жол жарамды JSON, <code>messages</code> бар, мазмұн бос емес, соңғы хабарлама <code>assistant</code> (модель осыны үйренеді). Сапа саннан маңызды: 300 мұқият тексерілген мысал 3 000 шулы мысалдан жақсы. Валидация жиынын бөлек ұстаңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Судьяға рубрикасыз «1-ден 10-ға дейін баға бер» деу.</li>
+<li>Fine-tuning-ті білім жаңарту үшін қолдану.</li>
+<li>JSONL-да <code>ensure_ascii</code> ұмытылып, қазақ мәтіні <code>\u04d9</code> болып кетуі: жарамды, бірақ тексеруге қолайсыз.</li>
+</ul>
+<div class="tip">Қауіпсіздік тесттерін де регрессия жиынына қосыңыз: injection, жеке деректі сұрау, тақырыптан тыс сұрақтар. Жаңа prompt сапаны көтеріп, қорғанысты әлсіретуі мүмкін.</div></div>
+<p><a href="../../#lesson/m6-ai/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-12">
+<h2>12. Қорытынды жоба: қолдау көмекшісі</h2>
+<div class="prose">
+<p>Модульдің бөліктерін бір жүйеге жинаймыз. «Жылдам Нет» деген ойдан шығарылған интернет-провайдердің қолдау көмекшісі: FAQ құжаттарынан іздейді, кірісті тексереді, тек дерек көзімен жауап береді, ал сапасы golden жиында өлшенеді. Бәрі таза Python-да, модель орнына fake LLM.</p>
+<h3>Архитектура</h3>
+<pre><code>сұрақ
+  → guard: injection? → "blocked"
+  → retrieve(top-2, min_score=1): ештеңе жоқ? → "no_answer" (LLM шақырылмайды)
+  → build_prompt(контекст + сұрақ) → LLM
+  → citation тексерісі: жоқ/жалған id? → "fallback"
+  → "ok": жауап + sources</code></pre>
+<p>Әр тармақтың өз <b>статусы</b> бар. Бұл eval пен мониторингке қажет: «no_answer» үлесі өссе, FAQ-та жоқ тақырып пайда болды; «fallback» өссе, модель немесе prompt бұзылды.</p>
+<h3>1-қадам: retrieval</h3>
+<p>Embedding моделі жоқ болғандықтан, қарапайым кілт сөз іздеуін жасаймыз. Қазақ тілі жалғамалы: «роутер», «роутерді», «роутерге» бір сөз. Ең қарапайым «stemming»: сөздің алғашқы 5 әрпін алу. Бұл дөрекі тәсіл («төлем» мен «төлеу» сәйкес келмейді), бірақ жүйенің қаңқасын құруға жетеді, ал кейін оны 5-сабақтағы hybrid search-ке ауыстыруға болады. Stop-сөздерді («не», «қалай», «ма») алып тастаймыз.</p>
+<pre><code>def stems(text):
+    words = re.findall(r"\w+", text.lower())
+    return {w[:5] for w in words if w not in STOP and len(w) &gt; 1}</code></pre>
+<p>Ұпай: сұрақ пен құжат stem-дерінің қиылысының өлшемі. <code>min_score</code> шегі маңызды: ол «ұшақ билеті» сияқты тақырыптан тыс сұраққа кездейсоқ құжат берілуін тоқтатады.</p>
+<h3>2-қадам: жауап және тексеріс</h3>
+<p>Prompt-та үзінділер <code>[faq1] мәтін</code> түрінде, ал нұсқауда әр сөйлемнен кейін дерек көзін жазу талап етіледі (6-сабақ). Модельдің жауабындағы барлық <code>[id]</code> шынымен берілген контексте бар ма, соны тексереміз. Жоқ id (мысалы, <code>[faq99]</code>) жалған дерек көзі, мұндай жауапты пайдаланушыға бермейміз.</p>
+<h3>3-қадам: golden жиында бағалау</h3>
+<p>Golden жиында төрт түрлі мысал болуы керек: қалыпты сұрақтар (күтілетін FAQ id), жауабы жоқ сұрақтар (күтілетін статус «no_answer»), шабуылдар (күтілетін статус «blocked») және «қиын» сұрақтар: синоним («модем» мен «роутер»), қате жазылған сөздер. Соңғылары жүйенің әлсіз жерін ашады. Eval нәтижесінде тек accuracy емес, сәтсіз сұрақтар тізімі де болуы керек: келесі жақсартуды солар көрсетеді.</p>
+<h3>Әрі қарай не істеуге болады</h3>
+<ul>
+<li>Кілт сөз іздеуін BM25 + embedding hybrid іздеумен ауыстыру, RRF арқылы біріктіру.</li>
+<li>Синонимдер сөздігі («модем» → «роутер») немесе сұрақты LLM арқылы қайта жазу (query rewriting).</li>
+<li>PII masking, rate limit, кэш және backoff қосу (8 және 10-сабақтар).</li>
+<li>Әр сұраудың трассасын логқа жазу: статус, retrieved id, latency.</li>
+</ul>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Retrieval ештеңе таппаса да модельді шақыру: модель ойдан жауап құрастырады.</li>
+<li>Guard-ты retrieval-дан кейін қою: шабуыл мәтіні бәрібір өңделеді.</li>
+<li>Golden жиынға тек жүйе жақсы жауап беретін сұрақтарды қосу.</li>
+</ul>
+<div class="tip">Жүйені статустары бар функция ретінде жазыңыз: әр тармақ тестілеуге оңай, ал мониторингте әр статустың үлесі бірден көрінеді.</div></div>
+<p><a href="../../#lesson/m6-ai/11">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="aie-gate">
+<h2>13. Модуль емтиханы: AI Engineering</h2>
+<div class="prose">
+<p>Емтихан бүкіл модульді қамтиды: sampling және генерация параметрлері, контекст бюджеті мен lost in the middle, RAG метрикалары, сенімді шақыру (backoff және JSON тексерісі), өндірістік метрикалар. Барлық тапсырма офлайн симуляциямен жұмыс істейді. Кеңестер жоқ, өту үшін ұпайдың кемінде <b>75%</b>-ын жинау керек.</p>
+<ul>
+<li>Функция мен кілт атауларын тапсырмада берілгендей жазыңыз.</li>
+<li>Алдымен шағын мысалмен <code>print</code> арқылы тексеріп, сосын «Тексеру» батырмасын басыңыз.</li>
+<li>Есіңізде болсын: сүзгіден кейін қайта қалыпқа келтіру, retry тек уақытша қатеге, модельдің шығысына сенбей тексеру.</li>
+</ul></div>
+<p><a href="../../#lesson/m6-ai/12">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<p class="static-cta"><a class="btn" href="../../#try/m6-ai">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m6-ai">Барлық тапсырмалар</a></p>
+</article>
+<p class="muted" style="margin:40px 0"><a href="../../">← Tolqyn басты беті</a></p>
+</main>
+</body>
+</html>

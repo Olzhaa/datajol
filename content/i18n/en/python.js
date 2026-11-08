@@ -14,7 +14,19 @@ print("Year:", 2026)</code></pre>
 <p>Text (a string) goes in quotes: <code>"..."</code> or <code>'...'</code>. Numbers are written without quotes. If you give <code>print</code> several values separated by commas, they are printed with a space between them.</p>
 <h3>Comments</h3>
 <pre><code># This line does not run: it is for people</code></pre>
-<div class="tip">Python cares about spaces at the start of a line (indentation). For now, start every command at the beginning of the line.</div>`,
+<div class="tip">Python cares about spaces at the start of a line (indentation). For now, start every command at the beginning of the line.</div>
+<h3>How does a program run?</h3>
+<p>Python reads and runs the lines one by one. The code below prints two lines because it has two <code>print</code> calls:</p>
+<pre><code>print("First line")
+print("Second line")</code></pre>
+<p>If you pass several values to one <code>print</code>, they are printed on one line separated by spaces: <code>print("Revenue:", 2500, "₸")</code> → <code>Revenue: 2500 ₸</code>.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>Unclosed quote</b>: <code>print("Сәлем)</code> → <code>SyntaxError</code>. Every opening quote needs a closing one.</li>
+<li><b>Capital letter</b>: <code>Print("...")</code> does not work. Python is case-sensitive.</li>
+<li><b>No parentheses</b>: <code>print "Сәлем"</code> is the old Python 2 syntax and is an error today.</li>
+</ul>
+<div class="tip">When a task expects exact text, every comma, space and letter must match. Check the result yourself with the “Run” button first.</div>`,
       ex: [
         { prompt: 'Print exactly this text: <code>Сәлем, Tolqyn!</code>', starter: '# Write your code here\n', hints: ['<code>print("...")</code>'] },
         { prompt: 'Print two lines: <code>SQL</code> on the first and <code>Python</code> on the second.', hints: ['Write two separate <code>print</code> calls.'] }
@@ -37,7 +49,16 @@ is_active = True</code></pre>
 <tr><td><code>bool</code></td><td>True / False</td><td>true / false</td></tr>
 </table>
 <p><code>type()</code> shows the type. You can convert between types: <code>int("42")</code>, <code>float("3.5")</code>, <code>str(100)</code>.</p>
-<div class="tip">Variable names use Latin lowercase letters, with words joined by <code>_</code>: <code>total_revenue</code>. A name cannot start with a digit.</div>`,
+<div class="tip">Variable names use Latin lowercase letters, with words joined by <code>_</code>: <code>total_revenue</code>. A name cannot start with a digit.</div>
+<h3>A variable's value changes</h3>
+<p>When you give a variable a new value, the old one is forgotten:</p>
+<pre><code>orders = 120
+orders = orders + 5     # now 125
+orders += 5             # short form, now 130</code></pre>
+<p>The <code>=</code> sign does not mean “equals” as in math; it means “store”: Python computes the value on the right and writes it to the name on the left.</p>
+<h3>Why do types matter?</h3>
+<p>You cannot add text and a number: <code>"1250" + 5</code> → <code>TypeError</code>. All data from CSV files or from a user arrives as text, so before calculating we convert it to a number with <code>int()</code> or <code>float()</code>. Adding strings joins them: <code>"Ал" + "маты"</code> → <code>"Алматы"</code>.</p>
+<div class="tip"><code>print(type(x))</code> is the quickest way to check a variable's type. If you get an unexpected result, check the type first.</div>`,
       ex: [
         { prompt: 'Set the variable <code>product</code> to <code>"Ноутбук"</code> and <code>price</code> to <code>350000</code>. Then run <code>print(product, price)</code>.', check: { tests: 'assert product == "Ноутбук", "product should be \\"Ноутбук\\""\nassert price == 350000 and isinstance(price, int), "price should be the whole number 350000"' }, hints: ['<code>product = "Ноутбук"</code>'] },
         { prompt: '<code>raw = "1250"</code> is given as text. Turn it into a whole number, store it in <code>qty</code> and print <code>qty * 2</code>.', check: { tests: 'assert isinstance(qty, int), "qty should be an int: use int(raw)"' }, hints: ['<code>int(raw)</code>'] }
@@ -57,7 +78,17 @@ is_active = True</code></pre>
 <pre><code>revenue_aug = 80_000_000
 revenue_sep = 100_000_000
 growth = (revenue_sep - revenue_aug) / revenue_aug * 100
-print(round(growth, 1))   # 25.0</code></pre>`,
+print(round(growth, 1))   # 25.0</code></pre>
+<h3>Order of operations</h3>
+<p>Python follows the same order as math: first <code>**</code>, then <code>* / // %</code>, and finally <code>+ -</code>. When in doubt, add parentheses: <code>(a + b) / 2</code> and <code>a + b / 2</code> give different results.</p>
+<h3>An analyst's everyday formulas</h3>
+<pre><code>conversion = buyers / visitors * 100          # conversion, %
+aov = revenue / orders                        # average order value
+share = part / total * 100                    # share, %
+change = (new - old) / old * 100              # change, %</code></pre>
+<h3>A quirk of decimal numbers</h3>
+<p><code>0.1 + 0.2</code> gives <code>0.30000000000000004</code>. This is not a Python bug: the computer stores decimal numbers in binary. Use <code>round()</code> when you display a result, and if money must be exact, count it in tiyn as whole numbers.</p>
+<div class="tip">Dividing by zero raises <code>ZeroDivisionError</code>. When you calculate conversion, ask yourself whether the number of visitors can be 0.</div>`,
       ex: [
         { prompt: 'An order has 3 items: 4500, 12000 and 800 tenge. Store the total in the variable <code>total</code> and print it.', check: { tests: 'assert total == 17300, "total should be 17300"' } },
         { prompt: '1840 people visited the site and 46 of them bought something. Work out the conversion rate as a percentage and print it rounded to 2 decimal places.', hints: ['<code>buyers / visitors * 100</code>', '<code>round(..., 2)</code>'] }
@@ -80,7 +111,22 @@ print(len("SQL"))            # 3</code></pre>
 <pre><code>city = "Астана"
 orders = 42
 print(f"{city}: {orders} orders")
-print(f"Average check: {8450.567:.2f}")   # 8450.57</code></pre>`,
+print(f"Average check: {8450.567:.2f}")   # 8450.57</code></pre>
+<h3>Useful methods</h3>
+<table>
+<tr><th>Method</th><th>Example</th><th>Result</th></tr>
+<tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
+<tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
+</table>
+<p>String methods do not change the original string; they return a new one. So you need to save the result: <code>name = name.strip()</code>.</p>
+<h3>f-string formats</h3>
+<pre><code>revenue = 1234567.891
+print(f"{revenue:,.0f}")    # 1,234,568  (with a thousands separator)
+print(f"{0.2537:.1%}")      # 25.4%
+print(f"{'Алматы':&lt;10}|")    # left-align the text in 10 characters</code></pre>
+<div class="tip">You can chain methods: <code>raw.strip().lower().replace(" ", "_")</code>. They run from left to right.</div>`,
       ex: [
         { prompt: '<code>raw = "  ШЫМКЕНТ "</code>. Remove the spaces and print it so that only the first letter is a capital: <code>Шымкент</code>.', hints: ['Chain <code>.strip()</code> and <code>.title()</code>.'] },
         { prompt: 'Use an f-string to print exactly this line: <code>Алматы: 925600 ₸</code>. The variables are given.', hints: ['<code>print(f"{city}: {revenue} ₸")</code>'] },
@@ -101,7 +147,17 @@ else:
 print(segment)   # mid-range</code></pre>
 <p>A <code>:</code> goes after the condition, and the block inside is indented by <b>4 spaces</b>. It is the exact counterpart of CASE WHEN in SQL.</p>
 <h3>Comparison and logic</h3>
-<p><code>==</code> (equal), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Combining: <code>and</code>, <code>or</code>, <code>not</code>. Is it in a list: <code>city in ["Алматы", "Астана"]</code>.</p>`,
+<p><code>==</code> (equal), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Combining: <code>and</code>, <code>or</code>, <code>not</code>. Is it in a list: <code>city in ["Алматы", "Астана"]</code>.</p>
+<h3>The order of conditions</h3>
+<p>Python checks <code>if</code>/<code>elif</code> conditions from top to bottom and runs only the block of the first true condition. That is why we write the strictest condition first. If <code>price &gt;= 10000</code> comes first, even a 250,000 ₸ product ends up as “medium”.</p>
+<h3>Why indentation matters</h3>
+<pre><code>if orders &gt; 100:
+    print("A lot")      # only if the condition is true
+print("Checked")  # always runs</code></pre>
+<p>Indentation shows which lines belong to the condition. If indentation is mixed up, you get an <code>IndentationError</code>.</p>
+<h3>Short form of a condition</h3>
+<p>To pick one value there is a one-line expression: <code>label = "үлкен" if amount &gt; 3000 else "кіші"</code> (“large” / “small”). It is similar to the <code>IF</code> function in Excel.</p>
+<div class="tip">Do not confuse <code>=</code> and <code>==</code>: the first assigns a value, the second compares. <code>if x = 5:</code> is a syntax error.</div>`,
       ex: [
         { prompt: 'Print a grade based on <code>score</code>: 85 and above is <code>A</code>, 70 and above is <code>B</code>, 50 and above is <code>C</code>, otherwise <code>F</code>. For <code>score = 72</code> the output should be <code>B</code>.', hints: ['Check the conditions from top to bottom, starting with the largest.'] },
         { prompt: 'If the order amount is over 20 000 <b>and</b> the customer is from Almaty, print <code>Тегін жеткізу</code> (free delivery), otherwise print <code>Жеткізу 1500 ₸</code>. Print the Kazakh text exactly as shown.', hints: ['<code>if amount > 20000 and city == "Алматы":</code>'] }
@@ -207,7 +263,20 @@ while balance &lt; 150000:
     months += 1
 print(months)   # 9</code></pre>
 <p><code>break</code> stops the loop at once. <code>continue</code> skips the rest of the body and moves on to the next pass.</p>
-<div class="tip">If the condition never becomes false, the loop runs forever. On this platform code is stopped after 8 seconds.</div>`,
+<div class="tip">If the condition never becomes false, the loop runs forever. On this platform code is stopped after 8 seconds.</div>
+<h3>for versus while</h3>
+<p><code>for</code> walks through a known list or range of numbers: “for each order”. <code>while</code> keeps going as long as a condition holds: “until the balance reaches 150,000”. If you know the number of repetitions in advance, choose <code>for</code>: it is simpler and cannot get stuck in an infinite loop.</p>
+<h3>A break and continue example</h3>
+<pre><code>amounts = [2500, 3100, -50, 4200, 0, 1800]
+for a in amounts:
+    if a == 0:
+        break          # 0 marks the end of the data
+    if a &lt; 0:
+        continue       # skip the negative amount
+    print(a)
+# 2500, 3100, 4200</code></pre>
+<p>When the loop reaches 0 it stops completely, so 1800 is not printed. The −50 is skipped and the loop moves on to the next element.</p>
+<div class="tip">Make sure that inside every <code>while</code> loop the variable the condition depends on changes. In the example, <code>balance</code> grows on every pass, so the loop eventually ends.</div>`,
       ex: [
         { prompt: 'A company has 1 000 users, and the number grows by 20% every month. How many months does it take to pass 10 000 users? Print the number of months.', hints: ['Condition: <code>while users <= 10000:</code>', 'Change both <code>users</code> and <code>months</code> inside the loop.'] },
         { prompt: 'Find and print the first negative number in the list, then stop the loop with <code>break</code>.' }
@@ -277,7 +346,21 @@ counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
 print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
-<p>Going over keys and values: <code>for key, value in counts.items():</code></p>`,
+<p>Going over keys and values: <code>for key, value in counts.items():</code></p>
+<h3>A list of dictionaries: a data table</h3>
+<p>If one dictionary describes one record, a list of dictionaries describes a whole table. Each dictionary is a row, and the keys are the column names:</p>
+<pre><code>orders = [
+    {"id": 1, "city": "Алматы", "amount": 2500},
+    {"id": 2, "city": "Астана", "amount": 3100},
+    {"id": 3, "city": "Алматы", "amount": 1800},
+]
+revenue = {}
+for o in orders:
+    revenue[o["city"]] = revenue.get(o["city"], 0) + o["amount"]
+print(revenue)   # {'Алматы': 4300, 'Астана': 3100}</code></pre>
+<p>This is the same as the SQL query <code>SELECT city, SUM(amount) ... GROUP BY city</code>.</p>
+<h3>A common mistake</h3>
+<p>If you read a missing key with <code>d["phone"]</code>, you get a <code>KeyError</code>. If the key may be missing, use <code>d.get("phone")</code> or <code>if "phone" in d:</code>.</p>`,
       ex: [
         { prompt: 'Count the order statuses with a dictionary, store it in <code>counts</code> and print it.', check: { tests: 'assert counts == {"delivered": 3, "shipped": 2, "cancelled": 1}, "the counts dictionary is wrong: " + str(counts)' }, hints: ['<code>counts[s] = counts.get(s, 0) + 1</code>'] },
         { prompt: 'Product prices are given in a dictionary. Print the products that cost more than 10 000 in the format <code>name: price</code> (in dictionary order).', hints: ['<code>for name, price in prices.items():</code>'] }
@@ -300,7 +383,19 @@ with_vat = [p * 1.12 for p in prices]
 # with a filter
 expensive = [p for p in prices if p &gt; 7000]</code></pre>
 <p>The pattern: <code>[expression for item in list if condition]</code>. Dictionaries have one too: <code>{k: v for k, v in d.items() if v &gt; 0}</code>.</p>
-<div class="tip">In pandas such operations run on whole columns at once, but comprehensions help you understand the "language" of Python.</div>`,
+<div class="tip">In pandas such operations run on whole columns at once, but comprehensions help you understand the "language" of Python.</div>
+<h3>When to use a comprehension and when a loop?</h3>
+<p>A comprehension is good for building a new list from another one: transforming or filtering. If you need several actions, a <code>print</code> or a complex condition, a plain <code>for</code> loop is easier to read. Rule of thumb: if a comprehension does not fit on one line, turn it into a loop.</p>
+<h3>Examples</h3>
+<pre><code>emails = ["A@MAIL.KZ ", "b@mail.kz"]
+clean = [e.strip().lower() for e in emails]
+
+dates = ["2024-11-02", "2024-10-30", "2024-11-15"]
+nov = [d for d in dates if d.startswith("2024-11")]
+
+prices = {"латте": 1500, "су": 300}
+cheap = {k: v for k, v in prices.items() if v &lt; 1000}</code></pre>
+<div class="tip">If you need a sum instead of a list, you can drop the square brackets: <code>sum(p * 1.12 for p in prices)</code>. This does not build an intermediate list.</div>`,
       ex: [
         { prompt: 'Use a comprehension to build a list <code>clean</code> from the <code>names</code> list, with spaces removed and a capital first letter (<code>.strip().title()</code>). Print it.', check: { tests: 'assert clean == ["Айгерім", "Нұрлан", "Дана"], "the clean list: " + str(clean)' }, hints: ['<code>[n.strip().title() for n in names]</code>'] },
         { prompt: 'Use a comprehension to collect only the November 2024 dates (those starting with <code>"2024-11"</code>) into a list <code>nov</code>, and print how many there are.', check: { tests: 'assert nov == ["2024-11-04", "2024-11-09", "2024-11-21"], "the nov list is wrong"' }, hints: ['<code>d.startswith("2024-11")</code>'] }
@@ -322,7 +417,22 @@ for r in raw:
     except ValueError:
         print("Skipped:", r)
 print(sum(values))   # 355</code></pre>
-<div class="tip">Do not hide every error with a bare <code>except:</code>. Name the exact error type, or you will miss a real problem.</div>`,
+<div class="tip">Do not hide every error with a bare <code>except:</code>. Name the exact error type, or you will miss a real problem.</div>
+<h3>Reading a traceback</h3>
+<p>When an error happens, Python shows its “trace” (traceback). Read it from the bottom up:</p>
+<ol>
+<li>The last line is the error type and its cause.</li>
+<li>Above it is the line of code where the error happened, with its number.</li>
+<li>The lines further up show how we got there (the chain of function calls).</li>
+</ol>
+<h3>Raising an error yourself</h3>
+<p>If a function receives a meaningless value, it is better to raise a clear error than to let it slip through silently:</p>
+<pre><code>def conversion(visitors, buyers):
+    if visitors &lt; 0 or buyers &lt; 0:
+        raise ValueError("сандар теріс болмауы керек")  # "numbers must not be negative"
+    return buyers / visitors * 100 if visitors else 0</code></pre>
+<p><code>raise</code> stops execution right away and reports the reason. Whoever uses such a function sees their mistake immediately.</p>
+<div class="tip">Put only the line that may fail inside a <code>try</code> block. If you wrap all your code in <code>try</code>, it is hard to find where the error happened.</div>`,
       ex: [
         { prompt: 'From the <code>raw</code> list, collect only the values that turn into numbers, as <code>float</code>, into <code>values</code> (<code>try/except ValueError</code>). At the end, print their sum.', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)' }, hints: ['Inside <code>except ValueError:</code> you can write <code>pass</code>.'] },
         { prompt: 'This code raises an error. Fix it so it prints <code>Барлығы: 15</code>.', hints: ['<code>count</code> is text: turn it into a number with <code>int()</code> first.', 'To join the result to text you need <code>str()</code>, or an f-string.'] }
@@ -342,7 +452,17 @@ print(rows[0])   # {'date': '2024-09-01', 'city': 'Алматы', ...}</code></p
 <li>Revenue by city (a dictionary).</li>
 <li>The city that brought in the most revenue.</li>
 </ol>
-<p>This is the Python version of <code>SUM</code>, <code>GROUP BY</code> and <code>ORDER BY ... LIMIT 1</code> in SQL. In the next module pandas does it in a line or two.</p>`,
+<p>This is the Python version of <code>SUM</code>, <code>GROUP BY</code> and <code>ORDER BY ... LIMIT 1</code> in SQL. In the next module pandas does it in a line or two.</p>
+<h3>Split the analysis into steps</h3>
+<p>Do not write a big task as one function. Write a separate function for each question and combine them:</p>
+<pre><code>def total_revenue(rows): ...
+def revenue_by_city(rows): ...
+def top_city(rows): ...</code></pre>
+<p>Each function can be tested on its own, and inside <code>top_city</code> you can reuse the result of <code>revenue_by_city</code>.</p>
+<h3>Finding the largest value</h3>
+<p>To find the key with the largest value in a dictionary: <code>max(d, key=d.get)</code>. <code>max</code> goes through the keys and compares each one using <code>d.get</code>.</p>
+<h3>Checking the result</h3>
+<p>The sum of revenue by city must equal the total revenue. Such a “check equation” is an important analyst habit: if the numbers do not match, a row was lost somewhere or counted twice.</p>`,
       ex: [
         { prompt: 'Write a function <code>total_revenue(rows)</code> that returns the sum of <code>qty × price</code> over all rows (as an int).', check: { tests: 'assert total_revenue(rows) == 188000, "Total revenue should be 188000, you have: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Return 0 for an empty list"' }, hints: ['Turn the text into a number: <code>int(r["qty"])</code>.'] },
         { prompt: 'The function <code>revenue_by_city(rows)</code> should return a city → revenue dictionary. Then <code>best_city(rows)</code> should return the name of the city with the most revenue.', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city should be Астана"' }, hints: ['Use the <code>.get(key, 0)</code> pattern from the lesson on counting with a dictionary.', 'The key with the largest value: <code>max(rev, key=rev.get)</code>.'] }

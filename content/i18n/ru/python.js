@@ -14,7 +14,19 @@ print("Год:", 2026)</code></pre>
 <p>Текст (string) берётся в кавычки: <code>"..."</code> или <code>'...'</code>. Числа пишутся без кавычек. Если передать в <code>print</code> несколько значений через запятую, они выведутся через пробел.</p>
 <h3>Комментарий (comment)</h3>
 <pre><code># Эта строка не выполняется: она для людей</code></pre>
-<div class="tip">Python чувствителен к отступам (indentation). Пока начинайте каждую команду с начала строки.</div>`,
+<div class="tip">Python чувствителен к отступам (indentation). Пока начинайте каждую команду с начала строки.</div>
+<h3>Как выполняется программа?</h3>
+<p>Python читает и выполняет строки по очереди. Код ниже выводит две строки, потому что в нём два <code>print</code>:</p>
+<pre><code>print("Первая строка")
+print("Вторая строка")</code></pre>
+<p>Если передать в один <code>print</code> несколько значений, они выведутся в одну строку через пробел: <code>print("Выручка:", 2500, "₸")</code> → <code>Выручка: 2500 ₸</code>.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Не закрыта кавычка</b>: <code>print("Сәлем)</code> → <code>SyntaxError</code>. Открытую кавычку нужно закрыть.</li>
+<li><b>Заглавная буква</b>: <code>Print("...")</code> не работает. Python различает заглавные и строчные буквы.</li>
+<li><b>Нет скобок</b>: <code>print "Сәлем"</code> — старая запись из Python 2, сейчас это ошибка.</li>
+</ul>
+<div class="tip">Если задание ждёт точный текст, должны совпадать все запятые, пробелы и буквы. Сначала проверьте результат сами кнопкой «Запустить».</div>`,
       ex: [
         { prompt: 'Выведите на экран ровно этот текст: <code>Сәлем, Tolqyn!</code>', starter: '# Пишите код здесь\n', hints: ['<code>print("...")</code>'] },
         { prompt: 'Выведите две строки: в первой <code>SQL</code>, во второй <code>Python</code>.', hints: ['Напишите два отдельных <code>print</code>.'] }
@@ -37,7 +49,16 @@ is_active = True</code></pre>
 <tr><td><code>bool</code></td><td>True / False</td><td>истина / ложь</td></tr>
 </table>
 <p>Тип показывает <code>type()</code>. Типы можно преобразовывать: <code>int("42")</code>, <code>float("3.5")</code>, <code>str(100)</code>.</p>
-<div class="tip">Имя переменной пишется латиницей, строчными буквами, слова через <code>_</code>: <code>total_revenue</code>. Оно не может начинаться с цифры.</div>`,
+<div class="tip">Имя переменной пишется латиницей, строчными буквами, слова через <code>_</code>: <code>total_revenue</code>. Оно не может начинаться с цифры.</div>
+<h3>Значение переменной меняется</h3>
+<p>Если присвоить переменной новое значение, старое забывается:</p>
+<pre><code>orders = 120
+orders = orders + 5     # теперь 125
+orders += 5             # короткая запись, теперь 130</code></pre>
+<p>Знак <code>=</code> означает не «равно», как в математике, а «сохрани»: Python вычисляет значение справа и записывает его в имя слева.</p>
+<h3>Почему важны типы?</h3>
+<p>Текст и число сложить нельзя: <code>"1250" + 5</code> → <code>TypeError</code>. Все данные из CSV-файлов или от пользователя приходят текстом, поэтому перед вычислениями их переводят в число через <code>int()</code> или <code>float()</code>. А сложение строк склеивает их: <code>"Ал" + "маты"</code> → <code>"Алматы"</code>.</p>
+<div class="tip"><code>print(type(x))</code> — самый быстрый способ проверить тип переменной. Если результат неожиданный, сначала посмотрите на тип.</div>`,
       ex: [
         { prompt: 'Присвойте переменной <code>product</code> значение <code>"Ноутбук"</code>, а переменной <code>price</code> — <code>350000</code>. Затем выполните <code>print(product, price)</code>.', check: { tests: 'assert product == "Ноутбук", "переменная product должна быть \\"Ноутбук\\""\nassert price == 350000 and isinstance(price, int), "price должна быть целым числом 350000"' }, hints: ['<code>product = "Ноутбук"</code>'] },
         { prompt: '<code>raw = "1250"</code> дано в виде текста. Преобразуйте его в целое число, сохраните в переменную <code>qty</code> и выведите <code>qty * 2</code>.', check: { tests: 'assert isinstance(qty, int), "qty должна быть типа int: используйте int(raw)"' }, hints: ['<code>int(raw)</code>'] }
@@ -57,7 +78,17 @@ is_active = True</code></pre>
 <pre><code>revenue_aug = 80_000_000
 revenue_sep = 100_000_000
 growth = (revenue_sep - revenue_aug) / revenue_aug * 100
-print(round(growth, 1))   # 25.0</code></pre>`,
+print(round(growth, 1))   # 25.0</code></pre>
+<h3>Порядок операций</h3>
+<p>Python соблюдает тот же порядок, что и математика: сначала <code>**</code>, затем <code>* / // %</code>, в конце <code>+ -</code>. Если сомневаетесь, ставьте скобки: <code>(a + b) / 2</code> и <code>a + b / 2</code> дают разные результаты.</p>
+<h3>Повседневные формулы аналитика</h3>
+<pre><code>conversion = buyers / visitors * 100          # конверсия, %
+aov = revenue / orders                        # средний чек
+share = part / total * 100                    # доля, %
+change = (new - old) / old * 100              # изменение, %</code></pre>
+<h3>Особенность дробных чисел</h3>
+<p><code>0.1 + 0.2</code> даёт <code>0.30000000000000004</code>. Это не ошибка Python: компьютер хранит дробные числа в двоичной системе. При выводе результата используйте <code>round()</code>, а если деньги нужно считать точно, считайте их в тиынах целыми числами.</p>
+<div class="tip">Деление на ноль даёт <code>ZeroDivisionError</code>. Когда считаете конверсию, подумайте: может ли число посетителей быть равным 0?</div>`,
       ex: [
         { prompt: 'Заказ состоит из 3 товаров: 4500, 12000 и 800 тенге. Запишите общую сумму в переменную <code>total</code> и выведите её.', check: { tests: 'assert total == 17300, "total должна быть 17300"' } },
         { prompt: 'На сайт зашли 1840 человек, 46 из них купили. Посчитайте конверсию в процентах и выведите её, округлив до 2 знаков после запятой.', hints: ['<code>buyers / visitors * 100</code>', '<code>round(..., 2)</code>'] }
@@ -80,7 +111,22 @@ print(len("SQL"))            # 3</code></pre>
 <pre><code>city = "Астана"
 orders = 42
 print(f"{city}: {orders} заказов")
-print(f"Средний чек: {8450.567:.2f}")   # 8450.57</code></pre>`,
+print(f"Средний чек: {8450.567:.2f}")   # 8450.57</code></pre>
+<h3>Полезные методы</h3>
+<table>
+<tr><th>Метод</th><th>Пример</th><th>Результат</th></tr>
+<tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
+<tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
+</table>
+<p>Методы строк не меняют исходную строку, а возвращают новую. Поэтому результат нужно сохранить: <code>name = name.strip()</code>.</p>
+<h3>Форматы f-строк</h3>
+<pre><code>revenue = 1234567.891
+print(f"{revenue:,.0f}")    # 1,234,568  (с разделителем тысяч)
+print(f"{0.2537:.1%}")      # 25.4%
+print(f"{'Алматы':&lt;10}|")    # выровнять текст по левому краю на 10 символов</code></pre>
+<div class="tip">Методы можно писать цепочкой: <code>raw.strip().lower().replace(" ", "_")</code>. Они выполняются слева направо.</div>`,
       ex: [
         { prompt: '<code>raw = "  ШЫМКЕНТ "</code>. Уберите пробелы и выведите так, чтобы заглавной была только первая буква: <code>Шымкент</code>.', hints: ['Напишите <code>.strip()</code> и <code>.title()</code> цепочкой.'] },
         { prompt: 'С помощью f-string выведите ровно такую строку: <code>Алматы: 925600 ₸</code>. Переменные уже даны.', hints: ['<code>print(f"{city}: {revenue} ₸")</code>'] },
@@ -101,7 +147,17 @@ else:
 print(segment)   # средний</code></pre>
 <p>После условия ставится <code>:</code>, а вложенный блок пишется с отступом в <b>4 пробела</b>. Это точный аналог CASE WHEN из SQL.</p>
 <h3>Сравнение и логика</h3>
-<p><code>==</code> (равно), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Объединение: <code>and</code>, <code>or</code>, <code>not</code>. Есть ли в списке: <code>city in ["Алматы", "Астана"]</code>.</p>`,
+<p><code>==</code> (равно), <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Объединение: <code>and</code>, <code>or</code>, <code>not</code>. Есть ли в списке: <code>city in ["Алматы", "Астана"]</code>.</p>
+<h3>Порядок условий</h3>
+<p>Python проверяет условия <code>if</code>/<code>elif</code> сверху вниз и выполняет блок только первого истинного условия. Поэтому самое строгое условие пишут первым. Если первым стоит <code>price &gt;= 10000</code>, то и товар за 250 000 ₸ окажется «средним».</p>
+<h3>Значение отступов</h3>
+<pre><code>if orders &gt; 100:
+    print("Много")      # только если условие истинно
+print("Проверено")  # выполняется всегда</code></pre>
+<p>Отступ (indentation) показывает, какие строки относятся к условию. Если отступы перепутаны, возникает <code>IndentationError</code>.</p>
+<h3>Короткая запись условия</h3>
+<p>Чтобы выбрать одно значение, есть однострочное выражение: <code>label = "үлкен" if amount &gt; 3000 else "кіші"</code> («большой» / «маленький»). Оно похоже на функцию <code>IF</code> в Excel.</p>
+<div class="tip">Не путайте <code>=</code> и <code>==</code>: первый присваивает значение, второй сравнивает. <code>if x = 5:</code> даёт синтаксическую ошибку.</div>`,
       ex: [
         { prompt: 'Выведите оценку по значению <code>score</code>: 85 и выше — <code>A</code>, 70 и выше — <code>B</code>, 50 и выше — <code>C</code>, иначе <code>F</code>. Для <code>score = 72</code> должно вывестись <code>B</code>.', hints: ['Проверяйте условия сверху вниз, начиная с самого большого.'] },
         { prompt: 'Если сумма заказа больше 20 000 <b>и</b> клиент из Алматы, выведите <code>Тегін жеткізу</code>, иначе <code>Жеткізу 1500 ₸</code> (тексты на казахском, как в задании).', hints: ['<code>if amount > 20000 and city == "Алматы":</code>'] }
@@ -207,7 +263,20 @@ while balance &lt; 150000:
     months += 1
 print(months)   # 9</code></pre>
 <p><code>break</code> — сразу останавливает цикл. <code>continue</code> — пропускает остаток тела и переходит к следующему шагу.</p>
-<div class="tip">Если условие никогда не станет ложным, цикл будет бесконечным. На этой платформе код останавливается через 8 секунд.</div>`,
+<div class="tip">Если условие никогда не станет ложным, цикл будет бесконечным. На этой платформе код останавливается через 8 секунд.</div>
+<h3>Разница между for и while</h3>
+<p><code>for</code> перебирает известный список или диапазон чисел: «для каждого заказа». <code>while</code> продолжается, пока выполняется условие: «пока баланс не достигнет 150 000». Если число повторений известно заранее, выбирайте <code>for</code>: он проще и не грозит бесконечным циклом.</p>
+<h3>Пример break и continue</h3>
+<pre><code>amounts = [2500, 3100, -50, 4200, 0, 1800]
+for a in amounts:
+    if a == 0:
+        break          # 0 — признак конца данных
+    if a &lt; 0:
+        continue       # пропускаем отрицательную сумму
+    print(a)
+# 2500, 3100, 4200</code></pre>
+<p>Дойдя до 0, цикл полностью останавливается, поэтому 1800 не выводится. А −50 пропускается, и цикл переходит к следующему элементу.</p>
+<div class="tip">Убедитесь, что внутри каждого цикла <code>while</code> меняется переменная, от которой зависит условие. В примере <code>balance</code> растёт на каждом шаге, поэтому цикл когда-нибудь закончится.</div>`,
       ex: [
         { prompt: 'У компании 1 000 пользователей. Каждый месяц их становится на 20% больше. Сколько месяцев нужно, чтобы пользователей стало больше 10 000? Выведите число месяцев.', hints: ['Условие: <code>while users <= 10000:</code>', 'Внутри цикла меняйте и <code>users</code>, и <code>months</code>.'] },
         { prompt: 'Найдите и выведите первое отрицательное число в списке, а затем остановите цикл с помощью <code>break</code>.' }
@@ -277,7 +346,21 @@ counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
 print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
-<p>Перебор ключей и значений: <code>for key, value in counts.items():</code></p>`,
+<p>Перебор ключей и значений: <code>for key, value in counts.items():</code></p>
+<h3>Список словарей: таблица данных</h3>
+<p>Если один словарь описывает одну запись, то список словарей описывает целую таблицу. Каждый словарь — одна строка, ключи — названия столбцов:</p>
+<pre><code>orders = [
+    {"id": 1, "city": "Алматы", "amount": 2500},
+    {"id": 2, "city": "Астана", "amount": 3100},
+    {"id": 3, "city": "Алматы", "amount": 1800},
+]
+revenue = {}
+for o in orders:
+    revenue[o["city"]] = revenue.get(o["city"], 0) + o["amount"]
+print(revenue)   # {'Алматы': 4300, 'Астана': 3100}</code></pre>
+<p>Это то же самое, что SQL-запрос <code>SELECT city, SUM(amount) ... GROUP BY city</code>.</p>
+<h3>Частая ошибка</h3>
+<p>Если прочитать несуществующий ключ через <code>d["phone"]</code>, возникнет <code>KeyError</code>. Если ключа может не быть, используйте <code>d.get("phone")</code> или <code>if "phone" in d:</code>.</p>`,
       ex: [
         { prompt: 'Посчитайте статусы заказов с помощью словаря, запишите результат в переменную <code>counts</code> и выведите её.', check: { tests: 'assert counts == {"delivered": 3, "shipped": 2, "cancelled": 1}, "словарь counts неверный: " + str(counts)' }, hints: ['<code>counts[s] = counts.get(s, 0) + 1</code>'] },
         { prompt: 'Цены товаров даны в словаре. Выведите товары дороже 10 000 в формате <code>название: цена</code> (в порядке словаря).', hints: ['<code>for name, price in prices.items():</code>'] }
@@ -300,7 +383,19 @@ with_vat = [p * 1.12 for p in prices]
 # с фильтром
 expensive = [p for p in prices if p &gt; 7000]</code></pre>
 <p>Шаблон: <code>[выражение for элемент in список if условие]</code>. Для словарей тоже есть: <code>{k: v for k, v in d.items() if v &gt; 0}</code>.</p>
-<div class="tip">В pandas такие операции делаются сразу над столбцами, но comprehension помогает понять «язык» Python.</div>`,
+<div class="tip">В pandas такие операции делаются сразу над столбцами, но comprehension помогает понять «язык» Python.</div>
+<h3>Когда comprehension, а когда цикл?</h3>
+<p>Comprehension хорош, когда из одного списка делают новый: преобразование или фильтрация. Если нужно несколько действий, <code>print</code> или сложное условие, обычный цикл <code>for</code> читать легче. Правило: если comprehension не помещается в одну строку, перепишите его циклом.</p>
+<h3>Примеры</h3>
+<pre><code>emails = ["A@MAIL.KZ ", "b@mail.kz"]
+clean = [e.strip().lower() for e in emails]
+
+dates = ["2024-11-02", "2024-10-30", "2024-11-15"]
+nov = [d for d in dates if d.startswith("2024-11")]
+
+prices = {"латте": 1500, "су": 300}
+cheap = {k: v for k, v in prices.items() if v &lt; 1000}</code></pre>
+<div class="tip">Если вместо списка нужна сумма, можно писать без квадратных скобок: <code>sum(p * 1.12 for p in prices)</code>. Так не создаётся промежуточный список.</div>`,
       ex: [
         { prompt: 'С помощью comprehension создайте список <code>clean</code> из имён списка <code>names</code> без пробелов и с заглавной буквы (<code>.strip().title()</code>). Выведите его.', check: { tests: 'assert clean == ["Айгерім", "Нұрлан", "Дана"], "список clean: " + str(clean)' }, hints: ['<code>[n.strip().title() for n in names]</code>'] },
         { prompt: 'С помощью comprehension соберите в список <code>nov</code> только даты ноября 2024 года (начинаются с <code>"2024-11"</code>) и выведите их количество.', check: { tests: 'assert nov == ["2024-11-04", "2024-11-09", "2024-11-21"], "список nov неверный"' }, hints: ['<code>d.startswith("2024-11")</code>'] }
@@ -322,7 +417,22 @@ for r in raw:
     except ValueError:
         print("Пропущено:", r)
 print(sum(values))   # 355</code></pre>
-<div class="tip">Нельзя прятать все ошибки через <code>except:</code>. Указывайте конкретный тип ошибки, иначе не заметите настоящую проблему.</div>`,
+<div class="tip">Нельзя прятать все ошибки через <code>except:</code>. Указывайте конкретный тип ошибки, иначе не заметите настоящую проблему.</div>
+<h3>Как читать traceback</h3>
+<p>При ошибке Python показывает её «след» (traceback). Читаем его снизу вверх:</p>
+<ol>
+<li>Последняя строка — тип и причина ошибки.</li>
+<li>Над ней — строка кода, где произошла ошибка, и её номер.</li>
+<li>Строки выше — как мы туда попали (цепочка вызовов функций).</li>
+</ol>
+<h3>Вызываем ошибку сами</h3>
+<p>Если в функцию пришло бессмысленное значение, лучше явно сообщить об ошибке, чем молча пропустить его:</p>
+<pre><code>def conversion(visitors, buyers):
+    if visitors &lt; 0 or buyers &lt; 0:
+        raise ValueError("сандар теріс болмауы керек")  # «числа не должны быть отрицательными»
+    return buyers / visitors * 100 if visitors else 0</code></pre>
+<p><code>raise</code> сразу останавливает выполнение и сообщает причину. Тот, кто использует такую функцию, сразу увидит свою ошибку.</p>
+<div class="tip">Оборачивайте в <code>try</code> только строку, где может возникнуть ошибка. Если обернуть в <code>try</code> весь код, будет трудно понять, где именно произошла ошибка.</div>`,
       ex: [
         { prompt: 'Соберите в <code>values</code> только те значения из списка <code>raw</code>, которые превращаются в число, в виде <code>float</code> (<code>try/except ValueError</code>). В конце выведите их сумму.', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)' }, hints: ['Внутри <code>except ValueError:</code> можно написать <code>pass</code>.'] },
         { prompt: 'Этот код выдаёт ошибку. Исправьте его, чтобы выводилось <code>Барлығы: 15</code>.', hints: ['<code>count</code> — текст: сначала сделайте <code>int()</code>.', 'Чтобы прибавить результат к тексту, нужен <code>str()</code> или f-string.'] }
@@ -342,7 +452,17 @@ print(rows[0])   # {'date': '2024-09-01', 'city': 'Алматы', ...}</code></p
 <li>Выручка по городам (словарь).</li>
 <li>Город с наибольшей выручкой.</li>
 </ol>
-<p>Это Python-версия <code>SUM</code>, <code>GROUP BY</code> и <code>ORDER BY ... LIMIT 1</code> из SQL. В следующем модуле pandas сделает это в одну-две строки.</p>`,
+<p>Это Python-версия <code>SUM</code>, <code>GROUP BY</code> и <code>ORDER BY ... LIMIT 1</code> из SQL. В следующем модуле pandas сделает это в одну-две строки.</p>
+<h3>Разбейте анализ на шаги</h3>
+<p>Не пишите большую задачу в одной функции. Напишите отдельную функцию на каждый вопрос и соедините их:</p>
+<pre><code>def total_revenue(rows): ...
+def revenue_by_city(rows): ...
+def top_city(rows): ...</code></pre>
+<p>Каждую функцию можно проверить отдельно, а внутри <code>top_city</code> можно повторно использовать результат <code>revenue_by_city</code>.</p>
+<h3>Поиск наибольшего значения</h3>
+<p>Чтобы найти ключ с наибольшим значением в словаре: <code>max(d, key=d.get)</code>. <code>max</code> перебирает ключи и сравнивает каждый через <code>d.get</code>.</p>
+<h3>Проверка результата</h3>
+<p>Сумма выручки по городам должна равняться общей выручке. Такое «контрольное равенство» — важная привычка аналитика: если числа не сходятся, где-то потерялась строка или что-то посчитано дважды.</p>`,
       ex: [
         { prompt: 'Напишите функцию <code>total_revenue(rows)</code>: пусть она возвращает сумму <code>qty × price</code> по всем строкам (int).', check: { tests: 'assert total_revenue(rows) == 188000, "Общая выручка должна быть 188000, у вас: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Для пустого списка верните 0"' }, hints: ['Преобразуйте текст в число: <code>int(r["qty"])</code>.'] },
         { prompt: 'Функция <code>revenue_by_city(rows)</code> пусть возвращает словарь город → выручка. Затем <code>best_city(rows)</code> пусть возвращает название города с наибольшей выручкой.', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city должна быть Астана"' }, hints: ['Используйте шаблон <code>.get(key, 0)</code> из урока про подсчёт через словарь.', 'Ключ с наибольшим значением: <code>max(rev, key=rev.get)</code>.'] }

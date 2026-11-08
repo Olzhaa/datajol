@@ -22,7 +22,17 @@ DJ.i18n.patch({
 <pre><code>SELECT * FROM customers;</code></pre>
 <p>You can list just the columns you need, separated by commas:</p>
 <pre><code>SELECT name, city FROM customers;</code></pre>
-<div class="tip">Writing SQL keywords (SELECT, FROM) in capitals is only a convention; <code>select</code> works too. The <code>;</code> at the end separates one query from the next.</div>`,
+<div class="tip">Writing SQL keywords (SELECT, FROM) in capitals is only a convention; <code>select</code> works too. The <code>;</code> at the end separates one query from the next.</div>
+<h3>How is a query run?</h3>
+<p>You write a query, the database reads it, takes rows from the table and returns the result as a new table. The original table does not change: SELECT only reads, so feel free to experiment.</p>
+<h3>Why use <code>*</code> with care?</h3>
+<ul>
+<li>In real work a table has dozens or even hundreds of columns. <code>SELECT *</code> pulls unneeded data and slows the query down.</li>
+<li>If a new column is added to the table later, the result of <code>*</code> changes and a report may break.</li>
+<li>If you name the columns, anyone reading the query sees right away what is being selected.</li>
+</ul>
+<p>So use <code>*</code> when you first get to know a table, and name the columns in queries you keep.</p>
+<div class="tip">When you first look at a large table, add <code>LIMIT 10</code> at the end: the database returns only 10 rows instead of the whole table. More on this in the ORDER BY lesson.</div>`,
       ex: [
         { prompt: 'Show all columns and rows of the <code>products</code> table.', starter: '-- Write your query here\n', hints: ['<code>*</code> is used for all columns.', 'Pattern: <code>SELECT * FROM table_name;</code>'] },
         { prompt: 'Show only the name (<code>name</code>) and price (<code>price</code>) of the products.', hints: ['List the columns separated by commas.', '<code>SELECT name, price FROM products;</code>'] }
@@ -44,7 +54,17 @@ WHERE price > 50000;</code></pre>
 <tr><td><code>&gt;=</code>, <code>&lt;=</code></td><td>greater or equal, less or equal</td></tr>
 </table>
 <p>Text and dates go in <b>single quotes</b>: <code>WHERE city = 'Алматы'</code>. Numbers go without quotes: <code>WHERE price = 9000</code>.</p>
-<div class="tip">Dates are stored as <code>'2024-09-01'</code>. In this format, comparing them as text also works correctly: <code>order_date &gt;= '2024-10-01'</code>.</div>`,
+<div class="tip">Dates are stored as <code>'2024-09-01'</code>. In this format, comparing them as text also works correctly: <code>order_date &gt;= '2024-10-01'</code>.</div>
+<h3>How does WHERE work?</h3>
+<p>The database checks the condition for every row of the table. If the condition is <code>TRUE</code>, the row goes into the result; if it is <code>FALSE</code> or unknown, it does not. So WHERE never creates new rows; it only filters existing ones.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>Double quotes</b>: <code>city = "Алматы"</code>. In standard SQL double quotes mean a column name; use single quotes for text.</li>
+<li><b>Case</b>: <code>'алматы'</code> and <code>'Алматы'</code> are different text. First check how the value is written in the data with <code>SELECT DISTINCT city</code>.</li>
+<li><b>Extra space</b>: <code>'Алматы '</code> with a trailing space will not match. We fix such data in the cleaning module.</li>
+<li><b>Comparing a number as text</b>: <code>price &gt; '50000'</code> is compared as text in some databases and gives unexpected results. Write numbers without quotes.</li>
+</ul>
+<div class="tip">An easy way to test a condition: first run the query without WHERE and look at a few rows, then add the condition and check that the row count dropped by a sensible amount.</div>`,
       ex: [
         { prompt: 'Show the name and price of products that cost more than 50 000 tenge.', hints: ['Condition: <code>price > 50000</code>'] },
         { prompt: 'Show all columns for customers from Astana (<code>\'Астана\'</code>).', hints: ['Put the text in quotes: <code>\'Астана\'</code>.'] },
@@ -67,7 +87,15 @@ WHERE category = 'Электроника' AND price &lt; 100000;</code></pre>
 <pre><code>WHERE price BETWEEN 5000 AND 20000
 WHERE city IN ('Алматы', 'Шымкент')
 WHERE city NOT IN ('Алматы')</code></pre>
-<div class="tip">When you mix AND and OR, use brackets: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Without brackets, AND runs first.</div>`,
+<div class="tip">When you mix AND and OR, use brackets: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Without brackets, AND runs first.</div>
+<h3>Condition precedence</h3>
+<p>SQL evaluates <code>NOT</code> first, then <code>AND</code>, and <code>OR</code> last. This condition:</p>
+<pre><code>WHERE city = 'Алматы' OR city = 'Астана' AND status = 'delivered'</code></pre>
+<p>is actually read as <code>city = 'Алматы' OR (city = 'Астана' AND status = 'delivered')</code>: rows from Almaty come back with any status. Parentheses prevent the mistake and make the query easier to read.</p>
+<h3>BETWEEN and dates</h3>
+<p><code>BETWEEN</code> includes both ends. If the date is stored together with the time (<code>'2024-09-30 14:00'</code>), <code>BETWEEN '2024-09-01' AND '2024-09-30'</code> misses records from September 30 after midnight, because as text they are greater than <code>'2024-09-30'</code>. In that case it is safer to stop at the start of the next month:</p>
+<pre><code>WHERE order_date &gt;= '2024-09-01' AND order_date &lt; '2024-10-01'</code></pre>
+<div class="tip">If a <code>NOT IN</code> list contains NULL, the condition is true for no rows at all. Do not include NULL when you write the list by hand, and if it comes from a subquery, add <code>WHERE ... IS NOT NULL</code>.</div>`,
       ex: [
         { prompt: 'Show the name and price of products in the «Электроника» (electronics) category that cost less than 100 000.', hints: ['Join the two conditions with <code>AND</code>.'] },
         { prompt: 'Show the name and city of customers from Almaty or Shymkent. Use <code>IN</code>.', hints: ["<code>WHERE city IN ('Алматы', 'Шымкент')</code>"] },
@@ -86,7 +114,18 @@ WHERE name LIKE '%ал%'     -- contains «ал»</code></pre>
 <p><code>NULL</code> means "unknown" or "empty". It is neither zero nor empty text. That is why <code>= NULL</code> does not work and a special operator is needed:</p>
 <pre><code>WHERE city IS NULL
 WHERE city IS NOT NULL</code></pre>
-<div class="tip">NULL is very common in real data. Before an analysis, always check which columns have empty values.</div>`,
+<div class="tip">NULL is very common in real data. Before an analysis, always check which columns have empty values.</div>
+<h3>More about LIKE</h3>
+<ul>
+<li>In SQLite, <code>LIKE</code> is case-insensitive for Latin letters: <code>'a%'</code> also finds “Apple”. But this rule does not work for Cyrillic: “кітап” and “Кітап” are different.</li>
+<li>For case-insensitive search, bring both sides to the same form: <code>WHERE LOWER(name) LIKE '%phone%'</code>.</li>
+<li>A pattern starting with <code>%</code> (<code>'%фон'</code>) cannot use an index and is slow on a large table.</li>
+</ul>
+<h3>NULL in arithmetic and comparisons</h3>
+<p>Any operation with NULL gives NULL: <code>5 + NULL</code> = NULL, and even <code>NULL = NULL</code> is not TRUE but NULL. That is why <code>WHERE city &lt;&gt; 'Алматы'</code> also hides customers with an empty city: for them the condition is unknown.</p>
+<p>To replace an empty value with another one, there is <code>COALESCE</code>:</p>
+<pre><code>SELECT name, COALESCE(city, 'белгісіз') AS city FROM customers;  -- 'белгісіз' = "unknown"</code></pre>
+<div class="tip">A quick way to count empty values in a column: <code>SELECT COUNT(*) - COUNT(city) FROM customers</code>. <code>COUNT(city)</code> does not count NULLs, so the difference is the number of empty rows.</div>`,
       ex: [
         { prompt: 'Show all columns for products whose name starts with the word «Кітап» (book).', hints: ["<code>LIKE 'Кітап%'</code>"] },
         { prompt: 'Show the <code>id</code> and <code>name</code> columns of customers whose city is not given.', hints: ['Write <code>IS NULL</code>, not <code>= NULL</code>.'] }
@@ -102,7 +141,19 @@ ORDER BY price DESC;</code></pre>
 <p><code>DISTINCT</code> removes repeated rows:</p>
 <pre><code>SELECT DISTINCT category FROM products;</code></pre>
 <h3>The order of the parts of a query</h3>
-<pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre>`,
+<pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre>
+<h3>Sorting by several columns</h3>
+<p>You can give ORDER BY several columns separated by commas. The second column is used when the first one ties:</p>
+<pre><code>SELECT name, category, price FROM products
+ORDER BY category ASC, price DESC;</code></pre>
+<p>In the result, categories are in alphabetical order, and within each category products go from most to least expensive.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>LIMIT without ORDER BY</b>: the database may return rows in any order, so the “first 5” can differ each time. Always write ORDER BY for a top-N.</li>
+<li><b>Ties</b>: if the 3rd and 4th products have the same price, LIMIT 3 drops one of them arbitrarily. For a stable result, add a second sort column (for example, <code>id</code>).</li>
+<li><b>NULL order</b>: in SQLite, NULLs come first in ascending order and last in descending order. Other databases may do the opposite.</li>
+</ul>
+<div class="tip"><code>DISTINCT</code> applies to the whole row: <code>SELECT DISTINCT city, signup_date</code> gives unique pairs of city and date, not just cities.</div>`,
       ex: [
         { prompt: 'Show the name and price of the 3 most expensive products, from most to least expensive.', hints: ['<code>ORDER BY price DESC</code>, then <code>LIMIT 3</code>.'] },
         { prompt: 'Show the list of customer cities without repeats. Leave out NULL.', hints: ['<code>SELECT DISTINCT city</code> + <code>WHERE city IS NOT NULL</code>.'] },
@@ -120,7 +171,21 @@ FROM products;</code></pre>
 <p>A table can get a short name too. This will be very useful in the JOIN lesson:</p>
 <pre><code>SELECT p.name FROM products AS p;
 SELECT p.name FROM products p;   -- AS is optional</code></pre>
-<div class="tip">In SQLite, dividing a whole number by a whole number gives a whole number: <code>7 / 2 = 3</code>. For an exact result, make one of them a decimal: <code>7 / 2.0 = 3.5</code>.</div>`,
+<div class="tip">In SQLite, dividing a whole number by a whole number gives a whole number: <code>7 / 2 = 3</code>. For an exact result, make one of them a decimal: <code>7 / 2.0 = 3.5</code>.</div>
+<h3>Examples of calculated columns</h3>
+<pre><code>SELECT name,
+       price,
+       ROUND(price * 0.85) AS after_discount,
+       price - 5000       AS minus_coupon
+FROM products;</code></pre>
+<p><code>ROUND(x)</code> rounds to a whole number, <code>ROUND(x, 1)</code> to one decimal place. You can join text with <code>||</code>: <code>name || ' (' || category || ')'</code>.</p>
+<h3>Where can you use an alias?</h3>
+<p>The parts of a query do not run in the order they are written: the database runs <code>FROM</code> and <code>WHERE</code> first, then <code>SELECT</code>, and <code>ORDER BY</code> last. So you can use an alias in ORDER BY but not in WHERE:</p>
+<pre><code>SELECT name, price * 1.12 AS price_with_vat
+FROM products
+ORDER BY price_with_vat DESC;   -- correct</code></pre>
+<p>In WHERE you have to repeat the calculation: <code>WHERE price * 1.12 &gt; 50000</code>.</p>
+<div class="tip">Give aliases names without spaces, in Latin letters: <code>price_with_vat</code>. If a name has a space, it must be wrapped in double quotes, which is awkward in later queries.</div>`,
       ex: [
         { prompt: 'For products in the «Кеңсе» (office) category, show the name as <code>product</code> and the price with a 10% discount as <code>sale_price</code>.', hints: ['A 10% discount = <code>price * 0.9</code>.', 'Naming a column: <code>name AS product</code>.'] },
         { prompt: 'Show each product\'s name and its price in thousands of tenge (<code>price_k</code>, a decimal). For example, 6500 → 6.5.', hints: ['Avoid whole-number division: <code>1000.0</code>.'] }
@@ -489,7 +554,21 @@ WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id);</cod
 UPDATE products SET price = price * 1.1 WHERE category = 'Кітаптар';
 DELETE FROM orders WHERE status = 'cancelled';
 ALTER TABLE customers ADD COLUMN phone TEXT;</code></pre>
-<div class="tip">If you write UPDATE or DELETE <b>without WHERE</b>, the whole table changes. At work, first run a SELECT with the same WHERE and check which rows will change.</div>`,
+<div class="tip">If you write UPDATE or DELETE <b>without WHERE</b>, the whole table changes. At work, first run a SELECT with the same WHERE and check which rows will change.</div>
+<h3>Staying safe when changing data</h3>
+<ol>
+<li>Before a change, run <code>SELECT COUNT(*)</code> with the same <code>WHERE</code>: find out how many rows will change.</li>
+<li>Wrap the commands in a transaction and <code>COMMIT</code> only after checking the result (next lesson).</li>
+<li>Do not change data directly in a production database: analysts usually get read-only access.</li>
+</ol>
+<h3>DROP vs DELETE vs TRUNCATE</h3>
+<table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>DELETE FROM t WHERE ...</code></td><td>Deletes the rows that match the condition; the table stays</td></tr>
+<tr><td><code>DELETE FROM t</code> / <code>TRUNCATE t</code></td><td>Deletes all rows; the structure stays (SQLite has no TRUNCATE)</td></tr>
+<tr><td><code>DROP TABLE t</code></td><td>Removes the table completely, structure included</td></tr>
+</table>
+<div class="tip">You can add several rows with one INSERT: <code>INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y');</code>. This is faster than writing a separate command for each row.</div>`,
       ex: [
         { prompt: 'Create a <code>courses</code> table: <code>id</code> INTEGER PRIMARY KEY, <code>title</code> TEXT NOT NULL, <code>hours</code> INTEGER. Then add two rows: (1, \'SQL\', 40) and (2, \'Python\', 50).', hints: ['You can add several rows with one INSERT: <code>VALUES (...), (...)</code>.'] },
         { prompt: 'Raise the prices of products in the «Кітаптар» (books) category by 10%.', hints: ["<code>UPDATE products SET price = price * 1.1 WHERE ...</code>"] },
@@ -517,7 +596,18 @@ SELECT * FROM big_orders;</code></pre>
 <p>In server databases (PostgreSQL, MySQL), <code>GRANT</code> and <code>REVOKE</code> control who can do what:</p>
 <pre><code>GRANT SELECT ON orders TO analyst;
 REVOKE DELETE ON orders FROM analyst;</code></pre>
-<p>SQLite is a file-based database, so it has no such commands. An analyst is usually given only the <code>SELECT</code> permission.</p>`,
+<p>SQLite is a file-based database, so it has no such commands. An analyst is usually given only the <code>SELECT</code> permission.</p>
+<h3>ACID: four guarantees of a transaction</h3>
+<ul>
+<li><b>Atomicity</b>: the commands in a transaction either all run or none do.</li>
+<li><b>Consistency</b>: after a transaction, the data satisfies all constraints.</li>
+<li><b>Isolation</b>: concurrent transactions do not interfere with each other.</li>
+<li><b>Durability</b>: a committed change survives even if the server shuts down.</li>
+</ul>
+<h3>When is a VIEW useful?</h3>
+<p>If your colleagues often use the same complex query (several JOINs, filters), save it as a VIEW. Then everyone uses the same logic, and if a rule needs to change, you only recreate the VIEW. For example, if you write the definition of an “active customer” in one VIEW, it will be the same in every report.</p>
+<p>Dropping a VIEW: <code>DROP VIEW big_orders;</code>. This does not affect the underlying table.</p>
+<div class="tip">A VIEW re-runs its query every time it is read. For heavy calculations some databases have a <b>materialized view</b>: it stores the result and reads as fast as a table, but it has to be refreshed from time to time.</div>`,
       ex: [
         { prompt: 'Create a VIEW called <code>delivered_orders</code>: only the rows of <code>orders</code> with the status <code>delivered</code> (all columns).', hints: ['<code>CREATE VIEW delivered_orders AS SELECT ...</code>'] },
         { prompt: 'Start a transaction, set the price of every product to 0, then do a <b>ROLLBACK</b> and show the sum of prices. The sum should be the same as before.', hints: ['Write <code>ROLLBACK;</code> after the UPDATE.'] },

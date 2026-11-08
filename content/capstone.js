@@ -25,7 +25,17 @@
 <li>Қайта сатып алу (retention).</li>
 <li>Бір теңге жарнамаға келетін табыс.</li>
 <li>Memo: ұсыныс пен шектеулер.</li>
-</ol>`,
+</ol>
+<h3>Бизнес сұрағын талдау сұрағына айналдыру</h3>
+<p>Директордың сұрағы кең: «бюджетті қайда бөлеміз?». Аналитиктің бірінші жұмысы — оны өлшенетін сұрақтарға бөлу:</p>
+<ul>
+<li>Әр арна қанша клиент әкелді және олар қанша табыс берді?</li>
+<li>Қай арнаның клиенттері қайта келеді (retention)?</li>
+<li>Жарнамаға жұмсалған бір теңге әр арнада қанша табыс қайтарды (ROAS)?</li>
+<li>Қалалар арасында орташа чек пен тапсырыс жиілігі қалай ерекшеленеді?</li>
+</ul>
+<p>Әр сұрақтың жанына «қандай шешімге әсер етеді?» деп жазып қойыңыз. Шешімге әсер етпейтін сұрақ — әдемі, бірақ артық жұмыс.</p>
+<div class="tip">Жобаны бастамас бұрын «табыс» деген сөзді нақтылаңыз: қайтарымдар (refund) кіре ме, корпоративтік тапсырыстар ше? Анықтаманы бір рет келісіп, memo-ға жазыңыз.</div>`,
         exercises: [
           { type: 'quiz', xp: 10, prompt: 'Директордың сұрағына жауап беру үшін ең маңызды салыстыру қайсы?', options: ['Қай арнада клиенттер көп тіркелді', 'Әр арнаның клиенттері әкелетін табыс пен арна шығынының қатынасы', 'Қай қалада кофехана көп', 'Қай айда тапсырыс көп'], answer: 1, explain: 'Бюджет шешімі «жұмсалған теңгеге қанша қайтады» деген сұраққа байланысты.' },
           { type: 'quiz', xp: 10, prompt: 'Неліктен талдауды метрикадан емес, profiling-тен бастаймыз?', options: ['Солай дәстүр', 'Дерек сапасындағы мәселелер (бос мән, қайтарым, шеткі мән) кейінгі барлық сандарды бұрмалауы мүмкін', 'SQL басқаша жұмыс істемейді', 'Уақыт үнемдеу үшін'], answer: 1, explain: 'Қате деректен шыққан дұрыс формула да қате нәтиже береді.' }
@@ -36,7 +46,20 @@
         body: `
 <p>Алдымен <code>orders</code> кестесінің «денсаулығын» тексереміз: неше жол, бос сомалар, қайтарымдар (<code>refund</code>), күн ауқымы.</p>
 <p>Сосын ең үлкен тапсырыстарды қараймыз: шеткі мәндер бар ма?</p>
-<div class="tip">Profiling нәтижесін жазып отырыңыз. Ол memo-ның «Шектеулер» бөліміне кіреді.</div>`,
+<div class="tip">Profiling нәтижесін жазып отырыңыз. Ол memo-ның «Шектеулер» бөліміне кіреді.</div>
+<h3>Profiling тексеру тізімі</h3>
+<p>Кез келген жаңа кестеге бірдей сұрақтар қойылады. Оларды әдетке айналдырыңыз:</p>
+<table>
+<tr><th>Сұрақ</th><th>SQL үлгісі</th></tr>
+<tr><td>Қанша жол бар?</td><td><code>COUNT(*)</code></td></tr>
+<tr><td>Бос мәндер қанша?</td><td><code>SUM(amount IS NULL)</code></td></tr>
+<tr><td>Қандай статустар бар?</td><td><code>SELECT status, COUNT(*) ... GROUP BY status</code></td></tr>
+<tr><td>Күн ауқымы қандай?</td><td><code>MIN(order_date)</code>, <code>MAX(order_date)</code></td></tr>
+<tr><td>Шеткі мәндер бар ма?</td><td><code>ORDER BY amount DESC LIMIT 5</code></td></tr>
+<tr><td>Дубликаттар бар ма?</td><td><code>COUNT(*)</code> мен <code>COUNT(DISTINCT id)</code> салыстыру</td></tr>
+</table>
+<p>SQLite-та <code>amount IS NULL</code> өрнегі 1 немесе 0 береді, сондықтан оны <code>SUM</code> ішіне салсаңыз, бос мәндердің саны шығады.</p>
+<p>Profiling-тің мақсаты — қате табу емес, деректі түсіну. Табылған әр ерекшелік кейін тазалау ережесіне немесе memo-дағы шектеуге айналады.</p>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 20, prompt: '<code>orders</code> бойынша бір жолда: <code>n</code>, <code>null_amount</code>, <code>refunds</code>, <code>first_day</code>, <code>last_day</code>.', starter: '', solution: "SELECT COUNT(*) AS n, SUM(amount IS NULL) AS null_amount, SUM(status = 'refund') AS refunds, MIN(order_date) AS first_day, MAX(order_date) AS last_day FROM orders;", check: { ordered: true }, hints: ["<code>SUM(status = 'refund')</code>"] },
           { type: 'sql', dataset: 'cafe', xp: 15, prompt: 'Сомасы ең үлкен 3 тапсырысты шығарыңыз: <code>id</code>, <code>customer_id</code>, <code>amount</code>, кему ретімен.', starter: '', solution: 'SELECT id, customer_id, amount FROM orders WHERE amount IS NOT NULL ORDER BY amount DESC LIMIT 3;', check: { ordered: true }, hints: ['<code>ORDER BY amount DESC LIMIT 3</code>'] },
@@ -57,7 +80,17 @@
   SELECT * FROM orders
   WHERE ${CLEAN}
 )
-SELECT ... FROM clean ...</code></pre>`,
+SELECT ... FROM clean ...</code></pre>
+<h3>Неге ережелерді бір жерде ұстаймыз?</h3>
+<p>Егер әр сұрауда сүзгіні қайта жазсаңыз, бір жерде <code>amount &lt; 20000</code> шартын ұмытып кетуіңіз оңай. Сонда екі кестедегі табыс бір-бірімен сәйкес келмейді, ал директор «қай сан дұрыс?» деп сұрайды. Бір <code>clean</code> CTE барлық есептің бір анықтамаға сүйенуін қамтамасыз етеді.</p>
+<h3>Әр ереженің себебін жазыңыз</h3>
+<table>
+<tr><th>Ереже</th><th>Себебі</th></tr>
+<tr><td><code>status = 'paid'</code></td><td>Қайтарылған ақша табыс емес.</td></tr>
+<tr><td><code>amount IS NOT NULL</code></td><td>Сомасы белгісіз тапсырысты қосу мүмкін емес.</td></tr>
+<tr><td><code>amount &lt; 20000</code></td><td>Бір реттік корпоративтік тапсырыс орташа чекті бұрмалайды.</td></tr>
+</table>
+<p>Алынып тасталған жолдарды санап, memo-ға жазыңыз: «таза деректе N тапсырыс, M жол алынды». Оқырман сіздің шешіміңізге сенуі үшін не алынғанын білуі керек.</p>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 20, prompt: '<code>clean</code> CTE-ін жазып, бір жолда <code>orders</code> (таза тапсырыстар саны) және <code>revenue</code> (олардың сомасы) шығарыңыз.', starter: 'WITH clean AS (\n  SELECT * FROM orders\n  WHERE \n)\nSELECT ', solution: `WITH clean AS (SELECT * FROM orders WHERE ${CLEAN}) SELECT COUNT(*) AS orders, SUM(amount) AS revenue FROM clean;`, check: { ordered: true, mustInclude: ['WITH'] }, hints: ['Үш шартты <code>AND</code> арқылы біріктіріңіз.'] }
         ]
@@ -67,7 +100,17 @@ SELECT ... FROM clean ...</code></pre>`,
         body: `
 <p>Бизнестің «тамыр соғысы»: әр айда неше тапсырыс, қанша табыс, неше белсенді клиент және орташа чек.</p>
 <p>Нәтижені line chart-қа салуға болады. Өсу мен құлдыраудың себебін кейін сегменттерден іздейміз.</p>
-<div class="tip">Маусым — соңғы ай, бірақ дерек 30-шы маусымға дейін толық. Әр айдың толық екенін әрқашан тексеріңіз: толық емес соңғы ай «құлдырау» болып көрінеді.</div>`,
+<div class="tip">Маусым — соңғы ай, бірақ дерек 30-шы маусымға дейін толық. Әр айдың толық екенін әрқашан тексеріңіз: толық емес соңғы ай «құлдырау» болып көрінеді.</div>
+<h3>Айды қалай бөліп аламыз?</h3>
+<p><code>order_date</code> мәтін түрінде сақталған (<code>2024-03-05</code>). Айды бөлу үшін алғашқы 7 таңбаны аламыз:</p>
+<pre><code>SELECT substr(order_date, 1, 7) AS month, COUNT(*) AS orders
+FROM clean
+GROUP BY month
+ORDER BY month</code></pre>
+<p><code>strftime('%Y-%m', order_date)</code> да дәл осы нәтижені береді.</p>
+<h3>Төрт метриканың байланысы</h3>
+<p>Табыс = тапсырыстар × орташа чек. Ал тапсырыстар = белсенді клиенттер × бір клиентке келетін тапсырыс. Табыс өзгерсе, қай көбейткіш өзгергенін қараңыз: жаңа клиенттер азайды ма, әлде олар сирек келе бастады ма, әлде чек кішірейді ме? Әр жауап бизнеске әртүрлі әрекет ұсынады.</p>
+<div class="tip">Орташа чекті <code>AVG(amount)</code> емес, <code>SUM(amount) * 1.0 / COUNT(*)</code> ретінде де есептеуге болады. Екеуі бірдей нәтиже береді, бірақ екінші жазу формуланы көзбен тексеруге ыңғайлы.</div>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 25, prompt: 'Таза тапсырыстар бойынша әр ай үшін: <code>month</code> (YYYY-MM), <code>orders</code>, <code>revenue</code>, <code>customers</code> (бірегей), <code>aov</code> (бүтінге дейін <code>ROUND</code>). Ай ретімен.', starter: '', solution: `WITH clean AS (SELECT * FROM orders WHERE ${CLEAN}) SELECT substr(order_date, 1, 7) AS month, COUNT(*) AS orders, SUM(amount) AS revenue, COUNT(DISTINCT customer_id) AS customers, ROUND(AVG(amount)) AS aov FROM clean GROUP BY month ORDER BY month;`, check: { ordered: true }, hints: ['<code>clean</code> CTE + <code>GROUP BY substr(order_date, 1, 7)</code>'] },
           { type: 'quiz', xp: 10, prompt: 'Маусымда тапсырыстар мамырдан аз. Memo-ға «маусымда құлдырау» деп жазбас бұрын не тексересіз?', options: ['Ештеңе', 'Жаңа клиенттер ағыны (тіркелу айлары) мен ескі клиенттердің кетуін: құлдырау қайдан келеді?', 'Шрифтті', 'Тек табысты'], answer: 1, explain: 'Жалпы сан өзгерсе, оны құрамдас бөліктерге жіктеп, себебін табамыз.' }
@@ -83,7 +126,21 @@ SELECT ... FROM clean ...</code></pre>`,
 <li>Орташа чек</li>
 <li>Бір клиенттен түскен табыс</li>
 </ul>
-<p>Арна клиентке <code>customers</code> кестесі арқылы байланған, сондықтан <code>JOIN</code> керек.</p>`,
+<p>Арна клиентке <code>customers</code> кестесі арқылы байланған, сондықтан <code>JOIN</code> керек.</p>
+<h3>Сұрау қалай құрылады?</h3>
+<p>Алдымен таза тапсырыстарды клиентпен байланыстырамыз, содан кейін арна бойынша топтаймыз:</p>
+<pre><code>WITH clean AS (...)
+SELECT c.channel,
+       COUNT(DISTINCT o.customer_id) AS customers,
+       COUNT(*) AS orders,
+       SUM(o.amount) AS revenue
+FROM clean o
+JOIN customers c ON c.id = o.customer_id
+GROUP BY c.channel</code></pre>
+<p>Осыдан туынды көрсеткіштер шығады: <code>orders * 1.0 / customers</code> — жиілік, <code>revenue * 1.0 / orders</code> — орташа чек, <code>revenue * 1.0 / customers</code> — бір клиенттің құны.</p>
+<h3>Нәтижені қалай оқу керек?</h3>
+<p>Клиенті көп арна әрқашан ең жақсы арна емес. Егер бір арна аз клиент әкелсе, бірақ олар жиі қайта келсе, бір клиенттің құны жоғары болады. Директорға тек «кім көп» емес, «кім құнды» екенін көрсетіңіз.</p>
+<div class="tip">Қала бойынша талдауда әр қаладағы клиент санын да көрсетіңіз. 5 клиенті бар қаланың орташа чегі бір адамның әсерінен қатты өзгереді.</div>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 30, prompt: 'Таза тапсырыстар бойынша арна сегменттері: <code>channel</code>, <code>customers</code> (тапсырыс берген бірегей клиенттер), <code>orders</code>, <code>revenue</code>, <code>rev_per_customer</code> (бүтінге дейін ROUND). Табыс бойынша кему ретімен.', starter: '', solution: `WITH clean AS (SELECT * FROM orders WHERE ${CLEAN}) SELECT c.channel, COUNT(DISTINCT c.id) AS customers, COUNT(o.id) AS orders, SUM(o.amount) AS revenue, ROUND(SUM(o.amount) * 1.0 / COUNT(DISTINCT c.id)) AS rev_per_customer FROM customers c JOIN clean o ON o.customer_id = c.id GROUP BY c.channel ORDER BY revenue DESC;`, check: { ordered: true }, hints: ['<code>customers c JOIN clean o ON o.customer_id = c.id</code>', '<code>ROUND(SUM(o.amount) * 1.0 / COUNT(DISTINCT c.id))</code>'] },
           { type: 'sql', dataset: 'cafe', xp: 20, prompt: 'Қала бойынша орташа чек: <code>city</code>, <code>aov</code> (бүтінге дейін), кему ретімен.', starter: '', solution: `WITH clean AS (SELECT * FROM orders WHERE ${CLEAN}) SELECT c.city, ROUND(AVG(o.amount)) AS aov FROM customers c JOIN clean o ON o.customer_id = c.id GROUP BY c.city ORDER BY aov DESC;`, check: { ordered: true }, hints: ['Алдыңғы сұраудағы JOIN, бірақ <code>GROUP BY c.city</code>.'] }
@@ -97,7 +154,13 @@ SELECT ... FROM clean ...</code></pre>`,
   SELECT customer_id, COUNT(*) AS n FROM clean GROUP BY customer_id
 )
 SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
-<p>Арна бойынша repeat rate әртүрлі болса, «арзан тартылған, бірақ бір рет келіп кететін» клиенттерді көреміз.</p>`,
+<p>Арна бойынша repeat rate әртүрлі болса, «арзан тартылған, бірақ бір рет келіп кететін» клиенттерді көреміз.</p>
+<h3>Неге дәл «3 тапсырыс»?</h3>
+<p>Шекті бизнес таңдайды. Кофехана үшін бір рет келу — кездейсоқ, екі рет — қызығушылық, үш рет — әдет. Басқа бизнесте шек басқа болады: пәтер жалдауда екінші келісімшарттың өзі жақсы нәтиже. Memo-да шекті неге таңдағаныңызды бір сөйлеммен түсіндіріңіз.</p>
+<h3>SQLite-тағы кішкене айла</h3>
+<p><code>n &gt;= 3</code> өрнегі 1 немесе 0 береді. Сондықтан <code>SUM(n &gt;= 3)</code> шартқа сай клиенттерді санайды, ал <code>* 100.0 / COUNT(*)</code> оны пайызға айналдырады. <code>100.0</code> деп жазу маңызды: <code>100</code> деп жазсаңыз, бүтін санға бөлу болып, ондық бөлігі жоғалуы мүмкін.</p>
+<h3>Когорттық көзқарас</h3>
+<p>Repeat rate-ке тіркелу уақыты да әсер етеді: маусымда тіркелген клиент үш рет келіп үлгермеуі мүмкін. Дәлірек талдауда клиенттерді тіркелу айы бойынша когорттарға бөліп, бірдей уақыт аралығын салыстырады. Бұл жобада қарапайым нұсқаны қолданамыз, бірақ осы шектеуді memo-ға жазыңыз.</p>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 30, prompt: 'Арна бойынша repeat rate: <code>channel</code>, <code>customers</code>, <code>repeat_rate</code> (≥ 3 таза тапсырысы бар клиенттер үлесі, %, бір ондық белгі). Кему ретімен.', starter: '', solution: `WITH clean AS (SELECT * FROM orders WHERE ${CLEAN}), per AS (SELECT customer_id, COUNT(*) AS n FROM clean GROUP BY customer_id) SELECT c.channel, COUNT(*) AS customers, ROUND(SUM(p.n >= 3) * 100.0 / COUNT(*), 1) AS repeat_rate FROM per p JOIN customers c ON c.id = p.customer_id GROUP BY c.channel ORDER BY repeat_rate DESC;`, check: { ordered: true, mustInclude: ['WITH'] }, hints: ['Екі CTE: <code>clean</code> және <code>per</code>.', '<code>ROUND(SUM(p.n &gt;= 3) * 100.0 / COUNT(*), 1)</code>'] }
         ]
@@ -107,7 +170,20 @@ SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
         body: `
 <p>SQL нәтижелерін Python-ға алып, жарнама шығынымен салыстырамыз. <b>ROAS</b> (return on ad spend) = арна табысы / арна шығыны.</p>
 <pre><code>spend = {"instagram": 300000, "2gis": 150000, "referral": 40000}</code></pre>
-<p>ROAS 1-ден төмен болса, арна жарнамаға жұмсалғаннан аз табыс әкелген (маржаны есептемегенде де).</p>`,
+<p>ROAS 1-ден төмен болса, арна жарнамаға жұмсалғаннан аз табыс әкелген (маржаны есептемегенде де).</p>
+<h3>Python-да қалай есептейміз?</h3>
+<pre><code>revenue = {"instagram": 410000, "2gis": 260000, "referral": 120000}   # мысал сандар
+spend = {"instagram": 300000, "2gis": 150000, "referral": 40000}
+for ch in spend:
+    print(ch, round(revenue[ch] / spend[ch], 2))</code></pre>
+<p>Бұл мысалда referral-дың ROAS-ы 3.0, Instagram-ныкі 1.37. Бірақ сандарды салыстырғанда олардың артында не тұрғанын ұмытпаңыз.</p>
+<h3>ROAS шектеулері</h3>
+<ul>
+<li><b>Маржа</b>: ROAS табысты есептейді, пайданы емес. Кофенің өзіндік құны 60% болса, ROAS 1.5-тің өзі шығын болуы мүмкін.</li>
+<li><b>Атрибуция</b>: клиент Instagram-нан білген, бірақ досының сілтемесімен тіркелуі мүмкін. Онда оны referral-ға жатқызамыз.</li>
+<li><b>Масштаб</b>: шағын арнаның ROAS-ы жоғары болуы мүмкін, бірақ бюджетті көбейткенде тиімділігі әдетте төмендейді.</li>
+</ul>
+<div class="tip">Сөздікті сұрыптау үшін <code>sorted(d.items(), key=lambda x: x[1], reverse=True)</code> үлгісін қолданыңыз.</div>`,
         exercises: [
           { type: 'python', xp: 30, prompt: '<code>roas_ranking(revenue, spend)</code> функциясын жазыңыз: әр арна үшін <code>(арна, roas)</code> жұптарын ROAS бойынша кему ретімен тізім ретінде қайтарсын. ROAS екі ондық белгіге дейін <code>round</code> жасалсын.', starter: 'def roas_ranking(revenue, spend):\n    pass\n', solution: 'def roas_ranking(revenue, spend):\n    pairs = [(ch, round(revenue[ch] / spend[ch], 2)) for ch in spend]\n    return sorted(pairs, key=lambda p: p[1], reverse=True)', check: { tests: '_rev = {"instagram": 150000, "2gis": 138800, "referral": 79200}\n_sp = {"instagram": 300000, "2gis": 150000, "referral": 40000}\n_r = roas_ranking(_rev, _sp)\nassert _r == [("referral", 1.98), ("2gis", 0.93), ("instagram", 0.5)], f"Күтілгені [(\'referral\', 1.98), (\'2gis\', 0.93), (\'instagram\', 0.5)], сізде {_r}"' }, hints: ['<code>round(revenue[ch] / spend[ch], 2)</code>', '<code>sorted(..., key=lambda p: p[1], reverse=True)</code>'] },
           { type: 'quiz', xp: 10, prompt: 'Referral-дың ROAS-ы ең жоғары. Бюджетті бірден 10 есе көбейтуге бола ма?', options: ['Иә, әрине', 'Сақтықпен: referral ауқымы шектеулі (ұсынатын клиенттер саны), сондықтан біртіндеп көбейтіп, нәтижені өлшеу керек', 'Жоқ, referral жаман', 'Instagram-ды толық өшіру керек'], answer: 1, explain: 'Кіші арнаның тиімділігі масштаб өскенде сақталмауы мүмкін. Эксперимент жасаңыз.' }
@@ -128,7 +204,17 @@ SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
 <li>GitHub репозиторийі: <code>README.md</code> (сұрақ, дерек, әдіс, нәтиже, ұсыныс), <code>sql/</code> папкасы, бір-екі график.</li>
 <li>README-дің басында нәтиже тұрсын: жұмыс беруші 30 секундта оқиды.</li>
 <li>Резюмеде: «6 айлық транзакцияларды талдап, арна бойынша ROAS пен retention-ды есептеп, бюджетті қайта бөлу ұсынысын жасадым».</li>
-</ul>`,
+</ul>
+<h3>Жақсы memo-ның белгілері</h3>
+<p>Төмендегі сандар — тек мысал, өз memo-ңызға өз нәтижелеріңізді жазыңыз.</p>
+<ul>
+<li>Бірінші сөйлем сұраққа жауап береді: «Бюджеттің бір бөлігін Instagram-нан referral-ға көшіруді ұсынамыз».</li>
+<li>Әр тұжырымның жанында сан бар: «referral клиенттерінің 40%-ы қайта келеді, Instagram-да 22%».</li>
+<li>Ұсыныс тексерілетін эксперимент түрінде: «бір ай бойы referral бюджетін екі есе көбейтіп, жаңа клиенттер санын өлшейміз».</li>
+<li>Шектеулер жасырылмайды. Олар сіздің біліктілігіңізді көрсетеді.</li>
+</ul>
+<h3>Жиі кездесетін қателер</h3>
+<p>Memo-ны талдау барысының күнделігі ретінде жазу («алдымен profiling жасадым, сосын…») — оқырманға процесс емес, нәтиже керек. Тым көп график қосу — бір негізгі кесте немесе бір график жеткілікті. Ұсыныссыз аяқтау — директор «ал не істейміз?» деп қайта сұрайды.</p>`,
         exercises: [
           { type: 'quiz', xp: 15, prompt: 'Memo-ның бірінші абзацы ретінде қайсысы ең жақсы?', options: ['«Мен 150 тапсырысты SQL-мен талдадым.»', '«Referral клиенттері жиірек қайта келеді және әр жарнама теңгесіне ең көп табыс әкеледі (ROAS ≈ 2), ал Instagram жарнамасы шығынын ақтамайды (ROAS ≈ 0.5). Instagram бюджетінің бір бөлігін referral-ға ауыстырып, бір тоқсан бойы нәтижені өлшеуді ұсынамыз.»', '«Деректе қызықты нәрселер көп.»', '«Instagram жаман.»'], answer: 1, explain: 'Нәтиже, дәлел және әрекет бір абзацта. (Нақты сандарыңыз сұрауларыңыздың нәтижесіне сай болуы керек.)' },
           { type: 'rubric', xp: 40, minWords: 60, done: 'Memo-ны портфолио README-іне салыңыз.', prompt: 'Өз memo-ңызды жазыңыз (кемінде 60 сөз), сосын оны төрт критерий бойынша адал бағалаңыз. Өту үшін әр критерий кемінде <b>3 / 4</b> болуы керек. Бұл жұмыс беруші жобаңызды қалай бағалайтынымен бірдей.', criteria: [
@@ -150,7 +236,21 @@ SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
 <li><b>Мінез-құлық сұрақтары</b>: STAR әдісімен жауап (Situation, Task, Action, Result).</li>
 </ol>
 <p>Төмендегі тапсырмалар сұхбатта жиі кездесетін үлгілер, бірақ біздің кофехана дерекқорында.</p>
-<div class="tip">Live coding кезінде ойыңызды дауыстап айтыңыз: интервьюер дұрыс жауаптан бөлек, ойлау жолыңызды бағалайды.</div>`,
+<div class="tip">Live coding кезінде ойыңызды дауыстап айтыңыз: интервьюер дұрыс жауаптан бөлек, ойлау жолыңызды бағалайды.</div>
+<h3>«Екінші тапсырыс» үлгісі</h3>
+<p>Сұхбатта жиі сұралатын тапсырма. Window function-мен шешіледі:</p>
+<pre><code>SELECT customer_id, order_date AS second_order
+FROM (
+  SELECT customer_id, order_date,
+         ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date, id) AS rn
+  FROM orders
+)
+WHERE rn = 2</code></pre>
+<p><code>ORDER BY</code> ішіне <code>id</code> қосу бір күнде екі тапсырыс болса да нәтижені тұрақты етеді.</p>
+<h3>«Ешқашан жасамаған» үлгісі</h3>
+<p>Белгілі кезеңде әрекет жасамаған клиенттерді табу үшін <code>NOT EXISTS</code> немесе <code>LEFT JOIN ... WHERE o.id IS NULL</code> қолданылады. <code>NOT IN</code> ішкі сұрауда NULL болса, күтпеген бос нәтиже береді, сондықтан сұхбатта <code>NOT EXISTS</code> таңдаған қауіпсіз.</p>
+<h3>STAR жауабының мысалы</h3>
+<p><b>S</b>: кофехана желісі жарнама бюджетін қайта бөлгісі келді. <b>T</b>: қай арнаның тиімді екенін анықтау. <b>A</b>: тапсырыстарды тазалап, арна бойынша retention мен ROAS есептедім. <b>R</b>: бюджеттің 20%-ын referral-ға көшіріп, тексеру экспериментін ұсындым.</p>`,
         exercises: [
           { type: 'sql', dataset: 'cafe', xp: 25, prompt: 'Әр клиенттің <b>екінші</b> тапсырысының күнін шығарыңыз (кез келген статус): <code>customer_id</code>, <code>second_order</code>. Тек кемінде екі тапсырысы барлар.', starter: '', solution: 'SELECT customer_id, order_date AS second_order FROM (SELECT customer_id, order_date, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date, id) AS rn FROM orders) WHERE rn = 2;', check: { mustInclude: ['OVER'] }, hints: ['<code>ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date, id)</code>, сыртында <code>rn = 2</code>.'] },
           { type: 'sql', dataset: 'cafe', xp: 25, prompt: 'Сәуірден бастап (<code>2024-04-01</code> және одан кейін) бірде-бір тапсырыс бермеген клиенттер: <code>id</code>, <code>city</code>, <code>channel</code>.', starter: '', solution: "SELECT id, city, channel FROM customers WHERE id NOT IN (SELECT customer_id FROM orders WHERE order_date >= '2024-04-01');", hints: ['<code>NOT IN (SELECT customer_id FROM orders WHERE ...)</code> немесе <code>LEFT JOIN ... IS NULL</code>.'] },

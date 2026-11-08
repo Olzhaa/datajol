@@ -29,7 +29,22 @@ orders.describe()   # сандық бағандардың статистикас
 <tr><td><code>len(df)</code></td><td><code>SELECT COUNT(*) FROM t</code></td></tr>
 <tr><td><code>df.columns</code></td><td>бағандар тізімі</td></tr>
 </table>
-<div class="tip">Бірінші рет <code>import pandas</code> жазғанда кітапхана жүктеледі (бірнеше секунд). Кейін бірден жұмыс істейді.</div>`,
+<div class="tip">Бірінші рет <code>import pandas</code> жазғанда кітапхана жүктеледі (бірнеше секунд). Кейін бірден жұмыс істейді.</div>
+<h3>Жаңа деректі алғаш қарау</h3>
+<p>Кез келген CSV-ді оқығаннан кейін төрт команданы әдетке айналдырыңыз:</p>
+<ol>
+<li><code>df.shape</code>: жолдар мен бағандар саны күткендей ме?</li>
+<li><code>df.head()</code>: деректің өзі қандай көрінеді, баған атаулары түсінікті ме?</li>
+<li><code>df.info()</code>: әр бағанның типі дұрыс па? Сома <code>object</code> (мәтін) болып тұрса, онда сан емес таңбалар бар.</li>
+<li><code>df.describe()</code>: ең кіші және ең үлкен мәндер қисынды ма?</li>
+</ol>
+<p>Бұл SQL сабақтарындағы profiling-тің pandas нұсқасы. Екі минуттық тексеріс кейін сағаттық қате іздеуден құтқарады.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Бөлгіш басқа</b>: Еуропалық Excel файлдары үтір емес, нүктелі үтір қолданады. Онда <code>pd.read_csv('file.csv', sep=';')</code> жазыңыз.</li>
+<li><b>Кодировка</b>: кириллица «кракозябр» болып шықса, <code>encoding='utf-8'</code> немесе <code>encoding='cp1251'</code> байқап көріңіз.</li>
+<li><b>Күндер мәтін болып қалды</b>: <code>pd.read_csv(..., parse_dates=['order_date'])</code> оларды бірден күн типіне айналдырады.</li>
+</ul>`,
         exercises: [
           { type: 'python', xp: 15, prompt: 'Үш қаланың деректерінен <code>df</code> DataFrame жасаңыз: <code>city</code> бағаны <code>[\'Алматы\', \'Астана\', \'Шымкент\']</code>, <code>orders</code> бағаны <code>[120, 95, 40]</code>. Сосын <code>print(df)</code>.', starter: 'import pandas as pd\n\n', solution: "import pandas as pd\n\ndf = pd.DataFrame({'city': ['Алматы', 'Астана', 'Шымкент'], 'orders': [120, 95, 40]})\nprint(df)", check: { tests: "assert isinstance(df, pd.DataFrame), 'df DataFrame болуы керек'\nassert list(df.columns) == ['city', 'orders'], 'Бағандар: city, orders'\nassert df['orders'].tolist() == [120, 95, 40], 'orders мәндері [120, 95, 40] болуы керек'" }, hints: ['<code>pd.DataFrame({\'city\': [...], \'orders\': [...]})</code>'] },
           { type: 'python', xp: 15, prompt: '<code>orders.csv</code> файлын <code>orders</code> айнымалысына оқыңыз. Жолдар санын <code>n_rows</code>, бағандар санын <code>n_cols</code> айнымалысына жазып, шығарыңыз.', starter: 'import pandas as pd\n\n', solution: "import pandas as pd\n\norders = pd.read_csv('orders.csv')\nn_rows, n_cols = orders.shape\nprint(n_rows, n_cols)", check: { tests: "assert n_rows == 150, 'Жолдар саны дұрыс емес: orders.shape қолданыңыз'\nassert n_cols == 5, 'Бағандар саны дұрыс емес'" }, hints: ['<code>orders.shape</code> (жолдар, бағандар) кортежін береді.'] }
@@ -52,7 +67,15 @@ two  = orders[orders['customer_id'].isin([1, 2])]</code></pre>
 <tr><td><code>WHERE a = 1 AND b &gt; 2</code></td><td><code>df[(df['a'] == 1) &amp; (df['b'] &gt; 2)]</code></td></tr>
 <tr><td><code>WHERE x IN (1, 2)</code></td><td><code>df[df['x'].isin([1, 2])]</code></td></tr>
 <tr><td><code>WHERE x IS NULL</code></td><td><code>df[df['x'].isna()]</code></td></tr>
-</table>`,
+</table>
+<h3>Жаңа баған қосу</h3>
+<p>Есептелген баған SQL-дегі <code>SELECT amount * 1.12 AS with_vat</code> сияқты жасалады, бірақ нәтиже кестенің өзіне қосылады:</p>
+<pre><code>orders['with_vat'] = orders['amount'] * 1.12
+orders['is_big'] = orders['amount'] &gt; 3000</code></pre>
+<p>Операция бүкіл бағанға бірден қолданылады, цикл керек емес.</p>
+<h3>loc пен iloc айырмасы</h3>
+<p><code>loc</code> жолдың <b>белгісімен</b> (index) жұмыс істейді, <code>iloc</code> оның <b>орнымен</b> (0, 1, 2...). Сүзгіден кейін индекс «тесік» болып қалады: <code>paid.loc[0]</code> қате береді, егер 0-жол сүзгіден өтпесе. Ал <code>paid.iloc[0]</code> әрқашан бірінші жолды береді. Индексті қайта нөмірлеу үшін <code>paid.reset_index(drop=True)</code> қолданыңыз.</p>
+<div class="tip">Сүзгіні <code>query</code> әдісімен де жазуға болады: <code>orders.query("status == 'paid' and amount &gt; 3000")</code>. Мұнда <code>and</code> сөзі жұмыс істейді, ал жазу SQL-ге жақын.</div>`,
         exercises: [
           { type: 'python', xp: 15, prompt: 'Тек төленген (<code>status == \'paid\'</code>) тапсырыстарды <code>paid</code> айнымалысына жазыңыз және олардың санын шығарыңыз.', starter: LOAD + '\n', solution: LOAD + "paid = orders[orders['status'] == 'paid']\nprint(len(paid))", check: { tests: REF + "assert len(paid) == (_o['status'] == 'paid').sum(), 'paid ішінде тек status == \"paid\" жолдары болуы керек'\nassert set(paid['status']) == {'paid'}, 'Басқа статустар қалып қойды'" }, hints: ["<code>orders[orders['status'] == 'paid']</code>"] },
           { type: 'python', xp: 20, prompt: 'Төленген және сомасы 3000-нан үлкен тапсырыстарды <code>big</code> айнымалысына жазыңыз. Тек <code>id</code>, <code>customer_id</code>, <code>amount</code> бағандары қалсын.', starter: LOAD + '\n', solution: LOAD + "big = orders[(orders['status'] == 'paid') & (orders['amount'] > 3000)][['id', 'customer_id', 'amount']]\nprint(big)", check: { tests: REF + "_b = _o[(_o['status'] == 'paid') & (_o['amount'] > 3000)]\nassert list(big.columns) == ['id', 'customer_id', 'amount'], 'Бағандар: id, customer_id, amount'\nassert sorted(big['id']) == sorted(_b['id']), 'Жолдар саны немесе сүзгі дұрыс емес'" }, hints: ['Екі шартты <code>&amp;</code> арқылы, әрқайсысын жақшаға алыңыз.', "Соңынан <code>[['id', 'customer_id', 'amount']]</code>"] }
@@ -180,7 +203,21 @@ orders['amount'].astype(int)         # типті өзгерту</code></pre>
 <pre><code>q1, q3 = orders['amount'].quantile([0.25, 0.75])
 iqr = q3 - q1
 outliers = orders[orders['amount'] &gt; q3 + 1.5 * iqr]</code></pre>
-<div class="tip">Бос соманы 0-мен толтыру орташа чекті жасанды төмендетеді. Әдетте оны алып тастайды немесе себебін анықтайды. Шешіміңізді әрқашан жазып қойыңыз.</div>`,
+<div class="tip">Бос соманы 0-мен толтыру орташа чекті жасанды төмендетеді. Әдетте оны алып тастайды немесе себебін анықтайды. Шешіміңізді әрқашан жазып қойыңыз.</div>
+<h3>Тазалау тәртібі</h3>
+<p>Тазалауды бір рет, бір ретпен орындаған дұрыс. Мысалы:</p>
+<pre><code>clean = (orders
+    .drop_duplicates()
+    .dropna(subset=['amount'])
+    .query("status == 'paid' and amount &lt; 20000"))
+print(len(orders), '→', len(clean))</code></pre>
+<p>Жақшадағы «тізбек» (method chaining) әр қадамды бір жолға жазады, ал соңғы <code>print</code> қанша жол алынғанын көрсетеді. Бұл санды есепте міндетті түрде көрсетіңіз.</p>
+<h3>Мәтінді тазалау</h3>
+<p>pandas-та мәтін бағанына <code>.str</code> арқылы жол әдістерін қолданамыз:</p>
+<pre><code>df['city'] = df['city'].str.strip().str.title()
+df['email'] = df['email'].str.lower()</code></pre>
+<p>Бұл әдістер бос мәндерді өткізіп жібереді, сондықтан <code>NaN</code> қате бермейді.</p>
+<div class="tip">Тазалауды бастапқы кестені өзгертпей, жаңа айнымалыға (<code>clean</code>) жазыңыз. Қате жіберсеңіз, бастапқы деректен қайта бастау оңай.</div>`,
         exercises: [
           { type: 'python', xp: 15, prompt: '<code>amount</code> бағанындағы бос мәндер санын <code>null_count</code> айнымалысына жазыңыз.', starter: LOAD + '\n', solution: LOAD + "null_count = orders['amount'].isna().sum()\nprint(null_count)", check: { tests: "assert int(null_count) == 6, 'Бос мәндер саны дұрыс емес: isna().sum() қолданыңыз'" }, hints: ["<code>orders['amount'].isna().sum()</code>"] },
           { type: 'python', xp: 25, prompt: 'Таза тапсырыстар кестесін <code>clean</code> айнымалысына жасаңыз: <code>status == \'paid\'</code>, <code>amount</code> бос емес және 20 000-нан кіші. Сосын <code>amount</code> типін <code>int</code>-ке айналдырыңыз және орташа чекті шығарыңыз.', starter: LOAD + '\n', solution: LOAD + "clean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\nclean['amount'] = clean['amount'].astype(int)\nprint(round(clean['amount'].mean()))", check: { tests: REF + "assert len(clean) == len(_clean), 'Жолдар саны дұрыс емес: үш шартты тексеріңіз'\nassert clean['amount'].isna().sum() == 0, 'Бос мәндер қалды'\nassert clean['amount'].max() < 20000, 'Шектен тыс мән қалды'\nassert str(clean['amount'].dtype).startswith('int'), 'amount типі int болуы керек: astype(int)'" }, hints: ["<code>orders['amount'].notna()</code>", 'Көшірме жасаңыз: <code>.copy()</code>, сосын <code>astype(int)</code>.'] }
@@ -299,7 +336,22 @@ a * 1.12                         # әр элементке бірден (век�
 a[a &lt; 20000]                     # маска арқылы сүзу
 np.where(a &gt; 3000, 'big', 'small')</code></pre>
 <p>Медиана шектен тыс мәнге (48000) сезімтал емес, ал орташа сезімтал. Мұны статистика модулінен білесіз.</p>
-<div class="tip">Python циклы миллион жолда баяу. NumPy/pandas операциялары C тілінде орындалады, сондықтан жүздеген есе жылдам.</div>`,
+<div class="tip">Python циклы миллион жолда баяу. NumPy/pandas операциялары C тілінде орындалады, сондықтан жүздеген есе жылдам.</div>
+<h3>Векторлау мысалы</h3>
+<p>Python тізімімен ҚҚС-ты қосу үшін цикл керек:</p>
+<pre><code>prices = [2150, 2250, 2550]
+with_vat = [p * 1.12 for p in prices]</code></pre>
+<p>NumPy-да бір әрекет жеткілікті: <code>np.array(prices) * 1.12</code>. Нәтиже бірдей, бірақ миллион элементте NumPy әлдеқайда жылдам, ал код қысқа әрі оқуға жеңіл.</p>
+<h3>Пайдалы функциялар</h3>
+<table>
+<tr><th>Функция</th><th>Не істейді</th></tr>
+<tr><td><code>np.round(a, 1)</code></td><td>дөңгелектеу</td></tr>
+<tr><td><code>np.percentile(a, 90)</code></td><td>90-перцентиль</td></tr>
+<tr><td><code>np.cumsum(a)</code></td><td>жиынтық сома</td></tr>
+<tr><td><code>np.log(a)</code></td><td>логарифм (қисайған деректі түзету үшін)</td></tr>
+<tr><td><code>a.argmax()</code></td><td>ең үлкен элементтің орны</td></tr>
+</table>
+<div class="tip">Массивтің барлық элементі бір типте болады. Сан мен мәтінді араластырсаңыз, NumPy бәрін мәтінге айналдырады да, арифметика жұмыс істемейді.</div>`,
         exercises: [
           { type: 'python', xp: 20, prompt: '<code>a</code> массивінің орташасын <code>mean_all</code>-ға, медианасын <code>med</code>-ке, ал 20 000-нан кіші элементтердің орташасын <code>mean_clean</code>-ге жазыңыз.', starter: 'import numpy as np\n\na = np.array([2150, 2250, 2550, 2050, 3100, 48000, 1900])\n', solution: 'import numpy as np\n\na = np.array([2150, 2250, 2550, 2050, 3100, 48000, 1900])\nmean_all = a.mean()\nmed = np.median(a)\nmean_clean = a[a < 20000].mean()\nprint(mean_all, med, mean_clean)', check: { tests: "assert abs(mean_all - 8857.142857) < 0.01, 'mean_all дұрыс емес'\nassert med == 2250, 'med дұрыс емес: np.median'\nassert abs(mean_clean - 2333.333333) < 0.01, 'mean_clean: a[a < 20000].mean()'" }, hints: ['<code>a[a &lt; 20000].mean()</code>'] },
           { type: 'quiz', xp: 10, prompt: '<code>np.where(a &gt; 3000, \'big\', \'small\')</code> не қайтарады?', options: ['3000-нан үлкен элементтердің индекстерін', 'Әр элемент үшін \'big\' немесе \'small\' мәтіндерінен тұратын массив', 'True/False массиві', 'Бір мәтін'], answer: 1, explain: 'Үш аргументті np.where — векторланған IF: шарт ақиқат болса бірінші мән, әйтпесе екінші.' }

@@ -53,13 +53,20 @@
     { id: 'modules-5', name: 'Бес шың', desc: '5 модульді толық аяқтадыңыз', icon: 'flag' },
     { id: 'exam-ace', name: 'Мінсіз емтихан', desc: 'Модуль емтиханынан 100%', icon: 'star' },
     { id: 'xp-2000', name: '2000 XP', desc: '2000 XP жинадыңыз', icon: 'bolt' },
-    { id: 'xp-5000', name: '5000 XP', desc: '5000 XP жинадыңыз', icon: 'bolt' }
+    { id: 'xp-5000', name: '5000 XP', desc: '5000 XP жинадыңыз', icon: 'bolt' },
+    { id: 'daily-7', name: 'Күн сайын', desc: '7 күн есебін шештіңіз', icon: 'star' }
   ];
   const CHEST_XP = 20;
-  const isTask = id => !id.startsWith('chest:');   // p.done also holds the daily chest bonus
+  const DAILY_XP = 15;
+  const isTask = id => !id.startsWith('chest:') && !id.startsWith('daily:');   // p.done also holds the chest and daily-challenge bonuses
+  // Weekly league by XP earned in the last 7 days (the same window as the weekly leaderboard).
+  const LEAGUES = [{ id: 'bronze', name: 'Қола', min: 0 }, { id: 'silver', name: 'Күміс', min: 100 }, { id: 'gold', name: 'Алтын', min: 300 }, { id: 'diamond', name: 'Алмас', min: 700 }];
+  const RUNNABLE = ['sql', 'python', 'java', 'cpp', 'sheet'];
+  // Small stable hash, so the daily pick is the same all day on every device.
+  const seed = str => { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
   const store = {
-    XP_LEVELS, BADGES, CHEST_XP, isTask,
+    XP_LEVELS, BADGES, CHEST_XP, DAILY_XP, LEAGUES, isTask,
     users() { return read('dj.users', {}); },
     current() { const u = ls.get('dj.session'); return u && this.users()[u] ? u : null; },
     // Guest: try lessons before signing up. Progress lives under '~guest' (not a valid login) and moves to the
@@ -159,10 +166,20 @@
         p.xpLog = (p.xpLog || []).concat([{ d: today(), xp: gained, id: exId }]).slice(-300);
         if (!usedHint) p.noHint = (p.noHint || 0) + 1;
       }
+      // Daily challenge: solving today's picked task (again, if it was solved before) gives a bonus once a day.
+      let daily = 0;
+      const dk = 'daily:' + today();
+      if (p.dailyPick && p.dailyPick.d === today() && p.dailyPick.id === exId && !p.done[dk]) {
+        daily = DAILY_XP;
+        p.done[dk] = { d: today(), hint: false, xp: DAILY_XP };
+        p.xp += DAILY_XP;
+        p.xpLog = (p.xpLog || []).concat([{ d: today(), xp: DAILY_XP, id: dk }]).slice(-300);
+      }
       this.touchDay(p);
       const newBadges = [];
       const give = id => { if (!p.badges[id]) { p.badges[id] = today(); newBadges.push(BADGES.find(b => b.id === id)); } };
       give('first-run');
+      if (daily && Object.keys(p.done).filter(k => k.startsWith('daily:')).length >= 7) give('daily-7');
       if (kind === 'sql') give('first-query');
       if (kind === 'python') give('first-python');
       if (kind === 'java') give('first-java');
@@ -175,7 +192,45 @@
       if (p.noHint >= 10) give('no-hints');
       if (p.xp >= 500) give('xp-500');
       this.save(p);
-      return { xp: gained, newBadges, levelUp: this.level(p.xp).level > before ? this.level(p.xp).level : null };
+      return { xp: gained, daily, newBadges, levelUp: this.level(p.xp).level > before ? this.level(p.xp).level : null };
+    },
+    // Today's challenge: a task solved at least 3 days ago, to recall it (spaced practice); else the next new task.
+    // Chosen once a day and kept in p.dailyPick so it does not change while the learner works. Returns
+    // { mod, li, ei, id, review, title, done } or null when nothing is open yet.
+    daily() {
+      const p = this.progress(), t = today();
+      const where = id => {   // 'sql-1#0' -> its module, lesson index and exercise (from the light index)
+        const [lid, n] = id.split('#');
+        for (const mid in DJ.modules) {
+          const ls = DJ.modules[mid].lessons || [], li = ls.findIndex(l => l.id === lid);
+          if (li >= 0) { const l = ls[li], e = (l.exercises || [])[+n]; return e && !l.gate ? { mod: mid, li, ei: +n, type: e.type, title: l.title } : null; }
+        }
+        return null;
+      };
+      let pick = p.dailyPick && p.dailyPick.d === t ? p.dailyPick : null;
+      if (!pick) {
+        const old = Object.keys(p.done).filter(id => isTask(id) && p.done[id] && p.done[id].d && dayDiff(p.done[id].d, t) >= 3)
+          .map(id => [id, where(id)]).filter(([, w]) => w && RUNNABLE.includes(w.type));
+        if (old.length) { const [id, w] = old[seed(t + (this.current() || '')) % old.length]; pick = { d: t, id, review: true, mod: w.mod, li: w.li, ei: w.ei }; }
+        else {
+          const nx = DJ.nextTask && DJ.nextTask(p);
+          if (!nx) return null;
+          pick = { d: t, id: nx.id, review: false, mod: nx.mod, li: nx.li, ei: nx.ei };
+        }
+        p.dailyPick = pick; write(this.key(), p);   // local only; it goes up with the next real save
+      }
+      const w = where(pick.id);
+      return w ? Object.assign({}, pick, { title: w.title, done: !!p.done['daily:' + t] }) : null;
+    },
+    weekXp(p) {
+      const from = new Date(Date.now() - 6 * 864e5), f = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+      return (p.xpLog || []).filter(e => e.d >= f && e.d <= today()).reduce((s, e) => s + (e.xp || 0), 0);
+    },
+    league(p) {
+      const xp = this.weekXp(p);
+      let i = 0; LEAGUES.forEach((L, j) => { if (xp >= L.min) i = j; });
+      const next = LEAGUES[i + 1];
+      return { league: LEAGUES[i], xp, next: next || null, need: next ? next.min - xp : 0 };
     },
     markLesson(lessonId, moduleId) {
       const p = this.progress();

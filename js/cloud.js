@@ -207,6 +207,12 @@
       if (error) throw error;
       return (data || [])[0] || null;
     },
+    // Any other function from supabase/*.sql (admin.sql, social.sql). Throws the Supabase error.
+    async call(fn, args) {
+      const { data, error } = await (await this.need()).rpc(fn, args || {});
+      if (error) throw error;
+      return data;
+    },
     // Deletes the signed-in account and its cloud row (supabase/account.sql).
     async deleteMe() { const r = await (await this.need()).rpc('delete_me'); if (!r.error) await this.signOut(); return r; },
     async signOut() { clearTimeout(this.timer); this.queued = this.failed = null; if (this.client) await this.client.auth.signOut(); this.user = null; }

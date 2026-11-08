@@ -838,6 +838,42 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 .lp-menu button[aria-checked="true"] { border-left-color: var(--b0); background: var(--surface-2); }
 .lp-menu button[aria-checked="true"] b { color: var(--ink); }
 
+/* ================= daily challenge, league, admin, portfolio, classes (js/social.js) ================= */
+.daily-card, .league-card { border-left: 6px solid var(--b2); box-shadow: var(--bevel-sm); }
+.daily-card .eyebrow svg, .league-card .eyebrow svg { width: 14px; height: 14px; vertical-align: -2px; }
+.daily-card.is-done { border-left-color: var(--b0); }
+.daily-card.is-done h3 { color: var(--ink-2); }
+.league-card { --lg: #C98A4B; border-left-color: var(--lg); }
+.league-card.lg-silver { --lg: #C7CEDC; } .league-card.lg-gold { --lg: var(--b2); } .league-card.lg-diamond { --lg: var(--b1); }
+.league-row { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+.league-gem { width: 34px; height: 34px; flex: none; background: var(--lg); transform: rotate(45deg) scale(.78); box-shadow: var(--bevel-sm); border-radius: 3px; }
+.linkbtn { margin-top: 8px; }
+.admin .tabs { max-width: 320px; }
+#adm, #teach-body { display: grid; gap: 16px; }
+.funnel { display: grid; gap: 6px; }
+.fn-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) 3fr 48px 44px; gap: 10px; align-items: center; font-size: .9rem; }
+.fn-row i { display: block; height: 14px; min-width: 2px; background: var(--b0); box-shadow: var(--bevel-sm); }
+.fn-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.adm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.mini-bars { display: flex; align-items: flex-end; gap: 2px; height: 70px; margin-top: 6px; border-bottom: 2px solid var(--line); }
+.mini-bars span { flex: 1; background: var(--b1); min-width: 2px; }
+.tbl-wrap { overflow-x: auto; margin-top: 8px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tbl th, .tbl td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl th { color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.tbl tr.warn td { background: color-mix(in srgb, var(--b5) 14%, transparent); }
+.fb-item { border-left: 4px solid var(--b4); padding: 8px 12px; margin-top: 10px; background: var(--surface-2); }
+.fb-item.seen { border-left-color: var(--b2); } .fb-item.done { border-left-color: var(--b0); opacity: .75; }
+.pf-head { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.pf-courses, .pf-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.pf-badges svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; }
+.pf-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 10px; align-items: center; }
+.tbl .pf-row { grid-template-columns: 90px auto; }
+.cls-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.cls-code { display: grid; text-align: right; }
+.cls-code b { font: 1.05rem var(--font-pixel); letter-spacing: .12em; color: var(--b2); }
+@media (max-width: 560px) { .fn-row { grid-template-columns: minmax(90px, 1fr) 2fr 40px; } .fn-row .note { display: none; } .cls-code { text-align: left; } }
+
 .static-page section { margin-top: 36px; }
 .static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .static-cta { margin: 18px 0 8px; }
@@ -851,7 +887,7 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 <article class="reading">
 <p class="eyebrow">M1.2 · 30–45 сағат · 15 сабақ</p>
 <h1>M1.2 SQL Core: SQL негіздері қазақша</h1>
-<p class="prose">Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен нәтижені көріңіз, сосын «Тексеру» басыңыз.</p>
+<p class="prose">Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен нәтижені көріңіз, сосын «Тексеру» батырмасын басыңыз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m1-2">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m1-2">Барлық тапсырмалар</a></p>
 <section id="sql-1">
 <h2>1. Дерекқор және бірінші SELECT</h2>
@@ -868,19 +904,19 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 <h3>SELECT ... FROM</h3>
 <p>Ең қарапайым сұрау кестедегі бәрін алады. <code>*</code> белгісі «барлық бағандар» дегенді білдіреді:</p>
 <pre><code>SELECT * FROM customers;</code></pre>
-<p>Тек керекті бағандарды үтір арқылы атауға болады:</p>
+<p>Тек керекті бағандарды үтірмен бөліп атауға болады:</p>
 <pre><code>SELECT name, city FROM customers;</code></pre>
-<div class="tip">SQL кілт сөздерін (SELECT, FROM) бас әріппен жазу — дәстүр ғана. <code>select</code> да жұмыс істейді. Сұрау соңындағы <code>;</code> бірнеше сұрауды бөлу үшін керек.</div>
+<div class="tip">SQL кілт сөздерін (SELECT, FROM) бас әріппен жазу — дәстүр ғана. <code>select</code> да жұмыс істейді. Сұрау соңындағы <code>;</code> сұрауларды бір-бірінен бөледі.</div>
 <h3>Сұрау қалай орындалады?</h3>
 <p>Сіз сұрауды жазасыз, дерекқор оны оқып, кестеден жолдарды алып, нәтижені жаңа кесте түрінде қайтарады. Бастапқы кесте өзгермейді: SELECT тек оқиды, сондықтан қорықпай тәжірибе жасай беріңіз.</p>
-<h3>Неге <code>*</code>-ты абайлап қолданамыз?</h3>
+<h3>Неге <code>*</code>-ны абайлап қолданамыз?</h3>
 <ul>
-<li>Нақты жұмыста кестеде ондаған, тіпті жүздеген баған болады. <code>SELECT *</code> керексіз деректі тартып, сұрауды баяулатады.</li>
+<li>Нақты жұмыста кестеде ондаған, тіпті жүздеген баған болады. <code>SELECT *</code> артық деректі алып, сұрауды баяулатады.</li>
 <li>Кейін кестеге жаңа баған қосылса, <code>*</code> нәтижесі өзгеріп кетеді де, есеп бұзылуы мүмкін.</li>
 <li>Бағандарды атап жазсаңыз, сұрауды оқыған адам не алынып жатқанын бірден түсінеді.</li>
 </ul>
-<p>Сондықтан <code>*</code>-ты кестемен алғаш танысқанда қолданыңыз, ал тұрақты сұрауларда бағандарды атаңыз.</p>
-<div class="tip">Үлкен кестеге алғаш қарағанда соңына <code>LIMIT 10</code> қосыңыз: дерекқор бүкіл кестені емес, тек 10 жолды қайтарады. Бұл туралы ORDER BY сабағында толығырақ.</div></div>
+<p>Сондықтан <code>*</code>-ны кестемен алғаш танысқанда қолданыңыз, ал тұрақты сұрауларда бағандарды атаңыз.</p>
+<div class="tip">Үлкен кестеге алғаш қарағанда соңына <code>LIMIT 10</code> қосыңыз: дерекқор бүкіл кестені емес, тек 10 жолды қайтарады. Бұл туралы ORDER BY сабағында толығырақ айтамыз.</div></div>
 <p><a href="../../#lesson/m1-2/0">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <section id="sql-2">
@@ -898,18 +934,18 @@ WHERE price > 50000;</code></pre>
 <tr><td><code>&gt;</code>, <code>&lt;</code></td><td>үлкен, кіші</td></tr>
 <tr><td><code>&gt;=</code>, <code>&lt;=</code></td><td>үлкен немесе тең, кіші немесе тең</td></tr>
 </table>
-<p>Мәтін мен күн <b>бір тырнақшада</b> жазылады: <code>WHERE city = 'Алматы'</code>. Сандар тырнақшасыз: <code>WHERE price = 9000</code>.</p>
+<p>Мәтін мен күн <b>бір тырнақшаға</b> алынады: <code>WHERE city = 'Алматы'</code>. Сандар тырнақшасыз: <code>WHERE price = 9000</code>.</p>
 <div class="tip">Күндер <code>'2024-09-01'</code> форматында сақталған. Бұл форматты мәтін ретінде салыстыру да дұрыс жұмыс істейді: <code>order_date &gt;= '2024-10-01'</code>.</div>
 <h3>WHERE қалай жұмыс істейді?</h3>
-<p>Дерекқор кестенің әр жолына шартты тексереді. Шарт <code>TRUE</code> болса, жол нәтижеге кіреді, <code>FALSE</code> немесе белгісіз болса, кірмейді. Сондықтан WHERE ешқашан жаңа жол жасамайды, тек бар жолдарды сүзеді.</p>
+<p>Дерекқор шартты кестенің әр жолы үшін тексереді. Шарт <code>TRUE</code> болса, жол нәтижеге кіреді, <code>FALSE</code> немесе белгісіз болса, кірмейді. Сондықтан WHERE ешқашан жаңа жол жасамайды, тек бар жолдарды сүзеді.</p>
 <h3>Жиі кездесетін қателер</h3>
 <ul>
-<li><b>Қос тырнақша</b>: <code>city = "Алматы"</code>. Стандарт SQL-де қос тырнақша баған атауын білдіреді, мәтін үшін бір тырнақша жазыңыз.</li>
+<li><b>Қос тырнақша</b>: <code>city = "Алматы"</code>. Стандартты SQL-де қос тырнақша баған атауын білдіреді, мәтін үшін бір тырнақша жазыңыз.</li>
 <li><b>Регистр</b>: <code>'алматы'</code> мен <code>'Алматы'</code> әртүрлі мәтін. Деректегі жазылуын алдымен <code>SELECT DISTINCT city</code> арқылы қараңыз.</li>
-<li><b>Артық бос орын</b>: <code>'Алматы '</code> соңындағы бос орынмен сәйкес келмейді. Мұндай деректі тазалау модулінде түзетеміз.</li>
-<li><b>Санды мәтін ретінде салыстыру</b>: <code>price &gt; '50000'</code> кейбір дерекқорда мәтін ретінде салыстырылып, күтпеген нәтиже береді. Санды тырнақшасыз жазыңыз.</li>
+<li><b>Артық бос орын</b>: соңында бос орны бар <code>'Алматы '</code> мәні шартқа сәйкес келмейді. Мұндай мәндерді дерек тазалау модулінде түзетеміз.</li>
+<li><b>Санды мәтін ретінде салыстыру</b>: <code>price &gt; '50000'</code> кейбір дерекқорларда мәтін ретінде салыстырылып, күтпеген нәтиже береді. Санды тырнақшасыз жазыңыз.</li>
 </ul>
-<div class="tip">Шартты тексерудің оңай жолы: алдымен WHERE-сіз сұрау жасап, бірнеше жолды көзбен қараңыз, сосын шартты қосып, жолдар саны қисынды азайғанын тексеріңіз.</div></div>
+<div class="tip">Шартты тексерудің оңай жолы: алдымен WHERE-сіз сұрау жасап, бірнеше жолды көзбен қараңыз, сосын шартты қосып, жолдар саны күткендей азайғанын тексеріңіз.</div></div>
 <p><a href="../../#lesson/m1-2/1">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <section id="sql-3">
@@ -919,24 +955,24 @@ WHERE price > 50000;</code></pre>
 <ul>
 <li><code>AND</code> — екі шарт та орындалуы керек.</li>
 <li><code>OR</code> — кемінде бір шарт орындалса жеткілікті.</li>
-<li><code>NOT</code> — шартты керісінше етеді.</li>
+<li><code>NOT</code> — шартты керісінше өзгертеді.</li>
 </ul>
 <pre><code>SELECT name, price FROM products
 WHERE category = 'Электроника' AND price &lt; 100000;</code></pre>
 <h3>BETWEEN және IN</h3>
-<p><code>BETWEEN a AND b</code> — аралық, шеттерін қоса алғанда. <code>IN (...)</code> — тізімнің біріне тең.</p>
+<p><code>BETWEEN a AND b</code> — аралық, шеттерін қоса алғанда. <code>IN (...)</code> — тізімдегі мәндердің біріне тең.</p>
 <pre><code>WHERE price BETWEEN 5000 AND 20000
 WHERE city IN ('Алматы', 'Шымкент')
 WHERE city NOT IN ('Алматы')</code></pre>
 <div class="tip">AND пен OR араласса, жақша қойыңыз: <code>WHERE (city = 'Алматы' OR city = 'Астана') AND status = 'delivered'</code>. Жақшасыз AND бірінші орындалады.</div>
 <h3>Шарттардың басымдығы</h3>
-<p>SQL алдымен <code>NOT</code>, сосын <code>AND</code>, соңында <code>OR</code> орындайды. Мына шарт:</p>
+<p>SQL алдымен <code>NOT</code>, сосын <code>AND</code>, соңында <code>OR</code> операторын орындайды. Мына шарт:</p>
 <pre><code>WHERE city = 'Алматы' OR city = 'Астана' AND status = 'delivered'</code></pre>
-<p>шын мәнінде <code>city = 'Алматы' OR (city = 'Астана' AND status = 'delivered')</code> деп оқылады: Алматыдан барлық статустағы жолдар келеді. Жақша қою қатені болдырмайды және сұрауды оқуды жеңілдетеді.</p>
+<p>шын мәнінде <code>city = 'Алматы' OR (city = 'Астана' AND status = 'delivered')</code> деп оқылады: Алматы бойынша кез келген статустағы жолдар шығады. Жақша қою қатені болдырмайды және сұрауды оқуды жеңілдетеді.</p>
 <h3>BETWEEN және күндер</h3>
-<p><code>BETWEEN</code> екі шетін де қамтиды. Күн мен уақыт бірге сақталса (<code>'2024-09-30 14:00'</code>), <code>BETWEEN '2024-09-01' AND '2024-09-30'</code> 30 қыркүйектің түстен кейінгі жазбаларын өткізіп жібереді, себебі ол мәтін ретінде <code>'2024-09-30'</code>-дан үлкен. Мұндай жағдайда келесі айдың басымен шектеген сенімдірек:</p>
+<p><code>BETWEEN</code> екі шетін де қамтиды. Күн мен уақыт бірге сақталса (<code>'2024-09-30 14:00'</code>), <code>BETWEEN '2024-09-01' AND '2024-09-30'</code> 30 қыркүйектегі түстен кейінгі жазбаларды өткізіп жібереді, себебі ол мәтін ретінде <code>'2024-09-30'</code>-дан үлкен. Мұндай жағдайда келесі айдың басымен шектеу сенімдірек:</p>
 <pre><code>WHERE order_date &gt;= '2024-09-01' AND order_date &lt; '2024-10-01'</code></pre>
-<div class="tip"><code>NOT IN</code> тізімінде NULL болса, шарт ешбір жолға орындалмайды. Тізімді қолмен жазғанда NULL қоспаңыз, ал ішкі сұраудан алсаңыз, <code>WHERE ... IS NOT NULL</code> қосыңыз.</div></div>
+<div class="tip"><code>NOT IN</code> тізімінде NULL болса, шарт ешбір жол үшін орындалмайды. Тізімді қолмен жазғанда NULL қоспаңыз, ал ішкі сұраудан алсаңыз, <code>WHERE ... IS NOT NULL</code> қосыңыз.</div></div>
 <p><a href="../../#lesson/m1-2/2">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <section id="sql-4">
@@ -955,14 +991,14 @@ WHERE city IS NOT NULL</code></pre>
 <h3>LIKE туралы қосымша</h3>
 <ul>
 <li>SQLite-та <code>LIKE</code> латын әріптері үшін регистрге сезімтал емес: <code>'a%'</code> «Apple»-ді де табады. Бірақ кириллицада бұл ереже жұмыс істемейді, «кітап» пен «Кітап» әртүрлі.</li>
-<li>Регистрге тәуелсіз іздеу үшін екі жағын бірдей түрге келтіріңіз: <code>WHERE LOWER(name) LIKE '%phone%'</code>.</li>
-<li>Басында <code>%</code> тұрған үлгі (<code>'%фон'</code>) индексті қолдана алмайды, үлкен кестеде баяу жұмыс істейді.</li>
+<li>Регистрге тәуелсіз іздеу үшін екі жағын да бірдей регистрге келтіріңіз: <code>WHERE LOWER(name) LIKE '%phone%'</code>.</li>
+<li>Басында <code>%</code> тұрған үлгі (<code>'%фон'</code>) индексті қолдана алмайды, сондықтан үлкен кестеде баяу жұмыс істейді.</li>
 </ul>
 <h3>NULL арифметикада және салыстыруда</h3>
 <p>NULL-мен кез келген амал NULL береді: <code>5 + NULL</code> = NULL, <code>NULL = NULL</code> да TRUE емес, NULL. Сондықтан <code>WHERE city &lt;&gt; 'Алматы'</code> қаласы бос клиенттерді де көрсетпейді: олар үшін шарт белгісіз.</p>
 <p>Бос мәнді басқа мәнмен алмастыру үшін <code>COALESCE</code> бар:</p>
 <pre><code>SELECT name, COALESCE(city, 'белгісіз') AS city FROM customers;</code></pre>
-<div class="tip">Бағандағы бос мәндерді санаудың тез тәсілі: <code>SELECT COUNT(*) - COUNT(city) FROM customers</code>. <code>COUNT(city)</code> NULL-ды санамайды, айырма бос жолдар саны болады.</div></div>
+<div class="tip">Бағандағы бос мәндерді санаудың тез тәсілі: <code>SELECT COUNT(*) - COUNT(city) FROM customers</code>. <code>COUNT(city)</code> NULL-ды санамайды, ал айырма бос мәндер санын береді.</div></div>
 <p><a href="../../#lesson/m1-2/3">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <section id="sql-5">
@@ -977,15 +1013,15 @@ ORDER BY price DESC;</code></pre>
 <h3>Сұрау бөліктерінің реті</h3>
 <pre><code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ...</code></pre>
 <h3>Бірнеше баған бойынша сұрыптау</h3>
-<p>ORDER BY-ға бірнеше бағанды үтірмен беруге болады. Бірінші баған тең болғанда екіншісі қаралады:</p>
+<p>ORDER BY-ға бірнеше бағанды үтірмен беруге болады. Бірінші бағандағы мәндер тең болса, екінші баған бойынша сұрыпталады:</p>
 <pre><code>SELECT name, category, price FROM products
 ORDER BY category ASC, price DESC;</code></pre>
-<p>Нәтижеде санаттар әліпби бойынша, ал әр санаттың ішінде тауарлар қымбаттан арзанға қарай тұрады.</p>
+<p>Нәтижеде санаттар әліпби ретімен, ал әр санаттың ішінде тауарлар қымбаттан арзанға қарай тұрады.</p>
 <h3>Жиі кездесетін қателер</h3>
 <ul>
-<li><b>ORDER BY-сыз LIMIT</b>: дерекқор жолдарды кез келген ретпен қайтара алады, сондықтан «алғашқы 5» әр жолы әртүрлі болуы мүмкін. Топ-N алғанда әрқашан ORDER BY жазыңыз.</li>
-<li><b>Тең мәндер</b>: 3-ші және 4-ші тауардың бағасы бірдей болса, LIMIT 3 біреуін кездейсоқ қалдырады. Тұрақты нәтиже үшін екінші сұрыптау бағанын (мысалы, <code>id</code>) қосыңыз.</li>
-<li><b>NULL реті</b>: SQLite-та NULL өсу ретінде бірінші, кему ретінде соңында тұрады. Басқа дерекқорларда керісінше болуы мүмкін.</li>
+<li><b>ORDER BY-сыз LIMIT</b>: дерекқор жолдарды кез келген ретпен қайтара алады, сондықтан «алғашқы 5» әр орындалған сайын әртүрлі болуы мүмкін. Топ-N алғанда әрқашан ORDER BY жазыңыз.</li>
+<li><b>Тең мәндер</b>: 3-ші және 4-ші тауарлардың бағасы бірдей болса, LIMIT 3 біреуін кездейсоқ қалдырады. Тұрақты нәтиже үшін екінші сұрыптау бағанын (мысалы, <code>id</code>) қосыңыз.</li>
+<li><b>NULL реті</b>: SQLite-та NULL өсу ретімен сұрыптағанда басында, кему ретімен сұрыптағанда соңында тұрады. Басқа дерекқорларда керісінше болуы мүмкін.</li>
 </ul>
 <div class="tip"><code>DISTINCT</code> бүкіл жолға қолданылады: <code>SELECT DISTINCT city, signup_date</code> қала мен күннің бірегей жұптарын береді, тек қалаларды емес.</div></div>
 <p><a href="../../#lesson/m1-2/4">Сабақты интерактивті түрде ашу →</a></p>
@@ -1001,7 +1037,7 @@ FROM products;</code></pre>
 <p>Кестеге де қысқа атау беруге болады. Бұл JOIN сабағында өте пайдалы болады:</p>
 <pre><code>SELECT p.name FROM products AS p;
 SELECT p.name FROM products p;   -- AS міндетті емес</code></pre>
-<div class="tip">SQLite-та бүтін санды бүтін санға бөлсеңіз, нәтиже де бүтін болады: <code>7 / 2 = 3</code>. Дәл нәтиже үшін біреуін бөлшекке айналдырыңыз: <code>7 / 2.0 = 3.5</code>.</div>
+<div class="tip">SQLite-та бүтін санды бүтін санға бөлсеңіз, нәтиже де бүтін болады: <code>7 / 2 = 3</code>. Дәл нәтиже үшін біреуін бөлшек санға айналдырыңыз: <code>7 / 2.0 = 3.5</code>.</div>
 <h3>Есептелген бағандардың мысалдары</h3>
 <pre><code>SELECT name,
        price,
@@ -1021,13 +1057,13 @@ ORDER BY price_with_vat DESC;   -- дұрыс</code></pre>
 <section id="sql-7">
 <h2>7. Агрегат функциялар</h2>
 <div class="prose">
-<p>Дүкен кассасын елестетіңіз. Кассир чектегі әр тауарды жеке айтпайды, соңында бір сан айтады: «Барлығы 41 700 ₸». <b>Агрегат функциялар</b> да солай жасайды: көп жолды алып, бір санға жинақтайды. Менеджердің «қанша клиент бар?», «орташа баға қандай?» деген сұрақтарының бәрі осылай шешіледі. Excel-дегі <code>COUNT</code>, <code>SUM</code>, <code>AVERAGE</code> формулаларымен бірдей.</p>
+<p>Дүкен кассасын елестетіңіз. Кассир чектегі әр тауарды жеке айтпайды, соңында бір сан айтады: «Барлығы 41 700 ₸». <b>Агрегат функциялар</b> да солай жасайды: көп жолды алып, бір санға жинақтайды. Менеджердің «қанша клиент бар?», «орташа баға қандай?» деген сұрақтарының бәрі осылай шешіледі. Олар Excel-дегі <code>COUNT</code>, <code>SUM</code>, <code>AVERAGE</code> формулалары сияқты жұмыс істейді.</p>
 <table>
 <tr><th>Функция</th><th>Не қайтарады</th></tr>
 <tr><td><code>COUNT(*)</code></td><td>жолдар саны</td></tr>
 <tr><td><code>COUNT(col)</code></td><td>NULL емес мәндер саны</td></tr>
 <tr><td><code>SUM(col)</code></td><td>қосынды</td></tr>
-<tr><td><code>AVG(col)</code></td><td>орташа</td></tr>
+<tr><td><code>AVG(col)</code></td><td>орташа мән</td></tr>
 <tr><td><code>MIN(col)</code>, <code>MAX(col)</code></td><td>ең кіші, ең үлкен</td></tr>
 </table>
 <h3>Мысал: бір сұрауда бірнеше функция</h3>
@@ -1063,8 +1099,8 @@ WHERE category = 'Электроника';</code></pre>
 </table>
 <h3>Жиі қателер</h3>
 <ul>
-<li><b>COUNT пен SUM-ды шатастыру.</b> <code>COUNT(quantity)</code> — қанша жол бар, ал <code>SUM(quantity)</code> — барлық дананың қосындысы. Бір жолда 5 блокнот болса, COUNT оны 1 деп, SUM 5 деп санайды.</li>
-<li><b>Агрегат пен қарапайым бағанды араластыру:</b> <code>SELECT name, MAX(price)</code>. Мұндай сұрауда <code>name</code> қай жолдан алынатыны түсініксіз. Ең қымбат тауардың атын білу үшін <code>ORDER BY price DESC LIMIT 1</code> жазыңыз, ал «әр топ үшін» есептеу — келесі сабақтағы GROUP BY.</li>
+<li><b>COUNT пен SUM-ды шатастыру.</b> <code>COUNT(quantity)</code> — қанша жол бар, ал <code>SUM(quantity)</code> — барлық тауар данасының қосындысы. Бір жолда 5 блокнот болса, COUNT оны 1 деп, SUM 5 деп санайды.</li>
+<li><b>Агрегат пен қарапайым бағанды араластыру:</b> <code>SELECT name, MAX(price)</code>. Мұндай сұрауда <code>name</code> қай жолдан алынатыны түсініксіз. Ең қымбат тауардың атауын білу үшін <code>ORDER BY price DESC LIMIT 1</code> жазыңыз, ал «әр топ үшін» есептеуді келесі сабақта GROUP BY арқылы үйренеміз.</li>
 <li><b>NULL-ды ұмыту.</b> <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> NULL мәндерді елемейді. Сондықтан <code>AVG</code> бос мәндерді нөл деп санамайды.</li>
 </ul></div>
 <p><a href="../../#lesson/m1-2/6">Сабақты интерактивті түрде ашу →</a></p>
@@ -1072,7 +1108,7 @@ WHERE category = 'Электроника';</code></pre>
 <section id="sql-8">
 <h2>8. GROUP BY және HAVING</h2>
 <div class="prose">
-<p>Өткен сабақта агрегат бүкіл кестеге бір сан берді. Ал «<b>әр</b> қалада қанша клиент?» деген сұраққа бір сан жетпейді. Үстелдегі чектерді қала бойынша үйінділерге бөліп, әр үйіндіні бөлек санайтыныңызды елестетіңіз. <code>GROUP BY</code> дәл осылай жасайды: жолдарды топтарға бөліп, әр топқа агрегат есептейді. Excel-дегі pivot table-мен бірдей.</p>
+<p>Өткен сабақта агрегат бүкіл кестеге бір сан берді. Ал «<b>әр</b> қалада қанша клиент?» деген сұраққа бір сан жетпейді. Үстелдегі чектерді қала бойынша үйінділерге бөліп, әр үйіндіні бөлек санайтыныңызды елестетіңіз. <code>GROUP BY</code> дәл осылай жасайды: жолдарды топтарға бөліп, әр топқа агрегат есептейді. Бұл Excel-дегі pivot table сияқты.</p>
 <h3>Мысал: әр қаладағы клиенттер</h3>
 <table>
 <tr><th>id</th><th>name</th><th>city</th></tr>
@@ -1091,7 +1127,7 @@ GROUP BY city;</code></pre>
 <tr><td>Алматы</td><td>3</td></tr>
 <tr><td>Астана</td><td>2</td></tr>
 </table>
-<p>SELECT-ке бірнеше агрегат қатар жазуға болады, мысалы <code>COUNT(*)</code> пен <code>AVG(price)</code> бірге — әр топ үшін екеуі де есептеледі.</p>
+<p>SELECT-ке бірнеше агрегатты қатар жазуға болады, мысалы <code>COUNT(*)</code> пен <code>AVG(price)</code> бірге — әр топ үшін екеуі де есептеледі.</p>
 <p>Ереже: SELECT-тегі агрегат емес әр баған GROUP BY-да да болуы керек.</p>
 <h3>HAVING: топтарды сүзу</h3>
 <p><code>WHERE</code> топтауға дейін <b>жолдарды</b> сүзеді. <code>HAVING</code> топтаудан кейін <b>топтарды</b> сүзеді. Сондықтан агрегат бойынша шарт (<code>COUNT(*)</code>, <code>AVG(price)</code>) тек HAVING-те жазылады. Жоғарыдағы кестеден кемінде 3 клиенті бар қалаларды ғана қалдырайық:</p>
@@ -1103,7 +1139,7 @@ HAVING COUNT(*) &gt;= 3;</code></pre>
 <tr><th>city</th><th>customers</th></tr>
 <tr><td>Алматы</td><td>3</td></tr>
 </table>
-<p>Астана тобында 2 жол, шарт орындалмады, сондықтан ол алынып тасталды. Тағы бір мысал — орташа бағасы 10 000-нан жоғары санаттар:</p>
+<p>Астана тобында 2 жол бар, шарт орындалмады, сондықтан ол нәтижеге кірмеді. Тағы бір мысал — орташа бағасы 10 000-нан жоғары санаттар:</p>
 <pre><code>SELECT category, AVG(price) AS avg_price
 FROM products
 GROUP BY category
@@ -1111,9 +1147,9 @@ HAVING AVG(price) &gt; 10000;</code></pre>
 <p>Толық реті: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
 <h3>Жиі қателер</h3>
 <ul>
-<li><b>Агрегатты WHERE-ге жазу:</b> <code>WHERE COUNT(*) &gt; 1</code> қате береді. WHERE кезінде топтар әлі жоқ — HAVING қолданыңыз.</li>
+<li><b>Агрегатты WHERE-ге жазу:</b> <code>WHERE COUNT(*) &gt; 1</code> қате береді. WHERE орындалғанда топтар әлі жоқ — HAVING қолданыңыз.</li>
 <li><b>GROUP BY-ды ұмыту.</b> <code>SELECT city, COUNT(*) FROM customers</code> әр қалаға емес, бүкіл кестеге бір жол қайтарады.</li>
-<li><b>NULL тобын байқамау.</b> <code>city</code> бос жолдар бөлек <code>NULL</code> тобына жиналады. Ол керек болмаса, <code>WHERE city IS NOT NULL</code> қосыңыз.</li>
+<li><b>NULL тобын байқамау.</b> <code>city</code> бағаны бос жолдар бөлек <code>NULL</code> тобына жиналады. Ол керек болмаса, <code>WHERE city IS NOT NULL</code> қосыңыз.</li>
 </ul></div>
 <p><a href="../../#lesson/m1-2/7">Сабақты интерактивті түрде ашу →</a></p>
 </section>

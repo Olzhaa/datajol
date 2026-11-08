@@ -45,6 +45,7 @@
     const exs = lesson.exercises || [];
     let ei = exs.findIndex((_, i) => !p.done[exId(lesson, i)]);
     if (ei < 0) ei = 0;
+    if (ui.route.ei != null && exs[ui.route.ei]) ei = ui.route.ei;
     L = { mod, lesson, li: ui.route.li, ei, hints: {}, fails: {} };
     if (S.setPref && (S.progress().prefs || {}).last !== mod.id) S.setPref('last', mod.id);
     const prev = ui.route.li > 0 ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${ui.route.li - 1}">← Алдыңғы</button>` : `<button class="btn ghost" data-go="module" data-mod="${mod.id}">← Модуль</button>`;
@@ -466,6 +467,7 @@
     const r = S.complete(id, ex.xp || 10, usedHint, kind);
     track('exercise_pass', { ex: id, type: kind, hint: usedHint, first: !!r.xp, guest: S.isGuest() });
     celebrate(r, $('#check') || $('#q-check'));
+    if (r.daily) toast(`<b>Күн есебі шешілді!</b> +${r.daily} XP`, 'star', 'badge');
     if (r.xp) bumpCombo(!usedHint && !L.fails[id], $('#check') || $('#q-check'));
     topbar();
     const exs = L.lesson.exercises;

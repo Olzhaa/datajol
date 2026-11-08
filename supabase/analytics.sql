@@ -54,3 +54,29 @@ grant insert (sid, message, source, line, page, ua, version) on public.client_er
 --          count(distinct sid) filter (where name = 'signup') as signed_up
 --     from public.events where created_at > now() - interval '30 days';
 --   select message, source, line, count(*) from public.client_errors group by 1, 2, 3 order by 4 desc limit 20;
+
+-- Retention and drop-off views (owner only: no grants to anon/authenticated).
+-- A learner here is a browser tab id (sid) or, once signed in, the user id; first_day is their first event.
+create or replace view public.retention_daily with (security_invoker = true) as
+with who as (
+  select coalesce(user_id::text, sid) as uid, created_at::date as day from public.events
+), first as (
+  select uid, min(day) as first_day from who group by uid
+)
+select f.first_day as cohort,
+       count(distinct f.uid) as learners,
+       count(distinct w.uid) filter (where w.day = f.first_day + 1) as d1,
+       count(distinct w.uid) filter (where w.day between f.first_day + 7 and f.first_day + 13) as d7
+from first f left join who w on w.uid = f.uid
+group by f.first_day order by f.first_day desc;
+
+-- Where learners stop: for each lesson, how many opened it and how many passed at least one of its tasks.
+create or replace view public.lesson_funnel with (security_invoker = true) as
+select props->>'mod' as module, (props->>'li')::int as lesson,
+       count(distinct coalesce(user_id::text, sid)) filter (where name = 'view') as opened
+from public.events
+where name = 'view' and props->>'v' = 'lesson'
+group by 1, 2 order by 1, 2;
+
+revoke all on public.retention_daily, public.lesson_funnel from anon, authenticated;
+-- Use: select * from public.retention_daily limit 30;  select * from public.lesson_funnel;

@@ -105,7 +105,7 @@ for (const p of DJ.phases) {
 <div class="prose">${l.body || ''}</div>
 <p><a href="../../#lesson/${m.id}/${i}">Сабақты интерактивті түрде ашу →</a></p>
 </section>`).join('\n');
-    const cta = `<a class="btn" href="../../#module/${m.id}">Тапсырмаларды орындау</a>`;
+    const cta = `<a class="btn" href="../../#try/${m.id}">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/${m.id}">Барлық тапсырмалар</a>`;
     const page = `<!doctype html>
 <html lang="kk">
 <head>
@@ -123,7 +123,7 @@ for (const p of DJ.phases) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
 <script type="application/ld+json">${json(ld)}</script>
 <style>
 ${css}

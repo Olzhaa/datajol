@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.7 DA Capstone & Interview","description":"Қорытынды жоба: «Бірінші кофе» желісінің 6 айлық деректерін бастан-аяқ талдайсыз. Бизнес сұрақ → profiling → тазалау → метрикалар → сегменттер → retention →…","url":"https://olzhaa.github.io/datajol/m/m3-7/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT40H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.7 DA Capstone & Interview","item":"https://olzhaa.github.io/datajol/m/m3-7/"}]}]</script>
 <style>
 /* Block theme: a dark playfield grid, bevelled square blocks in four piece colours, pixel type for the HUD. */
@@ -33,7 +33,7 @@
   --ph0: #47D1E8; --ph1: #C8F04A; --ph2: #FFC83D; --ph3: #FF8A4C; --ph4: #FF6B81; --ph5: #B79CFF; --ph6: #6BE594; --ph7: #8FE3F2;
   --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;   /* system mono: one web font family fewer */
   --radius: 10px;
   --t: 150ms cubic-bezier(0.23, 1, 0.32, 1);
   color-scheme: dark;
@@ -815,6 +815,18 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 :root[data-theme="light"] .path .hrs { color: #3F6B00; }
 @media (max-width: 560px) { .worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .world { padding: 12px; } .world .w-t { font-size: .92rem; } }
 
+/* Interface in ru/en, lesson text only in Kazakh. */
+.kk-only { display: inline-block; margin: 6px 0 12px; padding: 6px 10px; font-size: .85rem; color: var(--ink-2); background: var(--surface-2); border-left: 4px solid var(--b2); border-radius: 2px; }
+
+/* Day one goal on the dashboard. */
+.first-goal { margin-top: 16px; padding: 20px; background: var(--surface); border: 2px solid var(--line); border-radius: 2px; box-shadow: inset 0 4px 0 var(--b2); }
+.fg-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fg-h h2 { margin: 0; font-size: 1.25rem; }
+.fg-tag { padding: 4px 8px; background: var(--b2); color: var(--edge); font: .6rem var(--font-pixel); box-shadow: var(--bevel-sm); }
+.first-goal ol { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 10px; }
+.first-goal li { display: flex; align-items: center; gap: 12px; }
+.fg-n { width: 28px; height: 28px; flex: none; display: grid; place-items: center; background: var(--surface-3); border: 2px solid var(--edge); font: .65rem var(--font-pixel); }
+
 .static-page section { margin-top: 36px; }
 .static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .static-cta { margin: 18px 0 8px; }
@@ -829,7 +841,7 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 <p class="eyebrow">M3.7 · 40–60 сағат · 10 сабақ</p>
 <h1>M3.7 DA Capstone &amp; Interview: Дата аналитик портфолио жобасы</h1>
 <p class="prose">Қорытынды жоба: «Бірінші кофе» желісінің 6 айлық деректерін бастан-аяқ талдайсыз. Бизнес сұрақ → profiling → тазалау → метрикалар → сегменттер → retention → ұсыныс → memo. Соңында сұхбатқа дайындық тапсырмалары бар. Бұл жобаны портфолиоңызға қосуға болады.</p>
-<p class="static-cta"><a class="btn" href="../../#module/m3-7">Тапсырмаларды орындау</a></p>
+<p class="static-cta"><a class="btn" href="../../#try/m3-7">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-7">Барлық тапсырмалар</a></p>
 <section id="cap-1">
 <h2>1. Бриф: бизнес сұрақ және жоспар</h2>
 <div class="prose">
@@ -956,7 +968,7 @@ SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
 <p>Data Analyst жолының соңғы тексерісі. Дерекқор: <code>cafe</code>. Тазалау ережесі: <code>status = 'paid' AND amount IS NOT NULL AND amount < 20000</code>.</p></div>
 <p><a href="../../#lesson/m3-7/9">Сабақты интерактивті түрде ашу →</a></p>
 </section>
-<p class="static-cta"><a class="btn" href="../../#module/m3-7">Тапсырмаларды орындау</a></p>
+<p class="static-cta"><a class="btn" href="../../#try/m3-7">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-7">Барлық тапсырмалар</a></p>
 </article>
 <p class="muted" style="margin:40px 0"><a href="../../">← Tolqyn басты беті</a></p>
 </main>

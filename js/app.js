@@ -189,6 +189,7 @@
     if (DJ.cloud && DJ.cloud.enabled && ['dash', 'map', 'module', 'board', 'profile', 'diag', 'catalog', 'course'].includes(route.view)) $('#app').insertAdjacentHTML('beforeend', fbFoot('Сайт туралы ойыңыз бар ма, әлде қате таптыңыз ба?'));
     if (moveFocus) { const h = $('#app h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
   }
+  const kkOnly = mod => DJ.i18n && !DJ.i18n.hasText(mod) ? '<p class="kk-only">Бұл курстың сабақтары әзірге тек қазақ тілінде. Аудармасы дайындалып жатыр.</p>' : '';
   const fbFoot = q => `<aside class="fb-foot"><span class="fb-ico" aria-hidden="true">?</span><span class="fb-q">${q}</span><button type="button" class="btn ghost sm" data-feedback>Жазу</button></aside>`;
   function afterAuth() { const r = pendingRoute; pendingRoute = null; if (r) go(r.view, r); else go('dash'); }
 
@@ -196,7 +197,7 @@
   function topbar() {
     const el = $('#topbar');
     const u = S.profile();
-    const logo = `<button class="logo" data-go="dash">${LOGO}<span class="wordmark">TOLQYN</span></button>`;
+    const logo = `<button class="logo" data-go="dash" aria-label="Tolqyn">${LOGO}<span class="wordmark">TOLQYN</span></button>`;
     const lp = DJ.i18n ? DJ.i18n.picker() : '';
     if (!u) { el.innerHTML = `${logo}<div class="stats">${lp}</div>`; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
@@ -420,6 +421,13 @@
       <p class="note" style="margin:8px 0 0">${st ? `Қатарынан ${st} күн. Ең ұзағы: ${p.best || st}. ${set.has(days[6].key) ? 'Бүгінгі от жанды, ертең де келіңіз!' : 'Бүгін бір тапсырма орындасаңыз, от сөнбейді.'}` : 'Бүгін бір тапсырма орындап, отты жағыңыз.'}</p>
     </section>`;
   }
+  // Day one: one clear goal instead of empty quest bars and an unlit streak.
+  function firstGoal(nx) {
+    const steps = ['Қысқа теорияны оқыңыз', 'Редакторға бірінші кодыңызды жазыңыз', '«Тексеру» басып, алғашқы XP алыңыз'];
+    return `<section class="first-goal"><div class="fg-h"><span class="fg-tag">5 мин</span><h2>Бүгінгі мақсат: алғашқы XP</h2></div>
+      <ol>${steps.map((t, i) => `<li><span class="fg-n">${i + 1}</span>${t}</li>`).join('')}</ol>
+      <button class="btn" data-go="lesson" data-mod="${nx.mod.id}" data-li="${nx.li}">Бастау ${ICON.play}</button></section>`;
+  }
   function viewDash() {
     const u = S.profile(), p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
     const nx = nextLesson(p), career = S.careerLevel(p);
@@ -451,7 +459,7 @@
     const tile = ({ c, gi, cs }) => courseTile(c, gi, cs);
     const finished = open.filter(x => x.cs.done === x.cs.total).length;
     $('#app').innerHTML = `${hero}
-      <div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>
+      ${p.xp || !nx ? `<div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div>` : firstGoal(nx)}
       <div class="section-title"><h2>${mine.length ? 'Менің курстарым' : 'Неден бастаймыз?'}</h2><button class="btn ghost" data-go="catalog">Барлық курстар (${open.length}) →</button></div>
       <section class="world-group"><div class="worlds">${pick.map(tile).join('')}</div></section>
       ${finished ? `<p class="muted">Аяқталған курстар: ${finished}. Барлығы «Курстар» бетінде.</p>` : ''}`;
@@ -462,13 +470,15 @@
     const mod = DJ.findModule(route.mod);
     if (!mod || !mod.lessons) return go('dash');
     DJ.loadModule(mod.id).catch(() => {}); loadEditor();   // fetch the lessons while the learner reads the module page
+    // A module with Python tasks starts the Python runtime now: it is the slowest thing to load.
+    if (DJ.run.py.status === 'idle' && mod.lessons.some(l => (l.exercises || []).some(e => e.type === 'python'))) DJ.run.py.start().catch(() => { DJ.run.py.worker = null; DJ.run.py.status = 'idle'; });
     const p = S.progress(), s = S.moduleState(mod, p);
     $('#app').innerHTML = `
       <div class="crumbs">${(() => { const c = courseOf(mod.id); return c ? `<button data-go="catalog">Курстар</button><span>/</span>${c.mods.length > 1 ? `<button data-go="course" data-course="${c.id}">${esc(c.title)}</button>` : `<span>${esc(c.title)}</span>`}` : `<button data-go="dash">Оқу</button><span>/</span><span>Phase ${mod.phase.n} · ${esc(mod.phase.kz)}</span>`; })()}</div>
       <div class="mod-hero" style="--ph: var(--ph${mod.phase.n})"><span class="mod-ico">${esc(mod.code.replace(/^M/, ''))}</span><div style="min-width:0">
       <div class="eyebrow">${esc(mod.code)} · ${esc(mod.hours)} сағ${mod.preview ? ' · алдын ала көрініс' : ''}</div>
       <h1 style="margin:6px 0 10px">${esc(mod.title)}</h1></div></div>
-      <p class="muted" style="max-width:70ch">${mod.intro || esc(mod.desc)}</p>
+      ${kkOnly(mod)}<p class="muted" style="max-width:70ch">${mod.intro || esc(mod.desc)}</p>
       <div style="max-width:420px;margin-top:14px;--ph: var(--ph${mod.phase.n})"><div class="bar"><i style="width:${s.pct}%"></i></div><p class="note">${s.done} / ${s.total} сабақ аяқталды</p></div>
       <div class="lessons">${mod.lessons.map((l, i) => {
         const done = !!p.lessons[l.id];
@@ -491,7 +501,7 @@
       const want = route;
       $('#app').innerHTML = '<p class="muted" style="padding:40px 0" role="status">Сабақ жүктелуде…</p>';
       Promise.all([DJ.loadModule(route.mod), loadEditor()]).then(() => { if (route === want) render(); })
-        .catch(() => { if (route === want) $('#app').innerHTML = '<p class="muted" style="padding:40px 0" role="alert">Сабақ жүктелмеді. Интернетті тексеріп, бетті жаңартыңыз.</p>'; });
+        .catch(() => { if (route === want) { $('#app').innerHTML = '<div style="padding:40px 0" role="alert"><p class="muted">Сабақ жүктелмеді. Интернетті тексеріп, қайта көріңіз.</p><button class="btn" id="retry">Қайта көру</button></div>'; $('#retry').onclick = () => render(); } });
       return;
     }
     const mod = DJ.findModule(route.mod);
@@ -509,7 +519,7 @@
       <div class="lesson" id="lesson">
         <article class="reading">
           <div class="eyebrow">${lesson.gate ? 'Модуль емтиханы' : `Сабақ ${route.li + 1} / ${mod.lessons.length}`} · ${lesson.minutes || 10} мин</div>
-          <h1>${esc(lesson.title)}</h1>
+          <h1>${esc(lesson.title)}</h1>${kkOnly(mod)}
           <div class="prose">${lesson.body || ''}</div>
           <section class="task" id="task"></section>
           <div class="lesson-nav">${prev}<span id="next-slot"></span></div>
@@ -1217,7 +1227,7 @@
         <form id="rename" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Көрсетілетін аты (рейтинг, сертификат)<input type="text" name="nm" maxlength="40" value="${esc(u.name)}"></label><button class="btn ghost" type="submit">Сақтау</button></form>
         ${DJ.cloud && DJ.cloud.user ? `<form id="set-pw" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Жаңа пароль (email мен парольмен кіру үшін)<input type="password" name="npw" autocomplete="new-password" minlength="8"></label><button class="btn ghost" type="submit">Парольді сақтау</button></form><div class="err" id="pw-err" role="alert"></div>` : ''}
         ${DJ.cloud && DJ.cloud.user ? `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="hide-lb" ${(p.prefs || {}).hideLb ? 'checked' : ''}> Мені рейтингте көрсетпеу</label>` : ''}
-        <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button></div>
+        <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button><button class="btn ghost" id="del-acc" style="color:var(--bad)">Аккаунтты жою</button></div>
         <div id="confirm"></div>
       </div>
     </div>`;
@@ -1234,6 +1244,18 @@
     if (DJ.cloud && DJ.cloud.recovery && sp) { DJ.cloud.recovery = false; sp.npw.focus(); toast('Жаңа пароль қойыңыз', 'bolt'); }
     const hl = $('#hide-lb'); if (hl) hl.onchange = () => S.setPref('hideLb', hl.checked);
     $('#logout').onclick = async () => { if (DJ.cloud && DJ.cloud.user) await DJ.cloud.signOut(); S.logout(); go('auth'); };
+    $('#del-acc').onclick = () => {
+      const cloud = DJ.cloud && DJ.cloud.user;
+      $('#confirm').innerHTML = `<div class="verdict bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${cloud ? 'Аккаунт пен бұлттағы бүкіл прогресс біржола өшеді.' : 'Аккаунт пен осы браузердегі прогресс біржола өшеді.'} Қайтару мүмкін емес.<button class="btn" id="yes-del" style="background:var(--bad)">Иә, жою</button><button class="btn ghost" id="no-del">Жоқ</button></div>`;
+      $('#no-del').onclick = () => { $('#confirm').innerHTML = ''; };
+      $('#yes-del').onclick = async () => {
+        if (cloud) {
+          let r; try { r = await DJ.cloud.deleteMe(); } catch (er) { r = { error: er }; }
+          if (r && r.error) { $('#confirm').innerHTML = `<div class="verdict bad">Аккаунт өшпеді: ${esc(DJ.cloud.explain(r.error.message))}</div>`; return; }
+        }
+        S.removeAccount(); toast('Аккаунт өшірілді', 'check'); go('auth');
+      };
+    };
     $('#reset-p').onclick = () => {
       $('#confirm').innerHTML = `<div class="verdict bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">Барлық XP, сабақтар мен белгілер өшеді. Сенімдісіз бе?<button class="btn" id="yes-reset" style="background:var(--bad)">Иә, нөлдеу</button><button class="btn ghost" id="no-reset">Жоқ</button></div>`;
       $('#no-reset').onclick = () => { $('#confirm').innerHTML = ''; };
@@ -1250,6 +1272,16 @@
   }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   // ---------- boot ----------
+  // Offline cache (sw.js, written by build.py). Only the GitHub Pages build has DJ_VERSION; the artifact preview has no worker.
+  if (window.DJ_VERSION && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('service worker', e)));
+  }
+  // #try/<module>: a link from a static course page opens its first lesson at once, as a guest if nobody is signed in.
+  const tryMod = (location.hash.match(/^#try\/([\w-]+)$/) || [])[1];
+  if (tryMod && DJ.modules[tryMod]) {
+    if (!S.current()) { S.guest(); track('guest_start', { from: 'static', mod: tryMod }); }
+    history.replaceState(null, '', '#lesson/' + tryMod + '/0');
+  }
   route = parseHash(location.hash) || route;
   // Cloud progress merged in the background: refresh screens that only show progress (never an open lesson).
   window.addEventListener('dj:progress', () => { if (!S.current()) return; topbar(); if (['dash', 'profile', 'map', 'module', 'catalog', 'course'].includes(route.view)) render(); });

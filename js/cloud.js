@@ -129,9 +129,11 @@
       if (!r.error && r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
       return r;
     },
-    async signUp(address, pw, name) {
+    // extra: the consent record from the sign-up form ({ terms: <legal version date>, age_ok: true }).
+    async signUp(address, pw, name, extra) {
       const options = { emailRedirectTo: this.redirect() };
-      if (name) options.data = { full_name: String(name).slice(0, 40) };
+      options.data = Object.assign({}, extra || {});
+      if (name) options.data.full_name = String(name).slice(0, 40);
       const r = await (await this.need()).auth.signUp({ email: address, password: pw, options });
       if (r.error) return r;
       // Supabase answers a sign-up for an existing email with a user that has no identities (and sends nothing).
@@ -224,6 +226,8 @@
 
   // Product events and browser errors (supabase/analytics.sql): no names or emails, a random id per tab.
   // Sent in small batches once the client is up; dropped without retry if the tables are missing.
+  // Events need the visitor's consent (js/consent.js): until they choose, events wait in memory only; a "no" drops them.
+  // Error reports are sent without it: they are needed to keep the site working (see legal/src/privacy.*.html).
   let sid = '';
   try { sid = sessionStorage.getItem('dj.sid') || ''; } catch (e) {}
   if (!sid) { sid = Math.random().toString(36).slice(2, 12); try { sessionStorage.setItem('dj.sid', sid); } catch (e) {} }
@@ -232,7 +236,10 @@
   function flush() {
     clearTimeout(timer); timer = null;
     if (!cloud.client) return;
+    const C = DJ.consent;
+    if (C && !C.stats()) { if (C.decided()) outbox.events.length = 0; }   // undecided: keep waiting, nothing is sent
     for (const t in outbox) {
+      if (t === 'events' && C && !C.stats()) continue;
       const rows = outbox[t].splice(0);
       if (rows.length) cloud.client.from(t).insert(rows).then(r => { if (r.error) console.warn(t + ' insert failed', r.error.message); }, () => {});
     }
@@ -252,6 +259,7 @@
   window.addEventListener('error', e => { if (e.message) report(e.message, e.filename, e.lineno); });
   window.addEventListener('unhandledrejection', e => { const r = e.reason; report(r && r.message ? r.message : String(r), r && r.stack ? r.stack.split('\n')[1] : '', null); });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  window.addEventListener('dj:consent', e => { if (e.detail && e.detail.stats) soon(); else outbox.events.length = 0; });
 
   DJ.cloud = cloud;
 })();

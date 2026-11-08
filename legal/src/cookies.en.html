@@ -1,0 +1,26 @@
+<h1>Cookies and browser storage</h1>
+<p class="muted">Last updated: {{UPDATED}}</p>
+<p>Tolqyn <b>does not use cookie files</b> and does not include advertising or third-party trackers. For the site to work, it writes a small amount of data to your browser’s storage (localStorage, sessionStorage and cache). This data stays on your device. The full list is below.</p>
+
+<h2 id="needed">1. Needed for the site to work</h2>
+<p>Without these the site does not work, so consent is not requested.</p>
+<table>
+<thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Retention</th></tr></thead>
+<tbody>
+<tr><td><code>dj.users</code>, <code>dj.session</code></td><td>localStorage</td><td>Local account and information about who is signed in</td><td>Until sign-out or account deletion</td></tr>
+<tr><td><code>dj.p.*</code></td><td>localStorage</td><td>Progress and the code you wrote</td><td>Until the account is deleted</td></tr>
+<tr><td><code>dj.lang</code>, <code>dj.theme</code>, <code>dj.sound</code></td><td>localStorage</td><td>Language, light or dark theme, sound</td><td>Until you change them</td></tr>
+<tr><td><code>dj.consent</code></td><td>localStorage</td><td>Whether you agreed to statistics</td><td>12 months, then asked again</td></tr>
+<tr><td><code>dj.fb</code></td><td>localStorage</td><td>Feedback limit (no more than 5 messages per hour)</td><td>1 hour</td></tr>
+<tr><td><code>sb-*-auth-token</code></td><td>localStorage</td><td>Sign-in session for the cloud account (Supabase)</td><td>Until sign-out</td></tr>
+<tr><td><code>dj.sid</code></td><td>sessionStorage</td><td>Random session number: combines error reports and statistics for one visit</td><td>Until the page is closed</td></tr>
+<tr><td><code>tolqyn-app-*</code>, <code>tolqyn-vendor-*</code></td><td>Cache Storage (service worker)</td><td>Site files and Python, Java, C++ tools, so they are not downloaded again; offline operation</td><td>Until the site is updated</td></tr>
+</tbody>
+</table>
+
+<h2 id="stats">2. Statistics (only with consent)</h2>
+<p>If you give consent, the site sends information about which screens you open and which tasks you complete to Tolqyn’s own database (Supabase). This is needed to see which lessons are difficult and to improve the site. Third-party statistics services (Google Analytics, etc.) are not used. If you do not give consent, no statistics are sent, and the site continues to work fully.</p>
+
+<h2 id="change">3. How to change your choice</h2>
+<p>Press the <b>“Cookie settings”</b> button at the bottom of the site: the banner will be shown again. You can also clear all site data in your browser settings, but then progress in the mode without an account will be deleted.</p>
+<p>More details: <a href="{{L:privacy}}">Privacy policy</a>.</p>

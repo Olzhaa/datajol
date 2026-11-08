@@ -28,7 +28,9 @@
   }
   DJ.loadModule = function (id) {
     const m = DJ.modules[id];
-    return m && m.file ? loadScript(m.file).then(() => { if (DJ.i18n) DJ.i18n.reapply(); }) : Promise.resolve();
+    if (!m || !m.file) return Promise.resolve();
+    const tr = DJ.i18n && DJ.i18n.fileFor(m.file);   // the lesson text in ru/en, after the course file it patches
+    return loadScript(m.file).then(() => tr && loadScript(tr)).then(() => { if (DJ.i18n) DJ.i18n.reapply(); });
   };
   DJ.loadAll = () => Promise.all(Object.keys(DJ.modules).map(DJ.loadModule));
 
@@ -459,7 +461,8 @@
   function viewModule() {
     const mod = DJ.findModule(route.mod);
     if (!mod || !mod.lessons) return go('dash');
-    DJ.loadModule(mod.id).catch(() => {}); loadEditor();   // fetch the lessons while the learner reads the module page
+    const fresh = !!mod.file;
+    DJ.loadModule(mod.id).then(() => { if (fresh && DJ.i18n.lang !== 'kk' && route.view === 'module' && route.mod === mod.id) render(); }).catch(() => {}); loadEditor();   // fetch the lessons (and their translation) while the learner reads the module page
     // A module with Python tasks starts the Python runtime now: it is the slowest thing to load.
     if (DJ.run.py.status === 'idle' && mod.lessons.some(l => (l.exercises || []).some(e => e.type === 'python'))) DJ.run.py.start().catch(() => { DJ.run.py.worker = null; DJ.run.py.status = 'idle'; });
     const p = S.progress(), s = S.moduleState(mod, p);

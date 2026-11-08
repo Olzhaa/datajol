@@ -5,8 +5,6 @@
 (function () {
   const LANGS = { kk: 'Қазақша', ru: 'Русский', en: 'English' };
   const SHORT = { kk: 'ҚАЗ', ru: 'РУС', en: 'ENG' };
-  // Courses whose lessons have ru/en text in content/i18n/<lang>/<file>.js.
-  const TRANSLATED = ['python', 'sql'];
   let lang = 'kk';
   try { lang = localStorage.getItem('dj.lang') || ''; } catch (e) { lang = ''; }
   if (!LANGS[lang]) {
@@ -108,9 +106,10 @@
   // Lesson patches: { lessonId: { title, body, ex: [{ prompt, hints, options, explain, ... }] } } and
   // { moduleId: { intro } } under modules. Called by content/i18n/<lang>.js, which loads before js/app.js.
   // Patches are kept: a course file that loads later (DJ.loadModule) replaces its module, and reapply() patches it again.
-  const patches = [], textFor = new Set();   // lesson ids that have text in this language
-  function patch(p, again) {
-    if (!again) { patches.push(p); Object.keys(p.lessons || {}).forEach(id => textFor.add(id)); }
+  // content/i18n/<lang>/titles.js (generated) patches titles up front and names the modules that have text.
+  const patches = [], textFor = new Set();   // module ids that have text in this language
+  function patch(p, again, mods) {
+    if (!again) { patches.push(p); (mods || []).forEach(id => textFor.add(id)); }
     const byId = {};
     for (const id in DJ.modules) (DJ.modules[id].lessons || []).forEach(l => { byId[l.id] = l; });
     for (const id in p.modules || {}) if (DJ.modules[id]) Object.assign(DJ.modules[id], p.modules[id]);
@@ -130,7 +129,12 @@
   }
 
   // False when the interface is ru/en but this module's lessons exist only in Kazakh.
-  function hasText(mod) { return lang === 'kk' || !!(mod && mod.lessons && mod.lessons.some(l => textFor.has(l.id))); }
+  function hasText(mod) { return lang === 'kk' || !!(mod && textFor.has(mod.id)); }
+  // The translation file that goes with a course file (content/x.js → content/i18n/<lang>/x.js), or null.
+  function fileFor(src) {
+    const b = String(src || '').replace(/^content\//, '').replace(/\.js$/, '');
+    return lang !== 'kk' && (DJ.i18n.files || []).includes(b) ? `content/i18n/${lang}/${b}.js` : null;
+  }
   function reapply() { patches.forEach(p => patch(p, true)); }
 
   function set(l) {
@@ -168,11 +172,11 @@
   // Native dialogs get the same lookup.
   ['alert', 'confirm'].forEach(f => { const o = window[f]; if (o) window[f] = msg => o.call(window, typeof msg === 'string' ? tr(msg) : msg); });
 
-  DJ.i18n = { lang, LANGS, tr, patch, reapply, hasText, set, picker };
+  DJ.i18n = { lang, LANGS, tr, patch, reapply, hasText, fileFor, set, picker };
   if (lang !== 'kk') {
     const v = window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '';
-    // Parser-inserted, so they run before js/app.js. One file per translated course.
-    TRANSLATED.forEach(c => document.write(`<script src="content/i18n/${lang}/${c}.js${v}"><\/script>`));
+    // Parser-inserted, so it runs before js/app.js. Course text itself loads with the course (DJ.loadModule).
+    document.write(`<script src="content/i18n/${lang}/titles.js${v}"><\/script>`);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   }
 })();

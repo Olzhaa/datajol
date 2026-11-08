@@ -1,8 +1,7 @@
 // Game layer: the Үкі mascot, sounds, confetti, floating XP and reward dialogs.
 // Everything here is presentation only; XP, streaks and badges are still counted by js/store.js.
 (function () {
-  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const { lsGet, lsSet } = DJ.util;
   const calm = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------- mascot: a 12x12 pixel owl (үкі) with a turquoise scarf ----------
@@ -82,6 +81,15 @@
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1100);
   }
+  // "COMBO ×n" in the HUD font, rising from the button that was pressed.
+  function combo(from, n) {
+    if (calm()) return;
+    const { x, y } = centerOf(from);
+    const el = document.createElement('div'); el.className = 'combo-float'; el.setAttribute('aria-hidden', 'true');
+    el.textContent = `COMBO ×${n}`; el.style.left = x + 'px'; el.style.top = (y - 34) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
   function shake(el) {
     if (!el || calm()) return;
     el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
@@ -111,5 +119,5 @@
   }
 
   window.DJ = window.DJ || {};
-  DJ.game = { owl, play, soundOn, setSound, confetti, floatXp, shake, reward, calm };
+  DJ.game = { owl, play, soundOn, setSound, confetti, floatXp, combo, shake, reward, calm };
 })();

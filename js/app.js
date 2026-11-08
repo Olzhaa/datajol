@@ -1,11 +1,7 @@
 // UI: auth, dashboard, module and lesson screens, curriculum map, diagnostic, profile.
 (function () {
   const S = DJ.store;
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const { $, $$, esc, lsGet, lsSet } = DJ.util;
 
   const track = (name, props) => { if (DJ.cloud && DJ.cloud.track) DJ.cloud.track(name, props); };
 
@@ -32,7 +28,9 @@
   }
   DJ.loadModule = function (id) {
     const m = DJ.modules[id];
-    return m && m.file ? loadScript(m.file).then(() => { if (DJ.i18n) DJ.i18n.reapply(); }) : Promise.resolve();
+    if (!m || !m.file) return Promise.resolve();
+    const tr = DJ.i18n && DJ.i18n.fileFor(m.file);   // the lesson text in ru/en, after the course file it patches
+    return loadScript(m.file).then(() => tr && loadScript(tr)).then(() => { if (DJ.i18n) DJ.i18n.reapply(); });
   };
   DJ.loadAll = () => Promise.all(Object.keys(DJ.modules).map(DJ.loadModule));
 
@@ -67,15 +65,20 @@
   applyTheme(lsGet('dj.theme'));
 
   // ---------- toasts ----------
-  function toast(html, icon = 'bolt', kind = '') {
+  // At most two toasts are on screen; the rest wait their turn so a burst of badges never covers the page.
+  const toastQueue = [];
+  function toast(html, icon = 'bolt', kind = '') { toastQueue.push([html, icon, kind]); pumpToasts(); }
+  function pumpToasts() {
     const root = $('#toast-root');
-    const el = document.createElement('div');
-    el.className = 'toast ' + kind;
-    el.innerHTML = ICON[icon] + `<span>${html}</span>`;
-    const n = root.children.length;
-    el.style.bottom = `calc(${24 + n * 58}px + var(--tabbar, 0px) + env(safe-area-inset-bottom, 0px))`;
-    root.appendChild(el);
-    setTimeout(() => el.remove(), 3200);
+    while (root && toastQueue.length && root.children.length < 2) {
+      const [html, icon, kind] = toastQueue.shift();
+      const el = document.createElement('div');
+      el.className = 'toast ' + kind;
+      el.innerHTML = (ICON[icon] || ICON.bolt) + `<span>${html}</span>`;
+      el.style.bottom = `calc(${24 + root.children.length * 58}px + var(--tabbar, 0px) + env(safe-area-inset-bottom, 0px))`;
+      root.appendChild(el);
+      setTimeout(() => { el.remove(); [...root.children].forEach((c, i) => { c.style.bottom = `calc(${24 + i * 58}px + var(--tabbar, 0px) + env(safe-area-inset-bottom, 0px))`; }); pumpToasts(); }, 3200);
+    }
   }
   // Rewards for a passed task: floating XP from the button that was pressed, a chime, badge toasts, a level-up dialog.
   function celebrate(r, from) {
@@ -83,7 +86,7 @@
     (r.newBadges || []).forEach((b, i) => b && setTimeout(() => { toast(`<b>Жаңа белгі!</b> ${esc(b.name)}`, b.icon, 'badge'); G.play('badge'); }, 500 + i * 400));
     if (r.levelUp) setTimeout(() => {
       G.play('level');
-      G.reward({ title: `${r.levelUp}-деңгей!`, text: 'Жаңа деңгейге көтерілдіңіз. Үкі сізбен мақтанады.', stats: [{ v: S.progress().xp, l: 'барлық XP', cls: 'gold' }] });
+      G.reward({ title: `${r.levelUp}-деңгей!`, text: `Жаңа атақ: ${S.rank(r.levelUp)}. Үкі сізбен мақтанады.`, stats: [{ v: S.progress().xp, l: 'барлық XP', cls: 'gold' }] });
     }, 700);
   }
   function bumpHud() { const h = $('.hud-xp'); if (h) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); } }
@@ -110,9 +113,8 @@
     return null;
   }
   function go(view, params = {}) {
-    flushSave();
+    LS.leave();
     if (view === 'auth' && S.isGuest() && route.view !== 'auth') pendingRoute = route;   // a guest signing up comes back here
-    if (cm) cm = null;
     route = Object.assign({ view }, params);
     const h = hashFor(route);
     if (h !== location.hash && !(h === '' && !location.hash)) history.pushState(null, '', h || location.pathname + location.search);
@@ -120,17 +122,14 @@
     window.scrollTo(0, 0);
   }
   window.addEventListener('popstate', () => {
-    flushSave(); if (cm) cm = null;
+    LS.leave();
     route = parseHash(location.hash) || { view: 'dash' };
     render(true);
   });
-  // Editor autosave: the pending write is bound to its own exercise and flushed before any navigation.
-  let pendingSave = null;
-  function flushSave() { if (pendingSave) { clearTimeout(pendingSave.t); pendingSave.fn(); pendingSave = null; } }
   // ---------- feedback ----------
   const FB_KINDS = [['bug', 'Қате таптым'], ['unclear', 'Түсініксіз'], ['idea', 'Ұсыныс'], ['other', 'Басқа']];
   function openFeedback() {
-    const where = route.view === 'lesson' && L ? `${location.hash} · ${L.lesson.title} · тапсырма ${L.ei + 1}` : (location.hash || '#dash');
+    const L = LS.current(), where = route.view === 'lesson' && L ? `${location.hash} · ${L.lesson.title} · тапсырма ${L.ei + 1}` : (location.hash || '#dash');
     const dlg = document.createElement('dialog');
     dlg.className = 'fb-dialog';
     dlg.setAttribute('aria-labelledby', 'fb-h');
@@ -397,20 +396,12 @@
   const COURSE_ICON = { python: 'Py', 'python-2': 'Py2', sql: 'SQL', pandas: 'pd', stats: 'σ', viz: 'BI', ml: 'ML', dl: 'DL', genai: 'AI', dsa: '{ }', java: 'J', cpp: 'C++', swe: 'SE', git: 'Git', excel: 'fx', deploy: 'Dkr', mlops: 'Ops', dataeng: 'ETL', basics: '01', business: '$', capstones: 'PRJ', jobs: 'CV' };
   function courseGlyph(c) { return COURSE_ICON[c.id] || (DJ.i18n ? DJ.i18n.tr(c.title) : c.title).replace(/[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүІі+#]/g, '').slice(0, 2); }
   function questCard(p) {
-    const t = lastDays(1)[0].key;
-    const tasks = Object.values(p.done).filter(d => d && d.d === t).length;
-    const lessons = Object.values(p.lessons).filter(d => d === t).length;
-    const xp = S.xpToday(p);
-    const qs = [
-      { n: 'Бүгін 50 XP жина', v: xp, max: GOAL, icon: 'bolt' },
-      { n: '3 тапсырма орында', v: tasks, max: 3, icon: 'check' },
-      { n: '1 сабақты аяқта', v: lessons, max: 1, icon: 'flag' }
-    ];
-    const all = qs.every(q => q.v >= q.max);
+    const qs = S.quests(p);
+    const all = qs.every(q => q.v >= q.max), got = S.chestOpened(p);
     return `<section class="panel quests" aria-labelledby="q-h">
-      <div class="panel-h"><h2 id="q-h">Күндік квесттер</h2><span class="chest ${all ? 'open' : ''}" title="${all ? 'Бүгінгі квесттер орындалды' : 'Үшеуін орындасаңыз, сандық ашылады'}">${ICON.chest}</span></div>
+      <div class="panel-h"><h2 id="q-h">Күндік квесттер</h2><span class="chest ${all ? 'open' : ''}" title="${all ? 'Бүгінгі квесттер орындалды' : 'Үшеуін орындасаңыз, сандық ашылады'}">${ICON.chest}<b class="chest-xp">+${S.CHEST_XP}</b></span></div>
       ${qs.map(q => { const ok = q.v >= q.max; return `<div class="quest ${ok ? 'ok' : ''}"><span class="q-ico">${ok ? ICON.check : ICON[q.icon]}</span><div><b>${q.n}</b><div class="seg" style="--n:${q.max > 5 ? 10 : q.max}">${Array.from({ length: q.max > 5 ? 10 : q.max }, (_, i) => `<i class="${(q.max > 5 ? q.v / q.max * 10 : q.v) > i ? 'on' : ''}"></i>`).join('')}</div></div><span class="q-n">${Math.min(q.v, q.max)}/${q.max}</span></div>`; }).join('')}
-      <p class="note" style="margin:8px 0 0">${all ? 'Тамаша! Ертең жаңа квесттер шығады.' : 'Квесттер күн сайын түн ортасында жаңарады.'}</p>
+      <p class="note" style="margin:8px 0 0">${got ? `Сандық ашылды: +${S.CHEST_XP} XP. Ертең жаңа квесттер шығады.` : all ? 'Тамаша! Сандық келесі тапсырмадан кейін ашылады.' : `Үшеуін орындасаңыз, сандықтан +${S.CHEST_XP} XP шығады. Квесттер түн ортасында жаңарады.`}</p>
     </section>`;
   }
   function streakCard(p, st) {
@@ -445,6 +436,7 @@
       </div>
       <div class="lvl-card" aria-label="Деңгей ${lv.level}">
         <div class="shield"><span>LV</span><b>${lv.level}</b></div>
+        <div class="rank"><b>${esc(S.rank(lv.level))}</b></div>
         <div class="lvl-bar"><i style="width:${lv.pct}%"></i></div>
         <div class="note">${p.xp} XP · келесі деңгейге ${lv.next - p.xp} XP</div>
         <div class="note">${esc(career.id)} · ${esc(career.name)}</div>
@@ -469,7 +461,8 @@
   function viewModule() {
     const mod = DJ.findModule(route.mod);
     if (!mod || !mod.lessons) return go('dash');
-    DJ.loadModule(mod.id).catch(() => {}); loadEditor();   // fetch the lessons while the learner reads the module page
+    const fresh = !!mod.file;
+    DJ.loadModule(mod.id).then(() => { if (fresh && DJ.i18n.lang !== 'kk' && route.view === 'module' && route.mod === mod.id) render(); }).catch(() => {}); loadEditor();   // fetch the lessons (and their translation) while the learner reads the module page
     // A module with Python tasks starts the Python runtime now: it is the slowest thing to load.
     if (DJ.run.py.status === 'idle' && mod.lessons.some(l => (l.exercises || []).some(e => e.type === 'python'))) DJ.run.py.start().catch(() => { DJ.run.py.worker = null; DJ.run.py.status = 'idle'; });
     const p = S.progress(), s = S.moduleState(mod, p);
@@ -491,458 +484,10 @@
       }).join('')}</div>`;
   }
 
-  // ---------- lesson ----------
-  let cm = null;
-  let L = null;
-  function exId(lesson, i) { return lesson.id + '#' + i; }
-
-  function viewLesson() {
-    if ((DJ.modules[route.mod] && DJ.modules[route.mod].file) || (!window.CodeMirror && !noEditor)) {
-      const want = route;
-      $('#app').innerHTML = '<p class="muted" style="padding:40px 0" role="status">Сабақ жүктелуде…</p>';
-      Promise.all([DJ.loadModule(route.mod), loadEditor()]).then(() => { if (route === want) render(); })
-        .catch(() => { if (route === want) { $('#app').innerHTML = '<div style="padding:40px 0" role="alert"><p class="muted">Сабақ жүктелмеді. Интернетті тексеріп, қайта көріңіз.</p><button class="btn" id="retry">Қайта көру</button></div>'; $('#retry').onclick = () => render(); } });
-      return;
-    }
-    const mod = DJ.findModule(route.mod);
-    if (!mod || !mod.lessons || !mod.lessons[route.li]) return go('dash');
-    const lesson = mod.lessons[route.li];
-    const p = S.progress();
-    const exs = lesson.exercises || [];
-    let ei = exs.findIndex((_, i) => !p.done[exId(lesson, i)]);
-    if (ei < 0) ei = 0;
-    L = { mod, lesson, li: route.li, ei, hints: {}, fails: {} };
-    if (S.setPref && (S.progress().prefs || {}).last !== mod.id) S.setPref('last', mod.id);
-    const prev = route.li > 0 ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${route.li - 1}">← Алдыңғы</button>` : `<button class="btn ghost" data-go="module" data-mod="${mod.id}">← Модуль</button>`;
-    $('#app').innerHTML = `
-      <div class="crumbs"><button data-go="dash">Оқу</button><span>/</span><button data-go="module" data-mod="${mod.id}">${esc(mod.code)} ${esc(mod.title)}</button></div>
-      <div class="lesson" id="lesson">
-        <article class="reading">
-          <div class="eyebrow">${lesson.gate ? 'Модуль емтиханы' : `Сабақ ${route.li + 1} / ${mod.lessons.length}`} · ${lesson.minutes || 10} мин</div>
-          <h1>${esc(lesson.title)}</h1>${kkOnly(mod)}
-          <div class="prose">${lesson.body || ''}</div>
-          <section class="task" id="task"></section>
-          <div class="lesson-nav">${prev}<span id="next-slot"></span></div>
-          ${DJ.cloud && DJ.cloud.enabled ? fbFoot('Осы сабақта түсініксіз жер немесе қате бар ма?') : ''}
-        </article>
-        <aside class="workbench" id="wb"></aside>
-      </div>`;
-    renderTask();
-  }
-
-  function lessonDone() { const p = S.progress(); return (L.lesson.exercises || []).every((_, i) => p.done[exId(L.lesson, i)]); }
-  function nextSlot() {
-    const slot = $('#next-slot'); if (!slot) return;
-    const p = S.progress(), done = p.lessons[L.lesson.id];
-    const hasNext = L.li + 1 < L.mod.lessons.length;
-    if (!(L.lesson.exercises || []).length && !done) { slot.innerHTML = `<button class="btn" id="read-done">Оқыдым ${ICON.check.replace('<svg', '<svg style="width:16px;height:16px"')}</button>`; $('#read-done').onclick = () => { finishLesson(); }; return; }
-    slot.innerHTML = done ? (hasNext ? `<button class="btn" data-go="lesson" data-mod="${L.mod.id}" data-li="${L.li + 1}">Келесі сабақ →</button>` : `<button class="btn" data-go="module" data-mod="${L.mod.id}">Модульге оралу</button>`) : '';
-  }
-  function finishLesson() {
-    const nb = S.markLesson(L.lesson.id, L.mod.id);
-    topbar(); nextSlot();
-    const p = S.progress(), mod = L.mod, li = L.li, exs = L.lesson.exercises || [];
-    const got = i => p.done[exId(L.lesson, i)];
-    const xp = exs.reduce((t, _, i) => t + ((got(i) || {}).xp || 0), 0);
-    const clean = exs.filter((_, i) => got(i) && !got(i).hint).length;
-    const modDone = mod.lessons.every(l => p.lessons[l.id]);
-    const hasNext = li + 1 < mod.lessons.length;
-    setTimeout(() => {
-      G.play('lesson');
-      G.reward({
-        title: modDone ? 'Модуль бағындырылды!' : L.lesson.gate ? 'Емтихан тапсырылды!' : 'Сабақ аяқталды!',
-        text: modDone ? `${esc(mod.code)} ${esc(mod.title)} толық өтілді. Картада жаңа шың ашылды.` : esc(L.lesson.title),
-        stats: [{ v: '+' + xp, l: 'XP', cls: 'gold' }, { v: S.streakNow(p), l: 'күн streak', cls: 'flame' }].concat(exs.length ? [{ v: `${clean}/${exs.length}`, l: 'кеңессіз' }] : []),
-        actions: hasNext ? [{ label: 'Келесі сабақ', primary: true, onClick: () => go('lesson', { mod: mod.id, li: li + 1 }) }, { label: 'Модульге', onClick: () => go('module', { mod: mod.id }) }]
-          : [{ label: 'Картаға', primary: true, onClick: () => go('map') }, { label: 'Модульге', onClick: () => go('module', { mod: mod.id }) }]
-      });
-      nb.forEach((b, i) => b && setTimeout(() => { toast(`<b>Жаңа белгі!</b> ${esc(b.name)}`, b.icon, 'badge'); G.play('badge'); }, 600 + i * 400));
-    }, 450);
-  }
-
-  // Exercise types solved in the code editor; java/cpp are compiled in a worker (DJ.run.java / DJ.run.cpp).
-  const isCodeType = t => t === 'sql' || t === 'python' || t === 'java' || t === 'cpp';
-  const NATIVE = { java: { lang: 'Java', mime: 'text/x-java' }, cpp: { lang: 'C++', mime: 'text/x-c++src' } };
-
-  function renderTask() {
-    const exs = L.lesson.exercises || [];
-    const task = $('#task'), wb = $('#wb'), lessonEl = $('#lesson');
-    cm = null;
-    if (!exs.length) { task.innerHTML = ''; wb.innerHTML = ''; lessonEl.classList.add('solo'); nextSlot(); return; }
-    const p = S.progress();
-    const G = L.lesson.gate ? gateState() : null;
-    const ex = exs[L.ei], id = exId(L.lesson, L.ei), done = G ? !!G.res[L.ei] : !!p.done[id];
-    const isCode = isCodeType(ex.type);
-    lessonEl.classList.toggle('solo', !isCode);
-    const stepCls = i => G ? (G.res[i] === 'ok' ? 'ok' : G.res[i] === 'fail' ? 'bad' : '') : (p.done[exId(L.lesson, i)] ? 'ok' : '');
-    const stepState = i => ({ ok: ', орындалды', bad: ', есепке алынбады' })[stepCls(i)] || '';
-    const steps = exs.map((_, i) => `<button class="${i === L.ei ? 'cur' : ''} ${stepCls(i)}" data-step="${i}" aria-label="Тапсырма ${i + 1}${stepState(i)}"${i === L.ei ? ' aria-current="step"' : ''}>${i + 1}</button>`).join('');
-    let inner = '';
-    if (ex.type === 'quiz') {
-      inner = `<div class="options" role="group" aria-label="Жауап нұсқалары">${ex.options.map((o, i) => `<button class="opt" aria-pressed="false" data-opt="${i}">${o}</button>`).join('')}</div>
-        <div class="actions" style="margin-top:12px"><button class="btn" id="q-check" disabled>Тексеру</button></div>`;
-    } else if (ex.type === 'number') {
-      inner = `<div style="display:flex;gap:8px;align-items:center;margin-top:10px;max-width:280px"><input type="text" inputmode="decimal" id="num-in" placeholder="Жауап" aria-label="Жауап">${ex.unit ? `<b>${esc(ex.unit)}</b>` : ''}</div>
-        <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Тексеру</button></div>`;
-    } else if (ex.type === 'sheet') {
-      const tabs = ex.tabs || [ex.sheet];
-      inner = `${ex.cell ? `<p class="note" style="margin-bottom:0">Формула <b>${esc(ex.cell)}</b> ұяшығына жазылады деп есептеңіз. Ұяшықты басып, адресін формулаға қоюға болады.</p>` : '<p class="note" style="margin-bottom:0">Ұяшықты басып, адресін формулаға қоюға болады.</p>'}
-        <div class="sheet-tabs">${tabs.map((t, i) => `<button class="${i ? '' : 'cur'}" data-tab="${t}">${esc(DJ.sheets[t].name)}</button>`).join('')}</div>
-        <div class="sheet-grid" id="grid" tabindex="0" aria-label="Кесте деректері"></div>
-        <div class="fx"><b>fx</b><input type="text" id="fx-in" placeholder="=SUM(H2:H25)" aria-label="Формула" autocomplete="off" spellcheck="false"></div>
-        <div class="fx-result" id="fx-out"></div>
-        <div class="actions" style="margin-top:12px"><button class="btn ghost" id="fx-run">Есептеу</button><button class="btn" id="q-check">Тексеру</button></div>`;
-    } else if (ex.type === 'rubric') {
-      const saved = (p.rubric || {})[id] || {};
-      inner = `<textarea id="memo" rows="9" placeholder="Қорытынды, дәлелдер, ұсыныс, шектеулер…" aria-label="Memo мәтіні">${esc(saved.text || '')}</textarea>
-        <div class="note" id="memo-count"></div>
-        <div class="rubric">${ex.criteria.map((c, ci) => `<fieldset><legend>${esc(c.name)}</legend>${c.levels.map((lv, li) => `<label><input type="radio" name="rc${ci}" value="${li + 1}" ${saved.scores && saved.scores[ci] === li + 1 ? 'checked' : ''}><b>${li + 1}</b> ${esc(lv)}</label>`).join('')}</fieldset>`).join('')}</div>
-        <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Бағалауды тапсыру</button></div>`;
-    } else if (ex.type === 'cmd') {
-      inner = `<div class="term"><span>$</span><input type="text" id="cmd-in" placeholder="git ..." aria-label="Команда" autocomplete="off" spellcheck="false" autocapitalize="off"></div>
-        <div class="actions" style="margin-top:12px"><button class="btn" id="q-check">Тексеру</button></div>`;
-    } else {
-      inner = `<p class="note">Кодты ${window.innerWidth > 900 ? 'оң жақтағы' : 'төмендегі'} редакторға жазыңыз. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> іске қосады, <kbd>Esc</kbd> редактордан шығарады.</p>`;
-    }
-    const hintsBtn = (!G && ex.hints && ex.hints.length) ? `<button class="btn ghost" id="hint-btn">Кеңес (${ex.hints.length})</button>` : '';
-    task.innerHTML = `
-      ${exs.length > 1 ? `<div class="task-steps">${steps}</div>` : ''}
-      <h3 id="task-h">Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span>${ex.level && LEVELS[ex.level] ? ` <span class="lvl lvl-${ex.level}">${LEVELS[ex.level]}</span>` : ''}</h3>
-      <div class="prose">${ex.prompt}</div>
-      ${inner}
-      <div class="hints" id="hints"></div>
-      <div class="actions" style="margin-top:10px">${isCode || ex.type === 'sheet' || ex.type === 'cmd' ? hintsBtn : ''}<span id="sol-slot"></span></div>
-      <div id="qv" style="margin-top:10px"></div>`;
-    $$('[data-step]', task).forEach(b => b.onclick = () => { L.ei = Number(b.dataset.step); renderTask(); const h = $('#task h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } });
-    if ($('#hint-btn')) $('#hint-btn').onclick = () => showHint(ex, id);
-    if (G) {
-      const left = gateTries(ex) - (G.tries[L.ei] || 0);
-      $('#qv').innerHTML = done ? `<div class="verdict ${G.res[L.ei] === 'ok' ? 'ok' : 'bad'}">${G.res[L.ei] === 'ok' ? 'Бұл тапсырма орындалды.' : 'Бұл тапсырма есепке алынбады.'}</div>${gateNextHtml()}`
-        : `<div class="verdict info">Емтихан: бұл тапсырмада ${left} мүмкіндік бар. Кеңес пен шешім көрсетілмейді. Өту шегі ${Math.round(GATE_PASS * 100)}%.</div>`;
-      if (done) setTimeout(afterGateStep, 0);
-    } else if (done) $('#qv').innerHTML = `<div class="verdict ok">Бұл тапсырма орындалған. Қайта шешіп көруге болады (XP қайта берілмейді).</div>`;
-
-    if (ex.type === 'quiz') {
-      let sel = null;
-      $$('.opt', task).forEach(b => b.onclick = () => { sel = Number(b.dataset.opt); $$('.opt', task).forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-pressed', String(x === b)); x.classList.remove('right', 'wrong'); }); $('#q-check').disabled = false; });
-      $('#q-check').onclick = () => {
-        if (G && gateState().res[L.ei]) return;
-        const ok = sel === ex.answer;
-        $$('.opt', task).forEach(x => { const i = Number(x.dataset.opt); if (i === sel) x.classList.add(ok ? 'right' : 'wrong'); });
-        if (!ok && G) { if (gateState().res[L.ei]) return; gateFail(ex, '#qv'); return; }
-        if (!ok) { L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id); $('#qv').innerHTML = `<div class="verdict bad">Дұрыс емес. Тағы бір ойланып көріңіз${L.fails[id] >= 2 && ex.explain ? ': ' + ex.explain : '.'}</div>`; return; }
-        passed(ex, id, 'quiz', ex.explain);
-      };
-    } else if (ex.type === 'number') {
-      const inp = $('#num-in');
-      const check = () => {
-        const v = parseFloat(String(inp.value).replace(',', '.').replace(/\s|%/g, ''));
-        if (isNaN(v)) { $('#qv').innerHTML = '<div class="verdict info">Сан енгізіңіз.</div>'; return; }
-        if (G && gateState().res[L.ei]) return;
-        if (Math.abs(v - ex.answer) <= (ex.tol || 0.001) + 1e-9) passed(ex, id, 'number', ex.explain);
-        else if (G) { if (!gateState().res[L.ei]) gateFail(ex, '#qv'); }
-        else { L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id); $('#qv').innerHTML = `<div class="verdict bad">Жауап басқа.${L.fails[id] >= 2 && ex.explain ? ' Шешу жолы: ' + ex.explain : ' Есептеуді қайта тексеріңіз.'}</div>`; }
-      };
-      $('#q-check').onclick = check;
-      inp.onkeydown = e => { if (e.key === 'Enter') check(); };
-    } else if (ex.type === 'sheet') {
-      const inp = $('#fx-in');
-      const drawGrid = t => {
-        const rows = DJ.sheets[t].rows, w = Math.max(...rows.map(r => r.length));
-        $('#grid').innerHTML = `<table><thead><tr><th><span class="sr-only">Жол</span></th>${Array.from({ length: w }, (_, i) => `<th>${DJ.sheet.colName(i + 1)}</th>`).join('')}</tr></thead><tbody>${rows.map((r, ri) => `<tr><th>${ri + 1}</th>${Array.from({ length: w }, (_, ci) => { const v = r[ci]; return `<td data-addr="${t === ex.sheet ? '' : DJ.sheets[t].name + '!'}${DJ.sheet.colName(ci + 1)}${ri + 1}" class="${typeof v === 'number' ? 'num' : ''}">${v == null ? '' : esc(String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
-        $$('#grid td').forEach(td => td.onclick = () => { const a = td.dataset.addr; if (!inp.value) inp.value = '='; const at = Math.max(1, inp.selectionStart == null ? inp.value.length : inp.selectionStart); inp.value = inp.value.slice(0, at) + a + inp.value.slice(at); inp.focus(); inp.setSelectionRange(at + a.length, at + a.length); });
-      };
-      drawGrid(ex.sheet);
-      $$('[data-tab]', task).forEach(b => b.onclick = () => { $$('[data-tab]', task).forEach(x => x.classList.toggle('cur', x === b)); drawGrid(b.dataset.tab); });
-      const saved = (p.code || {})[id]; if (saved) inp.value = saved;
-      const calc = () => { const r = DJ.sheet.run(inp.value, DJ.sheets, ex.sheet); $('#fx-out').innerHTML = r.ok ? `Нәтиже: <code>${esc(DJ.sheet.show(r.value))}</code>` : `<span style="color:var(--bad)">${esc(r.error)}</span>`; };
-      const check = () => {
-        S.saveCode(id, inp.value);
-        const r = DJ.sheet.check(ex, inp.value);
-        if (r.value != null) $('#fx-out').innerHTML = `Нәтиже: <code>${esc(r.value)}</code>`;
-        if (G && gateState().res[L.ei]) return;
-        if (r.pass) { passed(ex, id, 'sheet', ex.explain); return; }
-        if (G) { gateFail(ex, '#qv'); $('#qv').insertAdjacentHTML('afterbegin', `<div class="verdict info">${r.msg}</div>`); return; }
-        L.fails[id] = (L.fails[id] || 0) + 1;
-        $('#qv').innerHTML = `<div class="verdict bad">${r.msg}</div>`;
-        if (L.fails[id] >= 3 && (!ex.hints || (L.hints[id] || 0) >= ex.hints.length)) offerSolution(ex, id);
-      };
-      $('#fx-run').onclick = calc;
-      $('#q-check').onclick = check;
-      inp.onkeydown = e => { if (e.key === 'Enter') { (e.ctrlKey || e.metaKey) ? check() : calc(); } };
-    } else if (ex.type === 'rubric') {
-      const ta = $('#memo'), words = () => ta.value.trim().split(/\s+/).filter(Boolean).length;
-      const count = () => { $('#memo-count').textContent = `${words()} сөз (кемінде ${ex.minWords || 0})`; };
-      ta.oninput = count; count();
-      $('#q-check').onclick = () => {
-        const scores = ex.criteria.map((_, ci) => { const r = $(`input[name="rc${ci}"]:checked`); return r ? Number(r.value) : 0; });
-        S.saveRubric(id, { text: ta.value, scores });
-        if (words() < (ex.minWords || 0)) { $('#qv').innerHTML = `<div class="verdict bad">Memo тым қысқа: ${words()} сөз, кемінде ${ex.minWords} керек.</div>`; return; }
-        if (scores.some(v => !v)) { $('#qv').innerHTML = '<div class="verdict info">Әр критерийге баға қойыңыз.</div>'; return; }
-        const weak = ex.criteria.filter((_, ci) => scores[ci] < 3);
-        if (weak.length) { $('#qv').innerHTML = `<div class="verdict bad">Әзірге өтпейді. Memo-ны жақсартыңыз:<ul>${weak.map(c => `<li><b>${esc(c.name)}</b>: ${esc(c.levels[3])}</li>`).join('')}</ul></div>`; return; }
-        passed(ex, id, 'rubric', `Орташа баға ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)} / 4. ${ex.done || 'Мәтінді портфолиоңызда сақтап қойыңыз.'}`);
-      };
-    } else if (ex.type === 'cmd') {
-      const inp = $('#cmd-in');
-      const check = () => {
-        const v = inp.value.trim().replace(/\s+/g, ' ').replace(/^\$\s*/, '');
-        if (!v) { $('#qv').innerHTML = '<div class="verdict info">Команданы жазыңыз.</div>'; return; }
-        if (G && gateState().res[L.ei]) return;
-        if (ex.accept.some(a => new RegExp('^(?:' + a + ')$').test(v))) { passed(ex, id, 'cmd', ex.explain); return; }
-        if (G) { gateFail(ex, '#qv'); return; }
-        L.fails[id] = (L.fails[id] || 0) + 1; markHinted(id);
-        $('#qv').innerHTML = `<div class="verdict bad">Бұл команда тапсырманы орындамайды.${L.fails[id] >= 2 ? ` Дұрыс жауап: <code>${esc(ex.solution)}</code>` : ' Кеңесті қараңыз немесе қайта көріңіз.'}</div>`;
-      };
-      $('#q-check').onclick = check;
-      inp.onkeydown = e => { if (e.key === 'Enter') check(); };
-    }
-    if (isCode) renderWorkbench(ex, id); else wb.innerHTML = '';
-    nextSlot();
-  }
-
-  function markHinted(id) { if (S.markHinted) S.markHinted(id); }
-  const wasHinted = id => !!(S.hinted && S.hinted(id));
-  function showHint(ex, id) {
-    const n = (L.hints[id] || 0);
-    if (n >= ex.hints.length) return;
-    L.hints[id] = n + 1; markHinted(id);
-    $('#hints').insertAdjacentHTML('beforeend', `<div class="hint"><b>Кеңес ${n + 1}.</b> ${ex.hints[n]}</div>`);
-    const b = $('#hint-btn');
-    if (L.hints[id] >= ex.hints.length) { b.remove(); offerSolution(ex, id); }
-    else b.textContent = `Тағы кеңес (${ex.hints.length - L.hints[id]})`;
-  }
-  function offerSolution(ex, id) {
-    if (L.lesson.gate || $('#sol-btn')) return;
-    $('#sol-slot').innerHTML = `<button class="btn ghost" id="sol-btn">Шешімді көрсету</button>`;
-    $('#sol-btn').onclick = () => { L.hints[id] = (L.hints[id] || 0) + 1; markHinted(id); L.solShown = id; if (cm) cm.setValue(ex.solution); else if ($('#fx-in')) $('#fx-in').value = ex.solution; else if ($('#cmd-in')) $('#cmd-in').value = ex.solution; $('#sol-btn').remove(); $('#qv').innerHTML = '<div class="verdict info">Шешім редакторға қойылды. Оны оқып, іске қосып, түсінгеннен кейін тексеріңіз. XP жартысы беріледі.</div>'; };
-  }
-
-  function renderWorkbench(ex, id) {
-    const wb = $('#wb');
-    const isSql = ex.type === 'sql', nat = NATIVE[ex.type];
-    const ds = isSql ? DJ.datasets[ex.dataset || 'shop'] : null;
-    const saved = (S.progress().code || {})[id];
-    wb.innerHTML = `
-      <div class="editor-shell">
-        <div class="editor-bar"><span><span class="dots"><i></i><i></i><i></i></span><span class="lang">${isSql ? 'SQL · ' + esc(ds ? ds.title : '') : nat ? nat.lang : 'Python 3'}</span></span><span>Ctrl+Enter: іске қосу</span></div>
-        <div id="cm"></div>
-      </div>
-      ${nat ? `<label style="display:block;margin-top:10px"><span class="eyebrow">Кіріс (stdin)</span><textarea id="stdin" rows="3" spellcheck="false" autocapitalize="off" style="display:block;width:100%;margin-top:4px;background:var(--code-bg);color:var(--code-ink);border:0;border-radius:8px;padding:8px 12px;font-family:var(--font-mono);resize:vertical">${esc(((ex.check || {}).cases || [])[0] ? ex.check.cases[0].stdin || '' : '')}</textarea></label>` : ''}
-      ${ds && ds.tables ? `<details class="schema"><summary>Кестелер</summary>${Object.entries(ds.tables).map(([t, c]) => `<div><code>${esc(t)}</code>: ${esc(c)}</div>`).join('')}</details>` : ''}
-      <div class="actions">
-        <button class="btn ghost" id="run">${ICON.play.replace('<svg', '<svg style="width:14px;height:14px"')} Іске қосу</button>
-        <button class="btn" id="check">${ICON.check.replace('<svg', '<svg style="width:16px;height:16px"')} Тексеру</button>
-        <button class="btn ghost" id="reset" title="Бастапқы кодқа қайтару">Тазалау</button>
-      </div>
-      <div id="verdict"></div>
-      <div class="output" id="out"><p class="muted" style="margin:0">Нәтиже осында шығады.</p></div>`;
-    const host = $('#cm');
-    const run = () => doRun(ex);
-    if (window.CodeMirror) {
-      cm = CodeMirror(host, {
-        value: saved != null ? saved : (ex.starter || ''), mode: isSql ? 'text/x-sqlite' : nat ? nat.mime : 'python', lineNumbers: true, indentUnit: 4,
-        matchBrackets: true, autoCloseBrackets: true, lineWrapping: true, viewportMargin: Infinity,
-        extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    '), Esc: () => { const b = $('#run'); if (b) b.focus(); } }
-      });
-      cm.getInputField().setAttribute('aria-label', (isSql ? 'SQL' : nat ? nat.lang : 'Python') + ' код редакторы');
-      const ed = cm;
-      cm.on('change', () => {
-        flushSave();
-        const fn = () => S.saveCode(id, ed.getValue());
-        pendingSave = { fn, t: setTimeout(() => { pendingSave = null; fn(); }, 500) };
-      });
-      setTimeout(() => cm && cm.refresh(), 0);
-    } else {
-      host.innerHTML = `<textarea id="plain" spellcheck="false" style="width:100%;height:240px;background:var(--code-bg);color:var(--code-ink);border:0;padding:12px;font-family:var(--font-mono)"></textarea>`;
-      const ta = $('#plain'); ta.value = saved != null ? saved : (ex.starter || '');
-      cm = { getValue: () => ta.value, setValue: v => { ta.value = v; }, refresh() {} };
-      ta.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run(); };
-    }
-    $('#run').onclick = run;
-    $('#check').onclick = () => doCheck(ex, id);
-    $('#reset').onclick = () => { cm.setValue(ex.starter || ''); $('#verdict').innerHTML = ''; };
-    // Start loading the runtime as soon as the task is opened, so it is likely ready by the first run.
-    const R = nat ? DJ.run[ex.type] : isSql ? null : DJ.run.py;
-    if (R && R.status === 'idle') R.start().catch(() => {});
-  }
-
-  function tableHtml(r) {
-    if (!r) return '<p class="muted" style="margin:0">Сұрау кесте қайтармады.</p>';
-    const rows = r.values.slice(0, 200);
-    return `<div style="overflow-x:auto"><table><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr>${rows.map(row => `<tr>${row.map(v => `<td>${v === null ? '<span class="muted">NULL</span>' : esc(v)}</td>`).join('')}</tr>`).join('')}</table></div>
-      <p class="note" style="margin:6px 0 0">${r.values.length} жол${r.values.length > 200 ? ' (алғашқы 200 көрсетілді)' : ''}</p>`;
-  }
-  function busy(on) { ['#run', '#check'].forEach(s => { const b = $(s); if (b) b.disabled = on; }); }
-  async function pyGuard() {
-    if (DJ.run.py.status !== 'ready') $('#out').innerHTML = '<p class="muted" style="margin:0">Python ортасы жүктелуде. Бірінші рет біраз уақыт алады…</p>';
-    try { await DJ.run.py.start(); return true; }
-    catch (e) {
-      DJ.run.py.worker = null; DJ.run.py.status = 'idle';
-      $('#out').innerHTML = `<div class="verdict bad">Python бұл браузерде іске қосылмады (${esc(e.message)}). Бетті жаңартып көріңіз немесе Chrome/Edge/Firefox-тың соңғы нұсқасын қолданыңыз.</div>`;
-      return false;
-    }
-  }
-
-  // Java/C++: the compiler is downloaded on first use; tell the learner while it loads.
-  async function nativeGuard(type) {
-    const R = DJ.run[type];
-    if (R.status !== 'ready') $('#out').innerHTML = `<p class="muted" style="margin:0">${R.label} компиляторы жүктелуде, ${R.size}…</p>`;
-    try { await R.start(); return true; }
-    catch (e) {
-      R.stop();
-      $('#out').innerHTML = `<div class="verdict bad">${esc(e.message)}</div>`;
-      return false;
-    }
-  }
-
-  function pandasNote(code) {
-    const R = DJ.run.py;
-    if (R.needsSklearn(code) && !R.sklearn) return 'scikit-learn жүктелуде (шамамен 40 МБ). Бұл тек бірінші рет бір-екі минут алуы мүмкін…';
-    return R.needsPandas(code) && !R.pandas ? 'pandas кітапханасы жүктелуде. Бұл тек бірінші рет біраз уақыт алады…' : '';
-  }
-
-  async function doRun(ex) {
-    const ed = cm, code = cm.getValue(), stdin = $('#stdin') ? $('#stdin').value : '';
-    const stale = () => cm !== ed;   // the learner moved to another task while this was running
-    busy(true); $('#verdict').innerHTML = '';
-    try {
-      if (ex.type === 'sql') {
-        $('#out').innerHTML = '<p class="muted" style="margin:0">Орындалуда…</p>';
-        const r = await DJ.run.sql.run(code, ex.dataset);
-        if (stale()) return;
-        if (!r.ok) $('#out').innerHTML = `<pre style="color:var(--bad)">${esc(r.error)}</pre>`;
-        else if (!r.results.length) $('#out').innerHTML = `<p style="margin:0">Сұрау орындалды. Өзгерген жолдар: ${r.changes}.</p>`;
-        else $('#out').innerHTML = r.results.map(tableHtml).join('<hr style="border:0;border-top:1px solid var(--line)">');
-      } else if (NATIVE[ex.type]) {
-        if (!(await nativeGuard(ex.type)) || stale()) return;
-        $('#out').innerHTML = '<p class="muted" style="margin:0">Компиляция және орындау…</p>';
-        const r = await DJ.run[ex.type].run(code, stdin);
-        if (stale()) return;
-        const err = r.error || r.stderr;
-        $('#out').innerHTML = (r.stdout ? `<pre>${esc(r.stdout)}</pre>` : '') + (err ? `<pre style="color:var(--bad)">${esc(err)}</pre>` : '') || '<p class="muted" style="margin:0">Бағдарлама орындалды, бірақ ештеңе шығармады.</p>';
-      } else {
-        if (!(await pyGuard()) || stale()) return;
-        $('#out').innerHTML = `<p class="muted" style="margin:0">${pandasNote(code) || 'Орындалуда…'}</p>`;
-        const r = await DJ.run.py.run(code);
-        if (stale()) return;
-        $('#out').innerHTML = (r.stdout ? `<pre>${esc(r.stdout)}</pre>` : '') + (r.error ? `<pre style="color:var(--bad)">${esc(r.error)}</pre>` : '') || '<p class="muted" style="margin:0">Код орындалды, бірақ ештеңе шығарылмады. <code>print()</code> қолданыңыз.</p>';
-      }
-    } catch (e) { if (!stale()) $('#out').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
-    finally { if (!stale()) busy(false); }
-  }
-
-  async function doCheck(ex, id) {
-    const ed = cm, code = cm.getValue();
-    const stale = () => cm !== ed;
-    S.saveCode(id, code);
-    busy(true);
-    $('#verdict').innerHTML = '<div class="verdict info">Тексерілуде…</div>';
-    try {
-      let r;
-      if (ex.type === 'sql') {
-        r = await DJ.run.sql.check(ex, code);
-        if (stale()) return;
-        if (r.shown) $('#out').innerHTML = tableHtml(r.shown);
-      } else {
-        const nat = !!NATIVE[ex.type];
-        if (!(await (nat ? nativeGuard(ex.type) : pyGuard()))) { if (!stale()) $('#verdict').innerHTML = ''; return; }
-        if (stale()) return;
-        if (!nat && pandasNote(code)) $('#verdict').innerHTML = `<div class="verdict info">${pandasNote(code)}</div>`;
-        r = await (nat ? DJ.run[ex.type] : DJ.run.py).check(ex, code);
-        if (stale()) return;
-        let out = '';
-        if (r.stdout) out += `<div class="eyebrow">Сіздің шығысыңыз</div><pre>${esc(r.stdout)}</pre>`;
-        if (r.trace) out += `<pre style="color:var(--bad)">${esc(r.trace)}</pre>`;
-        if (r.expected != null) out += `<div class="eyebrow" style="margin-top:10px">Күтілген шығыс</div><pre>${esc(r.expected)}</pre>`;
-        $('#out').innerHTML = out || '<p class="muted" style="margin:0">Шығыс жоқ.</p>';
-      }
-      const G = L.lesson.gate ? gateState() : null;
-      if (G && gateState().res[L.ei]) { $('#verdict').innerHTML = ''; return; }
-      if (r.pass) passed(ex, id, ex.type);
-      else if (G) { gateFail(ex, '#verdict'); $('#verdict').insertAdjacentHTML('afterbegin', `<div class="verdict info">${r.msg || ''}</div>`); }
-      else {
-        L.fails[id] = (L.fails[id] || 0) + 1;
-        $('#verdict').innerHTML = `<div class="verdict bad">${r.msg || 'Әзірге дұрыс емес.'}</div>`;
-        if (L.fails[id] >= 3 && (!ex.hints || (L.hints[id] || 0) >= ex.hints.length)) offerSolution(ex, id);
-      }
-    } catch (e) { if (!stale()) $('#verdict').innerHTML = `<div class="verdict bad">${esc(e.message || e)}</div>`; }
-    finally { if (!stale()) busy(false); }
-  }
-
-  // ---------- module exams: limited tries per task, pass mark 75% ----------
-  const GATE_PASS = 0.75;
-  const gateTries = ex => (isCodeType(ex.type) || ex.type === 'sheet') ? 3 : 1;
-  function gateState() { return S.gate(L.lesson.id); }
-  function gateScore(st) {
-    const exs = L.lesson.exercises, total = exs.reduce((s, e) => s + (e.xp || 10), 0);
-    const got = exs.reduce((s, e, i) => s + (st.res[i] === 'ok' ? (e.xp || 10) : 0), 0);
-    return { pct: got / total, resolved: exs.every((_, i) => st.res[i]) };
-  }
-  // A wrong answer in an exam: count the try; when tries run out the task is closed as failed.
-  function gateFail(ex, sel) {
-    const st = gateState(), i = L.ei;
-    st.tries[i] = (st.tries[i] || 0) + 1;
-    const left = gateTries(ex) - st.tries[i];
-    if (left <= 0) st.res[i] = 'fail';
-    S.setGate(L.lesson.id, st);
-    $(sel).innerHTML = left > 0
-      ? `<div class="verdict bad">Дұрыс емес. Бұл тапсырмада тағы ${left} мүмкіндік бар.</div>`
-      : `<div class="verdict bad">Дұрыс емес. Бұл тапсырма есепке алынбайды.</div>${gateNextHtml()}`;
-    afterGateStep();
-    return true;
-  }
-  function gateNextHtml() {
-    const st = gateState(), nextI = L.lesson.exercises.findIndex((_, i) => !st.res[i]);
-    return nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex" data-next="${nextI}">Келесі тапсырма →</button></div>` : '';
-  }
-  function afterGateStep() {
-    const st = gateState();
-    $$('[data-step]').forEach(b => { const i = Number(b.dataset.step); b.classList.toggle('ok', st.res[i] === 'ok'); b.classList.toggle('bad', st.res[i] === 'fail'); });
-    const nx = $('#next-ex'); if (nx && nx.dataset.next) nx.onclick = () => { L.ei = Number(nx.dataset.next); renderTask(); $('#task').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    const sc = gateScore(st);
-    if (!sc.resolved) return;
-    const pct = Math.round(sc.pct * 100), ok = sc.pct >= GATE_PASS - 1e-9;
-    st.best = Math.max(st.best || 0, pct);
-    S.setGate(L.lesson.id, st);
-    const p = S.progress();
-    if (ok && !p.lessons[L.lesson.id]) finishLesson();
-    const box = `<div class="card gate-result ${ok ? 'pass' : 'fail'}" style="margin-top:14px"><div class="eyebrow">Емтихан нәтижесі</div><h2 style="margin:4px 0">${pct}%</h2>
-      <p style="margin:0">${ok ? 'Емтихан тапсырылды. Модуль аяқталды.' : `Өту шегі ${Math.round(GATE_PASS * 100)}%. Қате кеткен сабақтарды қайталап, қайта тапсырыңыз.`}</p>
-      ${ok ? '' : '<div class="actions" style="margin-top:10px"><button class="btn" id="gate-retry">Қайта тапсыру</button></div>'}</div>`;
-    $('#qv').insertAdjacentHTML('beforeend', box);
-    if (!ok) $('#gate-retry').onclick = () => { S.setGate(L.lesson.id, { attempt: (st.attempt || 1) + 1, res: {}, tries: {}, best: st.best }); L.ei = 0; L.hints = {}; L.fails = {}; renderTask(); };
-  }
-
-  function passed(ex, id, kind, explain) {
-    if (L.lesson.gate) {
-      const st = gateState();
-      st.res[L.ei] = 'ok'; S.setGate(L.lesson.id, st);
-      const r = S.complete(id, ex.xp || 10, false, kind);
-      celebrate(r, $('#check') || $('#q-check')); topbar();
-      const target = isCodeType(kind) ? $('#verdict') : $('#qv');
-      target.innerHTML = `<div class="verdict ok">Дұрыс!${r.xp ? ` +${r.xp} XP` : ''}</div>` + gateNextHtml();
-      if (target.id === 'verdict') { $('#qv').innerHTML = ''; }
-      afterGateStep();
-      return;
-    }
-    const usedHint = !!(L.hints[id] || wasHinted(id) || (!isCodeType(kind) && kind !== 'sheet' && kind !== 'rubric' && L.fails[id]));
-    const r = S.complete(id, ex.xp || 10, usedHint, kind);
-    track('exercise_pass', { ex: id, type: kind, hint: usedHint, first: !!r.xp, guest: S.isGuest() });
-    celebrate(r, $('#check') || $('#q-check'));
-    topbar();
-    const exs = L.lesson.exercises;
-    const p = S.progress();
-    const nextI = exs.findIndex((_, i) => !p.done[exId(L.lesson, i)]);
-    const PRAISE = ['Дұрыс!', 'Керемет!', 'Тамаша!', 'Жарайсыз!', 'Дәл таптыңыз!'];
-    const msg = `<div class="verdict ok"><b>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}</b>${r.xp ? ` <span class="xp-tag">+${r.xp} XP</span>` : ''}${explain ? ' ' + explain : ''}</div>`;
-    const target = isCodeType(kind) ? $('#verdict') : $('#qv');
-    const save = S.isGuest() && r.xp ? '<p class="guest-save">XP жинала бастады. Прогресс жоғалмасын десеңіз, <button type="button" class="linkbtn" data-go="auth">тіркеліңіз</button>: жиналғаны аккаунтқа көшеді.</p>' : '';
-    target.innerHTML = msg + save + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
-    $$('[data-step]').forEach(b => b.classList.toggle('ok', !!p.done[exId(L.lesson, Number(b.dataset.step))]));
-    if (nextI >= 0) $('#next-ex').onclick = () => { L.ei = nextI; renderTask(); $('#task').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    if (nextI < 0 && !p.lessons[L.lesson.id]) finishLesson();
-  }
+  // ---------- lesson (js/lesson.js) ----------
+  const LS = DJ.lessonScreen({ $, $$, esc, S, G, ICON, LEVELS, celebrate, fbFoot, go, kkOnly, loadEditor, render, toast, topbar, track,
+    get route() { return route; }, get noEditor() { return noEditor; } });
+  const viewLesson = LS.viewLesson;
 
   // ---------- map ----------
   // A winding trail of module nodes, one region per phase. The connecting path is drawn after layout.
@@ -1214,7 +759,7 @@
         <div style="min-width:0"><h1 style="font-size:1.5rem;margin:0">${esc(u.name)}</h1><div class="muted">@${esc(u.username)} · ${esc(career.id)} ${esc(career.name)} · ${u.created} бастап</div></div>
       </div>
       <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px">
-        ${stat(p.xp, 'XP барлығы')}${stat(lv.level, 'деңгей')}${stat(p.best, 'ең ұзақ streak')}${stat(Object.keys(p.lessons).length, 'сабақ өтілді')}${stat(Object.keys(p.done).length, 'тапсырма орындалды')}
+        ${stat(p.xp, 'XP барлығы')}${stat(lv.level, 'деңгей')}${stat(p.best, 'ең ұзақ streak')}${stat(Object.keys(p.lessons).length, 'сабақ өтілді')}${stat(Object.keys(p.done).filter(S.isTask).length, 'тапсырма орындалды')}
       </div>
       <div class="card"><h3 style="margin-bottom:10px">Мансап деңгейі</h3><div style="display:grid;gap:4px">${DJ.careerLevels.map((l, i) => { const ci = DJ.careerLevels.findIndex(x => x.id === career.id); return `<div style="display:flex;gap:12px;font-size:.92rem;${i === ci ? 'color:var(--accent);font-weight:600' : i < ci ? '' : 'color:var(--ink-2)'}"><span style="font-family:var(--font-mono);width:28px">${l.id}</span><span>${esc(l.name)}</span></div>`; }).join('')}</div></div>
       <div class="card"><h3 style="margin-bottom:10px">Сертификаттар</h3>${(() => { const cs = certsEarned(p); return cs.length ? `<div style="display:grid;gap:8px">${cs.map(l => `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b>${esc(l.id)}</b> ${esc(l.name)}</span><button class="btn ghost sm" data-go="cert" data-mod="${l.id}">Сертификатты ашу</button></div>`).join('')}</div>` : `<p class="note" style="margin:0">Мансап деңгейінің барлық модулін (емтихандарымен) аяқтағанда сертификат беріледі. Алғашқысы: L1 Data Literate (M0.1 және M0.2).</p>`; })()}</div>

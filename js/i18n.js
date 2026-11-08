@@ -5,8 +5,6 @@
 (function () {
   const LANGS = { kk: 'Қазақша', ru: 'Русский', en: 'English' };
   const SHORT = { kk: 'ҚАЗ', ru: 'РУС', en: 'ENG' };
-  // Courses whose lessons have ru/en text in content/i18n/<lang>/<file>.js.
-  const TRANSLATED = ['python', 'sql'];
   let lang = 'kk';
   try { lang = localStorage.getItem('dj.lang') || ''; } catch (e) { lang = ''; }
   if (!LANGS[lang]) {
@@ -108,9 +106,10 @@
   // Lesson patches: { lessonId: { title, body, ex: [{ prompt, hints, options, explain, ... }] } } and
   // { moduleId: { intro } } under modules. Called by content/i18n/<lang>.js, which loads before js/app.js.
   // Patches are kept: a course file that loads later (DJ.loadModule) replaces its module, and reapply() patches it again.
-  const patches = [], textFor = new Set();   // lesson ids that have text in this language
-  function patch(p, again) {
-    if (!again) { patches.push(p); Object.keys(p.lessons || {}).forEach(id => textFor.add(id)); }
+  // content/i18n/<lang>/titles.js (generated) patches titles up front and names the modules that have text.
+  const patches = [], textFor = new Set();   // module ids that have text in this language
+  function patch(p, again, mods) {
+    if (!again) { patches.push(p); (mods || []).forEach(id => textFor.add(id)); }
     const byId = {};
     for (const id in DJ.modules) (DJ.modules[id].lessons || []).forEach(l => { byId[l.id] = l; });
     for (const id in p.modules || {}) if (DJ.modules[id]) Object.assign(DJ.modules[id], p.modules[id]);
@@ -130,7 +129,12 @@
   }
 
   // False when the interface is ru/en but this module's lessons exist only in Kazakh.
-  function hasText(mod) { return lang === 'kk' || !!(mod && mod.lessons && mod.lessons.some(l => textFor.has(l.id))); }
+  function hasText(mod) { return lang === 'kk' || !!(mod && textFor.has(mod.id)); }
+  // The translation file that goes with a course file (content/x.js → content/i18n/<lang>/x.js), or null.
+  function fileFor(src) {
+    const b = String(src || '').replace(/^content\//, '').replace(/\.js$/, '');
+    return lang !== 'kk' && (DJ.i18n.files || []).includes(b) ? `content/i18n/${lang}/${b}.js` : null;
+  }
   function reapply() { patches.forEach(p => patch(p, true)); }
 
   function set(l) {
@@ -138,20 +142,41 @@
     try { localStorage.setItem('dj.lang', l); } catch (e) { /* private mode: applies to this page only */ }
     location.reload();
   }
+  // Language menu: a button that opens a small block-style list (the native <select> popup could not be styled).
+  const GLOBE = '<svg class="lp-globe" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>';
   function picker(cls) {
-    return `<label class="lang-pick ${cls || ''}" data-noi18n><span class="sr-only">Language</span><svg class="lp-globe" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><select data-lang-pick aria-label="Тіл / Язык / Language">${
-      Object.keys(LANGS).map(k => `<option value="${k}" ${k === lang ? 'selected' : ''}>${SHORT[k]}</option>`).join('')}</select></label>`;
+    return `<div class="lang-pick ${cls || ''}" data-noi18n><button type="button" class="lp-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Тіл / Язык / Language: ${LANGS[lang]}">${GLOBE}<span class="lp-cur">${SHORT[lang]}</span><span class="lp-caret" aria-hidden="true"></span></button>` +
+      `<div class="lp-menu" role="menu" hidden>${Object.keys(LANGS).map(k => `<button type="button" role="menuitemradio" aria-checked="${k === lang}" data-lang="${k}"><b>${SHORT[k]}</b><span>${LANGS[k]}</span></button>`).join('')}</div></div>`;
   }
-  document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-lang-pick]')) set(e.target.value); });
+  function closeMenus(except) {
+    document.querySelectorAll('.lang-pick .lp-menu:not([hidden])').forEach(m => { if (m !== except) { m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false'); } });
+  }
+  document.addEventListener('click', e => {
+    const item = e.target.closest && e.target.closest('.lp-menu [data-lang]');
+    if (item) { closeMenus(); if (item.dataset.lang !== lang) set(item.dataset.lang); return; }
+    const btn = e.target.closest && e.target.closest('.lp-btn');
+    if (!btn) return closeMenus();
+    const menu = btn.nextElementSibling, open = menu.hidden;
+    closeMenus(menu); menu.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+    if (open) (menu.querySelector('[aria-checked="true"]') || menu.firstElementChild).focus();
+  });
+  document.addEventListener('keydown', e => {
+    const menu = e.target.closest && e.target.closest('.lp-menu');
+    if (!menu) return;
+    const items = [...menu.querySelectorAll('[data-lang]')], i = items.indexOf(document.activeElement);
+    if (e.key === 'Escape' || e.key === 'Tab') { menu.hidden = true; menu.previousElementSibling.setAttribute('aria-expanded', 'false'); if (e.key === 'Escape') menu.previousElementSibling.focus(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); items[e.key === 'Home' ? 0 : items.length - 1].focus(); }
+  });
 
   // Native dialogs get the same lookup.
   ['alert', 'confirm'].forEach(f => { const o = window[f]; if (o) window[f] = msg => o.call(window, typeof msg === 'string' ? tr(msg) : msg); });
 
-  DJ.i18n = { lang, LANGS, tr, patch, reapply, hasText, set, picker };
+  DJ.i18n = { lang, LANGS, tr, patch, reapply, hasText, fileFor, set, picker };
   if (lang !== 'kk') {
     const v = window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '';
-    // Parser-inserted, so they run before js/app.js. One file per translated course.
-    TRANSLATED.forEach(c => document.write(`<script src="content/i18n/${lang}/${c}.js${v}"><\/script>`));
+    // Parser-inserted, so it runs before js/app.js. Course text itself loads with the course (DJ.loadModule).
+    document.write(`<script src="content/i18n/${lang}/titles.js${v}"><\/script>`);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   }
 })();

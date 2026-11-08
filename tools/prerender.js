@@ -157,7 +157,7 @@ for (const p of DJ.phases) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="../../assets/fonts.css">
 <script type="application/ld+json">${json(ld)}</script>
 <style>
 ${css}
@@ -191,6 +191,8 @@ ${lessons}
 <ul style="margin:8px 0 0 20px;display:grid;gap:6px">${items.join('')}</ul></section>`);
 }
 
+// Legal pages (privacy, terms, cookies, licences) in every language, see tools/legal.js.
+urls.push(...require('child_process').execFileSync('node', [path.join(__dirname, 'legal.js')]).toString().split('\n').filter(Boolean));
 fs.writeFileSync(path.join(root, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(u => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}

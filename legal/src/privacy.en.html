@@ -1,0 +1,71 @@
+<h1>Privacy policy</h1>
+<p class="muted">Last updated: {{UPDATED}}</p>
+<p>This document explains what data the Tolqyn website (<a href="https://olzhaa.github.io/datajol/">olzhaa.github.io/datajol</a>) collects about you, what we use it for, to whom it is passed on, and how you can manage your data. This document is based on the Law of the Republic of Kazakhstan on Personal Data and Their Protection.</p>
+
+<h2 id="owner">1. Who is responsible for the data</h2>
+<p>Owner and operator of the personal data: <b>{{OWNER}}</b> ({{STATUS}}), {{CITY}}. Contact: <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>.</p>
+
+<h2 id="collect">2. What data we collect</h2>
+<p>The amount of data depends on how you use the site. We ask only for what is needed to operate it.</p>
+<table>
+<thead><tr><th>Situation</th><th>Data</th><th>Where it is stored</th></tr></thead>
+<tbody>
+<tr><td>Without an account (guest or local account)</td><td>Your name, login, password hash (not the password itself), progress, the code you wrote, language and theme settings</td><td>Only in your browser. It is not sent to us.</td></tr>
+<tr><td>Cloud account (email or Google)</td><td>Email, display name, password hash; if you sign in with Google, the email and name provided by Google; the consent mark made at registration</td><td>Supabase database</td></tr>
+<tr><td>Learning progress</td><td>XP, completed lessons, completed tasks, badges, streak, settings. Code projects you wrote stay in the browser</td><td>Supabase database</td></tr>
+<tr><td>Leaderboard and portfolio</td><td>Your display name and XP appear on the leaderboard (you can hide them in your profile). A public portfolio page is shown only if you added it yourself</td><td>Supabase database</td></tr>
+<tr><td>Classes, homework and exams</td><td>Classes you joined, code you wrote for an assignment, results, start and end times, and actions during an exam: leaving the page (with its duration), attempts to paste or copy text, exiting full-screen mode. This data is visible to your class teacher</td><td>Supabase database</td></tr>
+<tr><td>Feedback</td><td>Your message, the page where you wrote it, email (if you provide it, only to reply)</td><td>Supabase database</td></tr>
+<tr><td>Site statistics (only with your consent)</td><td>Which screens were opened, which tasks were completed, language, a random session number, and the account number if you are signed in</td><td>Supabase database</td></tr>
+<tr><td>Error reports</td><td>Error text, page address, browser name and version (User-Agent), site version, random session number</td><td>Supabase database</td></tr>
+<tr><td>Hosting</td><td>When you open a page, your IP address and browser name are recorded in the hosting log</td><td>GitHub Pages (GitHub Inc.)</td></tr>
+</tbody>
+</table>
+<p><b>What we do not collect:</b> date of birth, phone number, address, geolocation, payment data, document numbers. The site has no advertising, Google Analytics, Facebook Pixel or other third-party trackers. We do not use cookie files (for details, see <a href="{{L:cookies}}">Cookies and browser storage</a>).</p>
+
+<h2 id="why">3. What we use the data for</h2>
+<ul>
+<li>Signing in to your account and keeping your progress across devices. Legal basis: performance of the Terms of use and your consent given at registration.</li>
+<li>Leaderboard, certificates, classes and exams. Legal basis: operation of the feature you enabled yourself.</li>
+<li>Replying to feedback.</li>
+<li>Improving the site (statistics). Legal basis: your consent only. If you do not give consent, statistics are not sent.</li>
+<li>Fixing errors and site security (error reports, protection against artificially inflating XP). Legal basis: necessity for the operation of the site.</li>
+</ul>
+<p>We do not sell your data, do not pass it on for advertising, and do not use it to build profiles or make automated decisions.</p>
+
+<h2 id="share">4. Who processes the data</h2>
+<ul>
+<li><b>Supabase Inc.</b> (USA): database, authentication and sending of confirmation emails.</li>
+<li><b>GitHub Inc.</b> (USA): delivery of the site files (GitHub Pages).</li>
+<li><b>Google LLC</b> (USA): only if you press the “Sign in with Google” button; sign-in takes place on Google’s side.</li>
+<li>Class teacher: results of your class’s assignments and actions during exams.</li>
+</ul>
+<p>The servers of these services may be located outside Kazakhstan. By creating an account, you consent to the transfer of your data abroad. Fonts and learning libraries (Python, SQL, Java, C++) are loaded from the site’s own server and do not send requests to third-party websites.</p>
+
+<h2 id="keep">5. How long we keep the data</h2>
+<ul>
+<li>Account and progress: until the account is deleted.</li>
+<li>Site statistics: 180 days. Error reports: 60 days.</li>
+<li>Feedback: until it has been reviewed, and no longer than 2 years.</li>
+<li>Class data: until the teacher deletes the class or assignment, or until you delete your account.</li>
+</ul>
+<p>When an account is deleted, its progress, class membership and exam answers are deleted with it. The account number is removed from statistics and feedback records, so they are no longer linked to you.</p>
+
+<h2 id="rights">6. Your rights</h2>
+<ul>
+<li><b>Viewing data and obtaining a copy:</b> Profile → “Download my data” (JSON file).</li>
+<li><b>Correction:</b> you can change your name in your profile. To change your email, write to us.</li>
+<li><b>Deletion:</b> Profile → “Delete account”. The account and all cloud progress are deleted immediately.</li>
+<li><b>Withdrawing consent:</b> you can change your consent to statistics at any time via “Cookie settings” at the bottom of the site.</li>
+<li><b>Hiding from the leaderboard:</b> Profile → “Hide me from the leaderboard”.</li>
+</ul>
+<p>Send other requests to <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>. We reply within the time limits set by law. If you are not satisfied with the reply, you may complain to the authorised body for personal data protection of the Republic of Kazakhstan.</p>
+
+<h2 id="kids">7. Children</h2>
+<p>You may create a cloud account yourself from the age of 16. If you are under 16, create an account only with the permission of a parent or legal guardian. A teacher who invites pupils to a class is responsible for confirming that such permission exists. A parent may ask for a child’s account to be deleted at <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>. In the mode without an account, no data is sent to us.</p>
+
+<h2 id="security">8. Security</h2>
+<p>Communication takes place only over HTTPS. Passwords are stored only as hashes. In the database, each user can read only their own records (Row Level Security). No system is completely secure: if we detect a data leak, we will notify you in the manner required by law.</p>
+
+<h2 id="changes">9. Changes</h2>
+<p>If the policy changes, we will update the date on this page. We will announce significant changes on the site in advance.</p>

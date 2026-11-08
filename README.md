@@ -70,6 +70,10 @@ node tests/verify-exercises.js   # BASE_URL, CHROMIUM_PATH айнымалыла�
 2. Authentication → URL Configuration: Site URL және Redirect URLs ішіне `https://olzhaa.github.io/datajol/**` қосыңыз.
 3. `js/config.js` ішінде Supabase URL/кілтін және `cloudHosts` тізімін (бұлт қосылатын домендер) тексеріңіз.
 
+## Құқықтық беттер
+
+`legal/src/<doc>.<kk|ru|en>.html` мәтіндерінен `tools/legal.js` (build.py іске қосады) `legal/privacy.html`, `terms`, `cookies`, `licenses` беттерін үш тілде жасайды. Сайт иесінің деректері мен күн `legal/src/site.json` ішінде; шарттар өзгерсе, `js/consent.js` ішіндегі `terms` күнін де жаңартыңыз. Статистика (`DJ.cloud.track`) тек баннердегі келісіммен жіберіледі. Ескі жазбаларды өшіру: `supabase/retention.sql`. Шрифттер `assets/fonts/` ішінде (OFL).
+
 ## Жариялау
 
 GitHub Pages: Settings → Pages → Build and deployment → Source: **GitHub Actions** (`.github/workflows/pages.yml` әр push-та `build.py`-ды іске қосып, сайтты жариялайды). `404.html` белгісіз беттер үшін қолданылады.

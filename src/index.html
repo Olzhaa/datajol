@@ -1,6 +1,4 @@
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="assets/fonts.css">
 <style>
 /*CODEMIRROR_CSS*/
 </style>
@@ -8,6 +6,7 @@
 /*APP_CSS*/
 </style>
 
+<a class="skip-link" href="#app">Мазмұнға өту</a>
 <header class="topbar"><div class="wrap" id="topbar"></div></header>
 <main class="wrap" id="app">
 <section class="landing" style="padding:40px 0 64px">
@@ -17,6 +16,16 @@
 <!--MODULE_LIST-->
 </section>
 </main>
+<footer class="site-foot" id="site-foot"><div class="wrap">
+<nav aria-label="Құқықтық ақпарат">
+<a href="legal/privacy.html" data-legal="privacy">Құпиялық саясаты</a>
+<a href="legal/terms.html" data-legal="terms">Пайдалану шарттары</a>
+<a href="legal/cookies.html" data-legal="cookies">Cookie және браузер жады</a>
+<a href="legal/licenses.html" data-legal="licenses">Лицензиялар</a>
+<button type="button" class="linkbtn" id="consent-open" hidden>Cookie баптаулары</button>
+</nav>
+<p>© 2026 Tolqyn · <span>Аділбек Олжабек</span> · <a href="mailto:olzha.adilbek@gmail.com">olzha.adilbek@gmail.com</a></p>
+</div></footer>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
 <script src="content/curriculum.js"></script>
@@ -33,6 +42,7 @@
 <script src="js/config.js"></script>
 <script src="js/store.js"></script>
 <script src="js/cloud.js"></script>
+<script src="js/consent.js"></script>
 <script src="js/runners.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/game.js"></script>

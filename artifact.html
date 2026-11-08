@@ -1,6 +1,4 @@
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="assets/fonts.css">
 <style>
 /* BASICS */
 
@@ -1247,8 +1245,33 @@ body.exam-mode .topbar, body.exam-mode .fb-foot { display: none; }
 .fs-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(5, 4, 20, .92); display: grid; place-items: center; padding: 16px; }
 .fs-overlay .card { max-width: 420px; text-align: center; }
 
+/* Legal: skip link, site footer, statistics consent banner, consent checkboxes (js/consent.js, legal/). */
+.skip-link { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--accent); color: var(--accent-ink); padding: 10px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+.site-foot { border-top: 1px solid var(--line); margin-top: 48px; padding: 20px 0 calc(28px + env(safe-area-inset-bottom)); font-size: .85rem; color: var(--ink-2); }
+.site-foot nav { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin-bottom: 8px; }
+.site-foot a { color: var(--ink-2); text-underline-offset: 3px; }
+.site-foot a:hover { color: var(--ink); }
+.site-foot .linkbtn { margin: 0; padding: 0; font-size: inherit; color: var(--ink-2); justify-self: auto; }
+.site-foot p { margin: 0; }
+.consent { position: fixed; z-index: 60; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 560px; margin-inline: auto;
+  background: var(--surface); color: var(--ink); border: 2px solid var(--line-strong); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+.consent h2 { font-size: 1rem; margin: 0 0 6px; }
+.consent p { margin: 0 0 8px; font-size: .9rem; line-height: 1.5; }
+.consent a { color: var(--link); }
+.consent .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.consent .actions .btn { flex: 1 1 160px; }
+label.check { display: flex; gap: 10px; align-items: flex-start; font-size: .88rem; line-height: 1.4; cursor: pointer; }
+label.check input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: var(--accent); }
+:root[data-theme="light"] .linkbtn { color: var(--link); }   /* lime on white is 1.3:1 */
+:root[data-theme="light"] :focus-visible { outline-color: var(--ink); }   /* keyboard focus ring visible on light backgrounds */
+.legal-links { margin: 0; }
+.legal-links a { color: var(--link); }
+@media (max-width: 700px) { .site-foot { padding-bottom: 20px; } .consent { bottom: calc(var(--tabbar) + 12px + env(safe-area-inset-bottom, 0px)); max-height: 60vh; overflow-y: auto; } }
+
 </style>
 
+<a class="skip-link" href="#app">Мазмұнға өту</a>
 <header class="topbar"><div class="wrap" id="topbar"></div></header>
 <main class="wrap" id="app">
 <section class="landing" style="padding:40px 0 64px">
@@ -1275,6 +1298,16 @@ body.exam-mode .topbar, body.exam-mode .fb-foot { display: none; }
 <ul style="margin:8px 0 0 20px;display:grid;gap:6px"><li><a href="m/py-2/"><b>PY2 Intermediate Python</b></a> — OOP, генераторлар, декораторлар, файлдар, рекурсия</li><li><a href="m/java-1/"><b>JV1 Java</b></a> — Синтаксис, класстар, коллекциялар, қателер</li><li><a href="m/cpp-1/"><b>CP1 C++</b></a> — Синтаксис, функциялар, vector, pointer, класстар</li><li><a href="m/dsa-1/"><b>DSA Data Structures &amp; Algorithms</b></a> — Big-O, іздеу, сұрыптау, рекурсия, stack/queue, hash, ағаш, граф, DP</li><li><a href="m/dsa-2/"><b>DSA2 Advanced Algorithms</b></a> — Sliding window, hash table ішінен, heapsort, AVL, union-find, Dijkstra, MST, greedy, DP, KMP, trie</li><li><a href="m/py-3/"><b>PY3 Python Backend</b></a> — HTTP, REST, роутинг, валидация, ORM, аутентификация, тесттер, regex, async, деплой</li></ul></section>
 </section>
 </main>
+<footer class="site-foot" id="site-foot"><div class="wrap">
+<nav aria-label="Құқықтық ақпарат">
+<a href="legal/privacy.html" data-legal="privacy">Құпиялық саясаты</a>
+<a href="legal/terms.html" data-legal="terms">Пайдалану шарттары</a>
+<a href="legal/cookies.html" data-legal="cookies">Cookie және браузер жады</a>
+<a href="legal/licenses.html" data-legal="licenses">Лицензиялар</a>
+<button type="button" class="linkbtn" id="consent-open" hidden>Cookie баптаулары</button>
+</nav>
+<p>© 2026 Tolqyn · <span>Аділбек Олжабек</span> · <a href="mailto:olzha.adilbek@gmail.com">olzha.adilbek@gmail.com</a></p>
+</div></footer>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
 <script src="content/curriculum.js"></script>
@@ -1291,6 +1324,7 @@ body.exam-mode .topbar, body.exam-mode .fb-foot { display: none; }
 <script src="js/config.js"></script>
 <script src="js/store.js"></script>
 <script src="js/cloud.js"></script>
+<script src="js/consent.js"></script>
 <script src="js/runners.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/game.js"></script>

@@ -38,8 +38,8 @@ import base64
 csp = '; '.join([
     "default-src 'self'",
     "script-src 'self' 'wasm-unsafe-eval' 'sha256-" + base64.b64encode(hashlib.sha256(inline.encode()).digest()).decode() + "'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     "img-src 'self' data: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
     "worker-src 'self' blob:",
@@ -78,6 +78,6 @@ head = f'''<!doctype html>
 <link rel="icon" href="{favicon_uri}" type="image/svg+xml">
 <script type="application/ld+json">{ld}</script>
 '''
-title_end = page.index('</style>\n\n<header')
+title_end = page.index('</style>\n\n<a class="skip-link"')
 (root / 'index.html').write_text(head + page[:title_end + len('</style>\n')] + '</head>\n<body>\n' + page[title_end + len('</style>\n'):] + '\n</body>\n</html>\n')
 print('built', version)

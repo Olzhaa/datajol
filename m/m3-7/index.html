@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Exo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="../../assets/fonts.css">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M3.7 DA Capstone & Interview","description":"Қорытынды жоба: «Бірінші кофе» желісінің 6 айлық деректерін бастан-аяқ талдайсыз. Бизнес сұрақ → profiling → тазалау → метрикалар → сегменттер → retention →…","url":"https://olzhaa.github.io/datajol/m/m3-7/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT40H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M3.7 DA Capstone & Interview","item":"https://olzhaa.github.io/datajol/m/m3-7/"}]}]</script>
 <style>
 /* Block theme: a dark playfield grid, bevelled square blocks in four piece colours, pixel type for the HUD. */
@@ -915,6 +915,30 @@ body.exam-mode .topbar, body.exam-mode .fb-foot { display: none; }
 .plain-ed { height: 260px; }
 .fs-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(5, 4, 20, .92); display: grid; place-items: center; padding: 16px; }
 .fs-overlay .card { max-width: 420px; text-align: center; }
+
+/* Legal: skip link, site footer, statistics consent banner, consent checkboxes (js/consent.js, legal/). */
+.skip-link { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--accent); color: var(--accent-ink); padding: 10px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+.site-foot { border-top: 1px solid var(--line); margin-top: 48px; padding: 20px 0 calc(28px + env(safe-area-inset-bottom)); font-size: .85rem; color: var(--ink-2); }
+.site-foot nav { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin-bottom: 8px; }
+.site-foot a { color: var(--ink-2); text-underline-offset: 3px; }
+.site-foot a:hover { color: var(--ink); }
+.site-foot .linkbtn { margin: 0; padding: 0; font-size: inherit; color: var(--ink-2); justify-self: auto; }
+.site-foot p { margin: 0; }
+.consent { position: fixed; z-index: 60; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 560px; margin-inline: auto;
+  background: var(--surface); color: var(--ink); border: 2px solid var(--line-strong); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+.consent h2 { font-size: 1rem; margin: 0 0 6px; }
+.consent p { margin: 0 0 8px; font-size: .9rem; line-height: 1.5; }
+.consent a { color: var(--link); }
+.consent .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.consent .actions .btn { flex: 1 1 160px; }
+label.check { display: flex; gap: 10px; align-items: flex-start; font-size: .88rem; line-height: 1.4; cursor: pointer; }
+label.check input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: var(--accent); }
+:root[data-theme="light"] .linkbtn { color: var(--link); }   /* lime on white is 1.3:1 */
+:root[data-theme="light"] :focus-visible { outline-color: var(--ink); }   /* keyboard focus ring visible on light backgrounds */
+.legal-links { margin: 0; }
+.legal-links a { color: var(--link); }
+@media (max-width: 700px) { .site-foot { padding-bottom: 20px; } .consent { bottom: calc(var(--tabbar) + 12px + env(safe-area-inset-bottom, 0px)); max-height: 60vh; overflow-y: auto; } }
 
 .static-page section { margin-top: 36px; }
 .static-page h2 { font-size: 1.3rem; margin-bottom: 12px; }

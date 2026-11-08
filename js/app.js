@@ -143,7 +143,7 @@
       <h2 id="fb-h">Пікір қалдыру</h2>
       <div class="fb-kinds" role="group" aria-label="Пікір түрі">${FB_KINDS.map(([k, n], i) => `<button type="button" class="chip" data-kind="${k}" aria-pressed="${i === 0}">${n}</button>`).join('')}</div>
       <label class="field">Не болды? Не жақсартуға болады?<textarea name="msg" rows="5" maxlength="2000" required></textarea></label>
-      ${DJ.cloud.user ? '' : '<label class="field">Email (міндетті емес, жауап керек болса)<input type="email" name="contact" maxlength="200" autocomplete="email"></label>'}
+      ${DJ.cloud.user ? '' : '<label class="field">Email (міндетті емес, тек жауап беру үшін)<input type="email" name="contact" maxlength="200" autocomplete="email"></label>'}
       <p class="note" style="margin:0">Бет: ${esc(where)}</p>
       <div class="err" id="fb-err" role="alert"></div>
       <div class="actions"><button class="btn" type="submit" id="fb-send">Жіберу</button><button class="btn ghost" type="button" id="fb-cancel">Болдырмау</button></div>
@@ -258,19 +258,23 @@
         <div class="err" id="auth-err" role="alert"></div>
         <button class="btn" type="submit" id="auth-submit">Тіркеліп, бастау</button>
         <p class="note">Бұл нұсқада аккаунт пен прогресс осы браузерде сақталады. Сервер нұсқасында олар бұлтқа көшеді.</p>
+        <p class="note legal-links">${['terms', 'privacy'].map(d => `<a href="${esc(DJ.consent.legalHref(d))}" target="_blank" rel="noopener">${d === 'terms' ? 'Пайдалану шарттары' : 'Құпиялық саясаты'}</a>`).join(' · ')}</p>
       </form>
       ${DJ.cloud && DJ.cloud.enabled ? `<form class="card auth-card" id="signup-form" novalidate hidden>
-        <h3 style="margin:0">Тіркелу</h3>
-        <label class="field">Аты-жөніңіз<input type="text" name="fullname" autocomplete="name" placeholder="Айгерім Серікова" maxlength="40"></label>
+        <h2 style="margin:0;font-size:1.15rem">Тіркелу</h2>
+        <label class="field">Атыңыз (рейтинг пен сертификатта көрінеді)<input type="text" name="fullname" autocomplete="name" placeholder="Айгерім" maxlength="40"></label>
         <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
         <label class="field">Пароль<input type="password" name="spw" autocomplete="new-password" minlength="8" placeholder="кемінде 8 таңба"></label>
+        <label class="check"><input type="checkbox" name="terms"><span>Пайдалану шарттары мен Құпиялық саясатын қабылдаймын</span></label>
+        <label class="check"><input type="checkbox" name="age"><span>16 жастан асқанмын немесе ата-анамның рұқсаты бар</span></label>
+        <p class="note legal-links">${['terms', 'privacy'].map(d => `<a href="${esc(DJ.consent.legalHref(d))}" target="_blank" rel="noopener">${d === 'terms' ? 'Пайдалану шарттары' : 'Құпиялық саясаты'}</a>`).join(' · ')}</p>
         <div class="err" id="signup-err" role="alert"></div>
         <button class="btn" type="submit" id="s-submit">Тіркелу</button>
         <p class="note">Email-ге растау хаты келеді. Сілтемені бір рет басқан соң, email мен парольмен кіресіз. Прогресс бұлтта сақталады.</p>
         <button type="button" class="linkbtn" id="to-login">Аккаунтыңыз бар ма? Кіру</button>
       </form>
       <form class="card auth-card" id="cloud-form" novalidate>
-        <h3 style="margin:0">Кіру</h3>
+        <h2 style="margin:0;font-size:1.15rem">Кіру</h2>
         <button type="button" class="btn" id="g-login">Google арқылы кіру</button>
         <div class="note" style="text-align:center">немесе email мен пароль</div>
         <label class="field">Email<input type="email" name="email" autocomplete="email" placeholder="aigerim@mail.kz"></label>
@@ -280,6 +284,8 @@
         <button class="btn ghost" type="button" id="c-signup">Аккаунтыңыз жоқ па? Тіркелу</button>
         <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap"><button type="button" class="linkbtn" id="c-forgot">Парольді ұмыттым</button><button type="button" class="linkbtn" id="c-link">Парольсіз, сілтемемен кіру</button></div>
         <button type="button" class="linkbtn" id="local-mode">Аккаунтсыз жалғастыру (прогресс осы браузерде)</button>
+        <p class="note">Google не email арқылы алғаш кірсеңіз, аккаунт ашылады: сонда Пайдалану шарттары мен Құпиялық саясатын қабылдап, 16 жастан асқаныңызды не ата-анаңыздың рұқсаты барын растайсыз.</p>
+        <p class="note legal-links">${['terms', 'privacy'].map(d => `<a href="${esc(DJ.consent.legalHref(d))}" target="_blank" rel="noopener">${d === 'terms' ? 'Пайдалану шарттары' : 'Құпиялық саясаты'}</a>`).join(' · ')}</p>
       </form>` : ''}
     </section>`;
     const setMode = m => {
@@ -302,7 +308,7 @@
       $('#local-mode').onclick = () => { $('#cloud-form').hidden = true; $('#auth-form').hidden = false; };
       $('#g-login').onclick = async () => { track('login_start', { via: 'google', guest: S.isGuest() }); try { const r = await C.google(); if (r && r.error) cerr.textContent = C.explain(r.error.message); } catch (er) { cerr.textContent = C.explain(er.message); } };
       const form = $('#cloud-form');
-      const sent = (email, what) => { form.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне ${what}</p>`; };
+      const sent = (email, what) => { form.innerHTML = `<h2 style="margin:0;font-size:1.15rem">Поштаңызды тексеріңіз</h2><p class="note">${esc(email)} адресіне ${what}</p>`; };
       const getEmail = () => {
         const v = form.email.value.trim();
         // A bare login name (often filled in by the browser's password manager) is not an email: say what to do instead.
@@ -336,16 +342,19 @@
       sform.onsubmit = async (e) => {
         e.preventDefault();
         const name = sform.fullname.value.trim().replace(/\s+/g, ' '), email = sform.email.value.trim(), pw = sform.spw.value;
-        if (name.length < 2) { serr.textContent = 'Аты-жөніңізді жазыңыз.'; sform.fullname.focus(); return; }
+        if (name.length < 2) { serr.textContent = 'Атыңызды жазыңыз.'; sform.fullname.focus(); return; }
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { serr.textContent = 'Email дұрыс емес.'; sform.email.focus(); return; }
         if (pw.length < 8) { serr.textContent = 'Пароль кемінде 8 таңба болсын.'; sform.spw.focus(); return; }
+        if (!sform.terms.checked) { serr.textContent = 'Тіркелу үшін Пайдалану шарттары мен Құпиялық саясатын қабылдаңыз.'; sform.terms.focus(); return; }
+        if (!sform.age.checked) { serr.textContent = '16 жасқа толмасаңыз, ата-анаңыздың рұқсатымен тіркеліңіз немесе аккаунтсыз оқыңыз: онда дерек бізге жіберілмейді.'; sform.age.focus(); return; }
         const bs = $$('button', sform); bs.forEach(b => b.disabled = true); serr.textContent = '';
-        let r; try { r = await C.signUp(email, pw, name); } catch (er) { r = { error: er }; }
+        // The consent is kept with the account (Supabase user metadata) as a record of what was accepted and when.
+        let r; try { r = await C.signUp(email, pw, name, { terms: DJ.consent.terms, age_ok: true, consent_at: new Date().toISOString() }); } catch (er) { r = { error: er }; }
         bs.forEach(b => b.disabled = false);
         if (r && r.error) { serr.textContent = C.explain(r.error.message); return; }
         track('signup', { via: 'email', guest: S.isGuest() });
         if (r && r.data && r.data.session) { afterAuth(); return; }
-        sform.innerHTML = `<h3 style="margin:0">Поштаңызды тексеріңіз</h3><p class="note">${esc(email)} адресіне тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.</p>`;
+        sform.innerHTML = `<h2 style="margin:0;font-size:1.15rem">Поштаңызды тексеріңіз</h2><p class="note">${esc(email)} адресіне тіркелуді растау хаты жіберілді. Сілтемені бір рет басыңыз, кейін email мен парольмен кіресіз.</p>`;
       };
       $('#c-forgot').onclick = async () => {
         const email = getEmail(); if (!email) return;
@@ -832,7 +841,7 @@
         <form id="rename" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Көрсетілетін аты (рейтинг, сертификат)<input type="text" name="nm" maxlength="40" value="${esc(u.name)}"></label><button class="btn ghost" type="submit">Сақтау</button></form>
         ${DJ.cloud && DJ.cloud.user ? `<form id="set-pw" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:180px;margin:0">Жаңа пароль (email мен парольмен кіру үшін)<input type="password" name="npw" autocomplete="new-password" minlength="8"></label><button class="btn ghost" type="submit">Парольді сақтау</button></form><div class="err" id="pw-err" role="alert"></div>` : ''}
         ${DJ.cloud && DJ.cloud.user ? `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="hide-lb" ${(p.prefs || {}).hideLb ? 'checked' : ''}> Мені рейтингте көрсетпеу</label>` : ''}
-        <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button><button class="btn ghost" id="del-acc" style="color:var(--bad)">Аккаунтты жою</button></div>
+        <div class="actions"><button class="btn ghost" id="logout">Шығу</button><button class="btn ghost" id="export-me">Деректерімді жүктеу</button><button class="btn ghost" id="reset-p" style="color:var(--bad)">Прогресті нөлдеу</button><button class="btn ghost" id="del-acc" style="color:var(--bad)">Аккаунтты жою</button></div>
         <div id="confirm"></div>
       </div>
     </div>`;
@@ -852,6 +861,18 @@
     };
     if (DJ.cloud && DJ.cloud.recovery && sp) { DJ.cloud.recovery = false; sp.npw.focus(); toast('Жаңа пароль қойыңыз', 'bolt'); }
     const hl = $('#hide-lb'); if (hl) hl.onchange = () => S.setPref('hideLb', hl.checked);
+    // Right of access: everything this site keeps about the learner, as one JSON file (no password hash).
+    $('#export-me').onclick = () => {
+      const pr = S.profile() || {}, cu = DJ.cloud && DJ.cloud.user, meta = (cu && cu.user_metadata) || {};
+      const out = { exported: new Date().toISOString(), site: 'Tolqyn',
+        account: { username: pr.username, name: pr.name, created: pr.created, email: cu ? cu.email : undefined, cloud_id: cu ? cu.id : undefined,
+          consent: cu ? { terms: meta.terms, at: meta.consent_at } : undefined },
+        progress: S.progress(), settings: { lang: lsGet('dj.lang'), theme: lsGet('dj.theme'), statistics_consent: lsGet('dj.consent') } };
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+      a.download = 'tolqyn-data-' + S.today() + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
     $('#logout').onclick = async () => { if (DJ.cloud && DJ.cloud.user) await DJ.cloud.signOut(); S.logout(); go('auth'); };
     $('#del-acc').onclick = () => {
       const cloud = DJ.cloud && DJ.cloud.user;

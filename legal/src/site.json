@@ -1,0 +1,8 @@
+{
+  "owner": { "kk": "Аділбек Олжабек", "ru": "Адильбек Олжабек", "en": "Adilbek Olzhabek" },
+  "status": { "kk": "жеке тұлға, Қазақстан Республикасы", "ru": "физическое лицо, Республика Казахстан", "en": "individual, Republic of Kazakhstan" },
+  "city": { "kk": "Алматы", "ru": "Алматы", "en": "Almaty" },
+  "email": "olzha.adilbek@gmail.com",
+  "updated": "2026-11-08",
+  "docs": ["privacy", "terms", "cookies", "licenses"]
+}

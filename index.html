@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-EfB9i0XORRqWyiyUEFWEyn+eWBGTmhg5g52+PtEHq4s='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-CmkNsLTNOT2++yZ716q4mpndo1b6lauR6KgddM4xOQc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен</title>
 <meta name="description" content="Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.">
 <link rel="canonical" href="https://olzhaa.github.io/datajol/">
@@ -1228,6 +1228,48 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 .cls-code b { font: 1.05rem var(--font-pixel); letter-spacing: .12em; color: var(--b2); }
 @media (max-width: 560px) { .fn-row { grid-template-columns: minmax(90px, 1fr) 2fr 40px; } .fn-row .note { display: none; } .cls-code { text-align: left; } }
 
+/* ================= class assignments and exams (js/exam.js) ================= */
+.chip.exam { border-color: var(--b4); color: var(--ink); background: color-mix(in srgb, var(--b4) 14%, transparent); }
+.asg { margin-top: 14px; border-top: 2px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.asg-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.asg-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; background: var(--surface-2); border-left: 4px solid var(--b1); }
+.asg-item .actions { margin: 0; }
+.asg-card { margin-top: 16px; display: grid; gap: 8px; }
+.asg-form { display: grid; gap: 12px; padding: 14px; background: var(--surface-2); border: 2px dashed var(--line-strong); }
+.asg-form .tabs { max-width: 320px; }
+.asg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.asg-grid .field { margin: 0; }
+.asg-lessons { display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+.asg-lessons fieldset { border: 1px solid var(--line); padding: 6px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.asg-lessons legend { font-weight: 600; padding: 0 4px; }
+.asg-lessons label { display: flex; gap: 8px; align-items: center; font-size: .92rem; }
+.warn-note { color: var(--ink); border-left: 4px solid var(--b5); padding-left: 8px; }
+.live-feed #live { display: grid; gap: 4px; max-height: 200px; overflow: auto; }
+.live-ev { border-left: 3px solid var(--b2); padding: 2px 8px; color: var(--ink); }
+.live-ev.paste, .live-ev.copy, .live-ev.fs_exit { border-left-color: var(--b4); }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--b4); margin-left: 6px; animation: live-blink 1.6s infinite; }
+@keyframes live-blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+.code-row td { background: var(--surface-2); }
+.code-ans { margin: 6px 0 12px; }
+.code-ans pre { margin: 4px 0 0; max-height: 260px; overflow: auto; }
+.ok-t { color: var(--ok); }
+.rules { display: grid; gap: 6px; padding-left: 20px; margin: 0 0 14px; }
+body.exam-mode .topbar, body.exam-mode .fb-foot { display: none; }
+.exam-page { display: grid; gap: 16px; }
+.exam-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 14px; background: var(--surface); border: 2px solid var(--line-strong); box-shadow: var(--bevel-sm); }
+.exam-bar .task-steps { margin: 0; flex: 1; }
+.exam-title { font-family: var(--font-display); }
+.exam-timer { font: .95rem var(--font-pixel); color: var(--b2); min-width: 92px; text-align: right; }
+.exam-timer.low { color: var(--b4); }
+.task-steps button.touched { border-color: var(--b2); color: var(--ink); }
+.exam-body { align-items: start; }
+.no-select { user-select: none; -webkit-user-select: none; }
+.stdin, .plain-ed { display: block; width: 100%; margin-top: 4px; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 8px 12px; font-family: var(--font-mono); }
+.plain-ed { height: 260px; }
+.fs-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(5, 4, 20, .92); display: grid; place-items: center; padding: 16px; }
+.fs-overlay .card { max-width: 420px; text-align: center; }
+
 </style>
 </head>
 <body>
@@ -1260,27 +1302,28 @@ button.n-dot:active { box-shadow: var(--bevel-sm), 0 2px 0 var(--edge); }
 </main>
 <div id="toast-root" role="status" aria-live="polite"></div>
 
-<script>window.DJ_VERSION = 'c788cbed00';</script>
-<script src="content/curriculum.js?v=c788cbed00"></script>
-<script src="content/index.js?v=c788cbed00"></script>
-<script src="content/catalog.js?v=c788cbed00"></script>
-<script src="content/datasets.js?v=c788cbed00"></script>
-<script src="content/csv.js?v=c788cbed00"></script>
-<script src="content/mldata.js?v=c788cbed00"></script>
-<script src="content/sheets.js?v=c788cbed00"></script>
-<script src="content/diagnostic.js?v=c788cbed00"></script>
-<script src="js/util.js?v=c788cbed00"></script>
-<script src="js/i18n-dict.js?v=c788cbed00"></script>
-<script src="js/i18n.js?v=c788cbed00"></script>
-<script src="js/config.js?v=c788cbed00"></script>
-<script src="js/store.js?v=c788cbed00"></script>
-<script src="js/cloud.js?v=c788cbed00"></script>
-<script src="js/runners.js?v=c788cbed00"></script>
-<script src="js/sheet.js?v=c788cbed00"></script>
-<script src="js/game.js?v=c788cbed00"></script>
-<script src="js/lesson.js?v=c788cbed00"></script>
-<script src="js/social.js?v=c788cbed00"></script>
-<script src="js/app.js?v=c788cbed00"></script>
+<script>window.DJ_VERSION = '325f83ce63';</script>
+<script src="content/curriculum.js?v=325f83ce63"></script>
+<script src="content/index.js?v=325f83ce63"></script>
+<script src="content/catalog.js?v=325f83ce63"></script>
+<script src="content/datasets.js?v=325f83ce63"></script>
+<script src="content/csv.js?v=325f83ce63"></script>
+<script src="content/mldata.js?v=325f83ce63"></script>
+<script src="content/sheets.js?v=325f83ce63"></script>
+<script src="content/diagnostic.js?v=325f83ce63"></script>
+<script src="js/util.js?v=325f83ce63"></script>
+<script src="js/i18n-dict.js?v=325f83ce63"></script>
+<script src="js/i18n.js?v=325f83ce63"></script>
+<script src="js/config.js?v=325f83ce63"></script>
+<script src="js/store.js?v=325f83ce63"></script>
+<script src="js/cloud.js?v=325f83ce63"></script>
+<script src="js/runners.js?v=325f83ce63"></script>
+<script src="js/sheet.js?v=325f83ce63"></script>
+<script src="js/game.js?v=325f83ce63"></script>
+<script src="js/lesson.js?v=325f83ce63"></script>
+<script src="js/social.js?v=325f83ce63"></script>
+<script src="js/exam.js?v=325f83ce63"></script>
+<script src="js/app.js?v=325f83ce63"></script>
 
 </body>
 </html>

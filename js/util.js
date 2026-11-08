@@ -8,3 +8,5 @@ DJ.util = {
   lsGet: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
   lsSet: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
 };
+// content/practice/<course>.js: extra code tasks after each lesson, kept in lesson.practice (ids 'lesson#p0', 'lesson#p1', ...).
+DJ.addPractice = (mid, map) => { const m = DJ.modules && DJ.modules[mid]; ((m && m.lessons) || []).forEach(l => { if (map[l.id]) l.practice = map[l.id]; }); };

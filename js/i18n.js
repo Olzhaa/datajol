@@ -116,15 +116,16 @@
     for (const id in p.lessons || {}) {
       const l = byId[id], t = p.lessons[id];
       if (!l) continue;
-      const { ex, ...rest } = t;
+      const { ex, pr, ...rest } = t;
       Object.assign(l, rest);
-      (ex || []).forEach((e, i) => {
-        const x = l.exercises && l.exercises[i];
+      const each = (list, arr) => (list || []).forEach((e, i) => {
+        const x = arr && arr[i];
         if (!x || !e) return;
         const { check, ...r } = e;
         Object.assign(x, r);
         if (check && x.check) Object.assign(x.check, check);
       });
+      each(ex, l.exercises); each(pr, l.practice);   // pr: the practice tasks (content/practice/x.js)
     }
   }
 

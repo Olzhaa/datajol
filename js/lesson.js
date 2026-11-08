@@ -28,7 +28,12 @@
   // ---------- lesson ----------
   let cm = null;
   let L = null;
-  function exId(lesson, i) { return lesson.id + '#' + i; }
+  // Practice mode (#practice/<mod>/<li>): the lesson's extra code tasks (lesson.practice, ids 'lesson#p0'...).
+  let PR = false;
+  function exId(lesson, i) { return lesson.id + (PR ? '#p' : '#') + i; }
+  const exList = () => (PR ? L.lesson.practice : L.lesson.exercises) || [];
+  // Tasks open one at a time: a task opens once the one before it is solved (module exams have their own rules).
+  const isOpen = (lesson, i, p) => lesson.gate || i === 0 || !!p.done[exId(lesson, i - 1)];
 
   function viewLesson() {
     if ((DJ.modules[ui.route.mod] && DJ.modules[ui.route.mod].file) || (!window.CodeMirror && !ui.noEditor)) {
@@ -42,20 +47,29 @@
     if (!mod || !mod.lessons || !mod.lessons[ui.route.li]) return go('dash');
     const lesson = mod.lessons[ui.route.li];
     const p = S.progress();
-    const exs = lesson.exercises || [];
+    PR = ui.route.view === 'practice';
+    if (PR && !(lesson.practice || []).length) return go('lesson', { mod: mod.id, li: ui.route.li });
+    const exs = (PR ? lesson.practice : lesson.exercises) || [];
     let ei = exs.findIndex((_, i) => !p.done[exId(lesson, i)]);
     if (ei < 0) ei = 0;
-    if (ui.route.ei != null && exs[ui.route.ei]) ei = ui.route.ei;
-    L = { mod, lesson, li: ui.route.li, ei, hints: {}, fails: {} };
+    if (ui.route.ei != null && exs[ui.route.ei] && isOpen(lesson, ui.route.ei, p)) ei = ui.route.ei;
+    L = { mod, lesson, li: ui.route.li, ei, hints: {}, fails: {}, pr: PR };
+    if (PR && !p.lessons[lesson.id] && !p.done[exId(lesson, 0)]) {
+      $('#app').innerHTML = `<div class="crumbs"><button data-go="dash">Оқу</button><span>/</span><button data-go="module" data-mod="${mod.id}">${esc(mod.code)} ${esc(mod.title)}</button></div>
+        <div class="diag"><div class="card"><div class="eyebrow">Практика · ${exs.length} есеп</div><h1 style="margin:6px 0 10px;font-size:1.5rem">${esc(lesson.title)}</h1>
+        <p>${ICON.lock.replace('<svg', '<svg style="width:16px;height:16px;vertical-align:-2px"')} Практика сабақтың тапсырмалары орындалғаннан кейін ашылады.</p>
+        <div class="actions"><button class="btn" data-go="lesson" data-mod="${mod.id}" data-li="${ui.route.li}">Сабаққа өту</button></div></div></div>`;
+      return;
+    }
     if (S.setPref && (S.progress().prefs || {}).last !== mod.id) S.setPref('last', mod.id);
-    const prev = ui.route.li > 0 ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${ui.route.li - 1}">← Алдыңғы</button>` : `<button class="btn ghost" data-go="module" data-mod="${mod.id}">← Модуль</button>`;
+    const prev = PR ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${ui.route.li}">← Сабаққа</button>` : ui.route.li > 0 ? `<button class="btn ghost" data-go="lesson" data-mod="${mod.id}" data-li="${ui.route.li - 1}">← Алдыңғы</button>` : `<button class="btn ghost" data-go="module" data-mod="${mod.id}">← Модуль</button>`;
     $('#app').innerHTML = `
       <div class="crumbs"><button data-go="dash">Оқу</button><span>/</span><button data-go="module" data-mod="${mod.id}">${esc(mod.code)} ${esc(mod.title)}</button></div>
       <div class="lesson" id="lesson">
         <article class="reading">
-          <div class="eyebrow">${lesson.gate ? 'Модуль емтиханы' : `Сабақ ${ui.route.li + 1} / ${mod.lessons.length}`} · ${lesson.minutes || 10} мин</div>
+          <div class="eyebrow">${PR ? `Практика · ${exs.length} есеп` : lesson.gate ? 'Модуль емтиханы' : `Сабақ ${ui.route.li + 1} / ${mod.lessons.length}`}${PR ? '' : ` · ${lesson.minutes || 10} мин`}</div>
           <h1>${esc(lesson.title)}</h1>${kkOnly(mod)}
-          <div class="prose">${lesson.body || ''}</div>
+          ${PR ? `<details class="theory"><summary>Теорияны қайталау</summary><div class="prose">${lesson.body || ''}</div></details>` : `<div class="prose">${lesson.body || ''}</div>`}
           <section class="task" id="task"></section>
           <div class="lesson-nav">${prev}<span id="next-slot"></span></div>
           ${DJ.cloud && DJ.cloud.enabled ? fbFoot('Осы сабақта түсініксіз жер немесе қате бар ма?') : ''}
@@ -65,11 +79,16 @@
     renderTask();
   }
 
-  function lessonDone() { const p = S.progress(); return (L.lesson.exercises || []).every((_, i) => p.done[exId(L.lesson, i)]); }
+  function lessonDone() { const p = S.progress(); return exList().every((_, i) => p.done[exId(L.lesson, i)]); }
   function nextSlot() {
     const slot = $('#next-slot'); if (!slot) return;
     const p = S.progress(), done = p.lessons[L.lesson.id];
     const hasNext = L.li + 1 < L.mod.lessons.length;
+    const nextBtn = hasNext ? `<button class="btn" data-go="lesson" data-mod="${L.mod.id}" data-li="${L.li + 1}">Келесі сабақ →</button>` : `<button class="btn" data-go="module" data-mod="${L.mod.id}">Модульге оралу</button>`;
+    if (PR) { slot.innerHTML = lessonDone() ? nextBtn : ''; return; }
+    const np = (L.lesson.practice || []).length, pd = (L.lesson.practice || []).filter((_, i) => p.done[L.lesson.id + '#p' + i]).length;
+    const prBtn = np ? `<button class="btn ${pd < np ? '' : 'ghost'}" data-go="practice" data-mod="${L.mod.id}" data-li="${L.li}">Практика ${pd}/${np}</button>` : '';
+    if (done && np) { slot.innerHTML = prBtn + ' ' + nextBtn.replace('class="btn"', 'class="btn ghost"'); return; }
     if (!(L.lesson.exercises || []).length && !done) { slot.innerHTML = `<button class="btn" id="read-done">Оқыдым ${ICON.check.replace('<svg', '<svg style="width:16px;height:16px"')}</button>`; $('#read-done').onclick = () => { finishLesson(); }; return; }
     slot.innerHTML = done ? (hasNext ? `<button class="btn" data-go="lesson" data-mod="${L.mod.id}" data-li="${L.li + 1}">Келесі сабақ →</button>` : `<button class="btn" data-go="module" data-mod="${L.mod.id}">Модульге оралу</button>`) : '';
   }
@@ -101,7 +120,7 @@
   const NATIVE = { java: { lang: 'Java', mime: 'text/x-java' }, cpp: { lang: 'C++', mime: 'text/x-c++src' } };
 
   function renderTask() {
-    const exs = L.lesson.exercises || [];
+    const exs = exList();
     const task = $('#task'), wb = $('#wb'), lessonEl = $('#lesson');
     cm = null;
     if (!exs.length) { task.innerHTML = ''; wb.innerHTML = ''; lessonEl.classList.add('solo'); nextSlot(); return; }
@@ -111,8 +130,9 @@
     const isCode = isCodeType(ex.type);
     lessonEl.classList.toggle('solo', !isCode);
     const stepCls = i => G ? (G.res[i] === 'ok' ? 'ok' : G.res[i] === 'fail' ? 'bad' : '') : (p.done[exId(L.lesson, i)] ? 'ok' : '');
-    const stepState = i => ({ ok: ', орындалды', bad: ', есепке алынбады' })[stepCls(i)] || '';
-    const steps = exs.map((_, i) => `<button class="${i === L.ei ? 'cur' : ''} ${stepCls(i)}" data-step="${i}" aria-label="Тапсырма ${i + 1}${stepState(i)}"${i === L.ei ? ' aria-current="step"' : ''}>${i + 1}</button>`).join('');
+    const open = i => isOpen(L.lesson, i, p);
+    const stepState = i => ({ ok: ', орындалды', bad: ', есепке алынбады' })[stepCls(i)] || (open(i) ? '' : ', құлыпталған');
+    const steps = exs.map((_, i) => `<button class="${i === L.ei ? 'cur' : ''} ${stepCls(i)} ${open(i) ? '' : 'locked'}" data-step="${i}" aria-label="Тапсырма ${i + 1}${stepState(i)}"${i === L.ei ? ' aria-current="step"' : ''}${open(i) ? '' : ' disabled'}>${open(i) ? i + 1 : ICON.lock}</button>`).join('');
     let inner = '';
     if (ex.type === 'quiz') {
       inner = `<div class="options" role="group" aria-label="Жауап нұсқалары">${ex.options.map((o, i) => `<button class="opt" aria-pressed="false" data-opt="${i}">${o}</button>`).join('')}</div>
@@ -143,13 +163,13 @@
     const hintsBtn = (!G && ex.hints && ex.hints.length) ? `<button class="btn ghost" id="hint-btn">Кеңес (${ex.hints.length})</button>` : '';
     task.innerHTML = `
       ${exs.length > 1 ? `<div class="task-steps">${steps}</div>` : ''}
-      <h3 id="task-h">Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''} <span class="xp-tag">+${ex.xp || 10} XP</span>${ex.level && LEVELS[ex.level] ? ` <span class="lvl lvl-${ex.level}">${LEVELS[ex.level]}</span>` : ''}</h3>
+      <h3 id="task-h">${PR && ex.title ? `${L.ei + 1}. ${esc(ex.title)}` : `Тапсырма ${L.ei + 1}${exs.length > 1 ? ' / ' + exs.length : ''}`} <span class="xp-tag">+${ex.xp || 10} XP</span>${ex.level && LEVELS[ex.level] ? ` <span class="lvl lvl-${ex.level}">${LEVELS[ex.level]}</span>` : ''}</h3>
       <div class="prose">${ex.prompt}</div>
       ${inner}
       <div class="hints" id="hints"></div>
       <div class="actions" style="margin-top:10px">${isCode || ex.type === 'sheet' || ex.type === 'cmd' ? hintsBtn : ''}<span id="sol-slot"></span></div>
       <div id="qv" style="margin-top:10px"></div>`;
-    $$('[data-step]', task).forEach(b => b.onclick = () => { L.ei = Number(b.dataset.step); renderTask(); const h = $('#task h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } });
+    $$('[data-step]', task).forEach(b => b.onclick = () => { if (b.disabled) return; L.ei = Number(b.dataset.step); renderTask(); const h = $('#task h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } });
     if ($('#hint-btn')) $('#hint-btn').onclick = () => showHint(ex, id);
     if (G) {
       const left = gateTries(ex) - (G.tries[L.ei] || 0);
@@ -470,7 +490,7 @@
     if (r.daily) toast(`<b>Күн есебі шешілді!</b> +${r.daily} XP`, 'star', 'badge');
     if (r.xp) bumpCombo(!usedHint && !L.fails[id], $('#check') || $('#q-check'));
     topbar();
-    const exs = L.lesson.exercises;
+    const exs = exList();
     const p = S.progress();
     const nextI = exs.findIndex((_, i) => !p.done[exId(L.lesson, i)]);
     const PRAISE = ['Дұрыс!', 'Керемет!', 'Тамаша!', 'Жарайсыз!', 'Дәл таптыңыз!'];
@@ -478,9 +498,10 @@
     const target = isCodeType(kind) ? $('#verdict') : $('#qv');
     const save = S.isGuest() && r.xp ? '<p class="guest-save">XP жинала бастады. Прогресс жоғалмасын десеңіз, <button type="button" class="linkbtn" data-go="auth">тіркеліңіз</button>: жиналғаны аккаунтқа көшеді.</p>' : '';
     target.innerHTML = msg + save + (nextI >= 0 ? `<div class="actions" style="margin-top:10px"><button class="btn" id="next-ex">Келесі тапсырма →</button></div>` : '');
-    $$('[data-step]').forEach(b => b.classList.toggle('ok', !!p.done[exId(L.lesson, Number(b.dataset.step))]));
+    $$('[data-step]').forEach(b => { const i = Number(b.dataset.step); b.classList.toggle('ok', !!p.done[exId(L.lesson, i)]); if (b.disabled && isOpen(L.lesson, i, p)) { b.disabled = false; b.classList.remove('locked'); b.textContent = i + 1; b.setAttribute('aria-label', 'Тапсырма ' + (i + 1)); } });
     if (nextI >= 0) $('#next-ex').onclick = () => { L.ei = nextI; renderTask(); $('#task').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    if (nextI < 0 && !p.lessons[L.lesson.id]) finishLesson();
+    if (PR) { if (nextI < 0) { nextSlot(); setTimeout(() => { G.play('lesson'); toast(`<b>Практика аяқталды!</b> ${esc(L.lesson.title)}: ${exs.length} есеп шешілді.`, 'trophy', 'badge'); }, 500); } maybeChest($('#check') || $('#q-check')); }
+    else if (nextI < 0 && !p.lessons[L.lesson.id]) finishLesson();
     else maybeChest($('#check') || $('#q-check'));
   }
 

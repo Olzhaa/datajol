@@ -18,6 +18,13 @@ A free, Kazakh-language site for learning data analytics and data science from z
 | Тілдер мен CS | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++ |
 | Мансап | 7 | Портфолио, резюме, LinkedIn, сұхбатқа дайындық |
 
+## Практика және есептер
+
+- Сабақ ішіндегі тапсырмалар ретімен ашылады: алдыңғысын орындамай келесісі ашылмайды.
+- Код тапсырмасы бар әр сабақтан кейін 8 практика есебі бар (3 оңай, 3 орташа, 2 қиын), `#practice/<модуль>/<сабақ>`. Олар сабақ аяқталғаннан кейін ашылады.
+- `#problems` — барлық есептер бір бетте (LeetCode секілді): іздеу, курс, қиындық, тіл бойынша сүзгі. Тіркелусіз де ашылады (қонақ профилі жасалады).
+- `#selftest` — өткен тақырыптардан кездейсоқ есептермен уақытпен өзін-өзі тексеру. Нәтиже тек құрылғыда сақталады.
+
 ## Тапсырмалар қалай тексеріледі
 
 | Түрі | Қозғалтқыш |
@@ -35,6 +42,8 @@ A free, Kazakh-language site for learning data analytics and data science from z
 src/index.html, src/app.css   бет үлгісі мен стиль (build.py біріктіреді)
 js/                           қосымша, прогресс, бұлт, тексерушілер, Python worker
 content/                      сабақтар: әр модуль өз файлында, деректер жиындары
+content/practice/             әр сабақтан кейінгі практика есептері (DJ.addPractice), аудармасы content/i18n/<тіл>/practice/
+content/problems/             build.py жасайтын есептер тізімі (#problems беті)
 tools/prerender.js            m/<модуль>/ статикалық беттері, sitemap.xml, басты беттегі модуль тізімі
 vendor/                       CodeMirror, sql.js, Pyodide, supabase-js
 supabase/                     дерекқор схемасы мен көшбасшылар кестесі

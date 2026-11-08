@@ -70,7 +70,13 @@
         <div class="card"><h3>Retention</h3>${(s.retention || []).length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Бірінші күн</th><th>Оқушылар</th><th>Келесі күні</th><th>7–13 күннен кейін</th></tr>${s.retention.map(r => `<tr><td>${esc(r.cohort)}</td><td>${r.learners}</td><td>${r.d1} (${pct(r.d1, r.learners)}%)</td><td>${r.d7} (${pct(r.d7, r.learners)}%)</td></tr>`).join('')}</table></div>` : '<p class="muted" style="margin:0">Әзірге дерек жоқ.</p>'}</div>
         <div class="card"><h3>Сабақтар: ашқандар мен шешкендер</h3><p class="note">Ашқандардың аз бөлігі ғана шешкен сабақтарды алдымен қараңыз: түсініксіз жер сол жерде болуы мүмкін.</p>${(s.lessons || []).length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Сабақ</th><th>Ашты</th><th>Шешті</th><th>%</th></tr>${s.lessons.map(l => { const n = passed[lessonId(l.mod, l.li)] || 0; const r = pct(n, l.opened); return `<tr class="${l.opened >= 5 && r < 40 ? 'warn' : ''}"><td>${esc(lessonName(l.mod, l.li))}</td><td>${l.opened}</td><td>${n}</td><td>${r}%</td></tr>`; }).join('')}</table></div>` : '<p class="muted" style="margin:0">Әзірге дерек жоқ.</p>'}</div>
         <div class="card"><h3>Пікірлер</h3>${(s.feedback || []).length ? s.feedback.map(x => `<div class="fb-item ${esc(x.status)}"><div class="note">${esc(String(x.created_at).slice(0, 16).replace('T', ' '))} · ${esc(x.kind)} · ${esc(x.page || '')}${x.contact ? ' · ' + esc(x.contact) : ''}</div><p style="margin:4px 0">${esc(x.message)}</p><div class="actions">${['seen', 'done'].map(st => `<button class="btn ghost sm" data-fb="${x.id}" data-st="${st}" ${x.status === st ? 'disabled' : ''}>${st === 'seen' ? 'Қаралды' : 'Түзетілді'}</button>`).join('')}</div></div>`).join('') : '<p class="muted" style="margin:0">Пікір жоқ.</p>'}</div>
+        <form class="card" id="cls-limit" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><h3 style="flex-basis:100%;margin:0">Сынып шегі</h3><p class="note" style="flex-basis:100%;margin:0">Мұғалім 30-дан көп оқушы сұраса: сынып кодын және жаңа шекті жазыңыз.</p><label class="field" style="margin:0">Сынып коды<input name="code" maxlength="6" placeholder="ABC234"></label><label class="field" style="margin:0">Шек<input name="lim" type="number" min="1" max="2000" value="60"></label><button class="btn" type="submit">Сақтау</button><span class="note" id="lim-out"></span></form>
         <div class="card"><h3>Браузердегі қателер</h3>${(s.errors || []).length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Қате</th><th>Қайда</th><th>Саны</th></tr>${s.errors.map(e => `<tr><td>${esc(e.message)}</td><td class="note">${esc((e.source || '') + (e.line ? ':' + e.line : ''))}</td><td>${e.n}</td></tr>`).join('')}</table></div>` : '<p class="muted" style="margin:0">Қате тіркелмеген.</p>'}</div>`;
+      $('#cls-limit').onsubmit = async e => {
+        e.preventDefault(); const out = $('#lim-out');
+        try { const r = ((await C().call('admin_set_class_limit', { ccode: e.target.code.value, lim: Number(e.target.lim.value) })) || [])[0]; out.textContent = r ? `«${r.name}»: ${r.members} / ${r.max_members}` : ''; }
+        catch (er) { out.textContent = /not found/i.test(msgOf(er)) ? 'Сынып табылмады.' : 'Сақталмады.' + needSql(er, 'social.sql'); }
+      };
       $$('[data-fb]').forEach(b => b.onclick = async () => {
         b.disabled = true;
         try { await C().call('admin_feedback_status', { fid: Number(b.dataset.fb), st: b.dataset.st }); b.closest('.fb-item').className = 'fb-item ' + b.dataset.st; toast('Сақталды', 'check'); }
@@ -124,10 +130,11 @@
     const draw = classes => {
       $('#teach-body').innerHTML = `
         <form class="card" id="new-class" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field" style="flex:1;min-width:200px;margin:0">Жаңа сынып атауы<input name="cname" maxlength="60" placeholder="Мысалы: 10-В, Python үйірмесі"></label><button class="btn" type="submit">Сынып құру</button><div class="err" id="cls-err" role="alert" style="flex-basis:100%"></div></form>
-        ${classes.length ? classes.map(c => `<div class="card cls" data-cid="${esc(c.id)}"><div class="cls-head"><div><h3 style="margin:0">${esc(c.name)}</h3><div class="note">${c.members} оқушы</div></div>
+        ${classes.length ? classes.map(c => `<div class="card cls" data-cid="${esc(c.id)}"><div class="cls-head"><div><h3 style="margin:0">${esc(c.name)}</h3><div class="note">${c.members} / ${c.max_members || 30} оқушы</div></div>
           <div class="cls-code"><span class="note">Қосылу коды</span><b>${esc(c.code)}</b></div></div>
-          <div class="actions"><button class="btn" data-report="${esc(c.id)}">Есепті ашу</button><button class="btn ghost" data-link="${esc(c.code)}">Шақыру сілтемесін көшіру</button><button class="btn ghost" data-del="${esc(c.id)}" style="color:var(--bad)">Өшіру</button></div>
-          <div class="cls-report" id="r-${esc(c.id)}"></div></div>`).join('') : card('<p class="muted" style="margin:0">Әзірге сынып жоқ.</p>')}`;
+          <div class="actions"><button class="btn" data-asg="${esc(c.id)}">Тапсырмалар мен емтихандар</button><button class="btn ghost" data-report="${esc(c.id)}">Прогресс есебі</button><button class="btn ghost" data-link="${esc(c.code)}">Шақыру сілтемесін көшіру</button><button class="btn ghost" data-del="${esc(c.id)}" style="color:var(--bad)">Өшіру</button></div>
+          ${c.members >= (c.max_members || 30) ? `<p class="note warn-note">Сынып толды: ${c.max_members || 30} оқушы. Шекті көбейту үшін <button class="linkbtn" data-feedback>техникалық қолдауға жазыңыз</button> (сынып коды: ${esc(c.code)}).</p>` : ''}
+          <div class="cls-asg" id="a-${esc(c.id)}"></div><div class="cls-report" id="r-${esc(c.id)}"></div></div>`).join('') : card('<p class="muted" style="margin:0">Әзірге сынып жоқ.</p>')}`;
       $('#new-class').onsubmit = async e => {
         e.preventDefault(); const name = e.target.cname.value.trim();
         if (name.length < 2) { $('#cls-err').textContent = 'Сынып атауын жазыңыз.'; return; }
@@ -139,6 +146,8 @@
         try { await C().call('delete_class', { cid: b.dataset.del }); load(); } catch (er) { toast('Өшіру мүмкін болмады', 'bolt'); }
       });
       $$('[data-report]').forEach(b => b.onclick = () => report(b.dataset.report, classes.find(c => c.id === b.dataset.report)));
+      $$('[data-asg]').forEach(b => b.onclick = () => ui.teacherPanel($('#a-' + b.dataset.asg), classes.find(c => c.id === b.dataset.asg)));
+      if (classes.length === 1) ui.teacherPanel($('#a-' + classes[0].id), classes[0]);
     };
     const load = () => C().call('my_classes').then(rows => { if (ui.route.view === 'teach') draw(rows || []); })
       .catch(e => { $('#teach-body').innerHTML = card(`<p style="margin:0">Сыныптарды жүктеу мүмкін болмады.${needSql(e, 'social.sql')}</p>`); });
@@ -171,7 +180,7 @@
   // #join/<code>: a learner opens the teacher's link.
   async function joinCode(code) {
     try { const r = await C().call('join_class', { ccode: code }); const c = (r || [])[0]; track('class_join'); toast(`«${esc(c ? c.name : code)}» сыныбына қосылдыңыз`, 'check'); return true; }
-    catch (e) { toast(/not found/i.test(msgOf(e)) ? 'Мұндай кодпен сынып табылмады.' : 'Сыныпқа қосылу мүмкін болмады.', 'bolt'); return false; }
+    catch (e) { toast(/not found/i.test(msgOf(e)) ? 'Мұндай кодпен сынып табылмады.' : /full/i.test(msgOf(e)) ? 'Сынып толы. Мұғаліміңізге айтыңыз: ол шекті көбейтуді сұрай алады.' : 'Сыныпқа қосылу мүмкін болмады.', 'bolt'); return false; }
   }
   function viewJoin() {
     const code = ui.route.code;

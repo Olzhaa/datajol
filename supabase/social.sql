@@ -1,4 +1,4 @@
--- Public portfolio pages and teacher classes. Run in the Supabase SQL editor after schema.sql. Safe to re-run.
+-- Public portfolio pages and teacher classes. Run in the Supabase SQL editor after schema.sql and admin.sql. Safe to re-run.
 -- Every function runs as the table owner and returns only names, XP and lesson progress, never emails.
 
 -- ---------- public portfolio (#u/<user id>) ----------
@@ -32,6 +32,8 @@ create table if not exists public.class_members (
   joined_at timestamptz not null default now(),
   primary key (class_id, user_id)
 );
+-- Up to 30 learners a class for free; the site owner raises it on request (admin_set_class_limit below).
+alter table public.classes add column if not exists max_members integer not null default 30;
 alter table public.classes enable row level security;
 alter table public.class_members enable row level security;
 revoke all on public.classes, public.class_members from anon, authenticated;   -- only through the functions below
@@ -54,10 +56,11 @@ begin
   return query insert into classes (owner, name, code) values (auth.uid(), cname, c) returning classes.id, classes.name, classes.code;
 end $$;
 
+drop function if exists public.my_classes();   -- its columns changed (max_members)
 create or replace function public.my_classes()
-returns table (id uuid, name text, code text, members bigint, created_at timestamptz)
+returns table (id uuid, name text, code text, members bigint, created_at timestamptz, max_members integer)
 language sql stable security definer set search_path = public as $$
-  select c.id, c.name, c.code, (select count(*) from class_members m where m.class_id = c.id), c.created_at
+  select c.id, c.name, c.code, (select count(*) from class_members m where m.class_id = c.id), c.created_at, c.max_members
   from classes c where c.owner = auth.uid() order by c.created_at;
 $$;
 
@@ -76,6 +79,8 @@ begin
   select * into c from classes where classes.code = upper(trim(coalesce(ccode, '')));
   if c.id is null then raise exception 'class not found'; end if;
   if (select count(*) from class_members where user_id = auth.uid()) >= 20 then raise exception 'too many classes'; end if;
+  if not exists (select 1 from class_members where class_id = c.id and user_id = auth.uid())
+     and (select count(*) from class_members where class_id = c.id) >= c.max_members then raise exception 'class is full'; end if;
   insert into class_members (class_id, user_id) values (c.id, auth.uid()) on conflict do nothing;
   return query select c.id, c.name;
 end $$;
@@ -112,10 +117,22 @@ begin
   order by coalesce(p.xp, 0) desc;
 end $$;
 
+-- Site owner only (public.admins from admin.sql): raise or lower one class's learner limit by its code.
+create or replace function public.admin_set_class_limit(ccode text, lim integer)
+returns table (name text, members bigint, max_members integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then raise exception 'admins only'; end if;
+  if lim < 1 or lim > 2000 then raise exception 'bad limit'; end if;
+  update classes set max_members = lim where code = upper(trim(ccode));
+  if not found then raise exception 'class not found'; end if;
+  return query select c.name, (select count(*) from class_members m where m.class_id = c.id), c.max_members from classes c where c.code = upper(trim(ccode));
+end $$;
+
 do $$
 declare f text;
 begin
-  foreach f in array array['create_class(text)', 'my_classes()', 'delete_class(uuid)', 'join_class(text)', 'my_memberships()', 'leave_class(uuid)', 'class_report(uuid)'] loop
+  foreach f in array array['create_class(text)', 'my_classes()', 'delete_class(uuid)', 'join_class(text)', 'my_memberships()', 'leave_class(uuid)', 'class_report(uuid)', 'admin_set_class_limit(text,integer)'] loop
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated', f);
   end loop;

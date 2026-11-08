@@ -3,7 +3,7 @@
 # Lesson content is not listed: it is translated per lesson in content/i18n/.
 import re, sys, pathlib, json
 root = pathlib.Path(__file__).resolve().parent.parent
-FILES = ['js/app.js', 'js/lesson.js', 'js/social.js', 'js/i18n.js', 'js/game.js', 'js/store.js', 'js/cloud.js', 'js/runners.js', 'js/sheet.js',
+FILES = ['js/app.js', 'js/lesson.js', 'js/social.js', 'js/exam.js', 'js/i18n.js', 'js/game.js', 'js/store.js', 'js/cloud.js', 'js/runners.js', 'js/sheet.js',
          'content/curriculum.js', 'content/catalog.js', 'js/py-worker.js', 'content/datasets.js']
 CYR = re.compile(r'[А-Яа-яӘәҒғҚқҢңӨөҰұҮүІіҺһЁё]')
 

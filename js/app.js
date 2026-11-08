@@ -101,6 +101,7 @@
     if (r.view === 'cert') return r.uid ? `#cert/${r.uid}/${r.mod}` : '#cert/' + r.mod;
     if (r.view === 'u') return '#u/' + r.uid;
     if (r.view === 'join') return '#join/' + r.code;
+    if (r.view === 'exam' || r.view === 'asg') return `#${r.view}/${r.aid}`;
     return ['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(r.view) ? '#' + r.view : '';
   }
   function parseHash(h) {
@@ -113,11 +114,12 @@
     if ((m = h.match(/^cert\/(L\d)$/))) return { view: 'cert', mod: m[1] };
     if ((m = h.match(/^u\/([0-9a-f-]{36})$/))) return { view: 'u', uid: m[1] };
     if ((m = h.match(/^join\/([A-Za-z2-9]{6})$/))) return { view: 'join', code: m[1].toUpperCase() };
+    if ((m = h.match(/^(exam|asg)\/([0-9a-f-]{36})$/))) return { view: m[1], aid: m[2] };
     if (['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(h)) return { view: h };
     return null;
   }
   function go(view, params = {}) {
-    LS.leave();
+    LS.leave(); EX.leave();
     if (view === 'auth' && S.isGuest() && route.view !== 'auth') pendingRoute = route;   // a guest signing up comes back here
     route = Object.assign({ view }, params);
     const h = hashFor(route);
@@ -126,7 +128,7 @@
     window.scrollTo(0, 0);
   }
   window.addEventListener('popstate', () => {
-    LS.leave();
+    LS.leave(); EX.leave();
     route = parseHash(location.hash) || { view: 'dash' };
     render(true);
   });
@@ -174,15 +176,15 @@
     if (!b) return;
     e.preventDefault();
     go(b.dataset.go, { mod: b.dataset.mod, course: b.dataset.course, li: b.dataset.li != null ? Number(b.dataset.li) : undefined,
-      ei: b.dataset.ei != null ? Number(b.dataset.ei) : undefined, uid: b.dataset.uid, code: b.dataset.code });
+      ei: b.dataset.ei != null ? Number(b.dataset.ei) : undefined, uid: b.dataset.uid, code: b.dataset.code, aid: b.dataset.aid });
   });
 
-  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат', admin: 'Статистика', u: 'Портфолио', teach: 'Сыныптар', join: 'Сыныпқа қосылу' };
+  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат', admin: 'Статистика', u: 'Портфолио', teach: 'Сыныптар', join: 'Сыныпқа қосылу', exam: 'Тапсырма', asg: 'Тапсырма есебі' };
   function render(moveFocus) {
     if (!S.current() && !['cert', 'auth', 'u'].includes(route.view)) { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
     topbar();
     const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert,
-      admin: () => SO.viewAdmin(), u: () => SO.viewPublic(), teach: () => SO.viewTeach(), join: () => SO.viewJoin() };
+      admin: () => SO.viewAdmin(), u: () => SO.viewPublic(), teach: () => SO.viewTeach(), join: () => SO.viewJoin(), exam: () => EX.viewExam(), asg: () => EX.viewReport() };
     (views[route.view] || viewDash)();
     const seen = JSON.stringify(route.mod && !['cert', 'admin'].includes(route.view) ? { v: route.view, mod: route.mod, li: route.li } : { v: route.view });
     if (seen !== lastView) { lastView = seen; track('view', JSON.parse(seen)); }   // a re-render of the same screen is not a new view
@@ -488,10 +490,12 @@
     const tile = ({ c, gi, cs }) => courseTile(c, gi, cs);
     const finished = open.filter(x => x.cs.done === x.cs.total).length;
     $('#app').innerHTML = `${hero}
+      <div id="asg-slot"></div>
       ${p.xp || !nx ? `<div class="dash-grid">${questCard(p)}${streakCard(p, st)}</div><div class="dash-grid">${SO.dailyCard()}${SO.leagueCard()}</div>` : firstGoal(nx)}
       <div class="section-title"><h2>${mine.length ? 'Менің курстарым' : 'Неден бастаймыз?'}</h2><button class="btn ghost" data-go="catalog">Барлық курстар (${open.length}) →</button></div>
       <section class="world-group"><div class="worlds">${pick.map(tile).join('')}</div></section>
       ${finished ? `<p class="muted">Аяқталған курстар: ${finished}. Барлығы «Курстар» бетінде.</p>` : ''}`;
+    EX.dashWire();
   }
 
   // ---------- module ----------
@@ -540,7 +544,8 @@
 
   // ---------- admin, portfolio, classes, daily challenge, league (js/social.js) ----------
   let admin = null;   // null until asked once per session
-  const SO = DJ.socialScreens({ $, $$, esc, S, ICON, go, toast, track, certsEarned: p => certsEarned(p), render, get route() { return route; } });
+  const EX = DJ.examScreens({ $, $$, esc, S, ICON, go, toast, track, render, loadEditor, get route() { return route; } });
+  const SO = DJ.socialScreens({ $, $$, esc, S, ICON, go, toast, track, certsEarned: p => certsEarned(p), render, teacherPanel: EX.teacherPanel, get route() { return route; } });
 
   // ---------- map ----------
   // A winding trail of module nodes, one region per phase. The connecting path is drawn after layout.

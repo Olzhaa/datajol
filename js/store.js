@@ -284,6 +284,8 @@
     },
     setPref(k, v) { const p = this.progress(); p.prefs = Object.assign({}, p.prefs, { [k]: v }); this.save(p); },
     saveRubric(exId, r) { const p = this.progress(); p.rubric = p.rubric || {}; p.rubric[exId] = r; this.save(p); },
+    // Self-exam results (#selftest): the last 20, shown on that page.
+    saveSelfTest(r) { const p = this.progress(); p.selfTests = (p.selfTests || []).concat([Object.assign({ d: today() }, r)]).slice(-20); this.save(p); },
     saveCode(exId, code) { const p = this.progress(); p.code = p.code || {}; p.code[exId] = code; this.save(p, true); },   // goes up with the next real save
     markHinted(exId) { const p = this.progress(); p.hinted = p.hinted || {}; if (p.hinted[exId]) return; p.hinted[exId] = true; this.save(p); },
     hinted(exId) { return !!(this.progress().hinted || {})[exId]; },

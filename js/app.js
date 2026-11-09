@@ -29,8 +29,9 @@
   DJ.loadModule = function (id) {
     const m = DJ.modules[id];
     if (!m || !m.file) return Promise.resolve();
-    const tr = DJ.i18n && DJ.i18n.fileFor(m.file);   // the lesson text in ru/en, after the course file it patches
-    return loadScript(m.file).then(() => tr && loadScript(tr)).then(() => { if (DJ.i18n) DJ.i18n.reapply(); });
+    const pf = m.pfile;   // practice tasks of the course (content/practice/x.js), loaded after it
+    const tr = DJ.i18n && DJ.i18n.fileFor(m.file), ptr = pf && DJ.i18n && DJ.i18n.fileFor(pf);   // the lesson text in ru/en, after the course file it patches
+    return loadScript(m.file).then(() => pf && loadScript(pf)).then(() => Promise.all([tr && loadScript(tr), ptr && loadScript(ptr)])).then(() => { if (DJ.i18n) DJ.i18n.reapply(); });
   };
   DJ.loadAll = () => Promise.all(Object.keys(DJ.modules).map(DJ.loadModule));
 
@@ -98,11 +99,13 @@
     if (r.view === 'module') return '#module/' + r.mod;
     if (r.view === 'course') return '#course/' + r.course;
     if (r.view === 'lesson') return `#lesson/${r.mod}/${r.li}`;
+    if (r.view === 'practice') return `#practice/${r.mod}/${r.li}`;
+    if (r.view === 'problem') return '#problem/' + encodeURIComponent(r.pid);
     if (r.view === 'cert') return r.uid ? `#cert/${r.uid}/${r.mod}` : '#cert/' + r.mod;
     if (r.view === 'u') return '#u/' + r.uid;
     if (r.view === 'join') return '#join/' + r.code;
     if (r.view === 'exam' || r.view === 'asg') return `#${r.view}/${r.aid}`;
-    return ['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(r.view) ? '#' + r.view : '';
+    return ['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach', 'problems', 'selftest'].includes(r.view) ? '#' + r.view : '';
   }
   function parseHash(h) {
     h = (h || '').replace(/^#/, '');
@@ -110,16 +113,18 @@
     if ((m = h.match(/^module\/([\w-]+)$/))) return { view: 'module', mod: m[1] };
     if ((m = h.match(/^course\/([\w-]+)$/))) return { view: 'course', course: m[1] };
     if ((m = h.match(/^lesson\/([\w-]+)\/(\d+)$/))) return { view: 'lesson', mod: m[1], li: Number(m[2]) };
+    if ((m = h.match(/^practice\/([\w-]+)\/(\d+)$/))) return { view: 'practice', mod: m[1], li: Number(m[2]) };
+    if ((m = h.match(/^problem\/([\w-]+(?:%23|#)p?\d+)$/))) return { view: 'problem', pid: decodeURIComponent(m[1]) };
     if ((m = h.match(/^cert\/([0-9a-f-]{36})\/(L\d)$/))) return { view: 'cert', uid: m[1], mod: m[2] };
     if ((m = h.match(/^cert\/(L\d)$/))) return { view: 'cert', mod: m[1] };
     if ((m = h.match(/^u\/([0-9a-f-]{36})$/))) return { view: 'u', uid: m[1] };
     if ((m = h.match(/^join\/([A-Za-z2-9]{6})$/))) return { view: 'join', code: m[1].toUpperCase() };
     if ((m = h.match(/^(exam|asg)\/([0-9a-f-]{36})$/))) return { view: m[1], aid: m[2] };
-    if (['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach'].includes(h)) return { view: h };
+    if (['map', 'diag', 'profile', 'board', 'catalog', 'admin', 'teach', 'problems', 'selftest'].includes(h)) return { view: h };
     return null;
   }
   function go(view, params = {}) {
-    LS.leave(); EX.leave();
+    LS.leave(); EX.leave(); PB.leave();
     if (view === 'auth' && S.isGuest() && route.view !== 'auth') pendingRoute = route;   // a guest signing up comes back here
     route = Object.assign({ view }, params);
     const h = hashFor(route);
@@ -128,7 +133,7 @@
     window.scrollTo(0, 0);
   }
   window.addEventListener('popstate', () => {
-    LS.leave(); EX.leave();
+    LS.leave(); EX.leave(); PB.leave();
     route = parseHash(location.hash) || { view: 'dash' };
     render(true);
   });
@@ -176,20 +181,21 @@
     if (!b) return;
     e.preventDefault();
     go(b.dataset.go, { mod: b.dataset.mod, course: b.dataset.course, li: b.dataset.li != null ? Number(b.dataset.li) : undefined,
-      ei: b.dataset.ei != null ? Number(b.dataset.ei) : undefined, uid: b.dataset.uid, code: b.dataset.code, aid: b.dataset.aid });
+      ei: b.dataset.ei != null ? Number(b.dataset.ei) : undefined, uid: b.dataset.uid, code: b.dataset.code, aid: b.dataset.aid, pid: b.dataset.pid });
   });
 
-  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат', admin: 'Статистика', u: 'Портфолио', teach: 'Сыныптар', join: 'Сыныпқа қосылу', exam: 'Тапсырма', asg: 'Тапсырма есебі' };
+  const TITLES = { catalog: 'Курстар', auth: 'Кіру', map: 'Оқу картасы', diag: 'Диагностика', profile: 'Профиль', board: 'Рейтинг', cert: 'Сертификат', admin: 'Статистика', u: 'Портфолио', teach: 'Сыныптар', join: 'Сыныпқа қосылу', exam: 'Тапсырма', asg: 'Тапсырма есебі', problems: 'Есептер', problem: 'Есеп', selftest: 'Өзіңді тексер' };
   function render(moveFocus) {
+    if (!S.current() && ['problems', 'problem'].includes(route.view)) S.guest();   // problems are open to anyone: a guest profile keeps the solved ones
     if (!S.current() && !['cert', 'auth', 'u'].includes(route.view)) { if (route.view !== 'dash') pendingRoute = route; route = { view: 'auth' }; }
     topbar();
     const views = { catalog: viewCatalog, course: viewCourse, auth: viewAuth, dash: viewDash, module: viewModule, lesson: viewLesson, map: viewMap, diag: viewDiag, profile: viewProfile, board: viewBoard, cert: viewCert,
-      admin: () => SO.viewAdmin(), u: () => SO.viewPublic(), teach: () => SO.viewTeach(), join: () => SO.viewJoin(), exam: () => EX.viewExam(), asg: () => EX.viewReport() };
+      admin: () => SO.viewAdmin(), u: () => SO.viewPublic(), teach: () => SO.viewTeach(), join: () => SO.viewJoin(), exam: () => EX.viewExam(), asg: () => EX.viewReport(), practice: viewLesson, problems: () => PB.viewProblems(), problem: () => PB.viewProblem(), selftest: () => PB.viewSelfTest() };
     (views[route.view] || viewDash)();
     const seen = JSON.stringify(route.mod && !['cert', 'admin'].includes(route.view) ? { v: route.view, mod: route.mod, li: route.li } : { v: route.view });
     if (seen !== lastView) { lastView = seen; track('view', JSON.parse(seen)); }   // a re-render of the same screen is not a new view
     const m = route.mod && DJ.findModule(route.mod);
-    const t = route.view === 'lesson' && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
+    const t = (route.view === 'lesson' || route.view === 'practice') && m && m.lessons && m.lessons[route.li] ? m.lessons[route.li].title
       : route.view === 'module' && m ? `${m.code} ${m.title}` : route.view === 'course' && DJ.findCourse(route.course) ? DJ.findCourse(route.course).title : TITLES[route.view];
     document.title = t ? `${t} · Tolqyn` : 'Tolqyn';
     // After a screen change, move keyboard and screen-reader focus to the new heading.
@@ -208,13 +214,13 @@
     const lp = DJ.i18n ? DJ.i18n.picker() : '';
     if (!u) { el.innerHTML = `${logo}<div class="stats">${lp}</div>`; return; }
     const p = S.progress(), lv = S.level(p.xp), st = S.streakNow(p);
-    const cur = v => (route.view === v || (v === 'dash' && ['module', 'lesson'].includes(route.view))) ? 'aria-current="page"' : '';
+    const cur = v => (route.view === v || (v === 'dash' && ['module', 'lesson', 'practice'].includes(route.view)) || (v === 'problems' && ['problem', 'selftest'].includes(route.view))) ? 'aria-current="page"' : '';
     el.innerHTML = `${logo}
       <nav class="nav" aria-label="Негізгі">
         <button data-go="dash" ${cur('dash')}>${ICON.play}<span>Оқу</span></button>
         <button data-go="catalog" ${route.view === 'catalog' || route.view === 'course' ? 'aria-current="page"' : ''}>${ICON.db}<span>Курстар</span></button>
+        <button data-go="problems" ${cur('problems')}>${ICON.code}<span>Есептер</span></button>
         <button data-go="map" ${cur('map')}>${ICON.map}<span>Карта</span></button>
-        <button data-go="diag" ${cur('diag')}>${ICON.compass}<span>Диагностика</span></button>
         <button data-go="board" ${cur('board')}>${ICON.trophy}<span>Рейтинг</span></button>
       </nav>
       <div class="stats">
@@ -525,10 +531,11 @@
       <div style="max-width:420px;margin-top:14px;--ph: var(--ph${mod.phase.n})"><div class="bar"><i style="width:${s.pct}%"></i></div><p class="note">${s.done} / ${s.total} сабақ аяқталды</p></div>
       <div class="lessons">${mod.lessons.map((l, i) => {
         const done = !!p.lessons[l.id];
-        const ex = (l.exercises || []).length;
+        const ex = (l.exercises || []).length, np = (l.practice || []).length || l.pc || 0;
+        const pd = np ? Array.from({ length: np }, (_, k) => p.done[l.id + '#p' + k]).filter(Boolean).length : 0;
         return `<button class="lesson-row ${done ? 'done' : ''} ${l.gate ? 'gate' : ''}" data-go="lesson" data-mod="${mod.id}" data-li="${i}">
           <span class="num">${done ? ICON.check.replace('<svg', '<svg style="width:16px;height:16px"') : l.gate ? ICON.trophy.replace('<svg', '<svg style="width:16px;height:16px"') : i + 1}</span>
-          <span><b>${esc(l.title)}</b><small>${l.minutes || 10} мин · ${ex} тапсырма${l.gate ? ' · модуль емтиханы' : ''}</small></span>
+          <span><b>${esc(l.title)}</b><small>${l.minutes || 10} мин · ${ex} тапсырма${np ? ` · практика ${pd}/${np}` : ''}${l.gate ? ' · модуль емтиханы' : ''}</small></span>
           <span class="badge-s ${done ? 'done' : 'open'}">${done ? 'Өтілді' : 'Ашу'}</span>
         </button>`;
       }).join('')}</div>`;
@@ -554,6 +561,7 @@
   // ---------- admin, portfolio, classes, daily challenge, league (js/social.js) ----------
   let admin = null;   // null until asked once per session
   const EX = DJ.examScreens({ $, $$, esc, S, ICON, go, toast, track, render, loadEditor, get route() { return route; } });
+  const PB = DJ.problemScreens({ $, $$, esc, S, ICON, LEVELS, go, toast, track, celebrate, topbar, loadEditor, loadScript, startSelf: o => EX.startSelf(o), get route() { return route; } });
   const SO = DJ.socialScreens({ $, $$, esc, S, ICON, go, toast, track, certsEarned: p => certsEarned(p), render, teacherPanel: EX.teacherPanel, get route() { return route; } });
 
   // ---------- map ----------

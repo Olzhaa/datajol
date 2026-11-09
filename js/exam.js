@@ -18,12 +18,12 @@
   // Phones and tablets cannot take an exam: no full-screen check, and a second screen is too easy.
   const isPhone = () => window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches || window.innerWidth < 760;
 
-  // 'sql-1#0' → where it lives in the light index (module, lesson index, exercise index).
+  // 'sql-1#0' (or a practice task 'sql-1#p0') → where it lives in the light index (module, lesson index, exercise index).
   function locate(id) {
     const [lid, n] = id.split('#');
     for (const mid in DJ.modules) {
       const ls = DJ.modules[mid].lessons || [], li = ls.findIndex(l => l.id === lid);
-      if (li >= 0) return { mod: mid, li, ei: +n, lesson: ls[li] };
+      if (li >= 0) return { mod: mid, li, ei: +String(n).replace('p', ''), pr: String(n)[0] === 'p', lesson: ls[li] };
     }
     return null;
   }
@@ -31,9 +31,9 @@
     const w = locate(id); if (!w) return null;
     await DJ.loadModule(w.mod);
     const l = DJ.modules[w.mod].lessons[w.li];
-    return { ex: (l.exercises || [])[w.ei], lesson: l, mod: DJ.findModule(w.mod) };
+    return { ex: ((w.pr ? l.practice : l.exercises) || [])[w.ei], lesson: l, mod: DJ.findModule(w.mod) };
   }
-  const codeTasks = l => (l.exercises || []).filter(e => CODE_TYPES.includes(e.type)).length;
+  const codeTasks = l => (l.exercises || []).filter(e => CODE_TYPES.includes(e.type)).length + (l.pc || (l.practice || []).length);
 
   // ================= teacher: assignments of one class (inside its card on #teach) =================
   function teacherPanel(box, cls) {
@@ -227,7 +227,7 @@
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     X = null;
   }
-  const logEv = (kind, ms) => { if (X && !X.done) C().call('log_event', { aid: X.aid, ekind: kind, ems: ms == null ? null : Math.round(ms) }).catch(() => {}); };
+  const logEv = (kind, ms) => { if (X && !X.done && !X.local) C().call('log_event', { aid: X.aid, ekind: kind, ems: ms == null ? null : Math.round(ms) }).catch(() => {}); };
 
   async function viewExam() {
     const aid = ui.route.aid;
@@ -271,7 +271,7 @@
 
   async function run(aid, info, r) {
     const exam = info.kind === 'exam';
-    X = { aid, exam, info, tasks: r.tasks, deadline: r.deadline ? Date.parse(r.deadline) : null, offset: Date.parse(r.server_now) - Date.now(),
+    X = { aid, exam, local: !!info.local, info, tasks: r.tasks, deadline: r.deadline ? Date.parse(r.deadline) : null, offset: Date.parse(r.server_now) - Date.now(),
       cur: 0, codes: {}, ok: {}, ex: {}, cm: null, listeners: [], away: null, clip: '', done: false };
     for (const [id, a] of Object.entries(r.answers || {})) { X.ok[id] = !!a.ok; if (a.code) X.codes[id] = a.code; }
     $('#app').innerHTML = `<div class="diag">${card('<p class="muted" style="margin:0">Тапсырмалар жүктелуде…</p>')}</div>`;
@@ -282,6 +282,11 @@
     if (!X || X.aid !== aid) return;
     document.body.classList.add('exam-mode');
     const on = (t, ev, fn) => { t.addEventListener(ev, fn, true); X.listeners.push([t, ev, fn]); };
+    if (X.local) {   // self-exam: no teacher, so nothing is logged or blocked; only a reload asks first
+      on(window, 'beforeunload', e => { if (X && !X.done) { e.preventDefault(); e.returnValue = ''; } });
+      drawExam(); X.tick = setInterval(tick, 1000); tick();
+      return;
+    }
     // Leaving the page: one event per absence, with how long it lasted.
     const goAway = () => { if (X && !X.away) X.away = Date.now(); };
     const comeBack = () => { if (X && X.away) { const ms = Date.now() - X.away; X.away = null; if (ms > 800) { logEv('blur', ms); toast('Басқа бетке кеткеніңіз мұғалімге көрінеді', 'flag'); } } };
@@ -388,12 +393,12 @@
       if (r.shown && $('#ex-out')) $('#ex-out').innerHTML = tableHtml(r.shown);
       else if ($('#ex-out')) $('#ex-out').innerHTML = (r.stdout ? `<pre>${esc(r.stdout)}</pre>` : '') + (r.trace ? `<pre style="color:var(--bad)">${esc(r.trace)}</pre>` : '') || '<p class="muted" style="margin:0">Шығыс жоқ.</p>';
     } catch (e) { busy(false); if (v()) v().innerHTML = `<div class="verdict bad">${esc(msgOf(e))}</div>`; return; }
-    try { await C().call('submit_answer', { aid: X.aid, ex: id, passed: !!r.pass, src: code }); }
+    if (!X.local) try { await C().call('submit_answer', { aid: X.aid, ex: id, passed: !!r.pass, src: code }); }
     catch (e) { busy(false); if (v()) v().innerHTML = `<div class="verdict bad">${/time is up/i.test(msgOf(e)) ? 'Уақыт бітті: жауап қабылданбады.' : 'Жауап сақталмады. Интернетті тексеріп, қайта басыңыз.'}</div>`; if (/time is up/i.test(msgOf(e))) finish(true); return; }
     if (!X) return;
     X.codes[id] = code; if (r.pass) X.ok[id] = true;
     busy(false);
-    if (v()) v().innerHTML = r.pass ? '<div class="verdict ok">Дұрыс! Жауап сақталды.</div>'
+    if (v()) v().innerHTML = r.pass ? `<div class="verdict ok">${X.local ? 'Дұрыс!' : 'Дұрыс! Жауап сақталды.'}</div>`
       : `<div class="verdict bad">Әзірге дұрыс емес. Жауап сақталды, түзетіп қайта тапсыруға болады.${X.exam ? '' : (r.msg ? ' ' + r.msg : '')}</div>`;
     const b = $(`[data-ti="${X.cur}"]`); if (b) b.classList.toggle('ok', !!X.ok[id]);
   }
@@ -406,6 +411,19 @@
     }
     X.done = true;
     const aid = X.aid, info = X.info;
+    if (X.local) {
+      const ok = X.tasks.filter(t => X.ok[t]), all = X.tasks.slice(), ex = X.ex, codes = X.codes;
+      if (S.saveSelfTest) S.saveSelfTest({ n: all.length, ok: ok.length, min: info.minutes || 0 });
+      track('selftest_finish', { n: all.length, ok: ok.length });
+      cleanup();
+      if (timeUp) toast('Уақыт бітті', 'bolt');
+      const pct = Math.round(ok.length / all.length * 100);
+      $('#app').innerHTML = `<div class="diag">${card(`<div class="eyebrow">Өзіңді тексер</div><h1 style="margin:6px 0 8px;font-size:1.6rem">${ok.length} / ${all.length} · ${pct}%</h1>
+        <p class="muted" style="margin:0 0 10px">${pct >= 80 ? 'Керемет нәтиже! Тақырыптарды жақсы меңгергенсіз.' : pct >= 50 ? 'Жаман емес. Қате кеткен есептердің тақырыбын қайталаңыз.' : 'Тақырыптарды қайталап, практика есептерін шешіп, қайта тапсырыңыз.'}</p>
+        <div class="st-res">${all.map((t, i) => { const e = ex[t]; return `<div class="${X_ok(ok, t) ? 'ok' : 'bad'}"><b>${i + 1}.</b> ${esc(e && e.ex ? (e.ex.title || e.lesson.title) : t)} · ${X_ok(ok, t) ? 'дұрыс' : codes[t] && codes[t] !== ((e && e.ex && e.ex.starter) || '') ? 'дұрыс емес' : 'жауап жоқ'} <button class="linkbtn" data-go="problem" data-pid="${esc(t)}">Ашу</button></div>`; }).join('')}</div>
+        <div class="actions" style="margin-top:12px"><button class="btn" data-go="selftest">Қайта тапсыру</button><button class="btn ghost" data-go="problems">Есептер</button></div>`)}</div>`;
+      return;
+    }
     try { await C().call('finish_attempt', { aid }); } catch (e) {}
     track('exam_finish', { kind: info.kind, solved: X.tasks.filter(t => X.ok[t]).length });
     cleanup();
@@ -437,6 +455,13 @@
     }).catch(() => {});
   }
 
-  return { teacherPanel, viewReport, viewExam, dashWire, leave() { stopWatch(); if (X && !X.done) logEv('blur', 0); cleanup(); } };
+  const X_ok = (ok, t) => ok.includes(t);
+  // Self-exam (#selftest in js/problems.js): the same exam screen, run locally with no teacher and no server.
+  function startSelf({ tasks, minutes, title }) {
+    cleanup();
+    const now = new Date();
+    run('self', { title, kind: 'exam', local: true, minutes }, { tasks, deadline: minutes ? new Date(now.getTime() + minutes * 60000).toISOString() : null, server_now: now.toISOString() });
+  }
+  return { teacherPanel, viewReport, viewExam, dashWire, startSelf, leave() { stopWatch(); if (X && !X.done) logEv('blur', 0); cleanup(); } };
   };
 })();

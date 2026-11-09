@@ -11,12 +11,23 @@ const { chromium } = require('playwright');
   await pg.goto((process.env.BASE_URL || 'http://localhost:8765/') + 'index.html');
   await pg.fill('[name=name]', 'Т'); await pg.fill('[name=username]', 'user' + Date.now() % 100000); await pg.fill('[name=pw]', 'secret12');
   await pg.click('#auth-submit'); await pg.waitForSelector('.quest-hero');
-  // MODULES=m6-1,m6-2 limits the run to those modules.
+  // MODULES=m6-1,m6-2 limits the run to those modules; PRACTICE_ONLY=1 checks only the practice tasks.
   const only = (process.env.MODULES || '').split(',').filter(Boolean);
-  const res = await pg.evaluate(async (only) => {
+  const res = await pg.evaluate(async ([only, pOnly]) => {
     await DJ.loadAll();   // course files load on demand in the app
     const out = { pass: 0, fail: [], starterPass: [], quiz: 0 };
-    for (const id of Object.keys(DJ.modules).filter(m => !only.length || only.includes(m))) for (const l of DJ.modules[id].lessons) for (const [i, ex] of (l.exercises || []).entries()) {
+    const CODE = ['sql', 'python', 'java', 'cpp'];
+    const all = [];
+    for (const id of Object.keys(DJ.modules).filter(m => !only.length || only.includes(m))) for (const l of DJ.modules[id].lessons) {
+      (l.exercises || []).forEach((ex, i) => all.push([l, String(i), ex]));
+      (l.practice || []).forEach((ex, i) => {   // practice: code tasks with a title and a level
+        if (!CODE.includes(ex.type) || !ex.title || !['easy', 'medium', 'hard'].includes(ex.level)) out.fail.push(l.id + '#p' + i + ' practice needs a code type, title and level');
+        all.push([l, 'p' + i, ex]);
+      });
+    }
+    if (pOnly) all.splice(0, all.length, ...all.filter(([, i]) => i[0] === 'p'));
+    out.total = all.length;
+    for (const [l, i, ex] of all) {
       if (ex.type === 'quiz') { if (!(ex.answer < ex.options.length)) out.fail.push(l.id + '#' + i + ' bad answer idx'); out.quiz++; continue; }
       if (ex.type === 'number' || ex.type === 'cmd' || ex.type === 'rubric') { out.quiz++; continue; }
       if (ex.type === 'sheet') { const r = DJ.sheet.check(ex, ex.solution); if (r.pass) out.pass++; else out.fail.push(l.id + '#' + i + ' ' + r.msg); continue; }
@@ -27,7 +38,7 @@ const { chromium } = require('playwright');
       if (s.pass) out.starterPass.push(l.id + '#' + i);
     }
     return out;
-  }, only);
+  }, [only, !!process.env.PRACTICE_ONLY]);
   console.log(JSON.stringify(res));
   console.log('errors', errs);
   await b.close();

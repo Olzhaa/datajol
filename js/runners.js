@@ -1,5 +1,17 @@
 // In-browser code runners and exercise checkers: SQL via sql.js (asm build), Python via Pyodide in a worker,
 // Java and C++ compiled to WebAssembly in workers.
+// Үлкен деректерді (content/lazy/*.js) бастапқы бетке салмай, тапсырма іске қосылғанда жүктейді.
+window.DJ = window.DJ || {};
+(function () {
+  const loading = {};
+  DJ.loadData = src => loading[src] || (loading[src] = new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = src + (window.DJ_VERSION ? '?v=' + window.DJ_VERSION : '');
+    s.onload = ok;
+    s.onerror = () => { delete loading[src]; s.remove(); fail(new Error('Деректер жүктелмеді: ' + src)); };
+    document.head.appendChild(s);
+  }));
+})();
 (function () {
   const sql = {
     ready: null,
@@ -20,6 +32,7 @@
       const SQL = await this.load();
       const db = new SQL.Database();
       const ds = DJ.datasets[datasetId || 'shop'];
+      if (ds && !ds.sql && ds.lazy) await DJ.loadData(ds.lazy);   // үлкен дерекқордың SQL-і бөлек файлда
       if (ds && ds.sql) db.exec(ds.sql);
       return db;
     },
@@ -121,6 +134,8 @@
       // scikit-learn (with scipy) is ~35 MB more, and model training itself can take longer than plain code.
       const firstPandas = this.needsPandas(all) && !this.pandas;
       const sk = this.needsSklearn(all), firstSk = sk && !this.sklearn;
+      const lazyCsv = Object.keys(DJ.lazyCsv || {}).filter(f => all.includes(f) && !(DJ.csv && DJ.csv[f]));
+      if (lazyCsv.length) await Promise.all([...new Set(lazyCsv.map(f => DJ.lazyCsv[f]))].map(DJ.loadData));   // бөлек жүктелетін CSV-лер
       const files = /\.csv/.test(all) && DJ.csv ? DJ.csv : null;
       const slow = 'Кітапханалар әлі жүктеліп жатқан кезде уақыт бітті: интернет баяу болуы мүмкін. Қайта іске қосып көріңіз.';
       const loop = sk ? 'Код 25 секундтан артық орындалды. Деректер көлемін немесе модель параметрлерін (мысалы n_estimators) азайтып көріңіз.' : 'Код 8 секундтан артық орындалды. Шексіз цикл немесе тым баяу алгоритм болуы мүмкін: циклдарды және алгоритмнің күрделілігін тексеріңіз.';

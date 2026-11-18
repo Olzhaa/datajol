@@ -227,6 +227,38 @@ for ch in spend:
         ]
       },
       {
+        id: 'cap-ai', title: 'AI көмекшімен талдау: сұрау жазғызу және тексеру', minutes: 15,
+        body: `
+<p>Вакансиялардың едәуір бөлігі енді «ИИ-құралдарын қолдана білу» деп жазады. Бұл «AI менің орныма жұмыс істейді» дегенді білдірмейді. Талап басқа: <b>AI-дан жылдам жоба алып, оны аналитик ретінде тексере білу</b>.</p>
+<h3>Жақсы сұрау (промпт) қалай жазылады</h3>
+<ol>
+<li><b>Схеманы беріңіз:</b> кестелер мен бағандардың аты, түрі, байланыстары. Онсыз AI бағандарды ойдан шығарады.</li>
+<li><b>Базаны атаңыз:</b> PostgreSQL, ClickHouse немесе SQLite. Күн функциялары әртүрлі.</li>
+<li><b>Сұрақты нақты жазыңыз:</b> «табыс» емес, «delivered тапсырыстардың quantity × unit_price қосындысы, 2026 жыл, қала бойынша».</li>
+<li><b>Нәтиженің пішінін айтыңыз:</b> қай бағандар, қандай реттілік.</li>
+</ol>
+<pre><code>Схема (SQLite): orders(order_id, customer_id, order_date, status),
+order_items(order_id, product_id, quantity, unit_price), customers(customer_id, city).
+Сұрақ: 2026 жылы әр қаладағы delivered тапсырыстар саны мен түсімі.
+Бағандар: city, orders_cnt, revenue. Түсім бойынша кему ретімен.</code></pre>
+<h3>AI жауабын қалай тексеру керек</h3>
+<ul>
+<li><b>Жол санын тексеріңіз.</b> JOIN-нан кейін тапсырыс саны өсіп кетпеді ме? AI жиі <code>COUNT(*)</code> жазады, ал керегі <code>COUNT(DISTINCT order_id)</code>.</li>
+<li><b>Бір санды қолмен тексеріңіз.</b> Бір қаланың немесе бір айдың нәтижесін бөлек қарапайым сұраумен есептеп, салыстырыңыз.</li>
+<li><b>Сүзгілерді оқыңыз.</b> Статус, күн аралығы, NULL дұрыс өңделді ме?</li>
+<li><b>Ақылға қонымды ма?</b> Конверсия 140% немесе теріс түсім шықса, сұрауда қате бар.</li>
+</ul>
+<h3>Құпиялылық</h3>
+<p>Клиенттердің аты-жөні, телефоны, email-і сияқты жеке деректерді сыртқы AI сервисіне жібермеңіз. Схеманы және жасанды мысал жолдарды жіберсеңіз жеткілікті. Компанияның ішкі ережесін алдын ала біліп алыңыз.</p>
+<div class="tip">Сұхбатта «AI-ды қалай қолданасыз?» деп сұраса, үш нәрсені айтыңыз: жоба сұрауды тездету үшін, тексерудің нақты тәсілдері және жеке деректерді қорғау.</div>`,
+        exercises: [
+          { type: 'quiz', xp: 10, prompt: 'AI-ға SQL сұрау жазғызғанда ең бірінші не беру керек?', options: ['Тек сұрақтың өзін', 'Кестелер мен бағандардың схемасын және база түрін', 'Клиенттердің толық тізімін', 'Ештеңе, AI өзі біледі'], answer: 1, explain: 'Схемасыз AI бағандардың атын ойдан шығарады, ал база түрін білмесе, күн функцияларын шатастырады.' },
+          { type: 'quiz', xp: 10, prompt: 'AI берген сұрау тапсырыс санын күткеннен 1,7 есе көп көрсетті. Ең ықтимал себеп?', options: ['База қате', 'JOIN-нан кейін COUNT(*) жазылған, бір тапсырыстың әр тауары бөлек саналған', 'ORDER BY жоқ', 'AI ешқашан қателеспейді'], answer: 1, explain: 'orders пен order_items біріктірілгенде тапсырыс тауар санынша қайталанады. COUNT(DISTINCT o.order_id) керек.' },
+          { type: 'quiz', xp: 10, prompt: 'Қайсысын сыртқы AI сервисіне жіберуге болмайды?', options: ['Кестелердің схемасы', 'Жасанды мысал жолдар', 'Клиенттердің аты-жөні мен телефондары бар экспорт', 'Сұрақтың мәтіні'], answer: 2, explain: 'Жеке деректер компанияның ішінде қалуы керек. AI-ға құрылым мен мысал жеткілікті.' },
+          { type: 'sql', dataset: 'qazaq', xp: 30, prompt: '<b>qazaq.</b> AI мына сұрауды берді: «әр қаладағы delivered тапсырыстар саны мен түсімі». Бірақ <code>orders_cnt</code> тым үлкен шығып тұр. Қатені түзетіңіз. Бағандар: <code>city</code>, <code>orders_cnt</code>, <code>revenue</code>, реті түсім бойынша кемуімен.', starter: "SELECT c.city,\n       COUNT(*) AS orders_cnt,\n       SUM(oi.quantity * oi.unit_price) AS revenue\nFROM orders o\nJOIN customers c ON c.customer_id = o.customer_id\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.status = 'delivered'\nGROUP BY c.city\nORDER BY revenue DESC;", solution: "SELECT c.city, COUNT(DISTINCT o.order_id) AS orders_cnt, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' GROUP BY c.city ORDER BY revenue DESC;", check: { ordered: true }, hints: ['Түсім дұрыс. Қате тапсырыс санында: JOIN-нан кейін бір тапсырыс бірнеше жол болады.', '<code>COUNT(DISTINCT o.order_id)</code>'] }
+        ]
+      },
+      {
         id: 'cap-9', title: 'Сұхбатқа дайындық: SQL және кейс', minutes: 15,
         body: `
 <p>Junior Data Analyst сұхбаты әдетте үш бөліктен тұрады:</p>

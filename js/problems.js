@@ -49,7 +49,7 @@
     $('#app').innerHTML = `
       <div class="probs">
         <div class="probs-head">
-          <div><h1 style="margin:0 0 6px">Есептер</h1><p class="muted" style="margin:0;max-width:60ch">${list.length} есеп: SQL, Python, Java, C++. Кез келгенін ашып, кодты осы жерде жазып, бірден тексеруге болады.</p></div>
+          <div><h1 style="margin:0 0 6px">Есептер</h1><p class="muted" style="margin:0;max-width:60ch">${list.length} есеп: SQL және Python. Кез келгенін ашып, кодты осы жерде жазып, бірден тексеруге болады.</p></div>
           <div class="pstats"><div class="pstat all"><b>${list.filter(solved).length}</b><span>/ ${list.length}</span><small>шешілді</small></div>${by('easy')}${by('medium')}${by('hard')}</div>
         </div>
         <div class="actions" style="margin:12px 0"><button class="btn" id="p-rand">${ICON.bolt} Кездейсоқ есеп</button><button class="btn ghost" data-go="selftest">${ICON.trophy} Өзіңді тексер</button></div>

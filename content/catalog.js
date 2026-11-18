@@ -4,7 +4,7 @@ DJ.catalog = [
   { id: 'ds', title: 'Data Science', courses: [
     { id: 'python', title: 'Python', level: 'Бастауыш', mods: ['m2-1'] },
     { id: 'python-2', title: 'Intermediate Python', level: 'Орта', mods: ['py-2'] },
-    { id: 'sql', title: 'SQL', level: 'Бастауыш', mods: ['m1-2', 'm3-3'] },
+    { id: 'sql', title: 'SQL', level: 'Бастауыш', mods: ['m1-2', 'm3-3', 'm3-8'] },
     { id: 'pandas', title: 'pandas & NumPy', level: 'Бастауыш', mods: ['m2-2', 'm3-2'] },
     { id: 'stats', title: 'Статистика және ықтималдық', level: 'Орта', mods: ['m3-1', 'm4-1', 'm4-2'] },
     { id: 'viz', title: 'Визуализация және Power BI', level: 'Бастауыш', mods: ['m3-4', 'm3-5'] },
@@ -34,4 +34,9 @@ DJ.catalog = [
     { id: 'jobs', title: 'Резюме және сұхбат', level: 'Бастауыш', mods: ['m7-1'] }
   ] }
 ];
+// Жасырылған модульдерді (content/curriculum.js, DJ.hiddenModules) каталогтан алып тастау; бос курстар да шығады.
+(function () {
+  const hide = new Set(DJ.hiddenModules || []);
+  DJ.catalog = DJ.catalog.map(g => Object.assign({}, g, { courses: g.courses.map(c => Object.assign({}, c, { mods: c.mods.filter(m => !hide.has(m)) })).filter(c => c.mods.length) })).filter(g => g.courses.length);
+})();
 DJ.findCourse = id => { for (const g of DJ.catalog) for (const c of g.courses) if (c.id === id) return Object.assign({ group: g }, c); return null; };

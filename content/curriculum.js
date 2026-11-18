@@ -25,6 +25,8 @@ DJ.phases = [
       { id: 'm3-1', code: 'M3.1', title: 'Descriptive Statistics', desc: 'Таралу, шашыраңқылық, корреляция', hours: '20–30' },
       { id: 'm3-2', code: 'M3.2', title: 'Cleaning & EDA', desc: 'Profiling, missing, outliers, EDA чек-листі', hours: '20–30' },
       { id: 'm3-3', code: 'M3.3', title: 'Advanced SQL & Modeling', desc: 'CTE, window functions, star schema, оптимизация', hours: '25–35' },
+      { id: 'm3-8', code: 'M3.8', title: 'SQL практикум: Qazaq Market', desc: 'Онлайн-дүкен базасында 30+ нақты бизнес-сұрақ: сүзгі, агрегат, JOIN, CTE, window, когорта', hours: '8–12' },
+      { id: 'm6-5', code: 'M6.5', title: 'Cloud & Data Eng Basics', desc: 'Warehouse, ETL, Spark/dbt шолуы', hours: '20–30' },
       { id: 'm3-4', code: 'M3.4', title: 'Visualization & Storytelling', desc: 'Диаграмма таңдау, matplotlib, memo жазу', hours: '15–20' },
       { id: 'm3-5', code: 'M3.5', title: 'Power BI', desc: 'Power Query, модель, DAX, интерактивті есеп', hours: '30–40' },
       { id: 'm3-6', code: 'M3.6', title: 'Business Analytics', desc: 'KPI, воронка, когорт, unit economics', hours: '20–30' },
@@ -48,7 +50,6 @@ DJ.phases = [
       { id: 'm6-2', code: 'M6.2', title: 'Deployment', desc: 'FastAPI, Docker, бұлтқа деплой', hours: '25–35' },
       { id: 'm6-3', code: 'M6.3', title: 'MLOps Basics', desc: 'MLflow, CI, мониторинг, drift', hours: '25–35' },
       { id: 'm6-4', code: 'M6.4', title: 'Deep Learning Intro', desc: 'PyTorch, training loop, CNN', hours: '50–70' },
-      { id: 'm6-5', code: 'M6.5', title: 'Cloud & Data Eng Basics', desc: 'Warehouse, ETL, Spark/dbt шолуы', hours: '20–30' },
       { id: 'm6-6', code: 'M6.6', title: 'ML Capstone', desc: 'End-to-end ML сервисі', hours: '40–60' },
       { id: 'm6-g', code: 'GenAI', title: 'GenAI Specialization', desc: 'LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps', hours: '40–60' },
       { id: 'm6-ai', code: 'AIE', title: 'AI Engineering', desc: 'Генерацияны басқару, RAG сапасы, ReAct агент, guardrails, LLM сервисі, бағалау, fine-tuning', hours: '40–60' }
@@ -98,7 +99,21 @@ DJ.careerLevels = [
   { id: 'L7', name: 'ML Engineer', needs: ['m6-1', 'm6-2', 'm6-3', 'm6-6'] }
 ];
 
+// Сайтта жасырылған модульдер (Data Analyst + Data Science бағытына қатыссыздар). Коды мен сабақтары
+// content/ ішінде сақталады, оқушының прогресі өшпейді. Модульді қайта ашу үшін оны осы тізімнен алып тастап, build.py-ды іске қосыңыз.
+DJ.hiddenModules = ['m6-1', 'm6-2', 'm6-3', 'm6-4', 'm6-6', 'm6-g', 'm6-ai', 'py-2', 'java-1', 'cpp-1', 'dsa-1', 'dsa-2', 'py-3'];
+(function () {
+  const hide = new Set(DJ.hiddenModules);
+  DJ.allPhases = DJ.phases;   // толық тізім: DJ.findModule жасырын модульді де табады (ескі прогресс, сертификаттар)
+  DJ.phases = DJ.phases.map(p => Object.assign({}, p, { modules: p.modules.filter(m => !hide.has(m.id)) })).filter(p => p.modules.length);
+  const shown = new Set(DJ.phases.map(p => p.n));
+  DJ.paths = DJ.paths.map(x => Object.assign({}, x, { phases: x.phases.filter(n => shown.has(n)) }))
+    .filter((x, i, a) => a.findIndex(y => y.phases.join() === x.phases.join()) === i);   // ML Engineer жолы Data Scientist-пен бірдей болып қалады, сондықтан шығады
+  DJ.devTrack = DJ.devTrack.map(g => Object.assign({}, g, { mods: g.mods.filter(id => !hide.has(id)) })).filter(g => g.mods.length);
+  DJ.careerLevels = DJ.careerLevels.filter(l => !(l.needs || []).some(id => hide.has(id)));
+})();
+
 DJ.findModule = function (id) {
-  for (const p of DJ.phases) for (const m of p.modules) if (m.id === id) return Object.assign({ phase: p }, m, DJ.modules[id] || {});
+  for (const p of DJ.allPhases) for (const m of p.modules) if (m.id === id) return Object.assign({ phase: p }, m, DJ.modules[id] || {});
   return null;
 };

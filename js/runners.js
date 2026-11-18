@@ -112,7 +112,7 @@
     restart() { if (this.worker) this.worker.terminate(); this.worker = null; this.pandas = false; this.sklearn = false; this.pending.forEach(p => p.resolve({ ok: false, stdout: '', error: 'Код 8 секундтан артық орындалды. Шексіз цикл немесе тым баяу алгоритм болуы мүмкін: циклдарды және алгоритмнің күрделілігін тексеріңіз.' })); this.pending.clear(); return this.start(); },
     pandas: false, sklearn: false,
     needsPandas(code) { return /\b(pandas|numpy)\b/.test(code || ''); },
-    needsSklearn(code) { return /\bsklearn\b/.test(code || ''); },
+    needsSklearn(code) { return /\b(sklearn|scipy)\b/.test(code || ''); },   // scipy scikit-learn-мен бірге жүктеледі: ұзағырақ алғашқы жүктеу
     async exec(code, tests) {
       await this.start();
       const id = ++this.seq;

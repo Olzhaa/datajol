@@ -1403,7 +1403,7 @@ def review_query(sql):
 
 print(review_query('SELECT * FROM events'))
 `), check: { tests: "assert review_query('SELECT * FROM events') == ['select_star', 'no_filter'], \"'SELECT * FROM events' → ['select_star', 'no_filter']\"\nassert review_query(\"select city, amount from events where dt >= '2024-03-01'\") == [], 'Жақсы сұрауда ескерту жоқ'\nassert review_query(\"SELECT city FROM events WHERE status = 'paid'\") == ['no_partition_filter'], 'where бар, бірақ dt сүзгісі жоқ'\nassert review_query(\"select * from events where dt = '2024-03-01'\") == ['select_star'], 'Тек select_star'\nassert review_query('SELECT * FROM EVENTS') == ['select_star', 'no_filter'], 'Регистрге тәуелсіз болуы керек (.lower())'" }, hints: ['Алдымен <code>s = sql.lower()</code>', '<code>if \'where\' not in s: ... elif \'dt\' not in s: ...</code>'] },
-          { type: 'number', xp: 10, prompt: 'Кесте күн бойынша партицияланған, барлығы 365 күн және 730 GB. Сұрау <code>WHERE dt &gt;= </code> арқылы тек 7 күнді сұрады және екі бағанды (жалпы бағандардың 10%-ы) оқыды. Қанша GB сканерленеді?', answer: 1.4, tol: 0.05, unit: 'GB', explain: '730 GB / 365 × 7 = 14 GB — партиция сүзгісінен кейін. Оның 10%-ы (екі баған) = 1.4 GB.' },
+          { type: 'number', xp: 10, prompt: 'Кесте күн бойынша партицияланған, барлығы 365 күн және 730 GB. Сұрау <code>WHERE dt &gt;= \'2025-12-25\'</code> сүзгісі арқылы тек соңғы 7 күнді сұрады және екі бағанды (жалпы бағандардың 10%-ы) оқыды. Қанша GB сканерленеді?', answer: 1.4, tol: 0.05, unit: 'GB', explain: '730 GB / 365 × 7 = 14 GB — партиция сүзгісінен кейін. Оның 10%-ы (екі баған) = 1.4 GB.' },
           { type: 'quiz', xp: 10, prompt: 'Snowflake-те айлық шот күтпеген жерден екі есе өсті, сұраулар саны өзгермеген. Ең ықтимал себеп?', options: ['Дерек Parquet форматында сақталған', 'Есептеу кластері (warehouse) auto-suspend жоқ және тоқтамай қосулы тұрған', 'Кестеде баған көп', 'SQL-де JOIN қолданылған'], answer: 1, explain: 'Snowflake-те ақы кластердің қосулы уақытына төленеді. Auto-suspend қосылмаса, бос тұрған warehouse та ақша жейді.' }
         ]
       },
@@ -1440,6 +1440,80 @@ print(review_query('SELECT * FROM events'))
           { type: 'quiz', xp: 10, prompt: 'ClickHouse-та <code>uniq(user_id)</code> мен <code>uniqExact(user_id)</code> айырмашылығы?', options: ['Айырмашылығы жоқ', 'uniq шамамен, бірақ өте жылдам санайды; uniqExact дәл, бірақ баяулау', 'uniq тек сандарды санайды', 'uniqExact NULL-ды санайды'], answer: 1, explain: 'Дашбордтағы тренд үшін uniq жеткілікті. Қаржылық есепке немесе дәл салыстыруға uniqExact қолданыңыз.' },
           { type: 'sql', dataset: 'qazaq', xp: 25, prompt: '<b>qazaq.</b> ClickHouse-тағы <code>toStartOfMonth(order_date)</code> сияқты, SQLite-та <code>date(order_date, \'start of month\')</code> арқылы ай бойынша топтаңыз. Жеткізілген (<code>delivered</code>) тапсырыстардың айлық санын шығарыңыз: <code>month</code>, <code>orders_cnt</code>. Реті: ай бойынша.', starter: '', solution: "SELECT date(order_date, 'start of month') AS month, COUNT(*) AS orders_cnt FROM orders WHERE status = 'delivered' GROUP BY month ORDER BY month;", check: { ordered: true }, hints: ["<code>SELECT date(order_date, 'start of month') AS month, COUNT(*) ...</code>", "<code>WHERE status = 'delivered' GROUP BY month ORDER BY month</code>"] },
           { type: 'sql', dataset: 'qazaq', xp: 25, prompt: '<b>qazaq.</b> ClickHouse-тағы <code>countIf</code>-тің баламасын жазыңыз: әр қала үшін барлық тапсырыс санын (<code>orders_cnt</code>) және бас тартылғандар санын (<code>cancelled_cnt</code>) бір сұраумен шығарыңыз. Бағандар: <code>city</code>, <code>orders_cnt</code>, <code>cancelled_cnt</code>.', starter: '', solution: "SELECT c.city, COUNT(*) AS orders_cnt, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_cnt FROM orders o JOIN customers c ON c.customer_id = o.customer_id GROUP BY c.city;", hints: ['<code>orders</code> мен <code>customers</code>-ты <code>customer_id</code> бойынша біріктіріңіз.', "<code>SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END)</code>"] }
+        ]
+      },
+      {
+        id: 'deng-mart', title: 'Дерек витриналары, SCD және инкременттік жүктеу', minutes: 15,
+        body: `
+<p>Вакансияларда «витрина құру» (data mart, витрина данных) талабы жиі кездеседі. Бұл — аналитик пен дата инженердің жұмысы түйісетін жер: инженер деректі қоймаға жеткізеді, ал <b>қандай витрина керек</b> екенін, оның бағандары мен ережелерін көбіне аналитик сипаттайды, жиі өзі SQL-мен жазады.</p>
+<h3>Витрина деген не</h3>
+<p><b>Витрина</b> — бір команданың немесе бір дашбордтың сұрақтарына дайындалған, алдын ала біріктірілген және агрегатталған кесте. Қоймадағы қабаттар:</p>
+<pre><code>raw (шикі көшірме) → staging (тазаланған) → core (star schema: fact + dim) → marts (витриналар)</code></pre>
+<p>Star schema әмбебап, бірақ әр есеп үшін 4–5 кестені JOIN жасау керек. Витринада бұл JOIN бір рет жасалып қойған: дашборд жылдам ашылады, ал «түсім» барлық есепте бірдей есептеледі.</p>
+<h3>Түйіршік (grain)</h3>
+<p>Витринаны жобалаудағы бірінші сұрақ: <b>бір жол нені білдіреді?</b> Мысалы, «ай × қала» немесе «күн × санат». Түйіршік:</p>
+<ul>
+<li>кестенің бірегей кілтін анықтайды (осы бағандар бойынша қайталану болмауы керек);</li>
+<li>қандай сұраққа жауап беруге <b>болмайтынын</b> анықтайды: «ай × қала» витринасынан жеке тауарды көре алмайсыз;</li>
+<li>қате агрегаттан сақтайды: бірегей клиенттер саны (<code>COUNT(DISTINCT)</code>) айлардан жылға қосылмайды.</li>
+</ul>
+<h3>SCD: өлшем өзгергенде не істейміз</h3>
+<p>Клиент Тараздан Алматыға көшті. <code>dim_customer</code> кестесінде қаланы қалай сақтаймыз? Бұл — <b>slowly changing dimension</b> (SCD) мәселесі.</p>
+<table>
+<tr><th>Тип</th><th>Не істейді</th><th>Салдары</th></tr>
+<tr><td><b>SCD 1</b></td><td>Ескі мәнді үстінен жазады</td><td>Қарапайым. Бірақ тарих жоғалады: клиенттің былтырғы Тараздағы тапсырыстары енді Алматының есебінде көрінеді</td></tr>
+<tr><td><b>SCD 2</b></td><td>Жаңа жол қосады, ескісін «жабады»</td><td>Тарих сақталады: әр тапсырыс сол кездегі қалаға жатады. Кесте мен JOIN күрделенеді</td></tr>
+</table>
+<p>SCD 2 кестесі:</p>
+<table>
+<tr><th>customer_id</th><th>city</th><th>valid_from</th><th>valid_to</th><th>is_current</th></tr>
+<tr><td>19</td><td>Тараз</td><td>2025-05-15</td><td>2026-02-28</td><td>0</td></tr>
+<tr><td>19</td><td>Алматы</td><td>2026-03-01</td><td>9999-12-31</td><td>1</td></tr>
+</table>
+<p>Фактіні өлшемге тапсырыс күні бойынша жалғаймыз:</p>
+<pre><code>JOIN dim_customer d
+  ON d.customer_id = o.customer_id
+ AND o.order_date BETWEEN d.valid_from AND d.valid_to</code></pre>
+<p>Қайсысын таңдау керек? Қате түзетілсе (атындағы әріп қатесі) — SCD 1. Есептерге әсер ететін нақты өзгеріс болса (қала, тариф, менеджер, сегмент) — SCD 2.</p>
+<h3>Толық қайта жүктеу және инкремент</h3>
+<table>
+<tr><th>Тәсіл</th><th>Қалай</th><th>Қашан</th></tr>
+<tr><td>Толық қайта құру (full refresh)</td><td>Кестені өшіріп, басынан есептейді</td><td>Кесте шағын; логика жиі өзгереді</td></tr>
+<tr><td>Инкремент</td><td>Тек соңғы жүктеуден кейінгі жаңа жолдарды қосады</td><td>Кесте үлкен; тарих өзгермейді</td></tr>
+<tr><td>Snapshot</td><td>Күн сайын күйдің толық көшірмесін күн белгісімен сақтайды</td><td>Қалдықтар (қоймадағы тауар, шот балансы): кешегі күйді қайта есептеу мүмкін емес</td></tr>
+</table>
+<p>Инкрементте <b>watermark</b> сақталады — соңғы жүктелген күн. Келесі жолы <code>WHERE order_date &gt; watermark</code> шартымен тек жаңасы алынады. Екі қауіп бар:</p>
+<ul>
+<li><b>Кешігіп келген дерек</b>: кешегі тапсырыс бүгін ғана жүйеге түсті немесе статусы өзгерді. Сондықтан әдетте соңғы 3–7 күн қайта есептеледі.</li>
+<li><b>Қайталану</b>: жүктеу екі рет іске қосылса, жолдар екі еселенеді. ETL сабағындағы idempotency ережесі: алдымен сол кезеңді өшіріп (<code>DELETE</code>), сосын қосу (<code>INSERT</code>), немесе <code>MERGE</code>.</li>
+</ul>
+<h3>Витрина спецификациясы</h3>
+<p>Витринаны жазбас бұрын бір беттік сипаттама жасаңыз. Инженер де, тапсырыс беруші де соған қол қояды:</p>
+<table>
+<tr><th>Бөлім</th><th>Мысал</th></tr>
+<tr><td>Атауы мен мақсаты</td><td><code>mart_sales_monthly</code>: сатылым дашборды, коммерция бөлімі</td></tr>
+<tr><td>Түйіршік</td><td>ай × қала; кілті (month, city)</td></tr>
+<tr><td>Дереккөздер</td><td>orders, order_items, customers</td></tr>
+<tr><td>Бағандар мен анықтамалар</td><td>revenue = delivered тапсырыстардың quantity × unit_price сомасы; customers = бірегей сатып алушылар</td></tr>
+<tr><td>Сүзгілер</td><td>тек status = 'delivered'; тест тапсырыстары кірмейді</td></tr>
+<tr><td>Жаңарту</td><td>күн сайын 06:00, инкремент, соңғы 7 күн қайта есептеледі</td></tr>
+<tr><td>Тестілер</td><td>кілт бірегей; revenue ≥ 0; айлық сома дереккөзбен сәйкес</td></tr>
+<tr><td>Иесі</td><td>аналитика командасы</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Түйіршікті жазбай бастау: кейін бір жолда екі деңгей араласып, сомалар екі еселенеді.</li>
+<li>Витринаға дайын пайыз бен орташаны салу: оларды жоғары деңгейге қайта жинауға болмайды. Алым мен бөлімді бөлек сақтаңыз.</li>
+<li>Инкрементті кешіккен деректі ескермей жазу: витрина дереккөзден біртіндеп алшақтай береді.</li>
+<li>SCD 1 өлшеммен тарихи есеп жасау: өткен кезеңнің сандары өлшем өзгерген сайын «жылжиды».</li>
+</ul>
+<div class="tip">dbt-де витрина — <code>marts/</code> папкасындағы SQL модель, ал инкремент <code>materialized='incremental'</code> және <code>is_incremental()</code> шартымен жазылады. Алдыңғы dbt сабағындағы <code>unique</code> мен <code>not_null</code> тестілері дәл осы түйіршік кілтіне қойылады.</div>`,
+        exercises: [
+          { type: 'quiz', xp: 10, prompt: '<code>mart_sales_monthly</code> витринасының түйіршігі — «ай × қала». Одан қай сұраққа жауап алуға <b>болмайды</b>?', options: ['Наурызда Астананың түсімі қанша?', '2026 жылы қай қаланың түсімі ең көп?', 'Сәуірде қай тауар ең көп сатылды?', 'Түсім айдан айға қалай өзгерді?'], answer: 2, explain: 'Витринада тауар деңгейі жоқ: бір жол бір айдағы бір қаланы білдіреді. Тауар керек болса, түйіршігі ұсағырақ басқа витрина қажет.' },
+          { type: 'quiz', xp: 10, prompt: 'Клиент наурызда Тараздан Алматыға көшті. Басшылық «қала бойынша 2025 жылғы түсім есебі өзгермесін» дейді. Қай тәсіл керек?', options: ['SCD 1: қаланы үстінен жазу', 'SCD 2: жаңа жол қосып, ескісін valid_to күнімен жабу', 'Клиентті өшіріп, қайта тіркеу', 'Қала бағанын алып тастау'], answer: 1, explain: 'SCD 2 тарихты сақтайды: 2025 жылғы тапсырыстар Таразға, көшкеннен кейінгілері Алматыға жатады. SCD 1-де бүкіл тарих Алматыға көшіп кетер еді.' },
+          { type: 'sql', dataset: 'qazaq', xp: 30, prompt: "<b>qazaq.</b> Спецификациядағы витринаны құрыңыз: <code>CREATE TABLE mart_sales_monthly AS SELECT ...</code>. Түйіршік: ай × клиенттің қаласы, тек <code>delivered</code> тапсырыстар. Бағандар осы ретпен: <code>month</code> ('YYYY-MM'), <code>city</code>, <code>orders</code> (бірегей тапсырыстар), <code>customers</code> (бірегей сатып алушылар), <code>revenue</code> (quantity × unit_price сомасы).", starter: "CREATE TABLE mart_sales_monthly AS\nSELECT\n  \n", solution: "CREATE TABLE mart_sales_monthly AS SELECT strftime('%Y-%m', o.order_date) AS month, c.city, COUNT(DISTINCT o.order_id) AS orders, COUNT(DISTINCT o.customer_id) AS customers, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' GROUP BY month, c.city;", check: { mustInclude: ['CREATE TABLE'], after: 'SELECT month, city, orders, customers, revenue FROM mart_sales_monthly ORDER BY month, city', ordered: true }, hints: ['Үш кесте: <code>orders</code>, <code>customers</code>, <code>order_items</code>. JOIN жолдарды көбейтеді, сондықтан <code>COUNT(DISTINCT o.order_id)</code> және <code>COUNT(DISTINCT o.customer_id)</code>.', "<code>strftime('%Y-%m', o.order_date) AS month</code>, <code>GROUP BY month, c.city</code>."] },
+          { type: 'sql', dataset: 'qazaq', xp: 30, prompt: '<b>qazaq.</b> Күндік витрина (түйіршігі: күн × санат) 2026-05-31-ге дейін жүктелген, бұл — watermark. Инкременттік жүктеуге тек жаңа жолдарды дайындаңыз: watermark-тан кейінгі <code>delivered</code> тапсырыстар бойынша <code>order_date</code>, <code>category</code>, <code>orders</code> (бірегей тапсырыстар), <code>items</code> (<code>quantity</code> қосындысы), <code>revenue</code>. <code>order_date</code>, <code>category</code> бойынша сұрыптаңыз.', starter: '', solution: "SELECT o.order_date, p.category, COUNT(DISTINCT o.order_id) AS orders, SUM(oi.quantity) AS items, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.status = 'delivered' AND o.order_date > '2026-05-31' GROUP BY o.order_date, p.category ORDER BY o.order_date, p.category;", check: { ordered: true }, hints: ["Инкремент сүзгісі: <code>o.order_date &gt; '2026-05-31'</code>.", 'Түйіршік бойынша топтаңыз: <code>GROUP BY o.order_date, p.category</code>.'] },
+          { type: 'quiz', xp: 10, prompt: 'Инкременттік жүктеу түнде екі рет іске қосылып, витринадағы кешегі түсім екі еселенді. Мұны болдырмаудың дұрыс жолы қайсы?', options: ['Жүктеуді қолмен ғана іске қосу', 'Жүктеуді idempotent ету: жаңа жолдарды қоспас бұрын сол кезеңді өшіру (DELETE + INSERT) немесе MERGE қолдану', 'Витринаны айына бір рет қана жаңарту', 'Дашбордта түсімді екіге бөліп көрсету'], answer: 1, explain: 'Idempotent жүктеу неше рет орындалса да бірдей нәтиже береді. Кезеңді өшіріп қайта жазу кешігіп келген деректі де түзетеді.' }
         ]
       },
       {

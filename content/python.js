@@ -115,7 +115,7 @@ print(f"Орташа чек: {8450.567:.2f}")   # 8450.57</code></pre>
 <tr><th>Әдіс</th><th>Мысал</th><th>Нәтиже</th></tr>
 <tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
 <tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
-<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>2</code></td></tr>
 <tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
 </table>
 <p>Жол әдістері бастапқы жолды өзгертпейді, жаңа жол қайтарады. Сондықтан нәтижені сақтау керек: <code>name = name.strip()</code>.</p>
@@ -189,7 +189,7 @@ print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
 items = ["Термос", "Блокнот", "Рюкзак"]
 items.sort()
 print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
-<p>Мәтіндер әліпби ретімен сұрыпталады. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
+<p>Мәтіндер әріптердің код нөмірі бойынша сұрыпталады: орыс әліпбиіндегі әріптер үшін бұл әліпби ретімен бірдей, ал қазақтың төл әріптері (Ә, Қ, Ө, Ү…) басқа орынға түсуі мүмкін. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
 <h3>SQL-мен салыстыру</h3>
 <table>
 <tr><th>SQL</th><th>Python list</th></tr>
@@ -207,7 +207,7 @@ print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</cod
 </ul>`,
       exercises: [
         { type: 'python', xp: 10, prompt: 'Апталық сатылым берілген. Ең үлкен мәнді, ең кіші мәнді және орташа мәнді (2 ондық таңбаға дейін дөңгелектеп) бір жолда шығарыңыз: <code>print(max_v, min_v, avg)</code>.', starter: 'sales = [120, 95, 140, 80, 110, 160, 72]\n', solution: 'sales = [120, 95, 140, 80, 110, 160, 72]\nmax_v = max(sales)\nmin_v = min(sales)\navg = round(sum(sales) / len(sales), 2)\nprint(max_v, min_v, avg)', hints: ['<code>round(sum(sales) / len(sales), 2)</code>'] },
-        { type: 'python', xp: 15, prompt: '<code>cities</code> тізіміне <code>"Ақтөбе"</code> қосып, тізімді әліпби ретімен сұрыптап, шығарыңыз.', starter: 'cities = ["Шымкент", "Алматы", "Астана"]\n', solution: 'cities = ["Шымкент", "Алматы", "Астана"]\ncities.append("Ақтөбе")\ncities.sort()\nprint(cities)', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе тізімде болуы керек"\nassert cities == sorted(cities), "Тізім сұрыпталмаған"', stdout: true }, hints: ['<code>.append()</code>, сосын <code>.sort()</code>.'] }
+        { type: 'python', xp: 15, prompt: '<code>cities</code> тізіміне <code>"Ақтөбе"</code> қосып, тізімді <code>.sort()</code> арқылы сұрыптап, шығарыңыз. Назар аударыңыз: «Ақтөбе» «Астана»-дан кейін шығады, себебі <code>қ</code> әрпінің код нөмірі <code>л</code> мен <code>с</code>-тан үлкен. Бұл — қазақ әліпбиінің реті емес, <code>.sort()</code>-тың реті.', starter: 'cities = ["Шымкент", "Алматы", "Астана"]\n', solution: 'cities = ["Шымкент", "Алматы", "Астана"]\ncities.append("Ақтөбе")\ncities.sort()\nprint(cities)', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе тізімде болуы керек"\nassert cities == sorted(cities), "Тізім сұрыпталмаған"', stdout: true }, hints: ['<code>.append()</code>, сосын <code>.sort()</code>.'] }
       ]
     },
     {
@@ -343,7 +343,7 @@ print(customer.get("phone", "жоқ"))   # кілт жоқ болса, әдеп�
 counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
-print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
+print(counts)   # {'Алматы': 3, 'Астана': 1, 'Шымкент': 1}</code></pre>
 <p>Кілттер мен мәндерді аралау: <code>for key, value in counts.items():</code></p>
 <h3>Сөздіктер тізімі: деректер кестесі</h3>
 <p>Бір сөздік бір жазбаны сипаттаса, сөздіктер тізімі бүтін кестені сипаттайды. Әр сөздік — бір жол, кілттер — баған атаулары:</p>
@@ -429,7 +429,7 @@ print(sum(values))   # 355</code></pre>
     if visitors &lt; 0 or buyers &lt; 0:
         raise ValueError("сандар теріс болмауы керек")
     return buyers / visitors * 100 if visitors else 0</code></pre>
-<p><code>raise</code> қатені бірден тоқтатып, себебін хабарлайды. Мұндай функцияны қолданған адам қатесін бірден көреді.</p>
+<p><code>raise</code> функцияны бірден тоқтатып, қатенің себебін хабарлайды. Мұндай функцияны қолданған адам қатесін бірден көреді.</p>
 <div class="tip"><code>try</code> блогын тек қате болуы мүмкін жолға қойыңыз. Бүкіл кодты <code>try</code>-ға орасаңыз, қай жерде қате болғанын табу қиын.</div>`,
       exercises: [
         { type: 'python', xp: 20, prompt: '<code>raw</code> тізімінен тек санға айналатын мәндерді <code>float</code> қылып <code>values</code>-қа жинаңыз (<code>try/except ValueError</code>). Соңында олардың қосындысын шығарыңыз.', starter: 'raw = ["12.5", "abc", "7", "", "30.5", "N/A"]\nvalues = []\n', solution: 'raw = ["12.5", "abc", "7", "", "30.5", "N/A"]\nvalues = []\nfor r in raw:\n    try:\n        values.append(float(r))\n    except ValueError:\n        pass\nprint(sum(values))', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)', stdout: true, mustInclude: ['except'] }, hints: ['<code>except ValueError:</code> ішінде <code>pass</code> жазуға болады.'] },
@@ -464,6 +464,100 @@ def top_city(rows): ...</code></pre>
       exercises: [
         { type: 'python', xp: 25, prompt: '<code>total_revenue(rows)</code> функциясын жазыңыз: барлық жолдар бойынша <code>qty × price</code> қосындысын (int) қайтарсын.', starter: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef total_revenue(rows):\n    pass\n\nprint(total_revenue(rows))\n', solution: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef total_revenue(rows):\n    total = 0\n    for r in rows:\n        total += int(r["qty"]) * int(r["price"])\n    return total\n\nprint(total_revenue(rows))', check: { tests: 'assert total_revenue(rows) == 188000, "Жалпы табыс 188000 болуы керек, сізде: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Бос тізім үшін 0 қайтарыңыз"' }, hints: ['Мәтінді санға айналдырыңыз: <code>int(r["qty"])</code>.'] },
         { type: 'python', xp: 30, prompt: '<code>revenue_by_city(rows)</code> функциясы қала → табыс сөздігін қайтарсын. Сосын <code>best_city(rows)</code> ең көп табысты қаланың атауын қайтарсын.', starter: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef revenue_by_city(rows):\n    pass\n\ndef best_city(rows):\n    pass\n\nprint(revenue_by_city(rows))\nprint(best_city(rows))\n', solution: 'import csv, io\ndata = """date,city,product,qty,price\n2024-09-01,Алматы,Рюкзак,2,15000\n2024-09-01,Астана,Термос,1,9000\n2024-09-02,Алматы,Блокнот,10,1200\n2024-09-03,Шымкент,Рюкзак,1,15000\n2024-09-03,Астана,Монитор,1,95000\n2024-09-04,Алматы,Термос,3,9000\n"""\nrows = list(csv.DictReader(io.StringIO(data)))\n\ndef revenue_by_city(rows):\n    out = {}\n    for r in rows:\n        out[r["city"]] = out.get(r["city"], 0) + int(r["qty"]) * int(r["price"])\n    return out\n\ndef best_city(rows):\n    rev = revenue_by_city(rows)\n    return max(rev, key=rev.get)\n\nprint(revenue_by_city(rows))\nprint(best_city(rows))', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city Астана болуы керек"' }, hints: ['Сөздікпен санау сабағындағы <code>.get(key, 0)</code> үлгісін қолданыңыз.', 'Ең үлкен мәнді кілт: <code>max(rev, key=rev.get)</code>.'] }
+      ]
+    },
+    {
+      id: 'py-14', title: 'Кортеж, жиын, lambda және модульдер', minutes: 15,
+      body: `
+<p>Тізім мен сөздікті білесіз. Python-да дерекпен жұмыста күнде кездесетін тағы екі жинақ бар: <b>кортеж</b> (tuple) және <b>жиын</b> (set). Оған қоса бұл сабақта бір жолдық функцияны (<code>lambda</code>), дайын модульдерді және файлды оқуды үйренесіз. pandas-қа өтпес бұрын осының бәрі керек.</p>
+<h3>Кортеж (tuple)</h3>
+<p>Кортеж — өзгермейтін тізім. Жай жақшамен жазылады. Бір жазбаның бірнеше өрісін бірге ұстауға ыңғайлы:</p>
+<pre><code>row = ("Алматы", 69000)
+print(row[0])        # Алматы
+print(len(row))      # 2
+row[1] = 70000       # TypeError: кортежді өзгертуге болмайды</code></pre>
+<p>Ең пайдалысы — <b>жаю</b> (unpacking): кортеждің мәндерін бірден бірнеше айнымалыға тарату.</p>
+<pre><code>city, revenue = row
+print(city, revenue)             # Алматы 69000
+
+a, b = 5, 10
+a, b = b, a                      # мәндерді ауыстыру
+
+for city, revenue in [("Алматы", 69000), ("Астана", 104000)]:
+    print(f"{city}: {revenue}")</code></pre>
+<p>Сіз кортежді бұрын да көрдіңіз: <code>d.items()</code> кілт пен мәнді кортеж етіп береді, ал функция бірнеше мән қайтарғанда (<code>return total, count</code>) да кортеж қайтады.</p>
+<h3>Жиын (set)</h3>
+<p>Жиын — <b>қайталанбайтын</b> мәндер жинағы. Реті сақталмайды. SQL-дегі <code>DISTINCT</code> сияқты:</p>
+<pre><code>cities = ["Алматы", "Астана", "Алматы", "Шымкент", "Алматы"]
+unique = set(cities)
+print(len(unique))               # 3  (COUNT(DISTINCT city))
+print("Астана" in unique)        # True: жиында іздеу өте жылдам</code></pre>
+<p>Екі жиынмен SQL-дегі жиын операцияларын жасауға болады:</p>
+<table>
+<tr><th>Python</th><th>Мағынасы</th><th>SQL</th></tr>
+<tr><td><code>a | b</code></td><td>кемінде біреуінде бар</td><td><code>UNION</code></td></tr>
+<tr><td><code>a &amp; b</code></td><td>екеуінде де бар</td><td><code>INTERSECT</code></td></tr>
+<tr><td><code>a - b</code></td><td>a-да бар, b-да жоқ</td><td><code>EXCEPT</code></td></tr>
+</table>
+<pre><code>march = {1, 2, 3, 7}
+april = {2, 3, 8}
+print(march &amp; april)   # {2, 3}  екі айда да сатып алғандар
+print(april - march)   # {8}     сәуірдегі жаңа клиенттер</code></pre>
+<p>Бос жиын <code>set()</code> деп жазылады. <code>{}</code> — бос сөздік.</p>
+<h3>lambda және sorted(key=...)</h3>
+<p><code>lambda</code> — атаусыз, бір жолдық шағын функция. <code>lambda x: x * 2</code> дегеніміз — «x-ті алып, x * 2 қайтар». Ол көбіне басқа функцияға «неге қарап сұрыптау керек» дегенді айту үшін қолданылады:</p>
+<pre><code>sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000)]
+
+ranked = sorted(sales, key=lambda row: row[1], reverse=True)
+print(ranked)
+# [('Астана', 104000), ('Алматы', 69000), ('Шымкент', 15000)]</code></pre>
+<p><code>key</code> әр элементке қолданылады, ал сұрыптау соның нәтижесі бойынша жүреді. Мұнда <code>row[1]</code> — табыс. <code>key</code> болмаса, кортеждер бірінші элементі (қала атауы) бойынша сұрыпталар еді. <code>max</code> пен <code>min</code> да <code>key</code> қабылдайды: <code>max(sales, key=lambda row: row[1])</code>.</p>
+<h3>Модульдер: import</h3>
+<p>Python-мен бірге жүздеген дайын модуль келеді (стандартты кітапхана). Оларды орнатудың қажеті жоқ, тек <code>import</code> жазасыз:</p>
+<pre><code>import math
+print(math.sqrt(144))            # 12.0
+print(math.ceil(4.1))            # 5 (жоғары қарай дөңгелектеу)
+
+import statistics
+checks = [2150, 2250, 2550, 48000]
+print(statistics.mean(checks))   # 13737.5
+print(statistics.median(checks)) # 2400.0
+
+from datetime import date
+d1 = date.fromisoformat("2024-03-05")
+d2 = date.fromisoformat("2024-04-09")
+print((d2 - d1).days)            # 35
+print(d1.year, d1.month)         # 2024 3
+print(d1.strftime("%Y-%m"))      # 2024-03</code></pre>
+<p><code>import math</code> бүкіл модульді әкеледі, функциясы <code>math.sqrt</code> деп шақырылады. <code>from datetime import date</code> модульден тек бір нәрсені алады, оны бірден <code>date</code> деп жазасыз. Келесі модульдегі <code>import pandas as pd</code> — дәл осы, тек қысқа атаумен.</p>
+<h3>Файлды оқу: with open</h3>
+<p>Осы уақытқа дейін дерек кодтың ішінде жазылған еді. Нақты жұмыста ол файлда жатады. Жұмыс қалтасында <code>orders.csv</code> файлы бар (кофехана тапсырыстары):</p>
+<pre><code>with open("orders.csv", encoding="utf-8") as f:
+    lines = f.read().splitlines()
+
+print(lines[0])      # id,customer_id,order_date,amount,status
+print(len(lines))    # 151 (тақырып + 150 тапсырыс)</code></pre>
+<p><code>with</code> блогы біткенде файл өзі жабылады, тіпті қате шықса да. <code>encoding="utf-8"</code> қазақша мәтін дұрыс оқылуы үшін керек. CSV-ді сөздіктерге айналдыру үшін өткен сабақтағы <code>csv.DictReader</code>-ді қолданамыз, тек енді оған файлдың өзін береміз:</p>
+<pre><code>import csv
+with open("orders.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
+
+print(rows[0]["amount"])   # '2150'  (мәтін!)</code></pre>
+<div class="tip">Файлдан оқылған әр мән — мәтін, ал бос ұяшық — бос жол <code>""</code>. Сондықтан <code>int(r["amount"])</code> жазбас бұрын мәннің бос емес екенін тексеріңіз: <code>if r["amount"]:</code>.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Бір элементті кортеж.</b> <code>(5)</code> — жай сан. Кортеж үшін үтір керек: <code>(5,)</code>.</li>
+<li><b>Жаюда сандардың сәйкес келмеуі.</b> <code>a, b = (1, 2, 3)</code> → <code>ValueError: too many values to unpack</code>.</li>
+<li><b>Жиыннан индекспен алу.</b> <code>unique[0]</code> қате: жиында рет жоқ. Рет керек болса, <code>sorted(unique)</code> жазыңыз.</li>
+<li><b>with блогынан тыс оқу.</b> Блок біткен соң файл жабық: <code>f.read()</code> қате береді. Деректі блок ішінде айнымалыға сақтап алыңыз.</li>
+<li><b>Файл атауында қате.</b> <code>FileNotFoundError</code> шықса, атауды және файл жатқан қалтаны тексеріңіз.</li>
+</ul>`,
+      exercises: [
+        { type: 'python', xp: 20, prompt: '<code>sales</code> — (қала, табыс) кортеждерінің тізімі. Оны табыс бойынша кему ретімен сұрыптап, <code>ranked</code>-қа жазыңыз (<code>sorted</code> және <code>key=lambda</code>). Сосын бірінші орындағы кортежді <code>top_city</code> және <code>top_revenue</code> айнымалыларына жайыңыз.', starter: 'sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000), ("Ақтөбе", 31000)]\n\n', solution: 'sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000), ("Ақтөбе", 31000)]\n\nranked = sorted(sales, key=lambda row: row[1], reverse=True)\ntop_city, top_revenue = ranked[0]\nprint(ranked)\nprint(top_city, top_revenue)', check: { mustInclude: ['lambda'], tests: 'assert [r[1] for r in ranked] == [104000, 69000, 31000, 15000], "ranked табыс бойынша кему ретімен болуы керек: " + str(ranked)\nassert ranked[0] == ("Астана", 104000), "ranked ішінде (қала, табыс) кортеждері қалуы керек"\nassert top_city == "Астана", "top_city дұрыс емес: ranked[0]-ді жайыңыз"\nassert top_revenue == 104000, "top_revenue дұрыс емес"' }, hints: ['<code>sorted(sales, key=lambda row: row[1], reverse=True)</code>', 'Жаю: <code>top_city, top_revenue = ranked[0]</code>.'] },
+        { type: 'python', xp: 20, prompt: 'Наурыз бен сәуірде сатып алған клиенттердің id тізімдері берілген (қайталанулар бар). Жиындар арқылы есептеңіз: <code>both</code> — екі айда да сатып алғандар, <code>new</code> — тек сәуірде пайда болғандар, <code>total</code> — екі айдағы бірегей клиенттер <b>саны</b>.', starter: 'march = [1, 2, 3, 2, 7, 1, 9]\napril = [2, 3, 8, 8, 9, 12]\n\n', solution: 'march = [1, 2, 3, 2, 7, 1, 9]\napril = [2, 3, 8, 8, 9, 12]\n\nboth = set(march) & set(april)\nnew = set(april) - set(march)\ntotal = len(set(march) | set(april))\nprint(both, new, total)', check: { tests: 'assert isinstance(both, (set, frozenset)), "both жиын (set) болуы керек"\nassert both == {2, 3, 9}, "both: set(march) & set(april), сізде: " + str(both)\nassert set(new) == {8, 12}, "new: set(april) - set(march), сізде: " + str(new)\nassert total == 7, "total: бірігудің (|) ұзындығы, сізде: " + str(total)' }, hints: ['Алдымен тізімдерді жиынға айналдырыңыз: <code>set(march)</code>, <code>set(april)</code>.', '<code>&amp;</code> — қиылысу, <code>-</code> — айырма, <code>|</code> — бірігу.'] },
+        { type: 'python', xp: 20, prompt: 'Клиент <code>signup</code> күні тіркеліп, <code>first_order</code> күні алғаш тапсырыс берді. <code>datetime</code> модулі арқылы арадағы күндер санын <code>days</code>-ке жазыңыз. Сосын <code>statistics</code> модулімен <code>checks</code> тізімінің медианасын <code>med</code>-ке жазыңыз.', starter: 'from datetime import date\nimport statistics\n\nsignup = "2024-01-15"\nfirst_order = "2024-03-05"\nchecks = [2150, 2250, 2550, 2050, 48000]\n\n', solution: 'from datetime import date\nimport statistics\n\nsignup = "2024-01-15"\nfirst_order = "2024-03-05"\nchecks = [2150, 2250, 2550, 2050, 48000]\n\ndays = (date.fromisoformat(first_order) - date.fromisoformat(signup)).days\nmed = statistics.median(checks)\nprint(days, med)', check: { tests: 'assert days == 50, "days дұрыс емес: (date.fromisoformat(first_order) - date.fromisoformat(signup)).days"\nassert isinstance(days, int), "days бүтін сан болуы керек: .days қолданыңыз"\nassert med == 2250, "med дұрыс емес: statistics.median(checks)"' }, hints: ['Мәтінді күнге айналдыру: <code>date.fromisoformat(signup)</code>.', 'Екі күннің айырмасынан күн саны: <code>(d2 - d1).days</code>.', '<code>statistics.median(checks)</code>'] },
+        { type: 'python', xp: 25, prompt: '<code>orders.csv</code> файлын <code>with open</code> және <code>csv.DictReader</code> арқылы <code>rows</code> тізіміне оқыңыз. Сосын есептеңіз: <code>refunds</code> — статусы <code>refund</code> жолдар саны, <code>paid_total</code> — статусы <code>paid</code> және <code>amount</code> бос емес жолдардың сомасы (int).', starter: 'import csv\n\nwith open("orders.csv", encoding="utf-8") as f:\n    pass\n', solution: 'import csv\n\nwith open("orders.csv", encoding="utf-8") as f:\n    rows = list(csv.DictReader(f))\n\nrefunds = 0\npaid_total = 0\nfor r in rows:\n    if r["status"] == "refund":\n        refunds += 1\n    if r["status"] == "paid" and r["amount"]:\n        paid_total += int(r["amount"])\nprint(len(rows), refunds, paid_total)', check: { mustInclude: ['with open'], tests: 'import csv as _csv\nwith open("orders.csv", encoding="utf-8") as _f:\n    _rows = list(_csv.DictReader(_f))\nassert len(rows) == len(_rows) == 150, "rows ішінде 150 жол болуы керек: list(csv.DictReader(f))"\nassert rows[0]["status"] == "paid", "rows сөздіктер тізімі болуы керек"\nassert refunds == sum(1 for r in _rows if r["status"] == "refund"), "refunds дұрыс емес: status == \'refund\' жолдарды санаңыз"\nassert paid_total == sum(int(r["amount"]) for r in _rows if r["status"] == "paid" and r["amount"]), "paid_total дұрыс емес: тек paid және amount бос емес жолдар"' }, hints: ['<code>rows = list(csv.DictReader(f))</code> жолын <code>with</code> блогының ішіне жазыңыз.', 'Бос соманы өткізіп жіберу: <code>if r["status"] == "paid" and r["amount"]:</code>', 'Мәтінді санға айналдырыңыз: <code>int(r["amount"])</code>.'] },
+        { type: 'quiz', xp: 10, prompt: '<code>cities = ["Алматы", "Астана", "Алматы"]</code>. <code>len(set(cities))</code> нешеге тең және неге?', options: ['3: жиын тізімнің көшірмесі', '2: жиын қайталанған мәндерді бір рет қана сақтайды', '1: жиында тек бір мән болады', 'Қате шығады: мәтіннен жиын жасауға болмайды'], answer: 1, explain: 'set() қайталануларды жояды, сондықтан «Алматы» бір рет қалады. Бұл — SQL-дегі COUNT(DISTINCT city).' }
       ]
     },
     {

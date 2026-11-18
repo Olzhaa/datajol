@@ -428,9 +428,207 @@ GROUP BY a.variant;</code></pre>
       ]
     },
     {
+      id: 'ab-chi', title: 'Хи-квадрат және scipy.stats', minutes: 18,
+      body: `
+<p>Осы уақытқа дейін тесттерді қолмен, <code>NormalDist</code> арқылы жаздық: формуланы түсіну үшін солай керек болды. Жұмыста дайын кітапхана қолданылады: <code>scipy.stats</code>. Бұл сабақта оның төрт негізгі тестін үйренеміз және қайсысын қашан таңдау керегін бекітеміз.</p>
+<table>
+<tr><th>Сұрақ</th><th>Дерек түрі</th><th>Тест</th></tr>
+<tr><td>Үлестер топтар арасында бірдей ме? (2 және одан көп топ)</td><td>Санаттар кестесі</td><td><code>chi2_contingency</code></td></tr>
+<tr><td>Екі топтың орташасы бірдей ме?</td><td>Сан, тәуелсіз топтар</td><td><code>ttest_ind(..., equal_var=False)</code></td></tr>
+<tr><td>Бір топ екіншісінен «үлкенірек» мәндер бере ме? (қисық дерек, шеткі мәндер)</td><td>Сан не рет</td><td><code>mannwhitneyu</code></td></tr>
+<tr><td>Сол адамдардың «бұрын» және «кейін» өлшемі өзгерді ме?</td><td>Жұптасқан сан</td><td><code>ttest_rel</code></td></tr>
+</table>
+<h3>1. Хи-квадрат (χ²): кесте кездейсоқтан алыс па?</h3>
+<p><b>Идея:</b> егер нұсқа конверсияға әсер етпесе (H0), әр топтағы сатып алушылар үлесі жалпы үлеспен бірдей болар еді. Сол «күтілетін» кестені есептеп, нақты кестемен салыстырамыз. Айырма үлкен болса, H0-ге сенбейміз.</p>
+<pre><code>Күтілетін ұяшық E = жол қосындысы × баған қосындысы / жалпы саны
+χ² = Σ (O − E)² / E            # O — нақты (observed) сан
+df = (жолдар − 1) × (бағандар − 1)</code></pre>
+<p><b>Қадамдап мысал.</b> Үш нұсқа, әрқайсысында 1 000 пайдаланушы:</p>
+<table>
+<tr><th>Нұсқа</th><th>Сатып алды</th><th>Алмады</th><th>Барлығы</th></tr>
+<tr><td>A</td><td>100</td><td>900</td><td>1 000</td></tr>
+<tr><td>B</td><td>120</td><td>880</td><td>1 000</td></tr>
+<tr><td>C</td><td>150</td><td>850</td><td>1 000</td></tr>
+<tr><td>Барлығы</td><td>370</td><td>2 630</td><td>3 000</td></tr>
+</table>
+<ol>
+<li>Жалпы конверсия: 370 / 3 000 = 12.33%.</li>
+<li>H0 бойынша әр топта күтілетін сатып алушы: 1 000 × 370 / 3 000 = 123.33, алмағандар: 876.67.</li>
+<li>«Сатып алды» бағаны: (100 − 123.33)² + (120 − 123.33)² + (150 − 123.33)² = 544.4 + 11.1 + 711.1 = 1 266.7; бөлеміз 123.33-ке → 10.27.</li>
+<li>«Алмады» бағаны: сол 1 266.7 / 876.67 → 1.44.</li>
+<li>χ² = 10.27 + 1.44 = 11.72, df = (3 − 1) × (2 − 1) = 2, p ≈ 0.003. Нұсқалардың конверсиясы бірдей емес.</li>
+</ol>
+<pre><code>from scipy import stats
+table = [[100, 900], [120, 880], [150, 850]]
+chi2, p, dof, expected = stats.chi2_contingency(table)
+print(round(chi2, 2), round(p, 4), dof)     # 11.72 0.0029 2</code></pre>
+<p>Екі топ, екі нәтиже (2 × 2 кесте) болғанда χ² тесті ab-5 сабағындағы екі пропорция z-тестімен бірдей жауап береді: χ² = z². Бірақ scipy 2 × 2 кестеде әдепкі бойынша Yates түзетуін қосады (<code>correction=True</code>), сондықтан p сәл үлкенірек шығады. z-тестпен дәл сәйкестік керек болса, <code>correction=False</code> жазыңыз.</p>
+<p>χ² тесті «бір жерде айырма бар» дейді, бірақ <b>қай топта</b> екенін айтпайды. Одан кейін жұптық салыстыру жасап, α-ны Bonferroni бойынша түзетеді (α / салыстырулар саны).</p>
+<h3>2. Дәл Welch t-тесті</h3>
+<p>ab-6 сабағында p-value-ды қалыпты таралумен жуықтадық. scipy t-таралуды дәл есептейді:</p>
+<pre><code>a = [5, 7, 6, 8, 4]
+b = [9, 7, 8, 10, 6]
+res = stats.ttest_ind(b, a, equal_var=False)       # Welch
+print(res.statistic, res.pvalue)                   # 2.0  0.0805</code></pre>
+<p>Жуықтау p ≈ 0.046 берген еді, дәл жауап — 0.08. Шағын таңдамада айырма шешімді өзгертеді. <code>equal_var=False</code> жазуды ұмытпаңыз: әдепкі нұсқа дисперсияларды тең деп болжайды.</p>
+<h3>3. Mann–Whitney U: орташа емес, реттер</h3>
+<p>Табыс, чек, сессия ұзақтығы сияқты қисық деректе бір «кит» клиент орташаны жылжытып жібереді. Mann–Whitney мәндердің өзін емес, <b>реттік нөмірлерін</b> (rank) салыстырады: «B тобынан кездейсоқ алынған адамның мәні A тобындағыдан жоғары болу ықтималдығы 50%-дан өзгеше ме?» Шеткі мәндерге төзімді.</p>
+<pre><code>res = stats.mannwhitneyu(b, a, alternative='two-sided')
+print(res.pvalue)                                  # 0.114</code></pre>
+<p>Есте сақтаңыз: бұл тест <b>орташаны</b> салыстырмайды. Бизнес сұрағы «бір пайдаланушыға табыс өсті ме?» болса, жауап орташада жатыр: Welch немесе bootstrap (келесі сабақ) қолданыңыз.</p>
+<h3>4. Бір жақты және екі жақты тест</h3>
+<p>Екі жақты тест «айырма бар ма?» деп сұрайды (кез келген бағытта). Бір жақты тест «B <b>үлкен</b> бе?» деп сұрайды. Айырма күткен бағытта болса, бір жақты p екі жақтыдан екі есе кіші:</p>
+<pre><code>stats.ttest_ind(b, a, equal_var=False, alternative='greater').pvalue   # 0.040</code></pre>
+<p>Дәл осы себепті бағытты <b>деректі көрмей тұрып</b> таңдау керек. Нәтижені көріп алып, «бір жақтыға ауыстырайық» деу — p-hacking. A/B тесттерде әдепкі таңдау — екі жақты: бізге B-ның нашарлағаны да маңызды.</p>
+<h3>5. Жұптасқан (paired) тест</h3>
+<p>Бір адамдарды екі рет өлшесек (акцияға дейін және кейін), бақылаулар тәуелсіз емес. Мұнда әр адамның <b>айырмасын</b> есептеп, оның орташасы 0-ден өзгеше ме деп тексереміз. Адамдар арасындағы үлкен шашырау жойылады, сондықтан тест сезімталырақ.</p>
+<pre><code>after  = [12, 15, 11, 14, 13, 16]
+before = [10, 14, 11, 12, 12, 13]
+stats.ttest_rel(after, before).pvalue                    # 0.017
+stats.ttest_ind(after, before, equal_var=False).pvalue   # 0.151: жұптастыруды елемесек</code></pre>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>chi2_contingency</code>-ге пайыз не үлес беру: тек <b>сандар</b> (адам саны) керек. (2) Кестеге «сатып алды» бағанын ғана қою: «алмады» бағаны да болуы шарт. (3) Күтілетін ұяшық 5-тен аз болса, χ² сенімсіз: санаттарды біріктіріңіз. (4) Нәтижені көргеннен кейін бір жақты тестке ауысу. (5) Жұптасқан деректе тәуелсіз топтар тестін қолдану. (6) Mann–Whitney нәтижесін «орташа өсті» деп түсіндіру.</div>`,
+      exercises: [
+        { type: 'python', xp: 25, prompt: '<code>table</code> — құрылғы бойынша сатып алғандар мен алмағандар саны (жолдар: mobile, desktop, tablet). <code>stats.chi2_contingency</code> арқылы <code>chi2</code>, <code>p</code>, <code>dof</code>, <code>expected</code> алыңыз. <code>significant</code> — α = 0.05 кезінде конверсия құрылғыға тәуелді болса <code>True</code>.', starter: 'from scipy import stats\ntable = [[90, 1410], [95, 905], [30, 470]]\n', solution: 'from scipy import stats\ntable = [[90, 1410], [95, 905], [30, 470]]\nchi2, p, dof, expected = stats.chi2_contingency(table)\nsignificant = p < 0.05\nprint(round(chi2, 2), round(p, 4), dof, significant)\nprint(expected.round(1))', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nfrom scipy import stats as _st\n_c, _p, _d, _e = _st.chi2_contingency([[90, 1410], [95, 905], [30, 470]])\nassert abs(float(chi2) - _c) < 1e-6, f"chi2 ≈ {_c:.2f} болуы керек, сізде {float(chi2):.2f}. Кестені өзгертпей, бүтіндей беріңіз"\nassert abs(float(p) - _p) < 1e-9, f"p ≈ {_p:.4f} болуы керек"\nassert int(dof) == 2, "dof = (3 − 1) × (2 − 1) = 2"\nassert abs(float(expected[0][0]) - 107.5) < 1e-6, "Күтілетін mobile сатып алушылар: 1500 × 215 / 3000 = 107.5"\nassert bool(significant) is True, "p ≈ 0.002 < 0.05: significant = True"', mustInclude: ['chi2_contingency'] }, hints: ['Функция төрт мән қайтарады: <code>chi2, p, dof, expected = stats.chi2_contingency(table)</code>', '<code>significant = p &lt; 0.05</code>'] },
+        { type: 'python', xp: 25, prompt: '<code>a</code> және <code>b</code> — екі топтың чек сомалары (қатты оңға қисайған). Есептеңіз: <code>t_p</code> — Welch t-тестінің екі жақты p-value-ы; <code>u_p</code> — Mann–Whitney екі жақты p-value-ы; <code>t_p_one</code> — «B орташасы A-дан <b>үлкен</b>» деген бір жақты Welch p-value-ы. Әр шақыруда алдымен <code>b</code>, сосын <code>a</code> беріңіз.', starter: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(6)\na = rng.lognormal(8.0, 1.0, 500)   # A тобы, ₸\nb = rng.lognormal(8.2, 1.0, 500)   # B тобы, ₸\n', solution: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(6)\na = rng.lognormal(8.0, 1.0, 500)   # A тобы, ₸\nb = rng.lognormal(8.2, 1.0, 500)   # B тобы, ₸\nt_p = stats.ttest_ind(b, a, equal_var=False).pvalue\nu_p = stats.mannwhitneyu(b, a, alternative=\'two-sided\').pvalue\nt_p_one = stats.ttest_ind(b, a, equal_var=False, alternative=\'greater\').pvalue\nprint(round(a.mean()), round(b.mean()), round(t_p, 4), round(u_p, 4), round(t_p_one, 4))', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nfrom scipy import stats as _st\n_t = _st.ttest_ind(b, a, equal_var=False).pvalue\n_s = _st.ttest_ind(b, a).pvalue\n_u = _st.mannwhitneyu(b, a, alternative="two-sided").pvalue\n_o = _st.ttest_ind(b, a, equal_var=False, alternative="greater").pvalue\nassert abs(float(t_p) - _t) < 1e-9 or abs(float(t_p) - _s) > 1e-12, "t_p: Welch нұсқасы керек, equal_var=False қосыңыз"\nassert abs(float(t_p) - _t) < 1e-9, f"t_p ≈ {_t:.4f} болуы керек, сізде {float(t_p):.4f}: stats.ttest_ind(b, a, equal_var=False).pvalue"\nassert abs(float(u_p) - _u) < 1e-9, f"u_p ≈ {_u:.4f} болуы керек, сізде {float(u_p):.4f}: alternative=\'two-sided\'"\nassert abs(float(t_p_one) - _o) < 1e-9, f"t_p_one ≈ {_o:.4f} болуы керек, сізде {float(t_p_one):.4f}: alternative=\'greater\', алдымен b, сосын a"', mustInclude: ['ttest_ind', 'mannwhitneyu'] }, hints: ['<code>stats.ttest_ind(b, a, equal_var=False).pvalue</code>', '<code>stats.mannwhitneyu(b, a, alternative=\'two-sided\').pvalue</code>', 'Бір жақты: <code>alternative=\'greater\'</code> — бірінші аргументтің орташасы үлкен деген болжам. Екі тесттің p-value-ын салыстырыңыз: қисық деректе олар әртүрлі қорытынды беруі мүмкін.'] },
+        { type: 'number', xp: 15, prompt: 'Кесте: mobile — 1 000 пайдаланушы, 60-ы сатып алды; desktop — 500 пайдаланушы, 40-ы сатып алды. H0 (конверсия құрылғыға тәуелсіз) бойынша mobile-да <b>күтілетін</b> сатып алушылар саны қанша? (1 ондық белгіге дейін)', answer: 66.7, tol: 0.1, explain: 'E = жол қосындысы × баған қосындысы / жалпы саны = 1 000 × 100 / 1 500 = 66.67. Жалпы конверсия 100 / 1 500 = 6.67%, оны mobile-дағы 1 000 адамға қолданамыз.' },
+        { type: 'quiz', xp: 10, prompt: '40 курьердің орташа жеткізу уақыты жаңа маршрут алгоритміне <b>дейін</b> және <b>кейін</b> өлшенді (сол 40 курьер). Қай тест ең орынды?', options: ['<code>stats.ttest_ind(after, before, equal_var=False)</code>: екі тәуелсіз топ', '<code>stats.ttest_rel(after, before)</code>: жұптасқан тест, әр курьердің айырмасы талданады', '<code>stats.chi2_contingency</code>: санаттар кестесі', 'Тест керек емес, орташаларды салыстыру жеткілікті'], answer: 1, explain: 'Сол адамдар екі рет өлшенген, бақылаулар тәуелді. Жұптасқан тест әр курьердің айырмасын қарап, курьерлер арасындағы шашырауды алып тастайды, сондықтан сезімталырақ.' }
+      ]
+    },
+    {
+      id: 'ab-boot', title: 'Bootstrap және permutation тест', minutes: 18,
+      body: `
+<p>Орташа мен үлестің standard error формуласын білеміз. Ал <b>медиананың</b> сенімділік интервалы ше? 90-перцентильдің? Бір пайдаланушыға табыстың (RPU) ше, егер пайдаланушылардың 95%-ы 0 ₸ жұмсаса? Мұндайда ыңғайлы формула жоқ немесе оның болжамдары орындалмайды. Шешім — компьютерге «көп рет қайталап көр» деу. Бұл <b>resampling</b> әдістері.</p>
+<h3>1. Bootstrap: таңдамадан таңдама алу</h3>
+<p><b>Идея.</b> CI «зерттеуді қайталасақ, статистика қаншалық өзгерер еді?» дегенді өлшейді. Зерттеуді қайталай алмаймыз, бірақ қолда бар таңдама — популяцияның ең жақсы көшірмесі. Сондықтан одан <b>қайтарып салу арқылы</b> (with replacement) сол көлемдегі жаңа таңдамалар аламыз.</p>
+<ol>
+<li>n бақылаудан қайтарып салумен n бақылау таңдаймыз (кейбірі екі-үш рет түседі, кейбірі түспейді).</li>
+<li>Статистиканы (медиана, орташа, кез келген нәрсе) есептейміз.</li>
+<li>1–2-қадамды 2 000–10 000 рет қайталаймыз.</li>
+<li>Алынған мәндердің 2.5- және 97.5-перцентилі — 95% CI (percentile әдісі).</li>
+</ol>
+<p><b>Қолмен мысал.</b> Чектер (мың ₸): [2, 4, 4, 10], медиана 4.</p>
+<table>
+<tr><th>Қайталау</th><th>Жаңа таңдама</th><th>Медиана</th></tr>
+<tr><td>1</td><td>[4, 2, 4, 4]</td><td>4</td></tr>
+<tr><td>2</td><td>[10, 10, 2, 4]</td><td>7</td></tr>
+<tr><td>3</td><td>[2, 2, 4, 2]</td><td>2</td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+</table>
+<p>Мыңдаған қайталаудан кейін медианалардың таралуын аламыз: оның ені — біздің белгісіздігіміз.</p>
+<pre><code>import numpy as np
+
+def boot_ci(x, stat, n_boot=2000, level=0.95, seed=0):
+    rng = np.random.default_rng(seed)        # нәтиже қайталанатын болуы үшін
+    x = np.asarray(x)
+    vals = [stat(rng.choice(x, size=len(x), replace=True)) for _ in range(n_boot)]
+    a = (1 - level) / 2
+    return np.quantile(vals, a), np.quantile(vals, 1 - a)
+
+boot_ci(checks, np.median)      # медиананың 95% CI-ы</code></pre>
+<p><b>Екі топтың айырмасы.</b> A/B тестте әр топтан бөлек resample алып, айырманы есептейміз: <code>stat(b*) − stat(a*)</code>. Айырманың CI-ы 0-ді қамтымаса, нәтиже α = 0.05 деңгейінде маңызды.</p>
+<p><b>Бір пайдаланушыға табыс (RPU).</b> Дерек: әр пайдаланушыға бір сан (көбінде 0). RPU — осы сандардың орташасы. Таралу өте қисық болғандықтан, bootstrap CI t-интервалға жақсы балама. Маңыздысы: resample бірлігі — <b>пайдаланушы</b> (эксперимент кімді бөлсе, сол), тапсырыс не клик жолы емес.</p>
+<h3>2. Permutation тест: белгілерді араластыру</h3>
+<p><b>Идея.</b> H0 дұрыс болса (нұсқа ештеңе өзгертпейді), «A» және «B» деген белгілердің мағынасы жоқ: оларды кездейсоқ араластырсақ та, айырма шамамен сондай шығар еді. Тексерейік.</p>
+<ol>
+<li>Нақты айырманы есептейміз: obs = mean(B) − mean(A).</li>
+<li>Екі топты біріктіріп, араластырамыз; алғашқы n_A мәнді «A», қалғанын «B» дейміз.</li>
+<li>Осы жалған бөлудегі айырманы есептейміз.</li>
+<li>2–3-қадамды мыңдаған рет қайталаймыз.</li>
+<li>p-value = |жалған айырма| ≥ |obs| болған жағдайлардың үлесі (екі жақты).</li>
+</ol>
+<p><b>Қолмен мысал.</b> A = [1, 2, 3], B = [4, 5, 9]. obs = 6 − 2 = 4. Алты санды екі үштікке бөлудің 20 тәсілі бар. Айырмасы 4-тен кем емес бөлу: тек нақты бөлудің өзі және оның айнадағы көшірмесі (A = [4, 5, 9]). Дәл p = 2 / 20 = 0.10. Деректе 6 сан ғана болғандықтан, бұдан кіші p алу мүмкін емес.</p>
+<pre><code>def perm_test(a, b, n_perm=5000, seed=0):
+    rng = np.random.default_rng(seed)
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    obs = b.mean() - a.mean()
+    pooled = np.concatenate([a, b])
+    count = 0
+    for _ in range(n_perm):
+        s = rng.permutation(pooled)
+        d = s[len(a):].mean() - s[:len(a)].mean()
+        if abs(d) &gt;= abs(obs):
+            count += 1
+    return obs, count / n_perm</code></pre>
+<p>Бұл p-value анықтамасының тікелей өзі: «H0 дұрыс болғанда осындай немесе одан да шеткі нәтиже алу ықтималдығы». Қалыпты таралу туралы болжам керек емес.</p>
+<table>
+<tr><th></th><th>Bootstrap</th><th>Permutation</th></tr>
+<tr><td>Не береді</td><td>Сенімділік интервалы</td><td>p-value</td></tr>
+<tr><td>Қалай таңдайды</td><td>Қайтарып салумен, әр топ ішінде</td><td>Қайтарусыз, топтарды араластырып</td></tr>
+<tr><td>Сұрақ</td><td>Эффект қандай аралықта?</td><td>Эффект кездейсоқ па?</td></tr>
+</table>
+<div class="tip"><b>Жиі қателер:</b> (1) Bootstrap-та <code>replace=False</code> қалдыру: әр «жаңа» таңдама бастапқымен бірдей болып, интервал ені 0 шығады. (2) Resample көлемін n-нен өзгеше алу. (3) Тым аз қайталау (100): перцентильдер секіреді, кемінде 2 000 алыңыз. (4) Жолдарды (тапсырыстарды) resample ету, ал эксперимент пайдаланушыларды бөлген. (5) <code>seed</code> қоймау: есепті ешкім қайталай алмайды. (6) Bootstrap кішкентай таңдаманы «түзетеді» деп ойлау: 15 бақылаудан сенімді интервал шықпайды.</div>`,
+      exercises: [
+        { type: 'python', xp: 30, prompt: '<code>boot_ci(x, stat, n_boot=2000, level=0.95, seed=0)</code> функциясын жазыңыз: <code>x</code>-тен қайтарып салумен <code>len(x)</code> көлемді <code>n_boot</code> таңдама алып, әрқайсысында <code>stat</code> функциясын есептеп, percentile әдісімен <code>(low, high)</code> қайтарсын.', starter: 'import numpy as np\n\ndef boot_ci(x, stat, n_boot=2000, level=0.95, seed=0):\n    rng = np.random.default_rng(seed)\n    pass\n', solution: 'import numpy as np\n\ndef boot_ci(x, stat, n_boot=2000, level=0.95, seed=0):\n    rng = np.random.default_rng(seed)\n    x = np.asarray(x)\n    vals = [stat(rng.choice(x, size=len(x), replace=True)) for _ in range(n_boot)]\n    a = (1 - level) / 2\n    return float(np.quantile(vals, a)), float(np.quantile(vals, 1 - a))', check: { tests: 'import numpy as _np\n_x = _np.random.default_rng(5).lognormal(8, 1, 300)\ndef _ref(x, stat, n_boot, level, seed):\n    r = _np.random.default_rng(seed)\n    v = [stat(r.choice(x, size=len(x), replace=True)) for _ in range(n_boot)]\n    a = (1 - level) / 2\n    return float(_np.quantile(v, a)), float(_np.quantile(v, 1 - a))\n_r = boot_ci(_x, _np.mean)\nassert _r is not None and len(_r) == 2, "(low, high) кортежін қайтарыңыз"\n_lo, _hi = float(_r[0]), float(_r[1])\n_e = _ref(_x, _np.mean, 2000, 0.95, 0)\n_w = _e[1] - _e[0]\nassert _hi - _lo > 1e-9, "Интервал ені 0: таңдаманы қайтарып салумен алыңыз (replace=True)"\nassert _lo < _x.mean() < _hi, "Орташаның CI-ы таңдама орташасын қамтуы керек"\nassert abs(_lo - _e[0]) < 0.25 * _w and abs(_hi - _e[1]) < 0.25 * _w, f"Орташаның 95% CI-ы шамамен ({_e[0]:.0f}, {_e[1]:.0f}) болуы керек, сізде ({_lo:.0f}, {_hi:.0f}). Әр таңдама көлемі len(x), шекаралар — (1 − level) / 2 және 1 − (1 − level) / 2 квантильдері"\nassert abs((_hi - _lo) - _w) < 0.2 * _w, f"Интервал ені шамамен {_w:.0f} болуы керек, сізде {_hi - _lo:.0f}: әр жаңа таңдаманың көлемі дәл len(x) болсын"\n_r8 = boot_ci(_x, _np.mean, level=0.8)\nassert float(_r8[1]) - float(_r8[0]) < 0.85 * (_hi - _lo), "80% интервал 95%-дан тар болуы керек: level параметрін қолданыңыз"\n_m = boot_ci(_x, _np.median)\nassert float(_m[0]) <= float(_np.median(_x)) <= float(_m[1]), "stat ретінде np.median берілгенде медиананың CI-ы шығуы керек"', mustInclude: ['def boot_ci'] }, hints: ['Бір қайталау: <code>stat(rng.choice(x, size=len(x), replace=True))</code>', 'Мәндерді тізімге жинаңыз: <code>vals = [... for _ in range(n_boot)]</code>', '<code>a = (1 - level) / 2</code>; <code>np.quantile(vals, a)</code> және <code>np.quantile(vals, 1 - a)</code>'] },
+        { type: 'python', xp: 30, prompt: '<code>perm_test(a, b, n_perm=5000, seed=0)</code> функциясын жазыңыз: <code>(obs, p)</code> қайтарсын. <code>obs</code> = mean(b) − mean(a). <code>p</code> — біріктірілген деректі <code>n_perm</code> рет араластырғанда |жалған айырма| ≥ |obs| болған жағдайлардың үлесі (екі жақты).', starter: 'import numpy as np\n\ndef perm_test(a, b, n_perm=5000, seed=0):\n    rng = np.random.default_rng(seed)\n    a, b = np.asarray(a, float), np.asarray(b, float)\n    pass\n', solution: 'import numpy as np\n\ndef perm_test(a, b, n_perm=5000, seed=0):\n    rng = np.random.default_rng(seed)\n    a, b = np.asarray(a, float), np.asarray(b, float)\n    obs = b.mean() - a.mean()\n    pooled = np.concatenate([a, b])\n    count = 0\n    for _ in range(n_perm):\n        s = rng.permutation(pooled)\n        d = s[len(a):].mean() - s[:len(a)].mean()\n        if abs(d) >= abs(obs):\n            count += 1\n    return obs, count / n_perm', check: { tests: 'import numpy as _np\n_g = _np.random.default_rng(3)\n_a = _g.normal(100, 10, 60)\n_b = _g.normal(108, 10, 60)\n_r = perm_test(_a, _b, n_perm=2000)\nassert _r is not None and len(_r) == 2, "(obs, p) кортежін қайтарыңыз"\nassert abs(float(_r[0]) - (_b.mean() - _a.mean())) < 1e-9, "obs = mean(b) − mean(a)"\nassert 0 <= float(_r[1]) < 0.01, f"Айқын айырмада p < 0.01 болуы керек, сізде {float(_r[1]):.4f}"\n_c = _np.arange(40.0)\n_r0 = perm_test(_c, _c[::-1].copy(), n_perm=500)\nassert float(_r0[1]) > 0.9, f"Топтар бірдей болса p ≈ 1 болуы керек, сізде {float(_r0[1]):.3f}"\n_u = _g.normal(50, 12, 50)\n_v = _u[::-1].copy() + _np.linspace(-9, 15, 50)\ndef _ref(a, b, n, seed):\n    r = _np.random.default_rng(seed); obs = b.mean() - a.mean(); pool = _np.concatenate([a, b]); c = 0\n    for _ in range(n):\n        s = r.permutation(pool)\n        c += abs(s[len(a):].mean() - s[:len(a)].mean()) >= abs(obs)\n    return c / n\n_e = _ref(_u, _v, 3000, 1)\n_p = float(perm_test(_u, _v, n_perm=3000)[1])\nassert abs(_p - _e) < 0.05, f"Бұл деректе p ≈ {_e:.2f} болуы керек, сізде {_p:.2f}. Екі жақты тест: abs(d) >= abs(obs); бөлгіш — n_perm"', mustInclude: ['def perm_test'] }, hints: ['<code>pooled = np.concatenate([a, b])</code>, әр қайталауда <code>s = rng.permutation(pooled)</code>', 'Жалған топтар: <code>s[:len(a)]</code> және <code>s[len(a):]</code>', 'Санауыш: <code>if abs(d) &gt;= abs(obs): count += 1</code>; соңында <code>count / n_perm</code>'] },
+        { type: 'quiz', xp: 10, prompt: 'Интернет-дүкеннің A/B тестінде пайдаланушылар екі топқа бөлінді. Аналитик «орташа чек» метрикасының CI-ын алу үшін <b>тапсырыстар</b> кестесінің жолдарын bootstrap жасады. Бір пайдаланушыда бірнеше тапсырыс бар. Қате неде?', options: ['Қате жоқ: жол көп болған сайын интервал дәлірек', 'Resample бірлігі рандомизация бірлігімен (пайдаланушы) сәйкес келуі керек: бір адамның тапсырыстары тәуелді, сондықтан интервал жалған тар шығады', 'Bootstrap тек медианаға жарайды', 'Қайтарып салусыз таңдау керек еді'], answer: 1, explain: 'Эксперимент пайдаланушыларды бөлді, демек тәуелсіз бірлік — пайдаланушы. Тапсырыстарды тәуелсіз деп санасақ, n жасанды түрде үлкейіп, белгісіздік кем бағаланады. Пайдаланушыларды resample етіп, әрқайсысының барлық тапсырысын бірге алу керек.' }
+      ]
+    },
+    {
+      id: 'ab-cuped', title: 'Дисперсияны азайту (CUPED), ratio метрикалар және квази-эксперименттер', minutes: 20,
+      body: `
+<p>Junior деңгейден сәл жоғары, бірақ Қазақстандағы продукт-аналитик және Data Scientist вакансияларында жиі аталатын төрт тақырып: CUPED, ratio метрикалар, A/A тест және рандомизация мүмкін болмағандағы әдістер (DiD, PSM, uplift). Мақсат — әрқайсысының идеясын түсініп, сұхбатта екі-үш сөйлеммен түсіндіре алу.</p>
+<h3>1. CUPED: шуды алып тастау</h3>
+<p><b>Мәселе.</b> Тесттің сезімталдығы метриканың дисперсиясына тәуелді (ab-7): шу көп болса, сол эффектіні көру үшін көбірек пайдаланушы керек. Бірақ шудың үлкен бөлігі бізге <b>алдын ала белгілі</b>: өткен айда көп жұмсаған клиент бұл айда да көп жұмсайды. Бұл айырманың тестке қатысы жоқ.</p>
+<p><b>Идея.</b> Әр пайдаланушының метрикасынан оның эксперимент <b>алдындағы</b> мінез-құлқымен түсіндірілетін бөлігін шегереміз:</p>
+<pre><code>Y_cuped = Y − θ × (X − mean(X))
+θ = Cov(X, Y) / Var(X)</code></pre>
+<p>Y — эксперимент кезіндегі метрика, X — сол пайдаланушының эксперимент алдындағы метрикасы (covariate). θ — Y-тің X-ке регрессиясының көлбеулігі.</p>
+<ul>
+<li><b>Орташа өзгермейді:</b> X − mean(X) орташасы 0, сондықтан топтар айырмасының бағасы ығыспайды.</li>
+<li><b>Дисперсия азаяды:</b> Var(Y_cuped) = Var(Y) × (1 − ρ²), мұнда ρ — X пен Y корреляциясы.</li>
+</ul>
+<p><b>Санмен.</b> ρ = 0.7 болса, 1 − 0.49 = 0.51: дисперсия екі есеге жуық азаяды. Таңдама көлемі дисперсияға пропорционал, демек сол power-ға екі есе аз пайдаланушы немесе екі есе қысқа тест жеткілікті. ρ = 0.3 болса, ұтыс небәрі 9%.</p>
+<pre><code>import numpy as np
+x = np.concatenate([x_a, x_b]); y = np.concatenate([y_a, y_b])
+theta = np.cov(x, y)[0, 1] / x.var(ddof=1)     # екі топ бірге
+c_a = y_a - theta * (x_a - x.mean())
+c_b = y_b - theta * (x_b - x.mean())
+# әрі қарай әдеттегі Welch t-тесті: c_b мен c_a</code></pre>
+<p><b>Неге адал?</b> X эксперимент басталғанға дейін өлшенген, сондықтан нұсқа оған әсер ете алмайды, ал рандомизация X-ті екі топта теңестіреді. Егер covariate ретінде эксперимент <b>кезіндегі</b> шаманы алсаңыз (мысалы, сессия саны), эффекттің бір бөлігін өзіңіз шегеріп тастайсыз.</p>
+<h3>2. Ratio метрикалар</h3>
+<p>CTR = кликтер / көрсетілімдер, орташа чек = табыс / тапсырыстар. Мұнда бөлімі — пайдаланушылар саны емес, <b>кездейсоқ шама</b>. Бір пайдаланушының 50 көрсетілімі бір-біріне тәуелді, ал рандомизация пайдаланушы бойынша жасалған. Көрсетілімдерді тәуелсіз бақылау деп, оларға жай z- не t-тест қолдансақ, SE кем бағаланып, жалған «маңызды» нәтиже көбейеді.</p>
+<p>Дұрыс жолдары:</p>
+<ul>
+<li><b>Delta әдісі:</b> алым мен бөлімнің дисперсиялары және ковариациясы арқылы қатынастың дисперсиясын жуықтайтын формула.</li>
+<li><b>Пайдаланушы бойынша bootstrap:</b> пайдаланушыларды resample етіп, әр жолы Σ кликтер / Σ көрсетілімдер есептеу (алдыңғы сабақ).</li>
+<li><b>Метриканы өзгерту:</b> «әр пайдаланушының өз CTR-ының орташасы» — бұл қарапайым орташа, бірақ басқа сұраққа жауап береді.</li>
+</ul>
+<p>Сұхбатта формуланы жатқа айту міндетті емес. «Бұл ratio метрика, бақылау бірлігі рандомизация бірлігімен сәйкес емес, сондықтан delta әдісі не bootstrap керек» деп айта алсаңыз жеткілікті.</p>
+<h3>3. A/A тест</h3>
+<p>Екі топқа да <b>бірдей</b> нұсқа көрсетеміз. Айырма болмауы керек. Не тексереміз: бөлу жүйесі дұрыс па (SRM жоқ па), метрика есебі дұрыс па, тестіміз адал ма. Көп A/A симуляциясында p-value бірқалыпты таралуы және α = 0.05 кезінде шамамен 5% жағдайда «маңызды» шығуы тиіс. 5% орнына 15% шықса, SE кем бағаланған (көбіне ratio метрика не тәуелді бақылаулар кесірінен).</p>
+<h3>4. Рандомизация жоқ болса: Difference-in-Differences (DiD)</h3>
+<p>Кейде A/B тест мүмкін емес: жаңа тариф бүкіл қалаға бірден қосылды. «Бұрын мен кейінді» жай салыстыруға болмайды: маусым, жарнама, мереке де әсер етеді. DiD өзгеріс болмаған <b>бақылау тобының</b> сол кезеңдегі өзгерісін шегереді.</p>
+<pre><code>DiD = (treat_кейін − treat_бұрын) − (control_кейін − control_бұрын)</code></pre>
+<p><b>Қадамдап мысал.</b> Тараз қаласында тегін жеткізу қосылды, Шымкентте қосылған жоқ. Күндік орташа тапсырыс:</p>
+<table>
+<tr><th></th><th>Бұрын</th><th>Кейін</th><th>Өзгеріс</th></tr>
+<tr><td>Тараз (treatment)</td><td>100</td><td>130</td><td>+30</td></tr>
+<tr><td>Шымкент (control)</td><td>90</td><td>105</td><td>+15</td></tr>
+</table>
+<ol>
+<li>Тараздағы өсім: +30. Бірақ оның бәрі тегін жеткізуден емес.</li>
+<li>Шымкентте ештеңе өзгермесе де +15 өсті: бұл жалпы тренд (маусым).</li>
+<li>DiD = 30 − 15 = <b>+15</b> тапсырыс: тегін жеткізудің бағаланған эффектісі.</li>
+</ol>
+<p><b>Негізгі болжам — параллель трендтер:</b> өзгеріс болмағанда екі қала бірдей қарқынмен қозғалар еді. Мұны өзгеріске дейінгі бірнеше аптаның графигінен тексереді. Қалалар бұрыннан әртүрлі қозғалса, DiD-ке сенуге болмайды.</p>
+<h3>5. PSM және uplift: атауын білу жеткілікті</h3>
+<ul>
+<li><b>Propensity Score Matching (PSM).</b> Адамдар топқа өздері түскен (мысалы, қосымшаны орнатқандар). Олар орнатпағандардан басынан өзгеше. Әр адамға «treatment алу ықтималдығын» (propensity score) логистикалық регрессиямен бағалап, әр treatment адамына score-ы ұқсас control адамын жұптаймыз. Тек <b>өлшенген</b> белгілер бойынша теңестіреді; жасырын айырмашылық қалады.</li>
+<li><b>Uplift модельдеу.</b> Сұрақ «кім сатып алады?» емес, «кім <b>акцияның арқасында</b> сатып алады?». Uplift = P(сатып алу | акция) − P(сатып алу | акциясыз). Акцияны онсыз да сатып алатындарға жіберу — ақшаны босқа шашу; мақсат — «сендіруге болатын» сегмент. Деректі A/B тесттен алады.</li>
+</ul>
+<div class="tip"><b>Жиі қателер:</b> (1) CUPED covariate-ін эксперимент кезеңінен алу. (2) θ-ны әр топқа бөлек есептеп, әр топты өз орташасына центрлеу: онда топтар айырмасы бұрмаланады; бір θ және бір ортақ mean(X) қолданыңыз. (3) Ratio метриканы жолдар бойынша t-тестпен салыстыру. (4) A/A тесттегі бір «маңызды» нәтижеден үрку: 20 тесттің біреуі кездейсоқ солай шығады. (5) DiD-те параллель трендтерді тексермеу. (6) PSM нәтижесін рандомизацияланған тестпен тең деп санау.</div>`,
+      exercises: [
+        { type: 'python', xp: 25, prompt: '<code>x</code> — пайдаланушылардың эксперимент <b>алдындағы</b> шығыны, <code>y</code> — эксперимент кезіндегі шығыны. Есептеңіз: <code>theta</code> = Cov(x, y) / Var(x); <code>y_cuped</code> = y − theta × (x − mean(x)); <code>var_ratio</code> = Var(y_cuped) / Var(y).', starter: 'import numpy as np\nrng = np.random.default_rng(42)\nn = 4000\nx = rng.gamma(2.0, 3000, n)               # алдыңғы 4 апта, ₸\ny = 0.8 * x + rng.normal(0, 3000, n)      # эксперимент кезеңі, ₸\n', solution: 'import numpy as np\nrng = np.random.default_rng(42)\nn = 4000\nx = rng.gamma(2.0, 3000, n)               # алдыңғы 4 апта, ₸\ny = 0.8 * x + rng.normal(0, 3000, n)      # эксперимент кезеңі, ₸\ntheta = np.cov(x, y)[0, 1] / x.var(ddof=1)\ny_cuped = y - theta * (x - x.mean())\nvar_ratio = y_cuped.var() / y.var()\nprint(round(theta, 3), round(var_ratio, 3), round(1 - np.corrcoef(x, y)[0, 1] ** 2, 3))', check: { tests: 'import numpy as _np\n_th = _np.cov(x, y)[0, 1] / x.var(ddof=1)\n_rho = _np.corrcoef(x, y)[0, 1]\nassert abs(float(theta) - _th) < 1e-3 * abs(_th), f"theta ≈ {_th:.3f} болуы керек, сізде {float(theta):.3f}: np.cov(x, y)[0, 1] / x.var(ddof=1)"\nassert len(y_cuped) == len(y), "y_cuped — y-пен бірдей ұзындықтағы массив"\nassert abs(float(_np.mean(y_cuped)) - float(y.mean())) < 1e-6, "CUPED орташаны өзгертпеуі керек: x-тен mean(x)-ті шегеріңіз"\nassert abs(float(var_ratio) - (1 - _rho ** 2)) < 2e-3, f"var_ratio ≈ 1 − ρ² = {1 - _rho ** 2:.3f} болуы керек, сізде {float(var_ratio):.3f}"' }, hints: ['<code>theta = np.cov(x, y)[0, 1] / x.var(ddof=1)</code>', '<code>y_cuped = y - theta * (x - x.mean())</code>', '<code>var_ratio = y_cuped.var() / y.var()</code>'] },
+        { type: 'python', xp: 30, prompt: 'A/B тест: B тобына шын эффект қосылған, бірақ шу көп. Есептеңіз: <code>p_raw</code> — <code>y_b</code> мен <code>y_a</code> Welch t-тестінің p-value-ы; <code>theta</code> — екі топты біріктіріп есептелген Cov(x, y) / Var(x); <code>c_a</code>, <code>c_b</code> — CUPED түзетілген метрикалар (бір θ, бір ортақ mean(x)); <code>p_cuped</code> — <code>c_b</code> мен <code>c_a</code> Welch p-value-ы.', starter: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(3)\nn = 3000\nx_a = rng.gamma(2.0, 3000, n)\nx_b = rng.gamma(2.0, 3000, n)\ny_a = 0.8 * x_a + rng.normal(0, 3000, n)\ny_b = 0.8 * x_b + rng.normal(0, 3000, n) + 200    # шын эффект: +200 ₸\n', solution: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(3)\nn = 3000\nx_a = rng.gamma(2.0, 3000, n)\nx_b = rng.gamma(2.0, 3000, n)\ny_a = 0.8 * x_a + rng.normal(0, 3000, n)\ny_b = 0.8 * x_b + rng.normal(0, 3000, n) + 200    # шын эффект: +200 ₸\np_raw = stats.ttest_ind(y_b, y_a, equal_var=False).pvalue\nx = np.concatenate([x_a, x_b])\ny = np.concatenate([y_a, y_b])\ntheta = np.cov(x, y)[0, 1] / x.var(ddof=1)\nc_a = y_a - theta * (x_a - x.mean())\nc_b = y_b - theta * (x_b - x.mean())\np_cuped = stats.ttest_ind(c_b, c_a, equal_var=False).pvalue\nprint(round(y_b.mean() - y_a.mean(), 1), round(p_raw, 4))\nprint(round(c_b.mean() - c_a.mean(), 1), round(p_cuped, 4))', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nimport numpy as _np\nfrom scipy import stats as _st\n_x = _np.concatenate([x_a, x_b]); _y = _np.concatenate([y_a, y_b])\n_th = _np.cov(_x, _y)[0, 1] / _x.var(ddof=1)\n_ca = y_a - _th * (x_a - _x.mean()); _cb = y_b - _th * (x_b - _x.mean())\n_pr = _st.ttest_ind(y_b, y_a, equal_var=False).pvalue\n_pc = _st.ttest_ind(_cb, _ca, equal_var=False).pvalue\nassert abs(float(p_raw) - _pr) < 1e-9, f"p_raw ≈ {_pr:.4f} болуы керек: stats.ttest_ind(y_b, y_a, equal_var=False).pvalue"\nassert abs(float(theta) - _th) < 1e-3 * abs(_th), f"theta ≈ {_th:.3f} болуы керек: екі топты np.concatenate арқылы біріктіріп есептеңіз"\nassert abs(float(_np.mean(c_b) - _np.mean(c_a)) - float(_cb.mean() - _ca.mean())) < 1.0, "c_a мен c_b үшін бір theta және бір ортақ mean(x) қолданыңыз (әр топтың өз орташасы емес)"\nassert abs(_np.log(float(p_cuped)) - _np.log(_pc)) < 0.05, f"p_cuped ≈ {_pc:.4f} болуы керек, сізде {float(p_cuped):.4f}"\nassert float(p_cuped) < float(p_raw), "CUPED-тен кейін p-value кішірек болуы керек"', mustInclude: ['ttest_ind'] }, hints: ['<code>x = np.concatenate([x_a, x_b])</code>, <code>y = np.concatenate([y_a, y_b])</code>', '<code>c_a = y_a - theta * (x_a - x.mean())</code>, <code>c_b</code> дәл солай.', '<code>p_cuped = stats.ttest_ind(c_b, c_a, equal_var=False).pvalue</code>'] },
+        { type: 'number', xp: 15, prompt: 'Астанадағы дүкендерде жаңа бонус бағдарламасы қосылды, Алматыда қосылған жоқ. Орташа апталық сатылым (млн ₸): Астана 40 → 52, Алматы 60 → 66. Difference-in-Differences бойынша бағдарламаның эффектісі неше млн ₸?', answer: 6, tol: 0.01, unit: 'млн ₸', explain: 'Астана: 52 − 40 = +12. Алматы (жалпы тренд): 66 − 60 = +6. DiD = 12 − 6 = 6 млн ₸.' },
+        { type: 'quiz', xp: 10, prompt: 'Метрика — CTR = барлық кликтер / барлық көрсетілімдер. Рандомизация пайдаланушы бойынша. Аналитик әр көрсетілімді бөлек бақылау деп алып, екі пропорция z-тестін жасады. Мәселе неде?', options: ['Мәселе жоқ: көрсетілімдер көп, CLT жұмыс істейді', 'Бір пайдаланушының көрсетілімдері тәуелді, SE кем бағаланады; delta әдісі не пайдаланушы бойынша bootstrap керек', 'CTR-ға тек хи-квадрат жарайды', 'z-тестің орнына бір жақты t-тест алу керек'], answer: 1, explain: 'Бақылау бірлігі (көрсетілім) рандомизация бірлігімен (пайдаланушы) сәйкес емес. Тәуелді бақылауларды тәуелсіз деп санасақ, SE тым кіші, жалған оң нәтиже көп болады. A/A тестте бұл 5%-дан әлдеқайда жиі «маңызды» нәтиже ретінде көрінеді.' },
+        { type: 'quiz', xp: 10, prompt: 'Маркетинг 10% жеңілдік купонын кімге жіберуді сұрайды. Uplift тұрғысынан қай сегмент ең тиімді?', options: ['Сатып алу ықтималдығы ең жоғары клиенттер', 'Купонсыз сатып алмайтын, бірақ купонмен сатып алатын клиенттер', 'Соңғы айда ең көп жұмсаған клиенттер', 'Барлық клиенттер: қамту кең болған сайын жақсы'], answer: 1, explain: 'Uplift = P(сатып алу | купон) − P(сатып алу | купонсыз). Онсыз да сатып алатындарға купон беру маржаны азайтады, ал ешқашан алмайтындарға әсер етпейді. Пайда тек «сендіруге болатын» сегменттен келеді.' }
+      ]
+    },
+    {
       id: 'ab-gate', gate: true, title: 'Модуль емтиханы: Inference & A/B Testing', minutes: 25,
       body: `
-<p>Қорытынды тексеріс. Python тапсырмаларында тек стандарт кітапхана (<code>math</code>, <code>statistics</code>, оның ішінде <code>NormalDist</code>) қолжетімді. Кеңестер жоқ: модульдегі формулаларға сүйеніңіз.</p>`,
+<p>Қорытынды тексеріс. Емтихан тапсырмаларын стандарт кітапханамен (<code>math</code>, <code>statistics</code>, оның ішінде <code>NormalDist</code>) шешуге болады: формулаларды өзіңіз жазыңыз. Кеңестер жоқ: модульдегі формулаларға сүйеніңіз.</p>`,
       exercises: [
         { type: 'python', xp: 40, prompt: '<code>ab_decision(x_a, n_a, x_b, n_b, alpha=0.05)</code> функциясын жазыңыз. Ол pooled екі пропорция z-тестін жасап, сөздік қайтарсын: <code>"lift"</code> (p_B − p_A), <code>"z"</code>, <code>"p"</code> (екі жақты) және <code>"decision"</code>: p &lt; alpha және lift &gt; 0 болса <code>"ship B"</code>, p &lt; alpha және lift &lt; 0 болса <code>"keep A"</code>, әйтпесе <code>"inconclusive"</code>.', starter: 'import math\nfrom statistics import NormalDist\n\ndef ab_decision(x_a, n_a, x_b, n_b, alpha=0.05):\n    pass\n', solution: 'import math\nfrom statistics import NormalDist\n\ndef ab_decision(x_a, n_a, x_b, n_b, alpha=0.05):\n    p_a, p_b = x_a / n_a, x_b / n_b\n    p = (x_a + x_b) / (n_a + n_b)\n    se = math.sqrt(p * (1 - p) * (1 / n_a + 1 / n_b))\n    z = (p_b - p_a) / se\n    pv = 2 * (1 - NormalDist().cdf(abs(z)))\n    if pv < alpha:\n        decision = "ship B" if p_b > p_a else "keep A"\n    else:\n        decision = "inconclusive"\n    return {"lift": p_b - p_a, "z": z, "p": pv, "decision": decision}', check: { tests: '_d = ab_decision(200, 2000, 250, 2000)\nassert isinstance(_d, dict), "Сөздік қайтарыңыз"\nfor _k in ("lift", "z", "p", "decision"):\n    assert _k in _d, f"{_k} кілті жоқ"\nassert abs(_d["lift"] - 0.025) < 1e-9, "lift = p_b - p_a = 0.025 болуы керек"\nassert abs(_d["z"] - 2.50196) < 1e-3, "z ≈ 2.502 болуы керек (pooled SE)"\nassert abs(_d["p"] - 0.01235) < 1e-4, "p ≈ 0.0124 болуы керек"\nassert _d["decision"] == "ship B", "200/2000 vs 250/2000: ship B"\nassert ab_decision(250, 2000, 200, 2000)["decision"] == "keep A", "B нашар әрі маңызды: keep A"\nassert ab_decision(480, 10000, 540, 10000)["decision"] == "inconclusive", "p ≈ 0.054 > 0.05: inconclusive"\nassert ab_decision(480, 10000, 540, 10000, alpha=0.1)["decision"] == "ship B", "alpha = 0.1 кезінде p ≈ 0.054 маңызды: alpha параметрін қолданыңыз"' }, hints: [] },
         { type: 'python', xp: 30, prompt: 'Baseline 5%, MDE = 1 п.п. (абсолют), α = 0.05, power = 0.8. Модульдегі формуламен бір топқа керек санды <code>n_per_group</code>, ал күніне 2 000 жаңа пайдаланушы (екі топқа тең бөлінеді) болғанда тестке керек толық күндер санын <code>days</code> (<code>math.ceil</code>) есептеңіз.', starter: 'import math\nfrom statistics import NormalDist\n', solution: 'import math\nfrom statistics import NormalDist\np1, mde = 0.05, 0.01\np2 = p1 + mde\nz_a = NormalDist().inv_cdf(0.975)\nz_b = NormalDist().inv_cdf(0.8)\nn_per_group = math.ceil((z_a + z_b) ** 2 * (p1 * (1 - p1) + p2 * (1 - p2)) / mde ** 2)\ndays = math.ceil(2 * n_per_group / 2000)\nprint(n_per_group, days)', check: { tests: 'assert n_per_group == 8155, f"n_per_group = 8155 болуы керек, сізде {n_per_group}"\nassert days == 9, f"days = 9 болуы керек: 2 × 8155 / 2000 = 8.16 → 9, сізде {days}"' }, hints: [] },

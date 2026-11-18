@@ -274,12 +274,178 @@ GROUP BY cohort, a.month;</code></pre>
 <ul>
 <li><code>SELECT *</code> орнына керекті бағандарды ғана алыңыз.</li>
 <li>Индекстелген бағанға функция қолданбаңыз: <code>WHERE substr(order_date,1,4) = '2024'</code> индексті «өшіреді», ал <code>WHERE order_date &gt;= '2024-01-01' AND order_date &lt; '2025-01-01'</code> индексті қолданады.</li>
-<li>Алдымен сүзіңіз, сосын JOIN жасаңыз: аз жол, жылдам нәтиже.</li>
+<li>Сүзгіні ерте, CTE-нің ішінде жазыңыз: сұрау оңай оқылады, аралық нәтиже кішірейеді. Заманауи оптимизаторлар (PostgreSQL, ClickHouse) сүзгіні JOIN-ға дейін өздері «итереді» (predicate pushdown), сондықтан бұл ең алдымен оқылым мен қателерден сақтану үшін керек; жылдамдықты <code>EXPLAIN</code> арқылы тексеріңіз.</li>
 </ul>`,
       exercises: [
         { type: 'sql', dataset: 'shop', xp: 20, prompt: '<code>orders</code> кестесінің <code>customer_id</code> бағанына индекс құрыңыз (атауы кез келген).', starter: '', solution: 'CREATE INDEX idx_orders_customer ON orders(customer_id);', check: { mustInclude: ['CREATE INDEX'], after: "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND tbl_name = 'orders' AND sql LIKE '%customer_id%'" }, hints: ['<code>CREATE INDEX атау ON кесте(баған);</code>'] },
         { type: 'quiz', xp: 10, prompt: '<code>order_date</code> бағанында индекс бар. Қай шарт индексті тиімді қолданады?', options: ["<code>WHERE substr(order_date, 1, 7) = '2024-09'</code>", "<code>WHERE order_date >= '2024-09-01' AND order_date < '2024-10-01'</code>", "<code>WHERE order_date LIKE '%09%'</code>", 'Үшеуі бірдей'], answer: 1, explain: 'Бағанның өзі салыстырылса, индекс жұмыс істейді. Функция немесе басындағы % индексті қолдануға кедергі.' },
         { type: 'quiz', xp: 10, prompt: '<code>EXPLAIN QUERY PLAN</code> нәтижесінде <code>SCAN orders</code> жазылды. Бұл нені білдіреді?', options: ['Индекспен іздеу', 'Бүкіл кесте оқылады', 'Сұрауда қате бар', 'Нәтиже кэштен алынды'], answer: 1, explain: 'SCAN — толық оқу. Үлкен кестеде бұл баяу болуы мүмкін.' }
+      ]
+    },
+    {
+      id: 'adv-10', title: 'Күнтізбе кестесі және gaps-and-islands', minutes: 16,
+      body: `
+<p><code>GROUP BY day</code> тек дерегі <b>бар</b> күндерді қайтарады. Ешкім кірмеген күн нәтижеде мүлде болмайды. Графикте бұл «тесік» көрінбей қалады, ал жылжымалы орташа қате есептеледі: 7 жол 7 күн болмай шығады. Шешімі — <b>күнтізбе кестесі</b> (date spine): барлық күннің тізімі, оған дерек <code>LEFT JOIN</code> арқылы жалғанады.</p>
+<p>Бұл сабақта <code>metrics</code> базасының <code>daily_active(user_id, day)</code> кестесі қолданылады: 2024 жылғы қыркүйекте қай пайдаланушы қай күні қосымшаны ашқаны. 15 қыркүйекте ешкім кірмеген.</p>
+<h3>Рекурсивті CTE арқылы күндер тізімі</h3>
+<pre><code>WITH RECURSIVE cal(day) AS (
+  SELECT '2024-09-01'                 -- бастапқы жол
+  UNION ALL
+  SELECT date(day, '+1 day') FROM cal -- алдыңғы жолдан келесісін жасайды
+  WHERE day &lt; '2024-09-30'           -- тоқтау шарты
+)
+SELECT day FROM cal;</code></pre>
+<p>Рекурсивті CTE екі бөліктен тұрады: бірінші <code>SELECT</code> бір рет орындалады, екіншісі тоқтау шарты жалған болғанша өз нәтижесіне қайта-қайта қолданылады. Тоқтау шартын ұмытсаңыз, сұрау шексіз айналады.</p>
+<p>PostgreSQL-де дайын функция бар: <code>generate_series('2024-09-01'::date, '2024-09-30', interval '1 day')</code>. Компаниялардың қоймасында әдетте дайын <code>dim_date</code> кестесі тұрады.</p>
+<h3>Нөлмен толтыру (zero-fill)</h3>
+<pre><code>SELECT c.day, COUNT(a.user_id) AS dau
+FROM cal c
+LEFT JOIN daily_active a ON a.day = c.day
+GROUP BY c.day;</code></pre>
+<p>Күнтізбе <b>сол жақта</b> тұрады, сондықтан әр күн сақталады. <code>COUNT(a.user_id)</code> NULL-ды санамайды, сол себепті бос күнде 0 шығады. <code>COUNT(*)</code> жазсаңыз, бос күн 1 болып кетеді.</p>
+<h3>Gaps-and-islands: үзіліссіз серияларды табу</h3>
+<p>Сұрақ: «Пайдаланушы қатарынан неше күн кірді?» Қатар келген күндер — «арал» (island), араларындағы бос күндер — «үзік» (gap). Айла мынада: күннен оның реттік нөмірін азайтамыз. Бір арал ішінде күн де, нөмір де бірге 1-ге өседі, сондықтан айырма <b>тұрақты</b> болып қалады.</p>
+<table>
+<tr><th>day</th><th>rn</th><th>day − rn күн</th><th>Арал</th></tr>
+<tr><td>2024-09-01</td><td>1</td><td>2024-08-31</td><td>1-арал</td></tr>
+<tr><td>2024-09-02</td><td>2</td><td>2024-08-31</td><td>1-арал</td></tr>
+<tr><td>2024-09-04</td><td>3</td><td>2024-09-01</td><td>2-арал</td></tr>
+<tr><td>2024-09-05</td><td>4</td><td>2024-09-01</td><td>2-арал</td></tr>
+</table>
+<pre><code>WITH r AS (
+  SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn
+  FROM daily_active WHERE user_id = 1
+), g AS (
+  SELECT day, date(day, '-' || rn || ' day') AS grp FROM r
+)
+SELECT MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days
+FROM g GROUP BY grp;</code></pre>
+<p>Дәл осы тәсілмен «қатарынан неше ай төледі», «сервер қанша уақыт үзіліссіз жұмыс істеді», «қоймада тауар неше күн қатарынан болмады» деген сұрақтар шешіледі.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Күнтізбені оң жаққа қою немесе <code>WHERE a.user_id = 1</code> деп сүзу: LEFT JOIN INNER JOIN-ға айналады, бос күндер жоғалады. Оң жақ кестенің шартын <code>ON</code> ішіне жазыңыз.</li>
+<li>Бір күнде бірнеше жол болса (мысалы, оқиғалар кестесі), алдымен <code>DISTINCT</code> арқылы «бір пайдаланушы, бір күн» деңгейіне келтіріңіз. Әйтпесе <code>ROW_NUMBER</code> айырманы бұзады.</li>
+<li>Бірнеше пайдаланушы үшін <code>PARTITION BY user_id</code>-ді ұмыту.</li>
+</ul>
+<div class="tip">Сұхбатта «ең ұзын streak-ті табыңыз» деген тапсырма жиі кездеседі. Жауапты «күн минус ROW_NUMBER тұрақты болады» деген бір сөйлеммен бастаңыз: интервьюер тәсілді білетініңізді бірден көреді.</div>`,
+      exercises: [
+        { type: 'sql', dataset: 'metrics', xp: 20, prompt: 'Рекурсивті CTE арқылы 2024 жылғы қыркүйектің барлық 30 күнін шығарыңыз. Баған: <code>day</code> (<code>YYYY-MM-DD</code>), күн ретімен.', starter: "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  \n)\nSELECT day FROM cal ORDER BY day;", solution: "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30') SELECT day FROM cal ORDER BY day;", check: { ordered: true, mustInclude: ['RECURSIVE'] }, hints: ["Екінші бөлік: <code>SELECT date(day, '+1 day') FROM cal</code>", "Тоқтау шарты: <code>WHERE day &lt; '2024-09-30'</code>"] },
+        { type: 'sql', dataset: 'metrics', xp: 25, prompt: 'Қыркүйектің әр күні үшін DAU (сол күні кірген пайдаланушылар саны) шығарыңыз: <code>day</code>, <code>dau</code>. Ешкім кірмеген күн 0-мен көрінсін. Барлығы 30 жол, күн ретімен.', starter: "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'\n)\nSELECT ", solution: "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30') SELECT c.day, COUNT(a.user_id) AS dau FROM cal c LEFT JOIN daily_active a ON a.day = c.day GROUP BY c.day ORDER BY c.day;", check: { ordered: true, mustInclude: ['LEFT JOIN'] }, hints: ['<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>', '<code>COUNT(a.user_id)</code> бос күнде 0 береді, ал <code>COUNT(*)</code> 1 береді.'] },
+        { type: 'sql', dataset: 'metrics', xp: 30, prompt: '1-пайдаланушының үзіліссіз серияларын (аралдарын) шығарыңыз: <code>start_day</code>, <code>end_day</code>, <code>days</code> (сериядағы күн саны). Басталу күні бойынша сұрыптаңыз.', starter: "WITH r AS (\n  SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn\n  FROM daily_active WHERE user_id = 1\n)\nSELECT ", solution: "WITH r AS (SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn FROM daily_active WHERE user_id = 1), g AS (SELECT day, date(day, '-' || rn || ' day') AS grp FROM r) SELECT MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days FROM g GROUP BY grp ORDER BY start_day;", check: { ordered: true }, hints: ["Топ белгісі: <code>date(day, '-' || rn || ' day') AS grp</code>", '<code>GROUP BY grp</code>, сосын <code>MIN(day)</code>, <code>MAX(day)</code>, <code>COUNT(*)</code>.'] },
+        { type: 'sql', dataset: 'metrics', xp: 30, prompt: 'Әр пайдаланушының қыркүйектегі ең ұзын сериясын табыңыз: <code>user_id</code>, <code>longest</code> (қатарынан кірген күндердің ең көп саны). <code>longest</code> бойынша кемуімен, тең болса <code>user_id</code> бойынша.', starter: '', solution: "WITH r AS (SELECT user_id, day, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day) AS rn FROM daily_active), s AS (SELECT user_id, date(day, '-' || rn || ' day') AS grp, COUNT(*) AS days FROM r GROUP BY user_id, grp) SELECT user_id, MAX(days) AS longest FROM s GROUP BY user_id ORDER BY longest DESC, user_id;", check: { ordered: true }, hints: ['<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>', 'Алдымен <code>GROUP BY user_id, grp</code> арқылы әр серияның ұзындығын, сосын <code>MAX</code> арқылы ең ұзынын алыңыз.'] },
+        { type: 'quiz', xp: 10, prompt: 'Күндік сатылым кестесінде 3 күннің жолы жоқ. Аналитик күнтізбесіз <code>AVG(revenue) OVER (ORDER BY day ROWS 6 PRECEDING)</code> деп «7 күндік» орташаны есептеді. Не дұрыс емес?', options: ['Ештеңе, бәрі дұрыс', 'Терезе 7 күнді емес, 7 жолды алады: жоқ күндер 0 ретінде есептелмей, орташа жоғары шығады және терезе 7 күннен ұзақ кезеңді қамтиды', 'SQLite бұл функцияны қолдамайды', 'Орташа әрқашан NULL болады'], answer: 1, explain: 'ROWS жолдарды санайды. Алдымен күнтізбемен LEFT JOIN жасап, жоқ күндерді 0-мен толтырыңыз, сонда 7 жол = 7 күн.' }
+      ]
+    },
+    {
+      id: 'adv-11', title: 'UNION, self-join, NTILE және FIRST_VALUE', minutes: 16,
+      body: `
+<p>Бұл сабақта сұхбатта да, жұмыста да жиі кездесетін төрт құрал жиналған: кестені өз-өзімен біріктіру, жиын операциялары, квартильге бөлу және терезенің бірінші/соңғы мәнін алу.</p>
+<h3>Self-join: кесте өз-өзімен</h3>
+<p><code>staff</code> базасындағы <code>employees</code> кестесінде <code>manager_id</code> бағаны сол кестенің <code>id</code>-іне сілтейді. Қызметкердің жанына басшысының атын қою үшін кестені екі түрлі лақап атпен екі рет аламыз:</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;</code></pre>
+<p><code>e</code> — қызметкер, <code>m</code> — басшы. <code>LEFT JOIN</code> керек: директордың басшысы жоқ (<code>manager_id</code> NULL), <code>INNER JOIN</code> оны жоғалтады.</p>
+<h3>Жиын операциялары</h3>
+<table>
+<tr><th>Оператор</th><th>Не қайтарады</th></tr>
+<tr><td><code>UNION ALL</code></td><td>Екі нәтижені астына-үстіне қосады, қайталанғандарды сақтайды. Жылдам.</td></tr>
+<tr><td><code>UNION</code></td><td>Қосады да, қайталанған жолдарды алып тастайды (сұрыптау керек, сондықтан баяулау).</td></tr>
+<tr><td><code>INTERSECT</code></td><td>Екі нәтиженің екеуінде де бар жолдар.</td></tr>
+<tr><td><code>EXCEPT</code></td><td>Біріншісінде бар, екіншісінде жоқ жолдар.</td></tr>
+</table>
+<p>Екі сұраудың баған саны бірдей, типтері сәйкес болуы керек. Баған атаулары бірінші сұраудан алынады. Қайталану мүмкін емес екенін білсеңіз немесе қайталанғандар керек болса, <code>UNION ALL</code> жазыңыз.</p>
+<h3>NTILE және PERCENT_RANK</h3>
+<p><code>NTILE(4) OVER (ORDER BY salary DESC)</code> жолдарды саны шамамен тең 4 топқа бөледі: 1 — ең жоғары ширек (квартиль). <code>NTILE(10)</code> дециль береді. RFM сегментациясында дәл осы функция қолданылады.</p>
+<p><code>PERCENT_RANK()</code> жолдың орнын 0 мен 1 аралығында көрсетеді: 0.9 дегені «қалғандардың 90%-ынан жоғары».</p>
+<p>Мәндер тең болса, NTILE оларды әртүрлі топқа түсіріп жіберуі мүмкін. Нәтиже тұрақты болуы үшін <code>ORDER BY</code>-ға екінші баған қосыңыз: <code>ORDER BY salary DESC, name</code>.</p>
+<h3>FIRST_VALUE және LAST_VALUE</h3>
+<pre><code>SELECT name, department, salary,
+  FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS top_name
+FROM employees;</code></pre>
+<p>Әр жолға өз бөліміндегі ең жоғары жалақы алатын адамның аты қойылады. Қолданылуы: клиенттің бірінші тапсырыс арнасы, сессияның бірінші беті.</p>
+<h3>ROWS пен RANGE: терезе шекарасы</h3>
+<p><code>OVER</code> ішінде <code>ORDER BY</code> болып, шекара жазылмаса, әдепкі шекара — <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>. <code>RANGE</code> ағымдағы жолмен <b>мәні тең</b> жолдардың бәрін қоса алады. Аналитика бөлімі, жалақы бойынша өспелі сома:</p>
+<table>
+<tr><th>name</th><th>salary</th><th>RANGE (әдепкі)</th><th>ROWS</th></tr>
+<tr><td>Ерлан</td><td>410 000</td><td>410 000</td><td>410 000</td></tr>
+<tr><td>Ақжол</td><td>520 000</td><td>1 450 000</td><td>930 000</td></tr>
+<tr><td>Камила</td><td>520 000</td><td>1 450 000</td><td>1 450 000</td></tr>
+<tr><td>Гүлнар</td><td>750 000</td><td>2 200 000</td><td>2 200 000</td></tr>
+</table>
+<p>Ақжол мен Камиланың жалақысы тең, сондықтан RANGE екеуіне де бірдей сома береді. Жол-жолмен жинақталған сома керек болса, <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> деп анық жазыңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>LAST_VALUE</code>-ны шекарасыз жазу: әдепкі шекара ағымдағы жолда аяқталады, сондықтан ол «соңғы» емес, ағымдағы мәнді қайтарады. Шешімі: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code> қосу немесе ретті кері бұрып <code>FIRST_VALUE</code> қолдану.</li>
+<li>Self-join-да лақап аттарды шатастыру: <code>ON m.id = e.manager_id</code> орнына <code>ON e.id = m.manager_id</code> жазсаңыз, басшы мен бағынышты орын ауыстырады.</li>
+<li><code>UNION</code>-ды әдетпен жазу: ол қайталанған жолдарды үнсіз жояды, сома кеміп қалуы мүмкін.</li>
+</ul>
+<div class="tip">Екі сұраудың нәтижесін салыстырудың жылдам тәсілі: <code>SELECT ... EXCEPT SELECT ...</code>. Бос нәтиже шықса, бірінші сұраудың барлық жолы екіншісінде бар. Екі бағытта да тексеріңіз.</div>`,
+      exercises: [
+        { type: 'sql', dataset: 'staff', xp: 20, prompt: '<b>staff.</b> Әр қызметкердің атын және басшысының атын шығарыңыз: <code>name</code>, <code>manager</code>. Басшысы жоқ қызметкер де көрінсін (<code>manager</code> NULL).', starter: "SELECT e.name, \nFROM employees e\n", solution: 'SELECT e.name, m.name AS manager FROM employees e LEFT JOIN employees m ON m.id = e.manager_id;', check: { mustInclude: ['JOIN'] }, hints: ['Кестені екі рет алыңыз: <code>employees e</code> және <code>employees m</code>.', '<code>LEFT JOIN employees m ON m.id = e.manager_id</code>'] },
+        { type: 'sql', dataset: 'staff', xp: 25, prompt: '<b>staff.</b> Әр басшы үшін: <code>manager</code> (аты), <code>reports</code> (тікелей бағыныштылар саны), <code>avg_salary</code> (бағыныштылардың орташа жалақысы, бүтінге дейін <code>ROUND</code>).', starter: '', solution: 'SELECT m.name AS manager, COUNT(*) AS reports, ROUND(AVG(e.salary)) AS avg_salary FROM employees e JOIN employees m ON m.id = e.manager_id GROUP BY m.id, m.name;', hints: ['Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>', 'Басшы бойынша топтаңыз: <code>GROUP BY m.id, m.name</code>. Жалақы бағыныштыдан (<code>e.salary</code>) алынады.'] },
+        { type: 'sql', dataset: 'shop', xp: 20, prompt: '<b>shop.</b> <code>EXCEPT</code> арқылы тапсырыс берген, бірақ бірде-бір <code>delivered</code> тапсырысы жоқ клиенттердің <code>customer_id</code>-ін шығарыңыз.', starter: '', solution: "SELECT customer_id FROM orders EXCEPT SELECT customer_id FROM orders WHERE status = 'delivered';", check: { mustInclude: ['EXCEPT'] }, hints: ['Бірінші сұрау: тапсырыс берген барлық клиент. Екіншісі: delivered тапсырысы барлар.', "<code>SELECT customer_id FROM orders EXCEPT SELECT customer_id FROM orders WHERE status = 'delivered'</code>"] },
+        { type: 'sql', dataset: 'staff', xp: 25, prompt: '<b>staff.</b> Қызметкерлерді жалақысы бойынша 4 квартильге бөліңіз (1 — ең жоғары): <code>name</code>, <code>salary</code>, <code>quartile</code>. Терезеде де, нәтижеде де рет: жалақы кемуімен, тең болса <code>name</code> бойынша.', starter: '', solution: 'SELECT name, salary, NTILE(4) OVER (ORDER BY salary DESC, name) AS quartile FROM employees ORDER BY salary DESC, name;', check: { ordered: true, mustInclude: ['NTILE'] }, hints: ['<code>NTILE(4) OVER (ORDER BY salary DESC, name)</code>'] },
+        { type: 'sql', dataset: 'staff', xp: 25, prompt: '<b>staff.</b> Әр қызметкер үшін бөліміндегі ең жоғары жалақы алатын адамның атын (<code>top_name</code>) және сол жалақыдан айырмасын (<code>gap</code>) шығарыңыз: <code>name</code>, <code>department</code>, <code>salary</code>, <code>top_name</code>, <code>gap</code>.', starter: '', solution: 'SELECT name, department, salary, FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS top_name, FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary DESC) - salary AS gap FROM employees;', check: { mustInclude: ['OVER'] }, hints: ['<code>FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC)</code>', '<code>gap</code>: дәл сол терезедегі <code>FIRST_VALUE(salary)</code> минус <code>salary</code>. <code>MAX(salary) OVER (PARTITION BY department)</code> де жарайды.'] }
+      ]
+    },
+    {
+      id: 'adv-12', title: 'Сессиялар және реттелген воронка', minutes: 18,
+      body: `
+<p>Өнім аналитикасында дерек көбіне <b>оқиғалар журналы</b> түрінде келеді: кім, не істеді, қашан. <code>qazaq</code> базасына осындай кесте қосылды:</p>
+<table>
+<tr><th>Кесте</th><th>Бағандар</th><th>Не сақтайды</th></tr>
+<tr><td><code>events_ts</code></td><td>user_id, event, ts</td><td>50 пайдаланушының 2026 жылғы 1–15 наурыздағы 525 оқиғасы. <code>event</code>: view, cart, checkout, purchase. <code>ts</code>: <code>'2026-03-01 10:25:00'</code> түріндегі уақыт</td></tr>
+</table>
+<p>Журналда «сессия» деген баған жоқ. Оны аналитик өзі құрастырады.</p>
+<h3>1-қадам: алдыңғы оқиғадан бері қанша уақыт өтті</h3>
+<pre><code>SELECT user_id, event, ts,
+  (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min
+FROM events_ts;</code></pre>
+<p><code>julianday</code> уақытты күн санына айналдырады. Айырманы 1440-қа (бір тәуліктегі минут) көбейтсек, минут шығады. Бөлшек сандағы дәлсіздікті (10 орнына 9.9999) <code>ROUND</code> жояды. PostgreSQL-де: <code>EXTRACT(EPOCH FROM ts - LAG(ts) OVER (...)) / 60</code>.</p>
+<h3>2-қадам: сессияның басын белгілеу</h3>
+<p>Кең тараған ереже: екі оқиғаның арасы <b>30 минуттан асса</b>, жаңа сессия басталады. Пайдаланушының ең бірінші оқиғасы да (<code>gap_min IS NULL</code>) сессияның басы.</p>
+<pre><code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END AS is_new</code></pre>
+<h3>3-қадам: сессия нөмірі</h3>
+<p><code>is_new</code> бағанының өспелі сомасы сессия нөмірін береді: жаңа сессия басталған сайын сома 1-ге өседі.</p>
+<pre><code>SUM(is_new) OVER (PARTITION BY user_id ORDER BY ts) AS session_no</code></pre>
+<table>
+<tr><th>ts</th><th>event</th><th>gap_min</th><th>is_new</th><th>session_no</th></tr>
+<tr><td>03-01 11:10</td><td>checkout</td><td>2</td><td>0</td><td>1</td></tr>
+<tr><td>03-01 11:20</td><td>purchase</td><td>10</td><td>0</td><td>1</td></tr>
+<tr><td>03-03 09:51</td><td>view</td><td>2791</td><td>1</td><td>2</td></tr>
+<tr><td>03-03 09:58</td><td>view</td><td>7</td><td>0</td><td>2</td></tr>
+</table>
+<p>Енді <code>GROUP BY user_id, session_no</code> арқылы сессияның ұзақтығын, оқиға санын, сатып алумен аяқталғанын есептеуге болады. Бұл базада 128 сессия бар, олардың 28.9%-ы сатып алумен аяқталған.</p>
+<h3>Реттелген воронка</h3>
+<p>Business Analytics-тегі қарапайым воронка «осы оқиғасы бар пайдаланушыларды» санайды. Бірақ оқиғалардың <b>реті</b> маңызды: себетке салу қараудан <b>кейін</b>, сатып алу себеттен <b>кейін</b> болуы керек.</p>
+<pre><code>WITH v AS (
+  SELECT user_id, MIN(ts) AS view_ts
+  FROM events_ts WHERE event = 'view' GROUP BY user_id
+), c AS (
+  SELECT e.user_id, MIN(e.ts) AS cart_ts
+  FROM events_ts e JOIN v ON v.user_id = e.user_id
+  WHERE e.event = 'cart' AND e.ts &gt; v.view_ts
+  GROUP BY e.user_id
+)
+SELECT (SELECT COUNT(*) FROM v) AS viewed, (SELECT COUNT(*) FROM c) AS carted;</code></pre>
+<p>Осы базада себетке кемінде бір рет салған 42 пайдаланушы бар, бірақ оның тек 39-ы алғашқы қараудан кейін салған. Қалған үшеуі push-хабарламадағы сілтемемен бірден себетке түскен. Ретсіз воронка конверсияны асыра көрсетеді.</p>
+<h3>Конверсияға дейінгі уақыт</h3>
+<p>Алғашқы қарау мен алғашқы сатып алудың арасындағы уақыт (time-to-convert) маркетингке «еске салу хабарламасын қашан жіберу керек» дегенді айтады. Бұл таралу әдетте қатты қисық: көпшілігі сол сессияда алады, аз бөлігі бірнеше күннен кейін. Сондықтан орташаны емес, медиана мен үлестерді («1 сағат ішінде алғандар») көрсетіңіз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>PARTITION BY user_id</code>-ді ұмыту: бір пайдаланушының оқиғасы екіншісінің оқиғасымен салыстырылады.</li>
+<li>Уақытты мәтін ретінде азайту: <code>ts - LAG(ts)</code> SQLite-та жылдардың айырмасын (0) береді. <code>julianday</code> немесе <code>strftime('%s', ts)</code> қолданыңыз.</li>
+<li>Воронкада «бірінші оқиғадан кейін» шартын қоймау.</li>
+<li>30 минуттық шекті заң деп қабылдау: бұл келісім ғана. Бейне сервисінде 30 минут үнсіздік — қалыпты қарау, шекті өнімге қарай таңдайды.</li>
+</ul>
+<div class="tip">Google Analytics пен AppMetrica сессияны дәл осы «30 минут әрекетсіздік» ережесімен бөледі. Дашбордтағы сессия саны сіздің SQL-ден өзгеше шықса, алдымен шектің бірдей екенін тексеріңіз.</div>`,
+      exercises: [
+        { type: 'sql', dataset: 'qazaq', xp: 20, prompt: '26-пайдаланушының оқиғаларын уақыт ретімен шығарыңыз: <code>ts</code>, <code>event</code>, <code>gap_min</code> (алдыңғы оқиғадан бері өткен минут, бүтінге дейін <code>ROUND</code>; бірінші оқиғада NULL).', starter: "SELECT ts, event,\n  \nFROM events_ts\nWHERE user_id = 26\nORDER BY ts;", solution: 'SELECT ts, event, ROUND((julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440) AS gap_min FROM events_ts WHERE user_id = 26 ORDER BY ts;', check: { ordered: true, mustInclude: ['LAG'] }, hints: ['<code>LAG(ts) OVER (ORDER BY ts)</code> алдыңғы оқиғаның уақытын береді.', '<code>ROUND((julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440)</code>'] },
+        { type: 'sql', dataset: 'qazaq', xp: 30, prompt: '<code>events_ts</code> кестесінде барлығы неше сессия бар? Ереже: пайдаланушының бірінші оқиғасы немесе алдыңғы оқиғадан 30 минуттан артық үзіліс жаңа сессияны бастайды. Баған: <code>sessions</code>.', starter: "WITH g AS (\n  SELECT user_id, ts,\n    (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min\n  FROM events_ts\n)\nSELECT ", solution: 'WITH g AS (SELECT user_id, event, ts, (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min FROM events_ts) SELECT COUNT(*) AS sessions FROM g WHERE gap_min IS NULL OR gap_min > 30;', hints: ['Сессия саны = сессияны бастайтын оқиғалар саны.', '<code>WHERE gap_min IS NULL OR gap_min &gt; 30</code>'] },
+        { type: 'sql', dataset: 'qazaq', xp: 30, prompt: '7 және 26-пайдаланушылардың сессияларын шығарыңыз: <code>user_id</code>, <code>session_no</code>, <code>started_at</code> (сессияның бірінші оқиғасы), <code>events</code> (оқиға саны). <code>user_id</code>, <code>session_no</code> бойынша сұрыптаңыз.', starter: '', solution: 'WITH g AS (SELECT user_id, event, ts, (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min FROM events_ts), s AS (SELECT user_id, ts, SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts) AS session_no FROM g) SELECT user_id, session_no, MIN(ts) AS started_at, COUNT(*) AS events FROM s WHERE user_id IN (7, 26) GROUP BY user_id, session_no ORDER BY user_id, session_no;', check: { ordered: true }, hints: ['Үш қадам: <code>gap_min</code> (LAG), <code>is_new</code> (CASE), <code>session_no</code> (өспелі SUM).', '<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts)</code>', 'Пайдаланушыны сүзуді ең соңғы SELECT-те жасаңыз, сосын <code>GROUP BY user_id, session_no</code>.'] },
+        { type: 'sql', dataset: 'qazaq', xp: 30, prompt: 'Реттелген воронканы бір жолмен шығарыңыз: <code>viewed</code> (кемінде бір <code>view</code> жасағандар), <code>carted</code> (алғашқы қараудан <b>кейін</b> <code>cart</code> жасағандар), <code>purchased</code> (сол алғашқы себеттен <b>кейін</b> <code>purchase</code> жасағандар).', starter: "WITH v AS (\n  SELECT user_id, MIN(ts) AS view_ts\n  FROM events_ts WHERE event = 'view' GROUP BY user_id\n)\nSELECT ", solution: "WITH v AS (SELECT user_id, MIN(ts) AS view_ts FROM events_ts WHERE event = 'view' GROUP BY user_id), c AS (SELECT e.user_id, MIN(e.ts) AS cart_ts FROM events_ts e JOIN v ON v.user_id = e.user_id WHERE e.event = 'cart' AND e.ts > v.view_ts GROUP BY e.user_id), p AS (SELECT e.user_id, MIN(e.ts) AS buy_ts FROM events_ts e JOIN c ON c.user_id = e.user_id WHERE e.event = 'purchase' AND e.ts > c.cart_ts GROUP BY e.user_id) SELECT (SELECT COUNT(*) FROM v) AS viewed, (SELECT COUNT(*) FROM c) AS carted, (SELECT COUNT(*) FROM p) AS purchased;", hints: ["<code>c</code> CTE: <code>events_ts e JOIN v</code>, шарты <code>e.event = 'cart' AND e.ts &gt; v.view_ts</code>, әр пайдаланушыға <code>MIN(e.ts)</code>.", "<code>p</code> CTE дәл солай, бірақ <code>c</code>-мен біріктіріледі: <code>e.event = 'purchase' AND e.ts &gt; c.cart_ts</code>.", 'Соңында: <code>SELECT (SELECT COUNT(*) FROM v) AS viewed, ...</code>'] },
+        { type: 'sql', dataset: 'qazaq', xp: 30, prompt: 'Сатып алған әр пайдаланушы үшін алғашқы қараудан одан кейінгі алғашқы сатып алуға дейін неше минут өткенін шығарыңыз: <code>user_id</code>, <code>minutes_to_buy</code> (бүтінге дейін <code>ROUND</code>). Ең жылдамынан бастап сұрыптаңыз.', starter: '', solution: "WITH v AS (SELECT user_id, MIN(ts) AS view_ts FROM events_ts WHERE event = 'view' GROUP BY user_id), p AS (SELECT e.user_id, v.view_ts, MIN(e.ts) AS buy_ts FROM events_ts e JOIN v ON v.user_id = e.user_id WHERE e.event = 'purchase' AND e.ts > v.view_ts GROUP BY e.user_id, v.view_ts) SELECT user_id, ROUND((julianday(buy_ts) - julianday(view_ts)) * 1440) AS minutes_to_buy FROM p ORDER BY minutes_to_buy, user_id;", check: { ordered: true }, hints: ['Алдымен әр пайдаланушының алғашқы <code>view</code> уақыты, сосын одан кейінгі алғашқы <code>purchase</code> уақыты.', '<code>ROUND((julianday(buy_ts) - julianday(view_ts)) * 1440)</code>'] }
       ]
     },
     {

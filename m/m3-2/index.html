@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 3: Дерек аналитигі / M3.2</nav>
 <article class="reading">
-<p class="eyebrow">M3.2 · 20–30 сағат · 9 сабақ</p>
+<p class="eyebrow">M3.2 · 20–30 сағат · 10 сабақ</p>
 <h1>M3.2 Cleaning &amp; EDA: Деректі тазалау және EDA</h1>
 <p class="prose">Нақты дерек ешқашан таза келмейді: бос орындар, қайталанған клиенттер, «Алматы» мен «Almaty», мәтін түріндегі сандар. Аналитик уақытының үлкен бөлігі осыған кетеді. Бұл модульде raw дерекқорын SQL-мен және Python-мен тазалап, сосын EDA жасайсыз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m3-2">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-2">Барлық тапсырмалар</a></p>
@@ -1164,7 +1164,7 @@ WHERE REPLACE(amount, ' ', '') GLOB '*[^0-9-]*';</code></pre>
 <p>Екі кең тараған тәсіл бар:</p>
 <ul>
 <li><b>Бизнес шегі</b>: «бір тапсырыс 200 000 ₸-ден аспайды» деген ереже. Түсінікті, бірақ шекті бизнеспен келісу керек.</li>
-<li><b>Статистикалық шек (IQR)</b>: Q1 және Q3 квартильдерін тауып, <code>Q3 + 1.5 × (Q3 − Q1)</code>-ден үлкен мәндерді күдікті деп белгілейміз. Статистика модулінде бұл тәсілді толығырақ қарастырамыз.</li>
+<li><b>Статистикалық шек (IQR)</b>: Q1 және Q3 квартильдерін тауып, <code>Q3 + 1.5 × (Q3 − Q1)</code>-ден үлкен мәндерді күдікті деп белгілейміз. Статистика модулінде бұл тәсілді толығырақ қарастырдық.</li>
 </ul>
 <h3>Белгілеудің SQL үлгісі</h3>
 <pre><code>CASE
@@ -1244,11 +1244,72 @@ def clean_city(s):
 <div class="tip">Нақты жұмыста тазалау кодын бір рет жазып, әр жаңа экспортқа қайта қолданасыз. Сондықтан функцияға түсінікті ат беріп, әр ережеге түсініктеме жазыңыз.</div></div>
 <p><a href="../../#lesson/m3-2/7">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="cl-9">
+<h2>9. pandas-пен EDA және дерек сапасының тексерісі</h2>
+<div class="prose">
+<p>Алдыңғы сабақтарда тазалауды қолмен, таза Python-мен жасадыңыз: ол не болып жатқанын түсіндіреді. Жұмыста дәл сол қадамдарды <b>pandas</b> бірнеше жолмен орындайды. Бұл сабақта кофехананың <code>orders.csv</code> (150 тапсырыс) және <code>customers.csv</code> (40 клиент) файлдарын тексереміз.</p>
+<h3>Бес жолдық profiling</h3>
+<pre><code>import pandas as pd
+df = pd.read_csv('orders.csv')
+
+df.info()                      # бағандар, типтер, бос емес мәндер саны
+df.describe()                  # сандық бағандар: min, квартильдер, max
+df.isna().sum()                # әр бағандағы бос мәндер
+df['status'].value_counts()    # санаттардың жиілігі
+df.duplicated().sum()          # толық қайталанған жолдар</code></pre>
+<p>Осы файлда бұл командалар мынаны көрсетеді:</p>
+<table>
+<tr><th>Команда</th><th>Не көрдік</th><th>Қорытынды</th></tr>
+<tr><td><code>info()</code></td><td><code>amount</code>: 150-ден 144 бос емес; <code>order_date</code> мәтін</td><td>6 сома жоқ; күнді <code>pd.to_datetime</code>-мен түрлендіру керек</td></tr>
+<tr><td><code>describe()</code></td><td>медиана 2 450, max 48 000</td><td>Бір тапсырыс медианадан 20 есе үлкен: күдікті мән</td></tr>
+<tr><td><code>value_counts()</code></td><td>paid 146, refund 4</td><td>Табысты санағанда refund-ты алып тастаймыз</td></tr>
+<tr><td><code>duplicated()</code></td><td>0</td><td>Толық дубликат жоқ. Кілт бойынша да тексеріңіз: <code>df['id'].is_unique</code></td></tr>
+</table>
+<p><code>value_counts(dropna=False)</code> бос мәндерді де жеке жол етіп көрсетеді. <code>nunique()</code> бағандағы әртүрлі мәндер санын береді.</p>
+<h3>merge: кілттерді тексеру</h3>
+<p>Екі кестені біріктіру — дерек ең жиі бұзылатын жер. pandas-та екі сақтандырғыш бар.</p>
+<p><b>1. <code>indicator=True</code></b> әр жолдың қайдан келгенін көрсететін <code>_merge</code> бағанын қосады:</p>
+<pre><code>m = orders.merge(customers, on='customer_id', how='left', indicator=True)
+m['_merge'].value_counts()
+# both         — клиент табылды
+# left_only    — тапсырыс бар, клиент жоқ («жетім» кілт)</code></pre>
+<p>«Жетім» жолдар INNER JOIN-да үнсіз жоғалады, ал LEFT JOIN-да қала мен арна бағандары NaN болады. Екеуінде де сома дұрыс шықпайды, сондықтан оларды алдымен тауып алу керек.</p>
+<p><b>2. <code>validate</code></b> байланыс түрін тексереді. Күткеніңіз орындалмаса, pandas <code>MergeError</code> қатесін береді:</p>
+<pre><code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code></pre>
+<p><code>many_to_one</code>: сол жақта кілт қайталана алады, оң жақта бірегей болуы шарт. Клиенттер кестесінде бір <code>customer_id</code> екі рет кездессе, оның әр тапсырысы екі еселеніп, табыс асып кетер еді. <code>validate</code> мұны бірден ұстайды.</p>
+<h3>Жол санын салыстыру (reconciliation)</h3>
+<p>Әр қадамнан кейін жол саны мен бақылау сомасын жазып отырыңыз:</p>
+<pre><code>print(len(orders))               # 150
+m = orders.merge(customers, on='customer_id', how='left')
+assert len(m) == len(orders)     # left join жол қоспауы керек
+clean = m[(m['status'] == 'paid') &amp; m['amount'].notna()]
+print(len(clean), clean['amount'].sum())</code></pre>
+<p>Сандарыңыз SQL-дегі немесе дашбордтағы санмен сәйкес келмесе, осы жазбалар айырманың қай қадамда пайда болғанын табуға көмектеседі.</p>
+<h3>Дерек сапасының чек-листі</h3>
+<table>
+<tr><th>Өлшем</th><th>Сұрақ</th><th>pandas</th></tr>
+<tr><td>Толықтық</td><td>Бос мәндер қайда, қанша?</td><td><code>df.isna().sum()</code></td></tr>
+<tr><td>Бірегейлік</td><td>Кілт қайталана ма?</td><td><code>df['id'].is_unique</code>, <code>df.duplicated(subset=['id'])</code></td></tr>
+<tr><td>Жарамдылық</td><td>Мәндер рұқсат етілген аралықта ма?</td><td><code>describe()</code>, <code>(df['amount'] &lt;= 0).sum()</code>, <code>value_counts()</code></td></tr>
+<tr><td>Сәйкестік</td><td>Сыртқы кілттер табыла ма?</td><td><code>merge(..., indicator=True)</code></td></tr>
+<tr><td>Өзектілік</td><td>Дерек қай күнге дейін?</td><td><code>df['order_date'].min()</code>, <code>.max()</code></td></tr>
+<tr><td>Салыстыру</td><td>Жол саны мен сома дереккөзбен сәйкес пе?</td><td><code>len(df)</code>, <code>df['amount'].sum()</code></td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>describe()</code>-ті қарамай орташаны есептеу: бір 48 000 ₸-лік тапсырыс орташаны қатты жылжытады.</li>
+<li>merge-тен кейін жол санын тексермеу. Жол көбейсе, оң жақ кілт бірегей емес; азайса, INNER JOIN «жетім» жолдарды тастап кеткен.</li>
+<li>Бос мәндерді себебін білмей <code>fillna(0)</code>-мен толтыру: «сома белгісіз» бен «сома нөл» — екі бөлек нәрсе.</li>
+<li><code>duplicated()</code> тек толық бірдей жолдарды табады. Бір тапсырыс екі түрлі уақытпен екі рет жазылса, кілт бойынша тексеру ғана ұстайды.</li>
+</ul>
+<div class="tip">Чек-листті функция етіп жазып, әр жаңа файлға бірінші соны іске қосыңыз. Take-home тапсырмада «деректі қалай тексердім» деген бөлім — жұмыс берушінің бірінші қарайтын жері.</div></div>
+<p><a href="../../#lesson/m3-2/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
 <section id="cl-gate">
-<h2>9. Модуль емтиханы: Cleaning &amp; EDA</h2>
+<h2>10. Модуль емтиханы: Cleaning &amp; EDA</h2>
 <div class="prose">
 <p>Қорытынды тексеріс: profiling, стандарттау, дубликаттар және Python-дағы тазалау. Дерекқор: <code>raw</code>.</p></div>
-<p><a href="../../#lesson/m3-2/8">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m3-2/9">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m3-2">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-2">Барлық тапсырмалар</a></p>
 </article>

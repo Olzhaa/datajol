@@ -175,7 +175,7 @@ WHERE REPLACE(amount, ' ', '') GLOB '*[^0-9-]*';</code></pre>
 <p>Екі кең тараған тәсіл бар:</p>
 <ul>
 <li><b>Бизнес шегі</b>: «бір тапсырыс 200 000 ₸-ден аспайды» деген ереже. Түсінікті, бірақ шекті бизнеспен келісу керек.</li>
-<li><b>Статистикалық шек (IQR)</b>: Q1 және Q3 квартильдерін тауып, <code>Q3 + 1.5 × (Q3 − Q1)</code>-ден үлкен мәндерді күдікті деп белгілейміз. Статистика модулінде бұл тәсілді толығырақ қарастырамыз.</li>
+<li><b>Статистикалық шек (IQR)</b>: Q1 және Q3 квартильдерін тауып, <code>Q3 + 1.5 × (Q3 − Q1)</code>-ден үлкен мәндерді күдікті деп белгілейміз. Статистика модулінде бұл тәсілді толығырақ қарастырдық.</li>
 </ul>
 <h3>Белгілеудің SQL үлгісі</h3>
 <pre><code>CASE
@@ -261,6 +261,73 @@ def clean_city(s):
 <div class="tip">Нақты жұмыста тазалау кодын бір рет жазып, әр жаңа экспортқа қайта қолданасыз. Сондықтан функцияға түсінікті ат беріп, әр ережеге түсініктеме жазыңыз.</div>`,
       exercises: [
         { type: 'python', xp: 40, prompt: '<code>clean_rows(text)</code> функциясын жазыңыз. Әр жол үшін сөздік қайтарсын: <code>name</code> (strip), <code>city</code> (<code>CITY_MAP</code> арқылы, табылмаса strip жасалған мәтін), <code>amount</code> (бос орынсыз <code>int</code>). Сомасы бос, теріс, нөл немесе санға айналмайтын жолдар тасталсын.', starter: 'import csv, io\n\nCITY_MAP = {"алматы": "Алматы", "almaty": "Алматы", "астана": "Астана", "astana": "Астана"}\n\ndef clean_rows(text):\n    out = []\n    for row in csv.DictReader(io.StringIO(text)):\n        pass\n    return out\n', solution: 'import csv, io\n\nCITY_MAP = {"алматы": "Алматы", "almaty": "Алматы", "астана": "Астана", "astana": "Астана"}\n\ndef clean_rows(text):\n    out = []\n    for row in csv.DictReader(io.StringIO(text)):\n        raw = (row["amount"] or "").replace(" ", "")\n        try:\n            amount = int(raw)\n        except ValueError:\n            continue\n        if amount <= 0:\n            continue\n        city = row["city"].strip()\n        out.append({"name": row["name"].strip(), "city": CITY_MAP.get(city.lower(), city), "amount": amount})\n    return out', check: { tests: '_t = """name,city,amount\n Айгерім ,алматы,12 500\nНұрлан,АСТАНА,8000\nДана,Almaty,\nЕржан,Шымкент,-300\nТимур, Ақтөбе ,abc\nӘсем,astana,7 200"""\n_r = clean_rows(_t)\nassert isinstance(_r, list), "Тізім қайтарыңыз"\nassert len(_r) == 3, f"3 таза жол қалуы керек, сізде {len(_r)}"\nassert _r[0] == {"name": "Айгерім", "city": "Алматы", "amount": 12500}, f"1-жол: {_r[0]}"\nassert _r[1] == {"name": "Нұрлан", "city": "Астана", "amount": 8000}, f"2-жол: {_r[1]}"\nassert _r[2] == {"name": "Әсем", "city": "Астана", "amount": 7200}, f"3-жол: {_r[2]}"' }, hints: ['Сомаға <code>try: int(...) except ValueError: continue</code>.', 'Қала: <code>CITY_MAP.get(city.lower(), city)</code>, мұнда <code>city = row["city"].strip()</code>.'] }
+      ]
+    },
+    {
+      id: 'cl-9', title: 'pandas-пен EDA және дерек сапасының тексерісі', minutes: 18,
+      body: `
+<p>Алдыңғы сабақтарда тазалауды қолмен, таза Python-мен жасадыңыз: ол не болып жатқанын түсіндіреді. Жұмыста дәл сол қадамдарды <b>pandas</b> бірнеше жолмен орындайды. Бұл сабақта кофехананың <code>orders.csv</code> (150 тапсырыс) және <code>customers.csv</code> (40 клиент) файлдарын тексереміз.</p>
+<h3>Бес жолдық profiling</h3>
+<pre><code>import pandas as pd
+df = pd.read_csv('orders.csv')
+
+df.info()                      # бағандар, типтер, бос емес мәндер саны
+df.describe()                  # сандық бағандар: min, квартильдер, max
+df.isna().sum()                # әр бағандағы бос мәндер
+df['status'].value_counts()    # санаттардың жиілігі
+df.duplicated().sum()          # толық қайталанған жолдар</code></pre>
+<p>Осы файлда бұл командалар мынаны көрсетеді:</p>
+<table>
+<tr><th>Команда</th><th>Не көрдік</th><th>Қорытынды</th></tr>
+<tr><td><code>info()</code></td><td><code>amount</code>: 150-ден 144 бос емес; <code>order_date</code> мәтін</td><td>6 сома жоқ; күнді <code>pd.to_datetime</code>-мен түрлендіру керек</td></tr>
+<tr><td><code>describe()</code></td><td>медиана 2 450, max 48 000</td><td>Бір тапсырыс медианадан 20 есе үлкен: күдікті мән</td></tr>
+<tr><td><code>value_counts()</code></td><td>paid 146, refund 4</td><td>Табысты санағанда refund-ты алып тастаймыз</td></tr>
+<tr><td><code>duplicated()</code></td><td>0</td><td>Толық дубликат жоқ. Кілт бойынша да тексеріңіз: <code>df['id'].is_unique</code></td></tr>
+</table>
+<p><code>value_counts(dropna=False)</code> бос мәндерді де жеке жол етіп көрсетеді. <code>nunique()</code> бағандағы әртүрлі мәндер санын береді.</p>
+<h3>merge: кілттерді тексеру</h3>
+<p>Екі кестені біріктіру — дерек ең жиі бұзылатын жер. pandas-та екі сақтандырғыш бар.</p>
+<p><b>1. <code>indicator=True</code></b> әр жолдың қайдан келгенін көрсететін <code>_merge</code> бағанын қосады:</p>
+<pre><code>m = orders.merge(customers, on='customer_id', how='left', indicator=True)
+m['_merge'].value_counts()
+# both         — клиент табылды
+# left_only    — тапсырыс бар, клиент жоқ («жетім» кілт)</code></pre>
+<p>«Жетім» жолдар INNER JOIN-да үнсіз жоғалады, ал LEFT JOIN-да қала мен арна бағандары NaN болады. Екеуінде де сома дұрыс шықпайды, сондықтан оларды алдымен тауып алу керек.</p>
+<p><b>2. <code>validate</code></b> байланыс түрін тексереді. Күткеніңіз орындалмаса, pandas <code>MergeError</code> қатесін береді:</p>
+<pre><code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code></pre>
+<p><code>many_to_one</code>: сол жақта кілт қайталана алады, оң жақта бірегей болуы шарт. Клиенттер кестесінде бір <code>customer_id</code> екі рет кездессе, оның әр тапсырысы екі еселеніп, табыс асып кетер еді. <code>validate</code> мұны бірден ұстайды.</p>
+<h3>Жол санын салыстыру (reconciliation)</h3>
+<p>Әр қадамнан кейін жол саны мен бақылау сомасын жазып отырыңыз:</p>
+<pre><code>print(len(orders))               # 150
+m = orders.merge(customers, on='customer_id', how='left')
+assert len(m) == len(orders)     # left join жол қоспауы керек
+clean = m[(m['status'] == 'paid') &amp; m['amount'].notna()]
+print(len(clean), clean['amount'].sum())</code></pre>
+<p>Сандарыңыз SQL-дегі немесе дашбордтағы санмен сәйкес келмесе, осы жазбалар айырманың қай қадамда пайда болғанын табуға көмектеседі.</p>
+<h3>Дерек сапасының чек-листі</h3>
+<table>
+<tr><th>Өлшем</th><th>Сұрақ</th><th>pandas</th></tr>
+<tr><td>Толықтық</td><td>Бос мәндер қайда, қанша?</td><td><code>df.isna().sum()</code></td></tr>
+<tr><td>Бірегейлік</td><td>Кілт қайталана ма?</td><td><code>df['id'].is_unique</code>, <code>df.duplicated(subset=['id'])</code></td></tr>
+<tr><td>Жарамдылық</td><td>Мәндер рұқсат етілген аралықта ма?</td><td><code>describe()</code>, <code>(df['amount'] &lt;= 0).sum()</code>, <code>value_counts()</code></td></tr>
+<tr><td>Сәйкестік</td><td>Сыртқы кілттер табыла ма?</td><td><code>merge(..., indicator=True)</code></td></tr>
+<tr><td>Өзектілік</td><td>Дерек қай күнге дейін?</td><td><code>df['order_date'].min()</code>, <code>.max()</code></td></tr>
+<tr><td>Салыстыру</td><td>Жол саны мен сома дереккөзбен сәйкес пе?</td><td><code>len(df)</code>, <code>df['amount'].sum()</code></td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>describe()</code>-ті қарамай орташаны есептеу: бір 48 000 ₸-лік тапсырыс орташаны қатты жылжытады.</li>
+<li>merge-тен кейін жол санын тексермеу. Жол көбейсе, оң жақ кілт бірегей емес; азайса, INNER JOIN «жетім» жолдарды тастап кеткен.</li>
+<li>Бос мәндерді себебін білмей <code>fillna(0)</code>-мен толтыру: «сома белгісіз» бен «сома нөл» — екі бөлек нәрсе.</li>
+<li><code>duplicated()</code> тек толық бірдей жолдарды табады. Бір тапсырыс екі түрлі уақытпен екі рет жазылса, кілт бойынша тексеру ғана ұстайды.</li>
+</ul>
+<div class="tip">Чек-листті функция етіп жазып, әр жаңа файлға бірінші соны іске қосыңыз. Take-home тапсырмада «деректі қалай тексердім» деген бөлім — жұмыс берушінің бірінші қарайтын жері.</div>`,
+      exercises: [
+        { type: 'python', xp: 25, prompt: '<code>profile(df)</code> функциясын жазыңыз. Ол сөздік қайтарсын: <code>rows</code> (жол саны), <code>cols</code> (баған саны), <code>missing</code> (бос мәні бар бағандар ғана: <code>{баған: саны}</code>), <code>duplicates</code> (толық қайталанған жолдар саны).', starter: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef profile(df):\n    pass\n\nprint(profile(df))\n", solution: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef profile(df):\n    na = df.isna().sum()\n    return {\n        'rows': len(df),\n        'cols': df.shape[1],\n        'missing': {c: int(n) for c, n in na.items() if n > 0},\n        'duplicates': int(df.duplicated().sum()),\n    }\n\nprint(profile(df))\n", check: { tests: "import pandas as _pd\n_d = _pd.read_csv('orders.csv')\n_r = profile(_d)\nassert isinstance(_r, dict), 'profile сөздік қайтаруы керек'\nassert _r.get('rows') == 150 and _r.get('cols') == 5, f\"orders.csv: rows = 150, cols = 5 болуы керек, сізде {_r.get('rows')}, {_r.get('cols')}\"\nassert dict(_r.get('missing') or {}) == {'amount': 6}, f\"missing = {{'amount': 6}} болуы керек, сізде {_r.get('missing')}\"\nassert _r.get('duplicates') == 0, 'orders.csv-де толық дубликат жоқ: duplicates = 0'\n_r2 = profile(_pd.concat([_d, _d.head(3)], ignore_index=True))\nassert _r2.get('rows') == 153 and _r2.get('duplicates') == 3, 'Үш жол қайталанған кестеде duplicates = 3 болуы керек'" }, hints: ['<code>df.isna().sum()</code> әр бағандағы бос мәндер санын береді; <code>.items()</code> арқылы айналып, нөлден үлкендерін қалдырыңыз.', '<code>df.duplicated().sum()</code> — толық қайталанған жолдар. <code>int(...)</code>-ке ораңыз.', '<code>df.shape[1]</code> — баған саны.'] },
+        { type: 'python', xp: 30, prompt: '<code>orders</code>-қа <code>customers</code>-ты <code>customer_id</code> бойынша left join жасап, <code>indicator=True</code> қосыңыз: нәтиже <code>merged</code> болсын. Сосын клиенті табылмаған тапсырыстардың <code>customer_id</code> мәндерін қайталамай, өспелі ретпен <code>orphans</code> тізіміне жазыңыз.', starter: "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n# Басқа жүйеден қате жүктелген екі тапсырыс: мұндай клиент жоқ\nextra = pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})\norders = pd.concat([orders, extra], ignore_index=True)\n\n# merged = ...\n# orphans = ...\n", solution: "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n# Басқа жүйеден қате жүктелген екі тапсырыс: мұндай клиент жоқ\nextra = pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})\norders = pd.concat([orders, extra], ignore_index=True)\n\nmerged = orders.merge(customers, on='customer_id', how='left', indicator=True)\nprint(merged['_merge'].value_counts())\norphans = sorted(merged.loc[merged['_merge'] == 'left_only', 'customer_id'].unique().tolist())\nprint(orphans)\n", check: { mustInclude: ['indicator'], tests: "assert 'merged' in globals(), 'merged айнымалысын жасаңыз'\nassert '_merge' in merged.columns, 'merge ішіне indicator=True қосыңыз'\nassert len(merged) == 152, f'Left join жол санын өзгертпеуі керек: 152 жол, сізде {len(merged)}'\nassert 'orphans' in globals(), 'orphans тізімін жасаңыз'\nassert [int(x) for x in orphans] == [98, 99], f'orphans = [98, 99] болуы керек, сізде {list(orphans)}'" }, hints: ["<code>orders.merge(customers, on='customer_id', how='left', indicator=True)</code>", "«Жетім» жолдар: <code>merged['_merge'] == 'left_only'</code>", "<code>sorted(merged.loc[шарт, 'customer_id'].unique().tolist())</code>"] },
+        { type: 'python', xp: 30, prompt: "<code>safe_join(orders, customers)</code> функциясын жазыңыз: <code>customer_id</code> бойынша left join жасап, <code>validate='many_to_one'</code> арқылы клиенттер кілтінің бірегей екенін тексерсін, жол саны өзгермегеніне <code>assert</code> қойып, біріктірілген кестені қайтарсын. Клиенттер кестесінде кілт қайталанса, қате шығуы керек.", starter: "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef safe_join(orders, customers):\n    pass\n\nresult = safe_join(orders, customers)\n", solution: "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef safe_join(orders, customers):\n    out = orders.merge(customers, on='customer_id', how='left', validate='many_to_one')\n    assert len(out) == len(orders), 'Жол саны өзгерді'\n    return out\n\nresult = safe_join(orders, customers)\nprint(len(orders), len(result))\n", check: { mustInclude: ['validate'], tests: "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n_m = safe_join(_o, _c)\nassert _m is not None, 'safe_join біріктірілген кестені қайтаруы керек'\nassert len(_m) == len(_o), f'Жол саны 150 болып қалуы керек, сізде {len(_m)}'\nassert 'city' in _m.columns and 'channel' in _m.columns, 'Нәтижеде клиенттің city және channel бағандары болуы керек'\n_bad = _pd.concat([_c, _c.head(1)], ignore_index=True)\ntry:\n    safe_join(_o, _bad)\n    _raised = False\nexcept Exception:\n    _raised = True\nassert _raised, 'Клиенттер кестесінде кілт қайталанса, safe_join қате беруі керек'" }, hints: ["<code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code>", '<code>assert len(out) == len(orders)</code>, сосын <code>return out</code>.'] },
+        { type: 'quiz', xp: 10, prompt: '150 жолдық тапсырыстар кестесін клиенттер кестесімен left join жасағаннан кейін 163 жол шықты. Ең ықтимал себеп?', options: ['13 тапсырыстың клиенті табылмады', 'Клиенттер кестесінде кейбір <code>customer_id</code> қайталанған, сондықтан олардың тапсырыстары көбейген', 'pandas жолдарды кездейсоқ қосады', 'Тапсырыстар кестесінде бос мәндер бар'], answer: 1, explain: "Left join-да клиенті табылмаған жол жоғалмайды да, көбеймейді де. Жол саны тек оң жақтағы кілт бірегей болмағанда өседі. <code>validate='many_to_one'</code> мұны бірден ұстайды." },
+        { type: 'quiz', xp: 10, prompt: 'Сіздің pandas есебіңізде кофехана табысы 382 850 ₸, ал әріптесіңіздің SQL сұрауында 334 850 ₸. Алдымен не істейсіз?', options: ['Екі санның орташасын аламын', 'Екі есептің сүзгілері мен жол санын қадам-қадаммен салыстырамын: статус, бос сомалар, шеткі мәндер', 'Өз санымды дұрыс деп жариялаймын', 'Деректі қайта жүктеймін'], answer: 1, explain: 'Айырма дәл 48 000 ₸: бір корпоративтік тапсырыс бір есепте бар, екіншісінде алынып тасталған. Reconciliation айырманың қай қадамда пайда болғанын көрсетеді.' }
       ]
     },
     {

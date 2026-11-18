@@ -6,6 +6,9 @@
   const CH = "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\n";
   const CHM = CH + "from sklearn.linear_model import LogisticRegression\nclf = LogisticRegression(max_iter=1000)\nclf.fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n";
   const RC = "import pandas as _pd\nimport numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = _pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_m = _LogR(max_iter=1000).fit(_Xtr, _ytr)\n_p = _m.predict_proba(_Xte)[:, 1]\n";
+  // ml-reg: 5 real features + 20 noise columns, tiny train set (60 flats) so that plain LinearRegression overfits.
+  const REG = "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LinearRegression, Ridge, Lasso\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']].copy()\nrng = np.random.default_rng(3)\nfor i in range(20):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = flats['price_mln']\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size=60, random_state=1)\n";
+  const REGT = "import numpy as _np\nfrom sklearn.linear_model import Ridge as _Rd, Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, 'X_train өзгертілмеуі керек: 60 жол, 25 баған'\n";
 
   DJ.modules['m5-1'] = {
     intro: 'Machine learning — компьютерге ережені қолмен жазбай, мысалдардан үйрету. Бұл модульде scikit-learn арқылы Алматы пәтерлерінің бағасын (flats.csv) болжап, телеком абоненттерінің кетуін (churn.csv) жіктейсіз, модельді әділ бағалауды үйренесіз.',
@@ -133,6 +136,19 @@ print(model.score(X_test, y_test))    # 0.587</code></pre>
 <li><code>fit</code> тек train-де. Test R² (0.587) train-нен (0.633) сәл төмен — бұл қалыпты. Айырмашылық үлкен болса, overfitting.</li>
 </ol>
 <div class="tip">Classification-да <code>stratify=y</code> қосыңыз: сонда train мен test-те кеткен абоненттердің үлесі бірдей (≈26%) болады.</div>
+<h3>Train, validation, test: үш бөлік</h3>
+<p>Нақты жобада бір модель емес, ондаған нұсқа салыстырылады: қай белгілер, қандай параметрлер. Егер әр нұсқаны test-те тексеріп, ең жақсысын таңдасақ, test те «көрілген» болады. Сондықтан дерек <b>үшке</b> бөлінеді:</p>
+<table>
+<tr><th>Бөлік</th><th>Үлесі</th><th>Не үшін</th></tr>
+<tr><td><b>Train</b></td><td>≈60%</td><td>модель үйренеді (<code>fit</code>)</td></tr>
+<tr><td><b>Validation</b></td><td>≈20%</td><td>нұсқаларды салыстырамыз, параметр мен шекті таңдаймыз</td></tr>
+<tr><td><b>Test</b></td><td>≈20%</td><td>ең соңында <b>бір рет</b>: таңдалған модельдің шын бағасы</td></tr>
+</table>
+<pre><code># алдымен test-ті бөліп аламыз, сосын қалғанын train мен validation-ға
+X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.25, random_state=42)
+print(len(X_train), len(X_val), len(X_test))   # 240 80 80</code></pre>
+<p>Екінші бөлуде <code>test_size=0.25</code>, себебі қалған 80%-дың төрттен бірі — бүкіл деректің 20%-ы. Дерек аз болса, бөлек validation орнына <b>cross-validation</b> қолданылады (осы модульдің соңында): ол train ішінде validation-ды кезекпен ауыстырады. Қай жолды таңдасаңыз да, ереже біреу: <b>шешімдер validation-да, соңғы баға test-те</b>.</p>
 <h3>Жиі қателер</h3>
 <ul>
 <li>Модельді барлық деректе үйретіп, сосын test-те бағалау: модель test-ті «көріп қойған».</li>
@@ -312,6 +328,14 @@ print(clf.score(X_test, y_test))  # 0.807 (accuracy)</code></pre>
 </ol>
 <h3>Шекті өзгерту</h3>
 <p>0.5 — заң емес. Retention бөлімі көбірек абонентті ұстап қалғысы келсе, <code>(proba &gt;= 0.3).astype(int)</code> деп шекті түсіреді: көбірек адам «қауіпті» деп белгіленеді.</p>
+<h3>Екіден көп класс (multiclass)</h3>
+<p>Target екі емес, үш мәнді болса ше? Мысалы, абоненттің тарифін болжау: basic, standard, premium. Код өзгермейді: <code>LogisticRegression</code> мұны өзі шешеді.</p>
+<ul>
+<li><code>predict_proba</code> әр класқа бір баған береді (үш баған), әр жолдың қосындысы 1. Бағандар реті — <code>clf.classes_</code>.</li>
+<li><code>predict</code> ықтималдығы ең жоғары класты таңдайды.</li>
+<li>Precision, recall, F1 әр класс үшін бөлек есептеледі. Бір санға келтіру: <code>f1_score(y_test, pred, average='macro')</code> — класстардың жай орташасы (сирек класс та тең дауысқа ие), <code>average='weighted'</code> — класс көлеміне қарай өлшенген.</li>
+<li>Confusion matrix 3 × 3 болады: қай класты қайсысымен шатастыратынын көрсетеді.</li>
+</ul>
 <div class="tip"><i>ConvergenceWarning</i> шықса, <code>max_iter=1000</code> қойыңыз немесе белгілерді масштабтаңыз.</div>
 <h3>Жиі қателер</h3>
 <ul>
@@ -461,6 +485,183 @@ print(scores.mean(), scores.std())  # 0.778 0.037</code></pre>
           { type: 'python', xp: 25, prompt: '<code>make_pipeline(StandardScaler(), LogisticRegression())</code> үшін <code>cross_val_score</code>-ты <code>cv=5</code>-пен бүкіл <code>X</code>, <code>y</code>-де орындаңыз. Нәтижені <code>scores</code>-қа, орташасын <code>cv_mean</code>-ға, SD-ін <code>cv_std</code>-ға жазып, шығарыңыз.', starter: "import pandas as pd\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\n", solution: "import pandas as pd\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\npipe = make_pipeline(StandardScaler(), LogisticRegression())\nscores = cross_val_score(pipe, X, y, cv=5)\ncv_mean = scores.mean()\ncv_std = scores.std()\nprint(scores)\nprint(f'{cv_mean:.3f} ± {cv_std:.3f}')", check: { tests: "import numpy as _np\nassert len(scores) == 5, 'cv=5: 5 балл болуы керек'\nassert abs(cv_mean - _np.mean(scores)) < 1e-9 and abs(cv_std - _np.std(scores)) < 1e-9, 'cv_mean = scores.mean(), cv_std = scores.std()'\nassert abs(cv_mean - 0.79) < 0.02, f'cv_mean ≈ 0.79 болуы керек, сізде {cv_mean:.3f}. Pipeline-ды бүкіл X, y-де cv=5-пен бағаладыңыз ба?'", mustInclude: ['cross_val_score(', 'make_pipeline('] }, hints: ['<code>pipe = make_pipeline(StandardScaler(), LogisticRegression())</code>', '<code>cross_val_score(pipe, X, y, cv=5)</code>'] },
           { type: 'python', xp: 25, prompt: '<code>[1, 2, 3, 4, 5, None]</code> тереңдіктері үшін <code>DecisionTreeClassifier(max_depth=d, random_state=0)</code>-дың 5-fold CV орташасын <code>cv_means</code> сөздігіне жазыңыз. Ең жақсы тереңдікті <code>best_depth</code>-ке жазыңыз.', starter: "import pandas as pd\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\ncv_means = {}\n", solution: "import pandas as pd\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\ncv_means = {}\nfor d in [1, 2, 3, 4, 5, None]:\n    s = cross_val_score(DecisionTreeClassifier(max_depth=d, random_state=0), X, y, cv=5)\n    cv_means[d] = s.mean()\n    print(d, round(s.mean(), 3), round(s.std(), 3))\nbest_depth = max(cv_means, key=cv_means.get)\nprint('best:', best_depth)", check: { tests: "from sklearn.model_selection import cross_val_score as _cvs\nfrom sklearn.tree import DecisionTreeClassifier as _DT\nassert set(cv_means) == {1, 2, 3, 4, 5, None}, 'cv_means-те 6 тереңдік (None-ды қоса) болуы керек'\n_ref = {d: _cvs(_DT(max_depth=d, random_state=0), X, y, cv=5).mean() for d in [1, 2, 3, 4, 5, None]}\nassert all(abs(cv_means[d] - _ref[d]) < 0.01 for d in _ref), 'CV орташалары сәйкес келмейді: cv=5, random_state=0, бүкіл X, y'\nassert best_depth == max(_ref, key=_ref.get), f'best_depth = {max(_ref, key=_ref.get)} болуы керек: CV орташасы ең үлкен тереңдік'\nassert cv_means[None] < cv_means[best_depth], 'Шектеусіз ағаштың CV нәтижесі ең жақсыдан төмен болуы керек'", mustInclude: ['cross_val_score('] }, hints: ['<code>cross_val_score(DecisionTreeClassifier(max_depth=d, random_state=0), X, y, cv=5).mean()</code>', '<code>max(cv_means, key=cv_means.get)</code>'] },
           { type: 'quiz', xp: 10, prompt: 'Модельдің train accuracy-і 0.74, CV accuracy-і 0.74, ал «ешкім кетпейді» baseline-ы да 0.74. Бұл не?', options: ['High variance (overfitting)', 'High bias (underfitting): модель тым қарапайым', 'Тамаша модель', 'Data leakage'], answer: 1, explain: 'Train-де де, CV-де де baseline деңгейінде: модель заңдылықты ұстай алмады. Күрделірек модель немесе жақсырақ белгілер керек.' }
+        ]
+      },
+      {
+        id: 'ml-reg', title: 'Регуляризация: Ridge, Lasso және C', minutes: 16,
+        body: `
+<p>Алдыңғы сабақта overfitting-ті көрдік: модель train-ді жаттап алады, жаңа деректе нашар істейді. Сызықтық модельде бұл қалай көрінеді? <b>Коэффициенттер тым үлкейіп кетеді</b>: модель кездейсоқ шуды да «заңдылық» деп қабылдап, оған үлкен салмақ береді.</p>
+<p><b>Регуляризация</b> — модельге «үлкен коэффициент үшін айыппұл төлейсің» деу. Сонда модель тек шынымен пайдалы белгілерге ғана салмақ береді.</p>
+<h3>Ridge және Lasso</h3>
+<table>
+<tr><th>Модель</th><th>Нені азайтады</th><th>Нәтижесі</th></tr>
+<tr><td><code>LinearRegression</code></td><td>MSE</td><td>айыппұл жоқ</td></tr>
+<tr><td><code>Ridge(alpha)</code></td><td>MSE + alpha · Σ b²</td><td>барлық коэффициент нөлге қарай <b>кішірейеді</b>, бірақ нөл болмайды</td></tr>
+<tr><td><code>Lasso(alpha)</code></td><td>MSE + alpha · Σ |b|</td><td>пайдасыз белгілердің коэффициенті <b>дәл 0</b> болады</td></tr>
+</table>
+<p><code>alpha</code> — айыппұлдың күші. alpha = 0 — кәдімгі сызықтық регрессия. alpha үлкейген сайын модель қарапайымдалады. Тым үлкен alpha — underfitting: барлық коэффициент нөлге жуық, модель орташаны ғана болжайды.</p>
+<h3>Қадамдап мысал</h3>
+<p>Overfitting-ті әдейі жасаймыз: train-ге небәрі 60 пәтер аламыз, ал 5 нақты белгіге 20 мағынасыз кездейсоқ баған (<code>noise_0 … noise_19</code>) қосамыз.</p>
+<pre><code>from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+lin = make_pipeline(StandardScaler(), LinearRegression()).fit(X_train, y_train)
+print(lin.score(X_train, y_train))   # 0.856
+print(lin.score(X_test, y_test))     # 0.419</code></pre>
+<ol>
+<li>Train R² = 0.86, test R² = 0.42. Модель шу бағандарына да салмақ берген: олардың |коэффициенттерінің| қосындысы 22.6.</li>
+<li>Енді Ridge-ді әртүрлі alpha-мен, train ішінде 5-fold CV арқылы салыстырамыз:</li>
+</ol>
+<table>
+<tr><th>alpha</th><th>CV R²</th><th>Test R²</th><th>Шу коэффициенттерінің қосындысы</th></tr>
+<tr><td>0.01</td><td>0.00</td><td>0.42</td><td>22.5</td></tr>
+<tr><td>1</td><td>0.18</td><td>0.44</td><td>21.6</td></tr>
+<tr><td><b>10</b></td><td><b>0.52</b></td><td><b>0.55</b></td><td>15.2</td></tr>
+<tr><td>100</td><td>0.49</td><td>0.49</td><td>7.3</td></tr>
+<tr><td>1000</td><td>0.11</td><td>0.11</td><td>1.9</td></tr>
+</table>
+<ol start="3">
+<li>alpha өскен сайын коэффициенттер кішірейеді. alpha = 10 — ең жақсы теңгерім. alpha = 1000-да модель бәрін «өшіріп» тастады: underfitting.</li>
+<li>alpha-ны <b>CV бойынша</b> таңдадық, test-ке қарап емес. Test тек соңғы тексеріс.</li>
+<li><code>Lasso(alpha=1.0)</code> осы деректе 25 коэффициенттің 18-ін дәл нөлге теңестіреді: 20 шу бағанының 18-і өшеді, 5 нақты белгінің бәрі қалады. Test R² = 0.64. Lasso — автоматты <b>белгі таңдау</b> (feature selection).</li>
+</ol>
+<div class="tip">Ridge пен Lasso-ның алдында әрқашан <code>StandardScaler</code> қойыңыз. Айыппұл коэффициенттің шамасына салынады, ал шама бірлікке тәуелді: м² мен жыл әртүрлі масштабта. Масштабсыз айыппұл әділетсіз бөлінеді.</div>
+<h3>LogisticRegression-дағы C</h3>
+<p><code>LogisticRegression</code> әдепкіде регуляризациямен жұмыс істейді (Ridge сияқты, L2). Бірақ параметрі кері жазылған: <code>C = 1 / alpha</code>.</p>
+<ul>
+<li><b>Кіші C</b> (0.01) — күшті регуляризация, коэффициенттер кішкентай.</li>
+<li><b>Үлкен C</b> (100) — әлсіз регуляризация, модель еркін.</li>
+<li>Әдепкі мән <code>C=1.0</code>.</li>
+</ul>
+<p>Churn деректе (масштабталған 4 белгі) <code>tenure_months</code> коэффициенті: C = 0.001 болса −0.09, C = 1 болса −1.14. Мұнда белгі аз, шу жоқ, сондықтан CV AUC өзгермейді (≈0.825). Белгі көп болғанда (мысалы, мәтіндегі мыңдаған сөз) C-ны таңдау нәтижеге қатты әсер етеді.</p>
+<p><code>LogisticRegression(penalty='l1', solver='liblinear')</code> Lasso сияқты белгілерді нөлге теңестіреді.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>alpha мен C-ны шатастыру: alpha үлкен — күшті айыппұл, C үлкен — <b>әлсіз</b> айыппұл.</li>
+<li>Масштабтамай Ridge/Lasso қолдану.</li>
+<li>alpha-ны test нәтижесіне қарап таңдау. Дұрысы: cross-validation.</li>
+<li>Lasso нөлге теңестірген белгіні «мүлдем пайдасыз» деу. Екі белгі өзара ұқсас болса, Lasso біреуін ғана қалдырады.</li>
+<li>Регуляризация нашар деректі түзейді деп ойлау. Ол тек overfitting-ті азайтады, жаңа ақпарат қоспайды.</li>
+</ul>`,
+        exercises: [
+          { type: 'python', xp: 25, prompt: 'Стартерде 5 нақты белгі мен 20 шу бағаны бар шағын train (60 пәтер) дайын. <code>[0.01, 1, 10, 100, 1000]</code> әр alpha үшін <code>make_pipeline(StandardScaler(), Ridge(alpha=a))</code>-ның train-дегі 5-fold CV орташа R²-ын <code>scores</code> сөздігіне жазыңыз. Ең жақсы alpha → <code>best_alpha</code>. Сол alpha-мен модельді train-де үйретіп, test R²-ын <code>test_r2</code>-ге жазыңыз.', starter: REG + "scores = {}\n", solution: REG + `scores = {}
+for a in [0.01, 1, 10, 100, 1000]:
+    m = make_pipeline(StandardScaler(), Ridge(alpha=a))
+    scores[a] = cross_val_score(m, X_train, y_train, cv=5).mean()
+best_alpha = max(scores, key=scores.get)
+best = make_pipeline(StandardScaler(), Ridge(alpha=best_alpha)).fit(X_train, y_train)
+test_r2 = best.score(X_test, y_test)
+print(scores, best_alpha, round(test_r2, 3))`, check: { tests: REGT + `_s = {a: _cvs(_mp(_SS(), _Rd(alpha=a)), X_train, y_train, cv=5).mean() for a in [0.01, 1, 10, 100, 1000]}
+assert sorted(scores) == [0.01, 1, 10, 100, 1000], "scores кілттері: 0.01, 1, 10, 100, 1000"
+assert all(abs(scores[a] - _s[a]) < 1e-6 for a in _s), "CV мәндері сәйкес емес: cross_val_score(make_pipeline(StandardScaler(), Ridge(alpha=a)), X_train, y_train, cv=5).mean()"
+_b = max(_s, key=_s.get)
+assert best_alpha == _b, f"best_alpha = {_b} болуы керек: CV R² ең жоғары alpha"
+_t = _mp(_SS(), _Rd(alpha=_b)).fit(X_train, y_train).score(X_test, y_test)
+assert abs(test_r2 - _t) < 1e-6, f"test_r2 ≈ {_t:.3f} болуы керек: ең жақсы alpha-мен train-де үйретіп, test-те бағалаңыз"`, mustInclude: ['Ridge(', 'cross_val_score('] }, hints: ['Цикл: <code>for a in [0.01, 1, 10, 100, 1000]:</code> ішінде <code>scores[a] = cross_val_score(m, X_train, y_train, cv=5).mean()</code>', '<code>best_alpha = max(scores, key=scores.get)</code>'] },
+          { type: 'python', xp: 25, prompt: 'Сол деректе <code>make_pipeline(StandardScaler(), Lasso(alpha=1.0))</code>-ны <code>lasso</code> атымен train-де үйретіңіз. Коэффициенттерді <code>coefs</code> Series-іне (индексі — баған атаулары) жазыңыз. <code>n_zero</code> — дәл 0-ге тең коэффициенттер саны, <code>kept</code> — нөл емес белгілердің атаулары (тізім), <code>lasso_r2</code> — test R².', starter: REG + "\n", solution: REG + `
+lasso = make_pipeline(StandardScaler(), Lasso(alpha=1.0)).fit(X_train, y_train)
+coefs = pd.Series(lasso[-1].coef_, index=X_train.columns)
+n_zero = int((coefs == 0).sum())
+kept = list(coefs[coefs != 0].index)
+lasso_r2 = lasso.score(X_test, y_test)
+print(n_zero, kept, round(lasso_r2, 3))`, check: { tests: REGT + `_l = _mp(_SS(), _Ls(alpha=1.0)).fit(X_train, y_train)
+_c = _l[-1].coef_
+assert len(coefs) == 25 and list(coefs.index) == list(X_train.columns), "coefs — 25 коэффициент, индексі X_train.columns: pd.Series(lasso[-1].coef_, index=X_train.columns)"
+assert _np.allclose(_np.asarray(coefs, dtype=float), _c, atol=1e-6), "Коэффициенттер сәйкес емес: Lasso(alpha=1.0), алдында StandardScaler, train-де үйретілген"
+assert n_zero == int((_c == 0).sum()), f"n_zero = {int((_c == 0).sum())} болуы керек: (coefs == 0).sum()"
+assert list(kept) == [n for n, v in zip(X_train.columns, _c) if v != 0], "kept — коэффициенті нөл емес бағандардың атаулары (бағандар ретімен)"
+assert abs(lasso_r2 - _l.score(X_test, y_test)) < 1e-6, f"lasso_r2 ≈ {_l.score(X_test, y_test):.3f} болуы керек"`, mustInclude: ['Lasso('] }, hints: ['Pipeline-ның соңғы қадамы: <code>lasso[-1].coef_</code>', '<code>kept = list(coefs[coefs != 0].index)</code>'] },
+          { type: 'number', xp: 10, prompt: 'Ridge айыппұлы = alpha · Σ b². alpha = 0.5, коэффициенттер b = [3, −4]. Айыппұл қанша?', answer: 12.5, tol: 0.01, explain: '3² + (−4)² = 9 + 16 = 25. 0.5 · 25 = 12.5. Lasso-да бұл 0.5 · (3 + 4) = 3.5 болар еді.' },
+          { type: 'quiz', xp: 10, prompt: 'Мәтін белгілері көп (5 000 баған) модель train-де 0.99, CV-де 0.80 accuracy берді. <code>LogisticRegression(C=1.0)</code>-ды қалай өзгерткен дұрыс?', options: ['C-ны 100-ге көбейту: модельге көбірек еркіндік', 'C-ны азайтып көру (мысалы 0.1): регуляризация күшейеді, overfitting азаяды', 'max_iter-ді азайту', 'Ештеңе өзгертпеу: train accuracy жоғары'], answer: 1, explain: 'C = 1 / alpha. C кіші болса, айыппұл күшті: коэффициенттер кішірейіп, модель шуды азырақ жаттайды. Нақты мәнін CV-мен таңдаңыз.' }
+        ]
+      },
+      {
+        id: 'ml-curves', title: 'ROC және PR қисықтары, PR-AUC, log loss, калибровка, Gini/KS', minutes: 18,
+        body: `
+<p>Precision мен recall бір шекке (threshold) байланған. Бірақ шекті әлі таңдамасақ ше? Немесе екі модельді «жалпы» салыстырғымыз келсе? Ол үшін <b>шекке тәуелсіз</b> метрикалар бар: олар модельдің ықтималдықтарына тұтас қарайды.</p>
+<h3>ROC қисығы</h3>
+<p>Шекті 1-ден 0-ге дейін жылжытып, әр шекте екі сан есептейміз:</p>
+<ul>
+<li><b>TPR</b> (recall) = TP / (TP + FN): кетушілердің қаншасын таптық.</li>
+<li><b>FPR</b> = FP / (FP + TN): қалатындардың қаншасына бекер дабыл бердік.</li>
+</ul>
+<table>
+<tr><th>Шек</th><th>TPR</th><th>FPR</th><th>TPR − FPR</th></tr>
+<tr><td>0.5</td><td>0.41</td><td>0.05</td><td>0.36</td></tr>
+<tr><td>0.3</td><td>0.77</td><td>0.26</td><td>0.51</td></tr>
+<tr><td>0.2</td><td>0.82</td><td>0.43</td><td>0.39</td></tr>
+<tr><td>0.1</td><td>0.97</td><td>0.63</td><td>0.34</td></tr>
+</table>
+<p>Осы нүктелерді (FPR, TPR) графикке салсақ — ROC қисығы. Оның астындағы аудан — <b>ROC AUC</b>. Біздің churn моделінде 0.816.</p>
+<h3>Gini және KS: банк тілі</h3>
+<p>Қазақстан банктеріндегі скоринг вакансияларында AUC-тен гөрі <b>Gini</b> мен <b>KS</b> жиі аталады. Екеуі де ROC-тан шығады.</p>
+<ul>
+<li><b>Gini = 2 · AUC − 1</b>. AUC 0.5 (тиын лақтыру) → Gini 0; AUC 1.0 → Gini 1. Біздікі: 2 · 0.816 − 1 = <b>0.632</b>.</li>
+<li><b>KS</b> (Колмогоров–Смирнов) = max(TPR − FPR): «жақсы» мен «жаман» клиенттерді модель ең көп ажырататын нүкте. Біздікі <b>0.526</b>, шек ≈ 0.33 болғанда.</li>
+</ul>
+<pre><code>from sklearn.metrics import roc_auc_score, roc_curve
+auc = roc_auc_score(y_test, proba)       # 0.816
+gini = 2 * auc - 1                       # 0.632
+fpr, tpr, thr = roc_curve(y_test, proba)
+ks = (tpr - fpr).max()                   # 0.526</code></pre>
+<h3>PR қисығы және PR-AUC</h3>
+<p>ROC-тың әлсіз жері: класс өте сирек болғанда (алаяқтық 1%) FPR әрқашан кішкентай көрінеді, себебі «қалыпты» мысалдар тым көп. ROC AUC = 0.95 болса да, дабылдардың көбі жалған болуы мүмкін.</p>
+<p><b>PR қисығы</b> әр шектегі precision мен recall-ды көрсетеді. Астындағы ауданды <code>average_precision_score</code> есептейді (PR-AUC). Оның baseline-ы 0.5 емес, <b>оң кластың үлесі</b>: churn-де 0.26. Біздің модель 0.664 береді — кездейсоқтан 2.5 есе жақсы.</p>
+<div class="tip">Ереже: кластар шамамен тең болса — ROC AUC. Оң класс сирек және сізге дәл сол маңызды болса (fraud, дефолт, ауру) — PR-AUC қосымша қараңыз.</div>
+<h3>Log loss: ықтималдықтың сапасы</h3>
+<p>AUC тек <b>ретке</b> қарайды: кетушінің ықтималдығы қалушыдан жоғары ма. Ал ықтималдықтың өзі дұрыс па? Оны <b>log loss</b> өлшейді: шын жауапқа берілген ықтималдықтың −ln-і, орташасы.</p>
+<ol>
+<li>Кеткен абонентке p = 0.9 дедік: −ln(0.9) = 0.105. Аз айыппұл.</li>
+<li>p = 0.6 дедік: −ln(0.6) = 0.511.</li>
+<li>p = 0.01 дедік («анық кетпейді»), ал ол кетті: −ln(0.01) = 4.6. <b>Сенімді қате қатты жазаланады.</b></li>
+</ol>
+<p>Аз болған сайын жақсы. Біздің модель: 0.434. Барлығына бірдей 0.26 деп айтатын baseline: 0.573.</p>
+<h3>Калибровка</h3>
+<p>Модель «30%» деген абоненттердің шынымен шамамен 30%-ы кетсе, модель <b>калибрленген</b>. Тексеру: болжамдарды топтарға бөліп, орташа болжамды нақты үлеспен салыстырамыз.</p>
+<table>
+<tr><th>Болжам аралығы</th><th>Абонент</th><th>Орташа болжам</th><th>Нақты churn</th></tr>
+<tr><td>0–0.1</td><td>42</td><td>0.05</td><td>0.02</td></tr>
+<tr><td>0.1–0.2</td><td>28</td><td>0.14</td><td>0.21</td></tr>
+<tr><td>0.2–0.4</td><td>43</td><td>0.30</td><td>0.23</td></tr>
+<tr><td>0.4–1.0</td><td>37</td><td>0.58</td><td>0.59</td></tr>
+</table>
+<p>Сандар жақын: logistic regression әдетте жақсы калибрленген. Ағаш ансамбльдері мен <code>class_weight='balanced'</code> ықтималдықты бұрмалайды; оны <code>CalibratedClassifierCV</code> түзейді. Калибровка ықтималдықты ақшаға көбейткенде маңызды: күтілетін шығын = PD × сома.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Метрикаларға <code>predict</code> нәтижесін (0/1) беру. AUC, PR-AUC, log loss-қа <b>ықтималдық</b> керек.</li>
+<li>Сирек класта тек ROC AUC-ке сену.</li>
+<li>PR-AUC-ті 0.5-пен салыстыру. Оның baseline-ы — оң кластың үлесі.</li>
+<li>AUC жоғары болса, ықтималдық та дұрыс деп ойлау. AUC ретті ғана тексереді, калибровканы емес.</li>
+<li>Gini-ді «табыс теңсіздігі» Gini-імен шатастыру: скорингте ол жай 2 · AUC − 1.</li>
+</ul>`,
+        exercises: [
+          { type: 'python', xp: 25, prompt: 'Модель мен <code>proba</code> дайын. Test-те есептеңіз: <code>auc</code> (ROC AUC), <code>gini</code> (2 · AUC − 1), <code>pr_auc</code> (<code>average_precision_score</code>), <code>ll</code> (<code>log_loss</code>). Төртеуін шығарыңыз.', starter: CHM + "from sklearn.metrics import roc_auc_score, average_precision_score, log_loss\n\n", solution: CHM + `from sklearn.metrics import roc_auc_score, average_precision_score, log_loss
+
+auc = roc_auc_score(y_test, proba)
+gini = 2 * auc - 1
+pr_auc = average_precision_score(y_test, proba)
+ll = log_loss(y_test, proba)
+print(round(auc, 3), round(gini, 3), round(pr_auc, 3), round(ll, 3))`, check: { tests: RC + `from sklearn.metrics import roc_auc_score as _ras, average_precision_score as _aps, log_loss as _lls
+_a = _ras(_yte, _p)
+assert abs(auc - _a) < 1e-6, f"auc ≈ {_a:.3f} болуы керек: roc_auc_score(y_test, proba). proba — ықтималдық, 0/1 емес"
+assert abs(gini - (2 * _a - 1)) < 1e-6, f"gini = 2 * auc - 1 ≈ {2 * _a - 1:.3f}"
+assert abs(pr_auc - _aps(_yte, _p)) < 1e-6, f"pr_auc ≈ {_aps(_yte, _p):.3f} болуы керек: average_precision_score(y_test, proba)"
+assert abs(ll - _lls(_yte, _p)) < 1e-6, f"ll ≈ {_lls(_yte, _p):.3f} болуы керек: log_loss(y_test, proba)"` }, hints: ['<code>roc_auc_score(y_test, proba)</code>, <code>average_precision_score(y_test, proba)</code>', '<code>gini = 2 * auc - 1</code>, <code>ll = log_loss(y_test, proba)</code>'] },
+          { type: 'python', xp: 25, prompt: 'KS статистикасын есептеңіз. <code>roc_curve(y_test, proba)</code> үш массив қайтарады: <code>fpr</code>, <code>tpr</code>, <code>thr</code>. <code>ks</code> — (tpr − fpr)-дің ең үлкен мәні, <code>ks_thr</code> — сол нүктедегі шек.', starter: CHM + "import numpy as np\nfrom sklearn.metrics import roc_curve\n\n", solution: CHM + `import numpy as np
+from sklearn.metrics import roc_curve
+
+fpr, tpr, thr = roc_curve(y_test, proba)
+i = np.argmax(tpr - fpr)
+ks = (tpr - fpr)[i]
+ks_thr = thr[i]
+print(round(ks, 3), round(ks_thr, 3))`, check: { tests: RC + `from sklearn.metrics import roc_curve as _rc
+_fp, _tp, _th = _rc(_yte, _p)
+_i = _np.argmax(_tp - _fp)
+assert abs(ks - (_tp - _fp)[_i]) < 1e-6, f"ks ≈ {(_tp - _fp)[_i]:.3f} болуы керек: (tpr - fpr).max()"
+assert abs(ks_thr - _th[_i]) < 1e-6, f"ks_thr ≈ {_th[_i]:.3f} болуы керек: thr[np.argmax(tpr - fpr)]"`, mustInclude: ['roc_curve('] }, hints: ['<code>fpr, tpr, thr = roc_curve(y_test, proba)</code>', '<code>i = np.argmax(tpr - fpr)</code>, сосын <code>ks = (tpr - fpr)[i]</code>, <code>ks_thr = thr[i]</code>'] },
+          { type: 'quiz', xp: 10, prompt: 'Антифрод моделі: транзакциялардың 1%-ы алаяқтық. ROC AUC = 0.95, PR-AUC = 0.20. Қалай түсінеміз?', options: ['Модель тамаша: 0.95 өте жоғары', 'Модель ретті жақсы ажыратады, бірақ дабылдардың көбі жалған болады: сирек класта PR-AUC шынайырақ сурет береді', 'PR-AUC 0.5-тен төмен, демек модель кездейсоқтан нашар', 'Екі метрика бір-біріне қайшы, есепте қате бар'], answer: 1, explain: 'PR-AUC-тің baseline-ы — оң кластың үлесі (0.01). 0.20 одан 20 есе жақсы, бірақ precision әлі төмен. ROC AUC сирек класта тым оптимистік көрінеді.' },
+          { type: 'number', xp: 10, prompt: 'Скоринг моделінің ROC AUC-і 0.80. Оның Gini коэффициенті қанша?', answer: 0.6, tol: 0.005, explain: 'Gini = 2 · AUC − 1 = 2 · 0.80 − 1 = 0.60.' }
         ]
       },
       {

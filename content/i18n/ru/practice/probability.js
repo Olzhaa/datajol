@@ -864,6 +864,97 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "pr-11": {
+   "pr": [
+    {
+     "title": "Конверсия по каналам",
+     "prompt": "<p>Формула полной вероятности. Напишите функцию <code>total_prob(groups)</code>: <code>groups</code> — словарь <code>{канал: (доля, конверсия)}</code>. Верните общую конверсию P(B) = Σ P(B | Aᵢ) × P(Aᵢ).</p><p>Например, <code>{\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}</code> → <code>0.046</code>.</p>",
+     "hints": [
+      "Значения словаря — пары: <code>for share, rate in groups.values()</code>.",
+      "Для каждой группы <code>share * rate</code>, затем сумма."
+     ],
+     "check": {
+      "tests": "_g = {\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}\nassert total_prob(_g) is not None, \"total_prob должна возвращать значение\"\nassert abs(total_prob(_g) - 0.046) < 1e-12, \"должно быть 0.6 × 0.05 + 0.3 × 0.02 + 0.1 × 0.1 = 0.046\"\nassert abs(total_prob({\"a\": (1.0, 0.3)}) - 0.3) < 1e-12, \"если группа одна, P(B) = P(B | A) = 0.3\"\nassert abs(total_prob({\"new\": (0.25, 0.12), \"old\": (0.75, 0.04)}) - 0.06) < 1e-12, \"0.25 × 0.12 + 0.75 × 0.04 = 0.06\""
+     }
+    },
+    {
+     "title": "Первая продажа на k-м звонке",
+     "prompt": "<p>Геометрическое распределение. Напишите две функции:</p><ul><li><code>geom_pmf(k, p)</code> — вероятность того, что первый успех случится ровно на <code>k</code>-й попытке: (1 − p)^(k − 1) × p;</li><li><code>geom_mean(p)</code> — среднее число попыток до первого успеха: 1 / p.</li></ul><p>Например, <code>geom_pmf(4, 0.5)</code> → <code>0.0625</code>, <code>geom_mean(0.25)</code> → <code>4.0</code>.</p>",
+     "hints": [
+      "Сначала k − 1 неудач: <code>(1 - p) ** (k - 1)</code>, затем один успех: <code>* p</code>."
+     ],
+     "check": {
+      "tests": "assert geom_pmf(1, 0.3) is not None, \"geom_pmf должна возвращать значение\"\nassert abs(geom_pmf(1, 0.3) - 0.3) < 1e-12, \"успех с первой попытки: P = p = 0.3\"\nassert abs(geom_pmf(4, 0.5) - 0.0625) < 1e-12, \"geom_pmf(4, 0.5) = 0.5³ × 0.5 = 0.0625\"\nassert abs(geom_pmf(2, 0.1) - 0.09) < 1e-12, \"geom_pmf(2, 0.1) = 0.9 × 0.1 = 0.09\"\nassert abs(sum(geom_pmf(_k, 0.1) for _k in range(1, 301)) - 1) < 1e-9, \"сумма вероятностей по всем k должна быть равна 1\"\nassert geom_mean(0.25) is not None and abs(geom_mean(0.25) - 4) < 1e-12, \"geom_mean(0.25) = 1 / 0.25 = 4\""
+     }
+    },
+    {
+     "title": "До следующего заказа",
+     "prompt": "<p>Заказы приходят в среднем <code>lam</code> раз в час (экспоненциальное ожидание). Время ожидания дано в <b>минутах</b>. Напишите две функции:</p><ul><li><code>p_more(lam, minutes)</code> — вероятность ждать следующий заказ дольше <code>minutes</code> минут: e^(−λt), где t — в часах;</li><li><code>mean_minutes(lam)</code> — среднее время ожидания в минутах.</li></ul><p>Например, <code>p_more(3, 30)</code> ≈ <code>0.223</code>, <code>mean_minutes(3)</code> → <code>20.0</code>.</p>",
+     "hints": [
+      "λ дана в час, поэтому переведите минуты в часы: <code>minutes / 60</code>.",
+      "Среднее ожидание — 1 / λ часа, то есть <code>60 / lam</code> минут."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert p_more(3, 30) is not None, \"p_more должна возвращать значение\"\nassert abs(p_more(3, 30) - _m.exp(-1.5)) < 1e-9, f\"должно быть p_more(3, 30) = e^(−3 × 0.5) ≈ 0.223, у вас {p_more(3, 30):.4f}. 30 минут = 0.5 часа\"\nassert abs(p_more(6, 10) - _m.exp(-1)) < 1e-9, \"p_more(6, 10) = e^(−6 × 1/6) = e^(−1) ≈ 0.368\"\nassert abs(p_more(2, 0) - 1) < 1e-12, \"вероятность ждать дольше 0 минут равна 1\"\nassert mean_minutes(4) is not None and abs(mean_minutes(4) - 15) < 1e-9, \"mean_minutes(4) = 60 / 4 = 15 минут\""
+     }
+    },
+    {
+     "title": "Хотя бы одна продажа",
+     "prompt": "<p>Каждый звонок заканчивается продажей с вероятностью <code>p</code>, звонки независимы. Напишите две функции:</p><ul><li><code>p_within(k, p)</code> — вероятность хотя бы одной продажи среди первых <code>k</code> звонков (дополнение: 1 − все неудачны);</li><li><code>min_calls(p, target)</code> — наименьшее <code>k</code>, при котором <code>p_within(k, p) &gt;= target</code>.</li></ul><p>Например, <code>p_within(3, 0.2)</code> → <code>0.488</code>, <code>min_calls(0.2, 0.9)</code> → <code>11</code>.</p>",
+     "hints": [
+      "Все k звонков неудачны: <code>(1 - p) ** k</code>.",
+      "Начните с <code>k = 1</code> и увеличивайте k в цикле <code>while p_within(k, p) &lt; target</code>."
+     ],
+     "check": {
+      "tests": "assert p_within(1, 0.2) is not None, \"p_within должна возвращать значение\"\nassert abs(p_within(1, 0.2) - 0.2) < 1e-12, \"один звонок: P = p = 0.2\"\nassert abs(p_within(3, 0.2) - 0.488) < 1e-12, \"p_within(3, 0.2) = 1 − 0.8³ = 0.488\"\nassert min_calls(0.2, 0.9) == 11, f\"должно быть min_calls(0.2, 0.9) = 11 (0.8^10 ≈ 0.107 > 0.1, 0.8^11 ≈ 0.086), у вас {min_calls(0.2, 0.9)}\"\nassert min_calls(0.5, 0.75) == 2, \"min_calls(0.5, 0.75) = 2: 1 − 0.5² = 0.75, граница тоже подходит (>=)\"\nassert min_calls(1.0, 0.99) == 1, \"если p = 1, достаточно одного звонка\"\n_k = min_calls(0.05, 0.95)\nassert p_within(_k, 0.05) >= 0.95 and p_within(_k - 1, 0.05) < 0.95, f\"для p = 0.05, target = 0.95 нужно наименьшее k, у вас {_k}\""
+     }
+    },
+    {
+     "title": "Ковариация по совместному распределению",
+     "prompt": "<p>Совместное распределение двух случайных величин задано словарём <code>{(x, y): вероятность}</code>. Напишите две функции:</p><ul><li><code>cov_joint(joint)</code> — Cov(X, Y) = E[(X − E[X]) × (Y − E[Y])];</li><li><code>corr_joint(joint)</code> — Corr(X, Y) = Cov(X, Y) / (SD(X) × SD(Y)).</li></ul><p>Например, для <code>{(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}</code> Cov = 0.15, Corr = 0.6.</p>",
+     "hints": [
+      "Распакуйте ключ: <code>for (x, y), p in joint.items()</code>. E[X] = Σ x × p.",
+      "Var(X) = Σ (x − E[X])² × p, SD — корень из неё."
+     ],
+     "check": {
+      "tests": "_j = {(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}\nassert cov_joint(_j) is not None, \"cov_joint должна возвращать значение\"\nassert abs(cov_joint(_j) - 0.15) < 1e-9, f\"должно быть Cov = E[XY] − E[X]E[Y] = 0.4 − 0.25 = 0.15, у вас {cov_joint(_j):.4f}\"\nassert abs(corr_joint(_j) - 0.6) < 1e-9, \"Corr = 0.15 / (0.5 × 0.5) = 0.6\"\n_ind = {(1, 1): 0.25, (1, 2): 0.25, (2, 1): 0.25, (2, 2): 0.25}\nassert abs(cov_joint(_ind)) < 1e-12, \"у независимых величин Cov = 0\"\nassert abs(corr_joint({(0, 1): 0.5, (1, 0): 0.5}) + 1) < 1e-9, \"когда X = 1, Y = 0 и наоборот: Corr = −1\"\n_sq = {(-1, 1): 1 / 3, (0, 0): 1 / 3, (1, 1): 1 / 3}\nassert abs(cov_joint(_sq)) < 1e-12, \"Y = X²: величины зависимы, но Cov = 0 (ковариация измеряет только линейную связь)\"\nassert abs(cov_joint({(2, 10): 0.5, (4, 20): 0.5}) - 5) < 1e-9, \"для {(2, 10): 0.5, (4, 20): 0.5} Cov = 1 × 5 = 5\""
+     }
+    },
+    {
+     "title": "Риск двух кредитных портфелей",
+     "prompt": "<p>Месячные потери двух портфелей X и Y: стандартные отклонения <code>sd_x</code> и <code>sd_y</code> (млн ₸), корреляция <code>rho</code>. Напишите функцию <code>sd_total(sd_x, sd_y, rho)</code>: она возвращает SD общих потерь X + Y.</p><p>Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y), где Cov = rho × sd_x × sd_y.</p><p>Например, <code>sd_total(3, 4, 0)</code> → <code>5.0</code>, <code>sd_total(3, 4, 1)</code> → <code>7.0</code>.</p>",
+     "hints": [
+      "Получите ковариацию из корреляции: <code>cov = rho * sd_x * sd_y</code>.",
+      "Складываются дисперсии, а не SD: в конце <code>** 0.5</code>."
+     ],
+     "check": {
+      "tests": "assert sd_total(3, 4, 0) is not None, \"sd_total должна возвращать значение\"\nassert abs(sd_total(3, 4, 0) - 5) < 1e-9, \"независимы: √(9 + 16) = 5\"\nassert abs(sd_total(3, 4, 1) - 7) < 1e-9, \"rho = 1: √(9 + 16 + 24) = 7, SD складываются\"\nassert abs(sd_total(3, 4, -1) - 1) < 1e-9, \"rho = −1: √(9 + 16 − 24) = 1, риски гасят друг друга\"\nassert abs(sd_total(10, 10, 0.5) - 300 ** 0.5) < 1e-9, f\"должно быть sd_total(10, 10, 0.5) = √300 ≈ 17.32, у вас {sd_total(10, 10, 0.5):.2f}\"\nassert sd_total(5, 5, 0.8) > sd_total(5, 5, 0), \"положительная корреляция увеличивает риск\""
+     }
+    },
+    {
+     "title": "Два типа курьеров",
+     "prompt": "<p>Заказ берёт одна из двух групп курьеров. <code>groups</code> — словарь <code>{группа: (доля, λ)}</code>: доля — вероятность того, что заказ попадёт в эту группу, λ — интенсивность группы в час (ожидание экспоненциальное). Напишите три функции (t и s — в часах):</p><ul><li><code>p_wait_mix(groups, t)</code> — вероятность того, что клиент будет ждать дольше t (полная вероятность: Σ доля × e^(−λt));</li><li><code>mean_wait_mix(groups)</code> — среднее ожидание: Σ доля / λ;</li><li><code>cond_wait(groups, s, t)</code> — вероятность того, что клиент, который уже ждал s часов, будет ждать ещё дольше t часов: P(T &gt; s + t) / P(T &gt; s).</li></ul><p>Для одной группы <code>cond_wait</code> по свойству отсутствия памяти равна e^(−λt). При смеси двух групп это не так: долго ждут в основном те, кто попал в медленную группу.</p>",
+     "hints": [
+      "Для каждой группы P(T &gt; t | группа) = e^(−λt), затем сложите с весами-долями.",
+      "Условная вероятность: <code>p_wait_mix(groups, s + t) / p_wait_mix(groups, s)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_g = {\"A\": (0.6, 4), \"B\": (0.4, 2)}\nassert p_wait_mix(_g, 0.5) is not None, \"p_wait_mix должна возвращать значение\"\n_p = 0.6 * _m.exp(-2) + 0.4 * _m.exp(-1)\nassert abs(p_wait_mix(_g, 0.5) - _p) < 1e-9, f\"должно быть 0.6 × e^(−2) + 0.4 × e^(−1) ≈ 0.2284, у вас {p_wait_mix(_g, 0.5):.4f}\"\nassert abs(p_wait_mix(_g, 0) - 1) < 1e-12, \"при t = 0 вероятность равна 1 (сумма долей)\"\nassert mean_wait_mix(_g) is not None and abs(mean_wait_mix(_g) - 0.35) < 1e-9, \"среднее ожидание: 0.6 / 4 + 0.4 / 2 = 0.35 часа\"\nassert abs(cond_wait({\"A\": (1.0, 3)}, 0.7, 0.5) - _m.exp(-1.5)) < 1e-9, \"для одной группы отсутствие памяти: cond_wait = e^(−3 × 0.5)\"\n_c = cond_wait(_g, 0.5, 0.5)\nassert _c is not None and abs(_c - (0.6 * _m.exp(-4) + 0.4 * _m.exp(-2)) / _p) < 1e-9, f\"должно быть cond_wait(_g, 0.5, 0.5) = P(T > 1) / P(T > 0.5) ≈ 0.285, у вас {_c:.4f}\"\nassert _c > p_wait_mix(_g, 0.5), \"в смеси долго ждущие чаще в медленной группе: условная вероятность больше\""
+     }
+    },
+    {
+     "title": "Сумма многих величин",
+     "prompt": "<p>Формула Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y) обобщается на много величин: дисперсия суммы — это сумма ковариаций всех пар.</p><pre><code>Var(X₁ + … + Xₙ) = Σᵢ Σⱼ corr[i][j] × sd[i] × sd[j]</code></pre><p>Напишите функцию <code>var_of_sum(sds, corr)</code>: <code>sds</code> — список SD, <code>corr</code> — корреляционная матрица (список списков, на диагонали 1). Верните дисперсию суммы.</p><p>Например, <code>var_of_sum([2, 3], [[1, 0.5], [0.5, 1]])</code> → 4 + 9 + 2 × 0.5 × 6 = <code>19.0</code>.</p>",
+     "hints": [
+      "Два цикла: <code>for i in range(n)</code> и <code>for j in range(n)</code>. При i = j слагаемое — дисперсия sd[i]².",
+      "Каждая пара (i, j) и (j, i) входит дважды: это и есть слагаемое 2 × Cov."
+     ],
+     "check": {
+      "tests": "def _eye(n, r=0.0):\n    return [[1.0 if i == j else r for j in range(n)] for i in range(n)]\nassert var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) is not None, \"var_of_sum должна возвращать значение\"\nassert abs(var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) - 19) < 1e-9, \"4 + 9 + 2 × 0.5 × 2 × 3 = 19\"\nassert abs(var_of_sum([1, 2, 3], _eye(3)) - 14) < 1e-9, \"у независимых величин дисперсии просто складываются: 1 + 4 + 9 = 14\"\nassert abs(var_of_sum([1, 2, 3], _eye(3, 1.0)) - 36) < 1e-9, \"при полной корреляции складываются SD: (1 + 2 + 3)² = 36\"\n_sd = var_of_sum([10000] * 30, _eye(30)) ** 0.5\nassert abs(_sd - 10000 * 30 ** 0.5) < 1e-6, f\"30 независимых дней: должно быть SD = 10 000 × √30 ≈ 54 772, у вас {_sd:.0f}\"\n_sd3 = var_of_sum([10000] * 30, _eye(30, 0.3)) ** 0.5\nassert abs(_sd3 - (291e8) ** 0.5) < 1e-3, f\"при корреляции 0.3 между днями SD ≈ 170 587: риск вырастает почти втрое, у вас {_sd3:.0f}\""
+     }
+    }
+   ]
   }
  }
 });

@@ -56,7 +56,7 @@ self.onmessage = async (e) => {
     py.FS.writeFile('/home/pyodide/' + name, text);
     filesWritten.add(name);
   }
-  if (/\bsklearn\b/.test(code + (tests || ''))) {
+  if (/\b(sklearn|scipy)\b/.test(code + (tests || ''))) {   // scipy scikit-learn-мен бірге жүктеледі
     if (!sklearnReady) sklearnReady = py.loadPackage(['pandas', 'scikit-learn'], { messageCallback: () => {}, checkIntegrity: false });
     try { await sklearnReady; } catch (err) { sklearnReady = null; self.postMessage({ id, ok: false, stdout: '', error: 'scikit-learn жүктелмеді: ' + err }); return; }
   }

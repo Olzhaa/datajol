@@ -1025,6 +1025,100 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "py-14": {
+   "pr": [
+    {
+     "title": "Распаковка записи",
+     "prompt": "<p><code>record</code> — запись одного клиента: (имя, город, число заказов, общая сумма).</p><p>Распакуйте кортеж в одну строку в переменные <code>name</code>, <code>city</code>, <code>n_orders</code>, <code>total</code>. Затем запишите средний чек в <code>avg</code>: <code>total / n_orders</code>.</p>",
+     "hints": [
+      "<code>name, city, n_orders, total = record</code>"
+     ],
+     "check": {
+      "tests": "assert name == 'Айгерім' and city == 'Алматы', 'name и city неверны: распакуйте кортеж'\nassert n_orders == 3 and total == 7350, 'n_orders и total — 3-й и 4-й элементы кортежа'\nassert avg == 2450, 'avg = total / n_orders, должно быть 2450'"
+     }
+    },
+    {
+     "title": "Уникальные города",
+     "prompt": "<p><code>visits</code> — города, в которых побывал курьер (есть повторы).</p><p>С помощью множества запишите уникальные города в <code>unique</code>, а их число — в <code>n</code>. Есть ли в списке Ақтөбе (<code>True</code>/<code>False</code>), запишите через <code>in</code> в <code>has_aktobe</code>.</p>",
+     "hints": [
+      "<code>set(visits)</code>, затем <code>len(unique)</code>.",
+      "<code>\"Ақтөбе\" in unique</code> возвращает True или False."
+     ],
+     "check": {
+      "tests": "assert isinstance(unique, set), 'unique должен быть множеством (set): set(visits)'\nassert unique == {'Алматы', 'Тараз', 'Шымкент', 'Астана'}, 'В unique должно быть 4 города'\nassert n == 4, 'n = len(unique), должно быть 4'\nassert has_aktobe is False, 'has_aktobe должен быть False: Ақтөбе в списке нет'"
+     }
+    },
+    {
+     "title": "Коробки и среднее",
+     "prompt": "<p>В кофейню нужно привезти 47 чашек, в одну коробку помещается 12 чашек. С помощью модуля <code>math</code> запишите нужное число коробок в <code>boxes</code> (неполная коробка — тоже коробка). Затем модулем <code>statistics</code> запишите среднее списка <code>checks</code> в <code>avg</code>.</p>",
+     "hints": [
+      "Округление вверх: <code>math.ceil(cups / per_box)</code>.",
+      "<code>statistics.mean(checks)</code>"
+     ],
+     "check": {
+      "tests": "assert boxes == 4, 'boxes должен быть равен 4: math.ceil(47 / 12)'\nassert avg == 2300, 'avg = statistics.mean(checks), должно быть 2300'"
+     }
+    },
+    {
+     "title": "Начиная с дешёвого",
+     "prompt": "<p><code>menu</code> — кортежи (напиток, цена, продано штук).</p><p>Запишите <b>названия</b> напитков по возрастанию цены в список <code>by_price</code> (<code>sorted</code> и <code>key=lambda</code>). Название самого продаваемого напитка запишите в <code>best</code> через <code>max</code> и <code>key=lambda</code>.</p>",
+     "hints": [
+      "<code>sorted(menu, key=lambda row: row[1])</code> возвращает кортежи, название — <code>row[0]</code>.",
+      "<code>max(menu, key=lambda row: row[2])</code> возвращает весь кортеж."
+     ],
+     "check": {
+      "tests": "assert by_price == ['Американо', 'Капучино', 'Латте', 'Раф'], 'by_price: названия по возрастанию цены, у вас: ' + str(by_price)\nassert best == 'Капучино', 'best — название напитка с наибольшими продажами (текст)'"
+     }
+    },
+    {
+     "title": "Дни между заказами",
+     "prompt": "<p><code>dates</code> — даты заказов одного клиента (текст, по возрастанию).</p><p>С помощью <code>datetime</code> запишите число дней между каждыми двумя соседними заказами в список <code>gaps</code>. Затем через <code>statistics</code> найдите их среднее, округлите до одного знака после запятой и запишите в <code>avg_gap</code>.</p>",
+     "hints": [
+      "Сначала превратите тексты в даты: <code>[date.fromisoformat(d) for d in dates]</code>.",
+      "<code>(days[i + 1] - days[i]).days</code>, где <code>i</code> от 0 до <code>len(days) - 2</code>."
+     ],
+     "check": {
+      "tests": "assert gaps == [20, 15, 21], 'gaps должен быть [20, 15, 21], у вас: ' + str(gaps)\nassert avg_gap == 18.7, 'avg_gap = round(statistics.mean(gaps), 1)'"
+     }
+    },
+    {
+     "title": "Доход регионов из файла",
+     "prompt": "<p>В файле <code>daily_sales.csv</code> записан дневной доход двух регионов: <code>day</code>, <code>region</code>, <code>revenue</code>.</p><p>Прочитайте файл через <code>with open</code> и <code>csv.DictReader</code> и соберите словарь регион → сумма дохода (int) в <code>totals</code>. Регион с наибольшим доходом запишите в <code>best_region</code>.</p>",
+     "hints": [
+      "Строка <code>rows = list(csv.DictReader(f))</code> — внутри блока <code>with</code>.",
+      "Превратите текст в число: <code>int(r[\"revenue\"])</code>.",
+      "<code>max(totals, key=totals.get)</code>"
+     ],
+     "check": {
+      "tests": "assert totals == {'Алматы': 1505, 'Астана': 1150}, 'totals неверен, у вас: ' + str(totals)\nassert best_region == 'Алматы', 'best_region — регион с наибольшим доходом'"
+     }
+    },
+    {
+     "title": "И в марте, и в апреле",
+     "prompt": "<p>Прочитайте файл <code>orders.csv</code> через <code>with open</code> и <code>csv.DictReader</code>.</p><p>Соберите <code>customer_id</code> (int) клиентов, которые делали заказы в марте (<code>2024-03</code>), в множество <code>march</code>, а в апреле (<code>2024-04</code>) — в множество <code>april</code>. Затем: <code>loyal</code> — заказывали в оба месяца, <code>lost</code> — заказывали в марте, но не в апреле.</p>",
+     "hints": [
+      "Можно начать с пустого множества и в цикле писать <code>march.add(int(r[\"customer_id\"]))</code>.",
+      "Месяц: <code>r[\"order_date\"][:7] == \"2024-03\"</code>.",
+      "<code>&amp;</code> — пересечение, <code>-</code> — разность."
+     ],
+     "check": {
+      "tests": "import csv as _csv\nwith open('orders.csv', encoding='utf-8') as _f:\n    _rows = list(_csv.DictReader(_f))\n_m = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-03'}\n_a = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-04'}\nassert march == _m and april == _a, 'Множества march и april неверны: вы превратили customer_id в int?'\nassert set(loyal) == _m & _a, 'loyal = march & april'\nassert set(lost) == _m - _a, 'lost = march - april'"
+     }
+    },
+    {
+     "title": "Три лучших клиента",
+     "prompt": "<p>Прочитайте файл <code>orders.csv</code> через <code>with open</code> и по заказам со статусом <code>paid</code> и непустым <code>amount</code> соберите общую сумму каждого клиента в словарь <code>totals</code> (ключ — int <code>customer_id</code>, значение — сумма в int).</p><p>Отсортируйте <code>items()</code> словаря по сумме по убыванию (<code>key=lambda</code>) и запишите первые три кортежа в <code>top3</code>. Распакуйте первый кортеж в переменные <code>top_id</code> и <code>top_total</code>.</p>",
+     "hints": [
+      "Пропустите пустую сумму: <code>if r[\"status\"] == \"paid\" and r[\"amount\"]:</code>",
+      "<code>sorted(totals.items(), key=lambda kv: kv[1], reverse=True)[:3]</code>",
+      "Распаковка: <code>top_id, top_total = top3[0]</code>."
+     ],
+     "check": {
+      "tests": "assert totals.get(3) == 55950 and len(totals) == 39, 'totals неверен: только строки paid с непустым amount, ключ — int'\nassert top3 == [(3, 55950), (29, 16400), (26, 14900)], 'top3 — список кортежей (id, сумма) по убыванию суммы, у вас: ' + str(top3)\nassert top_id == 3 and top_total == 55950, 'Распакуйте top3[0] в top_id и top_total'"
+     }
+    }
+   ]
   }
  }
 });

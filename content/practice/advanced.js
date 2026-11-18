@@ -1368,5 +1368,456 @@ DJ.addPractice('m3-3', {
     ]
    }
   }
+ ],
+ "adv-10": [
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "easy",
+   "xp": 10,
+   "title": "Апта күндері",
+   "prompt": "Рекурсивті CTE арқылы 2024 жылғы 1–14 қыркүйек күндерін шығарыңыз: <code>day</code> және <code>dow</code> — апта күнінің нөмірі (<code>strftime('%w', day)</code>, 0 — жексенбі). Күн ретімен.",
+   "starter": "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  \n)\nSELECT ",
+   "solution": "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-14') SELECT day, strftime('%w', day) AS dow FROM cal ORDER BY day;",
+   "hints": [
+    "Тоқтау шарты: <code>WHERE day &lt; '2024-09-14'</code>.",
+    "<code>SELECT day, strftime('%w', day) AS dow FROM cal ORDER BY day</code>"
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "RECURSIVE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бос күндер",
+   "prompt": "Қыркүйектің қай күндері қосымшаға ешкім кірмеді? Күнтізбені <code>daily_active</code>-пен <code>LEFT JOIN</code> жасап, жұбы табылмаған күндерді шығарыңыз. Баған: <code>day</code>.",
+   "starter": "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'\n)\nSELECT ",
+   "solution": "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30') SELECT c.day FROM cal c LEFT JOIN daily_active a ON a.day = c.day WHERE a.user_id IS NULL;",
+   "hints": [
+    "<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>",
+    "Жұбы жоқ жолда оң жақтың бағандары NULL: <code>WHERE a.user_id IS NULL</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бір пайдаланушының апта соңы",
+   "prompt": "2024-09-25-тен 2024-09-30-ға дейінгі әр күн үшін 9-пайдаланушы кірді ме, соны көрсетіңіз: <code>day</code>, <code>active</code> (кірсе 1, кірмесе 0). Барлық 6 күн көрінсін, күн ретімен.",
+   "starter": "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-25'\n  UNION ALL\n  SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'\n)\nSELECT ",
+   "solution": "WITH RECURSIVE cal(day) AS (SELECT '2024-09-25' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30') SELECT c.day, COUNT(a.user_id) AS active FROM cal c LEFT JOIN daily_active a ON a.day = c.day AND a.user_id = 9 GROUP BY c.day ORDER BY c.day;",
+   "hints": [
+    "Пайдаланушының шартын <code>WHERE</code>-ге емес, <code>ON</code> ішіне жазыңыз: <code>ON a.day = c.day AND a.user_id = 9</code>.",
+    "<code>COUNT(a.user_id)</code> бос күнде 0 береді."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "medium",
+   "xp": 15,
+   "title": "Нөлмен толтырылған орташа",
+   "prompt": "Қыркүйектің күндік DAU-ын нөлмен толтырып, бір жолмен шығарыңыз: <code>days</code> (күнтізбедегі күн саны), <code>zero_days</code> (DAU = 0 болған күндер), <code>avg_dau</code> (30 күннің орташа DAU-ы, 2 таңба).",
+   "starter": "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'\n)\nSELECT ",
+   "solution": "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'), d AS (SELECT c.day, COUNT(a.user_id) AS dau FROM cal c LEFT JOIN daily_active a ON a.day = c.day GROUP BY c.day) SELECT COUNT(*) AS days, SUM(CASE WHEN dau = 0 THEN 1 ELSE 0 END) AS zero_days, ROUND(AVG(dau), 2) AS avg_dau FROM d;",
+   "hints": [
+    "Алдымен екінші CTE-де әр күннің <code>dau</code>-ын есептеңіз (<code>LEFT JOIN</code>, <code>COUNT(a.user_id)</code>).",
+    "<code>SUM(CASE WHEN dau = 0 THEN 1 ELSE 0 END)</code> және <code>ROUND(AVG(dau), 2)</code>. Жауап 3.27 болуы керек, 3.38 емес."
+   ],
+   "check": {
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "medium",
+   "xp": 15,
+   "title": "Үзіктерді табу",
+   "prompt": "1-пайдаланушының кірмеген кезеңдерін (үзіктерін) шығарыңыз: <code>gap_start</code> (үзіктің бірінші күні), <code>gap_end</code> (соңғы күні), <code>missing</code> (үзіктегі күн саны). <code>LAG</code> арқылы алдыңғы белсенді күнді алыңыз. <code>gap_start</code> бойынша сұрыптаңыз.",
+   "starter": "WITH r AS (\n  SELECT day, LAG(day) OVER (ORDER BY day) AS prev\n  FROM daily_active WHERE user_id = 1\n)\nSELECT ",
+   "solution": "WITH r AS (SELECT day, LAG(day) OVER (ORDER BY day) AS prev FROM daily_active WHERE user_id = 1) SELECT date(prev, '+1 day') AS gap_start, date(day, '-1 day') AS gap_end, CAST(julianday(day) - julianday(prev) - 1 AS INTEGER) AS missing FROM r WHERE julianday(day) - julianday(prev) > 1 ORDER BY gap_start;",
+   "hints": [
+    "Екі белсенді күннің арасы 1 күннен көп болса, ортасында үзік бар: <code>WHERE julianday(day) - julianday(prev) &gt; 1</code>.",
+    "<code>date(prev, '+1 day')</code>, <code>date(day, '-1 day')</code>, <code>CAST(julianday(day) - julianday(prev) - 1 AS INTEGER)</code>"
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LAG"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сериялар саны",
+   "prompt": "Әр пайдаланушының қыркүйекте неше үзіліссіз сериясы (аралы) болғанын санаңыз: <code>user_id</code>, <code>streaks</code>. <code>user_id</code> бойынша сұрыптаңыз.",
+   "starter": "WITH r AS (\n  SELECT user_id, day, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day) AS rn\n  FROM daily_active\n)\nSELECT ",
+   "solution": "WITH r AS (SELECT user_id, day, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day) AS rn FROM daily_active) SELECT user_id, COUNT(DISTINCT date(day, '-' || rn || ' day')) AS streaks FROM r GROUP BY user_id ORDER BY user_id;",
+   "hints": [
+    "Бір аралдың барлық күнінде <code>date(day, '-' || rn || ' day')</code> бірдей.",
+    "Арал саны = әртүрлі топ белгілерінің саны: <code>COUNT(DISTINCT ...)</code>."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "hard",
+   "xp": 20,
+   "title": "Ұзын сериялар",
+   "prompt": "Кемінде 5 күнге созылған барлық серияны шығарыңыз: <code>user_id</code>, <code>start_day</code>, <code>end_day</code>, <code>days</code>. <code>user_id</code>, <code>start_day</code> бойынша сұрыптаңыз.",
+   "starter": "",
+   "solution": "WITH r AS (SELECT user_id, day, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day) AS rn FROM daily_active), s AS (SELECT user_id, MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days FROM r GROUP BY user_id, date(day, '-' || rn || ' day')) SELECT user_id, start_day, end_day, days FROM s WHERE days >= 5 ORDER BY user_id, start_day;",
+   "hints": [
+    "<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>, сосын <code>GROUP BY user_id, date(day, '-' || rn || ' day')</code>.",
+    "Серияның ұзындығын CTE-де есептеп, сыртқы сұрауда <code>WHERE days &gt;= 5</code> қойыңыз (немесе <code>HAVING COUNT(*) &gt;= 5</code>)."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "hard",
+   "xp": 20,
+   "title": "Нақты 7 күндік орташа",
+   "prompt": "Қыркүйектің әр күні үшін: <code>day</code>, <code>dau</code> (бос күн 0) және <code>avg7</code> — сол күнді қоса алғанда соңғы 7 күннің орташа DAU-ы (<code>ROWS BETWEEN 6 PRECEDING AND CURRENT ROW</code>, 2 таңба). Айдың алғашқы күндерінде терезеде бар күндердің орташасы алынады. 30 жол, күн ретімен.",
+   "starter": "WITH RECURSIVE cal(day) AS (\n  SELECT '2024-09-01'\n  UNION ALL\n  SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'\n)\nSELECT ",
+   "solution": "WITH RECURSIVE cal(day) AS (SELECT '2024-09-01' UNION ALL SELECT date(day, '+1 day') FROM cal WHERE day < '2024-09-30'), d AS (SELECT c.day, COUNT(a.user_id) AS dau FROM cal c LEFT JOIN daily_active a ON a.day = c.day GROUP BY c.day) SELECT day, dau, ROUND(AVG(dau) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2) AS avg7 FROM d ORDER BY day;",
+   "hints": [
+    "Алдымен нөлмен толтырылған күндік DAU (күнтізбе + <code>LEFT JOIN</code>), сосын терезе: сонда 7 жол = 7 күн.",
+    "<code>ROUND(AVG(dau) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2)</code>"
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LEFT JOIN",
+     "PRECEDING"
+    ]
+   }
+  }
+ ],
+ "adv-11": [
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бір тізімге жинау",
+   "prompt": "<b>shop.</b> <code>UNION ALL</code> арқылы клиенттердің аттары мен тауарлардың атауларын бір тізімге жинаңыз: <code>name</code>, <code>kind</code> (клиент үшін <code>'customer'</code>, тауар үшін <code>'product'</code>).",
+   "starter": "",
+   "solution": "SELECT name, 'customer' AS kind FROM customers UNION ALL SELECT name, 'product' FROM products;",
+   "hints": [
+    "Екі сұраудың баған саны бірдей болуы керек: <code>SELECT name, 'customer' AS kind FROM customers</code>.",
+    "Екіншісі: <code>UNION ALL SELECT name, 'product' FROM products</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "easy",
+   "xp": 10,
+   "title": "Басшылар INTERSECT-пен",
+   "prompt": "<b>staff.</b> <code>INTERSECT</code> арқылы кем дегенде бір бағыныштысы бар қызметкерлердің <code>id</code>-ін шығарыңыз: бұл <code>id</code> бағанында да, <code>manager_id</code> бағанында да кездесетін мәндер.",
+   "starter": "",
+   "solution": "SELECT id FROM employees INTERSECT SELECT manager_id FROM employees;",
+   "hints": [
+    "<code>SELECT id FROM employees INTERSECT SELECT manager_id FROM employees</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "INTERSECT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жалақының орны",
+   "prompt": "<b>staff.</b> Әр қызметкердің жалақысы бойынша орнын 0 мен 1 аралығында көрсетіңіз: <code>name</code>, <code>salary</code>, <code>pr</code> = <code>PERCENT_RANK()</code> жалақының өсуі бойынша, 2 таңбаға дейін <code>ROUND</code>.",
+   "starter": "",
+   "solution": "SELECT name, salary, ROUND(PERCENT_RANK() OVER (ORDER BY salary), 2) AS pr FROM employees;",
+   "hints": [
+    "<code>PERCENT_RANK() OVER (ORDER BY salary)</code>: ең төмен жалақы 0, ең жоғарысы 1."
+   ],
+   "check": {
+    "mustInclude": [
+     "PERCENT_RANK"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "medium",
+   "xp": 15,
+   "title": "Басшы жалақысының үлесі",
+   "prompt": "<b>staff.</b> Басшысы бар әр қызметкер үшін: <code>name</code>, <code>manager</code> (басшының аты), <code>pct</code> — қызметкер жалақысы басшы жалақысының неше пайызы (1 таңба).",
+   "starter": "SELECT e.name, \nFROM employees e\n",
+   "solution": "SELECT e.name, m.name AS manager, ROUND(100.0 * e.salary / m.salary, 1) AS pct FROM employees e JOIN employees m ON m.id = e.manager_id;",
+   "hints": [
+    "Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>. Директор түспеуі керек, сондықтан <code>JOIN</code> жеткілікті.",
+    "<code>ROUND(100.0 * e.salary / m.salary, 1)</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бөлімнің ең аз жалақысы",
+   "prompt": "<b>staff.</b> <code>LAST_VALUE</code> арқылы әр бөлімде ең аз жалақы алатын адамды табыңыз: <code>department</code>, <code>lowest</code>. Терезеде рет — жалақының кемуі бойынша. Бір бөлімге бір жол.",
+   "starter": "SELECT DISTINCT department,\n  LAST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS lowest\nFROM employees;",
+   "solution": "SELECT DISTINCT department, LAST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS lowest FROM employees;",
+   "hints": [
+    "Бастапқы код әр жолға өз атын қояды: әдепкі шекара ағымдағы жолда аяқталады.",
+    "<code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code> қосыңыз, сосын <code>DISTINCT</code> бір бөлімге бір жол қалдырады."
+   ],
+   "check": {
+    "mustInclude": [
+     "LAST_VALUE",
+     "UNBOUNDED FOLLOWING"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "medium",
+   "xp": 15,
+   "title": "Жиынтық жолы",
+   "prompt": "<b>staff.</b> Есеп жасаңыз: әр бөлімнің жалақы қоры (<code>department</code>, <code>total</code>), ал астына <code>UNION ALL</code> арқылы бүкіл компанияның жиынтық жолы: <code>department</code> орнында <code>'TOTAL'</code>.",
+   "starter": "",
+   "solution": "SELECT department, SUM(salary) AS total FROM employees GROUP BY department UNION ALL SELECT 'TOTAL', SUM(salary) FROM employees;",
+   "hints": [
+    "Бірінші сұрау: <code>GROUP BY department</code>. Екіншісі топтаусыз: <code>SELECT 'TOTAL', SUM(salary) FROM employees</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "hard",
+   "xp": 20,
+   "title": "Басшының басшысы",
+   "prompt": "<b>staff.</b> Әр қызметкер үшін: <code>name</code>, <code>manager</code> (тікелей басшы) және <code>skip_manager</code> (басшысының басшысы). Барлық 12 қызметкер көрінсін; жоқ мән NULL болады.",
+   "starter": "",
+   "solution": "SELECT e.name, m.name AS manager, g.name AS skip_manager FROM employees e LEFT JOIN employees m ON m.id = e.manager_id LEFT JOIN employees g ON g.id = m.manager_id;",
+   "hints": [
+    "Кестені үш рет алыңыз: <code>e</code> (қызметкер), <code>m</code> (басшы), <code>g</code> (басшының басшысы).",
+    "<code>LEFT JOIN employees g ON g.id = m.manager_id</code>. Екі JOIN да <code>LEFT</code> болуы керек, әйтпесе жоғарғы деңгейлер жоғалады."
+   ],
+   "check": {
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "hard",
+   "xp": 20,
+   "title": "Клиенттердің үш деңгейі",
+   "prompt": "<b>shop.</b> Тапсырыс берген клиенттерді жалпы сатып алу сомасы (<code>quantity × price</code>, барлық статус) бойынша <code>NTILE(3)</code>-пен үш деңгейге бөліңіз (1 — ең көп жұмсағандар; терезеде рет: сома кемуімен, тең болса <code>customer_id</code>). Әр деңгей үшін: <code>tier</code>, <code>customers</code>, <code>revenue</code>. <code>tier</code> бойынша сұрыптаңыз.",
+   "starter": "",
+   "solution": "WITH t AS (SELECT o.customer_id, SUM(oi.quantity * p.price) AS total FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id GROUP BY o.customer_id), q AS (SELECT customer_id, total, NTILE(3) OVER (ORDER BY total DESC, customer_id) AS tier FROM t) SELECT tier, COUNT(*) AS customers, SUM(total) AS revenue FROM q GROUP BY tier ORDER BY tier;",
+   "hints": [
+    "1-CTE: әр клиенттің сомасы. 2-CTE: <code>NTILE(3) OVER (ORDER BY total DESC, customer_id) AS tier</code>.",
+    "Соңында: <code>GROUP BY tier</code>, <code>COUNT(*)</code>, <code>SUM(total)</code>."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "NTILE"
+    ]
+   }
+  }
+ ],
+ "adv-12": [
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Алдыңғы оқиға",
+   "prompt": "7-пайдаланушының оқиғаларын уақыт ретімен шығарыңыз: <code>ts</code>, <code>event</code>, <code>prev_event</code> (осы пайдаланушының алдыңғы оқиғасы; біріншісінде NULL).",
+   "starter": "SELECT ts, event,\n  \nFROM events_ts\nWHERE user_id = 7\nORDER BY ts;",
+   "solution": "SELECT ts, event, LAG(event) OVER (ORDER BY ts) AS prev_event FROM events_ts WHERE user_id = 7 ORDER BY ts;",
+   "hints": [
+    "<code>LAG(event) OVER (ORDER BY ts)</code>"
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LAG"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Ретсіз воронка",
+   "prompt": "Салыстыру үшін алдымен ретсіз воронканы есептеңіз: әр оқиға түрі үшін <code>event</code>, <code>users</code> (сол оқиғасы бар бірегей пайдаланушылар), <code>events</code> (оқиға саны). <code>events</code> бойынша кемуімен.",
+   "starter": "",
+   "solution": "SELECT event, COUNT(DISTINCT user_id) AS users, COUNT(*) AS events FROM events_ts GROUP BY event ORDER BY events DESC;",
+   "hints": [
+    "<code>COUNT(DISTINCT user_id)</code> және <code>COUNT(*)</code>, <code>GROUP BY event</code>."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Сессияның басы",
+   "prompt": "15-пайдаланушының оқиғалары үшін <code>ts</code>, <code>event</code> және <code>is_new</code> шығарыңыз: оқиға пайдаланушының ең біріншісі болса немесе алдыңғы оқиғадан 30 минуттан артық өтсе 1, әйтпесе 0. Уақыт ретімен.",
+   "starter": "WITH g AS (\n  SELECT ts, event,\n    (julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440 AS gap_min\n  FROM events_ts WHERE user_id = 15\n)\nSELECT ",
+   "solution": "WITH g AS (SELECT ts, event, (julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440 AS gap_min FROM events_ts WHERE user_id = 15) SELECT ts, event, CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END AS is_new FROM g ORDER BY ts;",
+   "hints": [
+    "<code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END</code>",
+    "Бірінші оқиғада <code>LAG</code> NULL береді, оны да сессияның басы деп санаңыз."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "CASE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Пайдаланушының сессиялары",
+   "prompt": "Әр пайдаланушының сессия санын шығарыңыз (ереже: бірінші оқиға немесе 30 минуттан артық үзіліс жаңа сессияны бастайды): <code>user_id</code>, <code>sessions</code>. <code>sessions</code> кемуімен, тең болса <code>user_id</code> бойынша.",
+   "starter": "WITH g AS (\n  SELECT user_id, ts,\n    (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min\n  FROM events_ts\n)\nSELECT ",
+   "solution": "WITH g AS (SELECT user_id, event, ts, (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min FROM events_ts) SELECT user_id, SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) AS sessions FROM g GROUP BY user_id ORDER BY sessions DESC, user_id;",
+   "hints": [
+    "Пайдаланушының сессия саны = оның сессия бастайтын оқиғалар саны.",
+    "<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id</code>."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сессияның орташа көрінісі",
+   "prompt": "Барлық сессия бойынша бір жол шығарыңыз: <code>sessions</code> (саны), <code>avg_events</code> (сессиядағы орташа оқиға саны, 2 таңба), <code>avg_minutes</code> (бірінші мен соңғы оқиғаның арасындағы орташа минут, 1 таңба).",
+   "starter": "WITH g AS (\n  SELECT user_id, event, ts,\n    (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min\n  FROM events_ts\n), s AS (\n  SELECT user_id, event, ts,\n    SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts) AS session_no\n  FROM g\n)\nSELECT ",
+   "solution": "WITH g AS (SELECT user_id, event, ts, (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min FROM events_ts), s AS (SELECT user_id, event, ts, SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts) AS session_no FROM g), t AS (SELECT user_id, session_no, COUNT(*) AS events, (julianday(MAX(ts)) - julianday(MIN(ts))) * 1440 AS minutes FROM s GROUP BY user_id, session_no) SELECT COUNT(*) AS sessions, ROUND(AVG(events), 2) AS avg_events, ROUND(AVG(minutes), 1) AS avg_minutes FROM t;",
+   "hints": [
+    "Үшінші CTE: <code>GROUP BY user_id, session_no</code>, ішінде <code>COUNT(*)</code> және <code>(julianday(MAX(ts)) - julianday(MIN(ts))) * 1440</code>.",
+    "Сосын сол кестенің үстінен <code>COUNT(*)</code>, <code>AVG</code>. Сессия саны 128 болуы керек."
+   ],
+   "check": {
+    "mustInclude": [
+     "OVER"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сатып алуы бар сессиялар",
+   "prompt": "Сессиялардың қаншасында кемінде бір <code>purchase</code> бар? Бір жол: <code>sessions</code>, <code>with_purchase</code>, <code>pct</code> (%, 1 таңба).",
+   "starter": "WITH g AS (\n  SELECT user_id, event, ts,\n    (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min\n  FROM events_ts\n), s AS (\n  SELECT user_id, event, ts,\n    SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts) AS session_no\n  FROM g\n)\nSELECT ",
+   "solution": "WITH g AS (SELECT user_id, event, ts, (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min FROM events_ts), s AS (SELECT user_id, event, ts, SUM(CASE WHEN gap_min IS NULL OR gap_min > 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts) AS session_no FROM g), t AS (SELECT user_id, session_no, MAX(CASE WHEN event = 'purchase' THEN 1 ELSE 0 END) AS bought FROM s GROUP BY user_id, session_no) SELECT COUNT(*) AS sessions, SUM(bought) AS with_purchase, ROUND(100.0 * SUM(bought) / COUNT(*), 1) AS pct FROM t;",
+   "hints": [
+    "Әр сессияға белгі: <code>MAX(CASE WHEN event = 'purchase' THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id, session_no</code>.",
+    "<code>ROUND(100.0 * SUM(bought) / COUNT(*), 1)</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "OVER"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Қараусыз себет",
+   "prompt": "Сабақта айтылған push-хабарлама пайдаланушыларын табыңыз: <code>cart</code> жасаған, бірақ алғашқы себетіне дейін бірде-бір <code>view</code> жасамаған пайдаланушылар (мүлде қарамағандар да кіреді). Бағандар: <code>user_id</code>, <code>first_cart</code>, <code>first_view</code> (жоқ болса NULL). <code>user_id</code> бойынша.",
+   "starter": "",
+   "solution": "WITH c AS (SELECT user_id, MIN(ts) AS first_cart FROM events_ts WHERE event = 'cart' GROUP BY user_id), v AS (SELECT user_id, MIN(ts) AS first_view FROM events_ts WHERE event = 'view' GROUP BY user_id) SELECT c.user_id, c.first_cart, v.first_view FROM c LEFT JOIN v ON v.user_id = c.user_id WHERE v.first_view IS NULL OR v.first_view > c.first_cart ORDER BY c.user_id;",
+   "hints": [
+    "Екі CTE: әр пайдаланушының алғашқы <code>cart</code> уақыты және алғашқы <code>view</code> уақыты.",
+    "<code>c LEFT JOIN v</code>, шарт: <code>v.first_view IS NULL OR v.first_view &gt; c.first_cart</code>. Үш пайдаланушы шығуы керек."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Бір сағат ішінде сатып алғандар",
+   "prompt": "Алғашқы қараудан кейін сатып алған пайдаланушылардың қаншасы алғашқы сатып алуын сол қараудан кейін 60 минут ішінде жасады? Бір жол: <code>buyers</code>, <code>within_hour</code>, <code>pct</code> (%, 1 таңба). Медианадан да түсінікті метрика.",
+   "starter": "WITH v AS (\n  SELECT user_id, MIN(ts) AS view_ts\n  FROM events_ts WHERE event = 'view' GROUP BY user_id\n)\nSELECT ",
+   "solution": "WITH v AS (SELECT user_id, MIN(ts) AS view_ts FROM events_ts WHERE event = 'view' GROUP BY user_id), p AS (SELECT e.user_id, (julianday(MIN(e.ts)) - julianday(v.view_ts)) * 1440 AS minutes FROM events_ts e JOIN v ON v.user_id = e.user_id WHERE e.event = 'purchase' AND e.ts > v.view_ts GROUP BY e.user_id, v.view_ts) SELECT COUNT(*) AS buyers, SUM(CASE WHEN minutes <= 60 THEN 1 ELSE 0 END) AS within_hour, ROUND(100.0 * SUM(CASE WHEN minutes <= 60 THEN 1 ELSE 0 END) / COUNT(*), 1) AS pct FROM p;",
+   "hints": [
+    "<code>p</code> CTE: <code>events_ts e JOIN v</code>, <code>e.event = 'purchase' AND e.ts &gt; v.view_ts</code>, әр пайдаланушыға <code>MIN(e.ts)</code>.",
+    "Минут: <code>(julianday(MIN(e.ts)) - julianday(v.view_ts)) * 1440</code>; сосын <code>SUM(CASE WHEN minutes &lt;= 60 THEN 1 ELSE 0 END)</code>."
+   ]
+  }
  ]
 });

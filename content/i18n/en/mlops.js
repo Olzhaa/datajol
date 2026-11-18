@@ -563,7 +563,7 @@ for chunk in pd.read_csv('big.csv', chunksize=100_000):
       ex: [
         { prompt: 'Write <code>scan_cost(gb, price_per_tb=6.25)</code>, which computes a BigQuery on-demand bill (1 TB = 1024 GB). Then: <code>cost_now</code> is the <b>monthly</b> (30 days) bill when the dashboard scans 2048 GB 40 times a day; <code>cost_agg</code> is the monthly bill with an aggregate table (2048 GB once a day + 1 GB 40 times).', check: { tests: "assert abs(scan_cost(1024) - 6.25) < 1e-9, '1 TB = 1024 GB → $6.25'\nassert abs(scan_cost(512) - 3.125) < 1e-9, 'Half a TB → $3.125'\nassert cost_now is not None and abs(float(cost_now) - 15000.0) < 1.0, f'cost_now should be ≈ $15 000, you have {cost_now}'\nassert cost_agg is not None and abs(float(cost_agg) - 382.81) < 2.0, f'cost_agg should be ≈ $383 (2048 GB + 40 GB per day), you have {cost_agg}'\nassert float(cost_now) / float(cost_agg) > 30, 'The aggregate layer cuts the bill almost 30 times'" }, hints: ['<code>gb / 1024 * price_per_tb</code>', 'Monthly: multiply the daily bill by 30'] },
         { prompt: 'Write <code>review_query(sql)</code>, which checks whether a query is "cheap". It returns a list of warnings (in this order): <code>\'select_star\'</code> if there is <code>select *</code>; <code>\'no_filter\'</code> if there is no <code>where</code> at all; <code>\'no_partition_filter\'</code> if there is a <code>where</code> but no <code>dt</code> in it. It should not depend on letter case.', check: { tests: "assert review_query('SELECT * FROM events') == ['select_star', 'no_filter'], \"'SELECT * FROM events' → ['select_star', 'no_filter']\"\nassert review_query(\"select city, amount from events where dt >= '2024-03-01'\") == [], 'A good query has no warnings'\nassert review_query(\"SELECT city FROM events WHERE status = 'paid'\") == ['no_partition_filter'], 'There is a where, but no dt filter'\nassert review_query(\"select * from events where dt = '2024-03-01'\") == ['select_star'], 'Only select_star'\nassert review_query('SELECT * FROM EVENTS') == ['select_star', 'no_filter'], 'It should not depend on letter case (.lower())'" }, hints: ['First, <code>s = sql.lower()</code>', '<code>if \'where\' not in s: ... elif \'dt\' not in s: ...</code>'] },
-        { prompt: 'A table is partitioned by day: 365 days and 730 GB in total. A query with <code>WHERE dt &gt;= </code> asked for only 7 days and read two columns (10% of all columns). How many GB are scanned?', explain: '730 GB / 365 × 7 = 14 GB after the partition filter. 10% of that (two columns) = 1.4 GB.' },
+        { prompt: 'A table is partitioned by day: 365 days and 730 GB in total. A query with the filter <code>WHERE dt &gt;= \'2025-12-25\'</code> asked for only the last 7 days and read two columns (10% of all columns). How many GB are scanned?', explain: '730 GB / 365 × 7 = 14 GB after the partition filter. 10% of that (two columns) = 1.4 GB.' },
         { prompt: 'In Snowflake the monthly bill suddenly doubled, while the number of queries did not change. What is the most likely cause?', options: ['The data is stored as Parquet', 'The compute cluster (warehouse) has no auto-suspend and stayed on non-stop', 'The table has many columns', 'The SQL uses a JOIN'], explain: 'In Snowflake you pay for the time the cluster is on. Without auto-suspend, an idle warehouse burns money too.' }
       ]
     },
@@ -578,6 +578,115 @@ for chunk in pd.read_csv('big.csv', chunksize=100_000):
         { prompt: 'A dashboard scans 3 TB in BigQuery every time it is opened. What is the most effective way to cut the bill?', options: ['Change the dashboard colors', 'Compute an aggregate (gold) table once a day and connect the dashboard to it', 'Write <code>SELECT * FROM ... LIMIT 1000</code> instead of <code>SELECT *</code>', 'Move the table to CSV format'], explain: 'An aggregate layer cuts the scanned volume thousands of times. In BigQuery <code>LIMIT</code> does not reduce the scan, and CSV costs more than columnar Parquet.' },
         { prompt: 'The fact table has <code>customer_id = 9</code>, but that customer is not in <code>dim_customer</code>. Which dbt test catches this?', options: ['<code>not_null</code>', '<code>unique</code>', '<code>relationships</code>', '<code>accepted_values</code>'], explain: 'The <code>relationships</code> test checks that a key in the fact exists in the dimension (a foreign key check).' },
         { prompt: 'A table is 1200 GB, split into 400 daily partitions, with 20 columns all of the same size. A query reads 10 days and 3 columns. How many GB are scanned? (one decimal)', explain: '1200 / 400 × 10 = 30 GB by partition; 30 × 3/20 = 4.5 GB.' }
+      ]
+    },
+    'deng-ch': {
+      title: 'ClickHouse: a fast database for analytics',
+      body: `
+<p>Data Analyst vacancies in Almaty often name <b>ClickHouse</b> alongside PostgreSQL. It is a <b>columnar OLAP database</b>: it computes a <code>GROUP BY</code> over billions of events (clicks, views, orders) in a fraction of a second.</p>
+<h3>Why it is fast</h3>
+<ul>
+<li><b>It stores data by column.</b> PostgreSQL stores a row as a whole, while ClickHouse stores each column separately. The query <code>SELECT city, SUM(amount)</code> reads only two columns and does not touch the other 50.</li>
+<li><b>It compresses.</b> The values in one column are alike (the same city names, for example), so they compress 5–10 times better.</li>
+<li><b>It computes in parallel</b>, splits the data into parts (<code>PARTITION BY</code>) and reads only the ones it needs.</li>
+</ul>
+<h3>What an analyst needs to know</h3>
+<p>The syntax is ordinary SQL: <code>SELECT</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>JOIN</code> and window functions are all there. The differences are mostly in functions:</p>
+<table>
+<tr><th>What you need</th><th>ClickHouse</th><th>PostgreSQL</th><th>SQLite (this site)</th></tr>
+<tr><td>Start of the month</td><td><code>toStartOfMonth(d)</code></td><td><code>DATE_TRUNC('month', d)</code></td><td><code>date(d, 'start of month')</code></td></tr>
+<tr><td>Distinct count (fast, approximate)</td><td><code>uniq(user_id)</code></td><td>none</td><td>none</td></tr>
+<tr><td>Distinct count (exact)</td><td><code>uniqExact(user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td></tr>
+<tr><td>Conditional count</td><td><code>countIf(status = 'paid')</code></td><td><code>COUNT(*) FILTER (WHERE ...)</code></td><td><code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code></td></tr>
+</table>
+<h3>Habits</h3>
+<ul>
+<li>Always filter by date: <code>WHERE event_date &gt;= today() - 30</code>. If the table is partitioned by date, ClickHouse does not read the old parts at all.</li>
+<li>Be careful when you <code>JOIN</code> large tables: ClickHouse loads the right-hand table into memory. Put the smaller table on the right.</li>
+<li><code>SELECT *</code> is the most expensive query in a columnar database: name only the columns you need.</li>
+<li>ClickHouse is not a transactional system: orders are taken in PostgreSQL and reports are built in ClickHouse (remember the OLTP vs OLAP lesson).</li>
+</ul>
+<div class="tip">Trying ClickHouse for free: the online playground on the official site lets you write SQL against open datasets.</div>`,
+      ex: [
+        { prompt: 'What is the main reason ClickHouse is fast on <code>GROUP BY</code> queries?', options: ['It stores data by row', 'It stores data by column and reads only the columns the query needs', 'It has no indexes at all', 'It stores only JSON'], explain: 'Columnar storage: if only 2 of 50 columns are needed, the database reads just those 2 columns, and they compress well.' },
+        { prompt: 'Which system should a shop choose for taking orders, and which for reports over millions of events?', options: ['ClickHouse for both', 'PostgreSQL (OLTP) for orders, ClickHouse (OLAP) for reports', 'ClickHouse for orders, PostgreSQL for reports', 'Excel for both'], explain: 'ClickHouse is not designed for updating rows one at a time or for transactions. It is strong at reading large volumes and aggregating.' },
+        { prompt: 'What is the difference between <code>uniq(user_id)</code> and <code>uniqExact(user_id)</code> in ClickHouse?', options: ['There is none', 'uniq counts approximately but very fast; uniqExact is exact but slower', 'uniq counts only numbers', 'uniqExact counts NULL'], explain: 'For a trend on a dashboard, uniq is enough. For financial reporting or an exact comparison, use uniqExact.' },
+        { prompt: `<b>qazaq.</b> Like <code>toStartOfMonth(order_date)</code> in ClickHouse, group by month in SQLite with <code>date(order_date, 'start of month')</code>. Show the monthly number of delivered (<code>delivered</code>) orders: <code>month</code>, <code>orders_cnt</code>. Order: by month.`, hints: [`<code>SELECT date(order_date, 'start of month') AS month, COUNT(*) ...</code>`, `<code>WHERE status = 'delivered' GROUP BY month ORDER BY month</code>`] },
+        { prompt: '<b>qazaq.</b> Write the equivalent of ClickHouse\'s <code>countIf</code>: for each city, show the number of all orders (<code>orders_cnt</code>) and the number of cancelled ones (<code>cancelled_cnt</code>) in a single query. Columns: <code>city</code>, <code>orders_cnt</code>, <code>cancelled_cnt</code>.', hints: ['Join <code>orders</code> and <code>customers</code> on <code>customer_id</code>.', `<code>SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END)</code>`] }
+      ]
+    },
+    'deng-mart': {
+      title: 'Data marts, SCD and incremental loading',
+      body: `
+<p>Vacancies often ask for "building data marts". This is where the work of an analyst and a data engineer meets: the engineer delivers the data to the warehouse, while <b>which mart is needed</b>, its columns and its rules are mostly described by the analyst, who often writes it in SQL too.</p>
+<h3>What a data mart is</h3>
+<p>A <b>data mart</b> is a pre-joined, pre-aggregated table prepared for the questions of one team or one dashboard. The layers of a warehouse:</p>
+<pre><code>raw (a raw copy) → staging (cleaned) → core (star schema: fact + dim) → marts</code></pre>
+<p>A star schema is general-purpose, but every report has to join 4–5 tables. In a mart that JOIN has been done once already: the dashboard opens fast, and "revenue" is computed the same way in every report.</p>
+<h3>Grain</h3>
+<p>The first question when you design a mart: <b>what does one row mean?</b> For example, "month × city" or "day × category". The grain:</p>
+<ul>
+<li>defines the table's unique key (there must be no duplicates across these columns);</li>
+<li>defines which questions you <b>cannot</b> answer: a "month × city" mart cannot show an individual product;</li>
+<li>protects against wrong aggregation: the number of unique customers (<code>COUNT(DISTINCT)</code>) does not add up from months to a year.</li>
+</ul>
+<h3>SCD: what to do when a dimension changes</h3>
+<p>A customer moved from Taraz to Almaty. How do we store the city in the <code>dim_customer</code> table? This is the <b>slowly changing dimension</b> (SCD) problem.</p>
+<table>
+<tr><th>Type</th><th>What it does</th><th>Consequences</th></tr>
+<tr><td><b>SCD 1</b></td><td>Overwrites the old value</td><td>Simple. But history is lost: the customer's orders placed in Taraz last year now show up in Almaty's report</td></tr>
+<tr><td><b>SCD 2</b></td><td>Adds a new row and "closes" the old one</td><td>History is kept: each order belongs to the city at that time. The table and the JOIN get more complex</td></tr>
+</table>
+<p>An SCD 2 table:</p>
+<table>
+<tr><th>customer_id</th><th>city</th><th>valid_from</th><th>valid_to</th><th>is_current</th></tr>
+<tr><td>19</td><td>Тараз</td><td>2025-05-15</td><td>2026-02-28</td><td>0</td></tr>
+<tr><td>19</td><td>Алматы</td><td>2026-03-01</td><td>9999-12-31</td><td>1</td></tr>
+</table>
+<p>We join the fact to the dimension by the order date:</p>
+<pre><code>JOIN dim_customer d
+  ON d.customer_id = o.customer_id
+ AND o.order_date BETWEEN d.valid_from AND d.valid_to</code></pre>
+<p>Which one to choose? If a mistake is being corrected (a typo in a name), SCD 1. If it is a real change that affects reports (city, plan, manager, segment), SCD 2.</p>
+<h3>Full refresh and incremental loading</h3>
+<table>
+<tr><th>Approach</th><th>How</th><th>When</th></tr>
+<tr><td>Full refresh</td><td>Drops the table and computes it from scratch</td><td>The table is small; the logic changes often</td></tr>
+<tr><td>Incremental</td><td>Adds only the new rows since the last load</td><td>The table is large; history does not change</td></tr>
+<tr><td>Snapshot</td><td>Saves a full copy of the state every day with a date stamp</td><td>Balances (stock in the warehouse, an account balance): yesterday's state cannot be recomputed</td></tr>
+</table>
+<p>An incremental load keeps a <b>watermark</b>: the last loaded date. Next time only the new data is taken, with the condition <code>WHERE order_date &gt; watermark</code>. There are two dangers:</p>
+<ul>
+<li><b>Late-arriving data</b>: yesterday's order reached the system only today, or its status changed. That is why the last 3–7 days are usually recomputed.</li>
+<li><b>Duplication</b>: if the load runs twice, the rows are doubled. The idempotency rule from the ETL lesson: first delete that period (<code>DELETE</code>), then insert (<code>INSERT</code>), or use <code>MERGE</code>.</li>
+</ul>
+<h3>A mart specification</h3>
+<p>Before you write a mart, make a one-page description. Both the engineer and the requester sign off on it:</p>
+<table>
+<tr><th>Section</th><th>Example</th></tr>
+<tr><td>Name and purpose</td><td><code>mart_sales_monthly</code>: the sales dashboard, the commercial department</td></tr>
+<tr><td>Grain</td><td>month × city; key (month, city)</td></tr>
+<tr><td>Sources</td><td>orders, order_items, customers</td></tr>
+<tr><td>Columns and definitions</td><td>revenue = the sum of quantity × unit_price for delivered orders; customers = unique buyers</td></tr>
+<tr><td>Filters</td><td>only status = 'delivered'; test orders are excluded</td></tr>
+<tr><td>Refresh</td><td>daily at 06:00, incremental, the last 7 days are recomputed</td></tr>
+<tr><td>Tests</td><td>the key is unique; revenue ≥ 0; the monthly total matches the source</td></tr>
+<tr><td>Owner</td><td>the analytics team</td></tr>
+</table>
+<h3>Common mistakes</h3>
+<ul>
+<li>Starting without writing down the grain: later two levels get mixed in one row and totals double.</li>
+<li>Putting ready-made percentages and averages into a mart: they cannot be rolled up to a higher level. Store the numerator and the denominator separately.</li>
+<li>Writing an incremental load that ignores late data: the mart slowly drifts away from the source.</li>
+<li>Building historical reports on an SCD 1 dimension: the numbers of past periods "shift" every time the dimension changes.</li>
+</ul>
+<div class="tip">In dbt a mart is a SQL model in the <code>marts/</code> folder, and an incremental load is written with <code>materialized='incremental'</code> and the <code>is_incremental()</code> condition. The <code>unique</code> and <code>not_null</code> tests from the earlier dbt lesson go on exactly this grain key.</div>`,
+      ex: [
+        { prompt: 'The grain of the <code>mart_sales_monthly</code> mart is "month × city". Which question can it <b>not</b> answer?', options: ['What was Astana\'s revenue in March?', 'Which city had the most revenue in 2026?', 'Which product sold the most in April?', 'How did revenue change from month to month?'], explain: 'The mart has no product level: one row is one city in one month. If you need products, you need another mart with a finer grain.' },
+        { prompt: 'A customer moved from Taraz to Almaty in March. Management says "the 2025 revenue report by city must not change". Which approach is needed?', options: ['SCD 1: overwrite the city', 'SCD 2: add a new row and close the old one with a valid_to date', 'Delete the customer and register them again', 'Remove the city column'], explain: 'SCD 2 keeps history: the 2025 orders belong to Taraz and those after the move belong to Almaty. With SCD 1 the whole history would move to Almaty.' },
+        { prompt: `<b>qazaq.</b> Build the mart from the specification: <code>CREATE TABLE mart_sales_monthly AS SELECT ...</code>. Grain: month × the customer's city, only <code>delivered</code> orders. Columns in this order: <code>month</code> ('YYYY-MM'), <code>city</code>, <code>orders</code> (unique orders), <code>customers</code> (unique buyers), <code>revenue</code> (the sum of quantity × unit_price).`, hints: ['Three tables: <code>orders</code>, <code>customers</code>, <code>order_items</code>. The JOIN multiplies rows, so use <code>COUNT(DISTINCT o.order_id)</code> and <code>COUNT(DISTINCT o.customer_id)</code>.', `<code>strftime('%Y-%m', o.order_date) AS month</code>, <code>GROUP BY month, c.city</code>.`] },
+        { prompt: '<b>qazaq.</b> A daily mart (grain: day × category) is loaded up to 2026-05-31; that is the watermark. Prepare only the new rows for an incremental load: over the <code>delivered</code> orders after the watermark, show <code>order_date</code>, <code>category</code>, <code>orders</code> (unique orders), <code>items</code> (the sum of <code>quantity</code>), <code>revenue</code>. Sort by <code>order_date</code>, <code>category</code>.', hints: [`The incremental filter: <code>o.order_date &gt; '2026-05-31'</code>.`, 'Group by the grain: <code>GROUP BY o.order_date, p.category</code>.'] },
+        { prompt: 'An incremental load ran twice during the night and yesterday\'s revenue in the mart doubled. What is the right way to prevent this?', options: ['Run the load only by hand', 'Make the load idempotent: delete that period before adding the new rows (DELETE + INSERT), or use MERGE', 'Refresh the mart only once a month', 'Show the revenue divided by two on the dashboard'], explain: 'An idempotent load gives the same result however many times it runs. Deleting and rewriting the period also fixes late-arriving data.' }
       ]
     }
   }

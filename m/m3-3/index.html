@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 3: Дерек аналитигі / M3.3</nav>
 <article class="reading">
-<p class="eyebrow">M3.3 · 25–35 сағат · 10 сабақ</p>
+<p class="eyebrow">M3.3 · 25–35 сағат · 13 сабақ</p>
 <h1>M3.3 Advanced SQL &amp; Modeling: Күрделі SQL: CTE және window functions</h1>
 <p class="prose">Аналитиктің күнделікті SQL-і: CTE, window functions, кумулятивті сома, top-N, воронка, когорт retention, star schema және сұрау жылдамдығы. Жаңа metrics дерекқоры өнім метрикаларына арналған.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m3-3">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-3">Барлық тапсырмалар</a></p>
@@ -1249,16 +1249,164 @@ GROUP BY cohort, a.month;</code></pre>
 <ul>
 <li><code>SELECT *</code> орнына керекті бағандарды ғана алыңыз.</li>
 <li>Индекстелген бағанға функция қолданбаңыз: <code>WHERE substr(order_date,1,4) = '2024'</code> индексті «өшіреді», ал <code>WHERE order_date &gt;= '2024-01-01' AND order_date &lt; '2025-01-01'</code> индексті қолданады.</li>
-<li>Алдымен сүзіңіз, сосын JOIN жасаңыз: аз жол, жылдам нәтиже.</li>
+<li>Сүзгіні ерте, CTE-нің ішінде жазыңыз: сұрау оңай оқылады, аралық нәтиже кішірейеді. Заманауи оптимизаторлар (PostgreSQL, ClickHouse) сүзгіні JOIN-ға дейін өздері «итереді» (predicate pushdown), сондықтан бұл ең алдымен оқылым мен қателерден сақтану үшін керек; жылдамдықты <code>EXPLAIN</code> арқылы тексеріңіз.</li>
 </ul></div>
 <p><a href="../../#lesson/m3-3/8">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="adv-10">
+<h2>10. Күнтізбе кестесі және gaps-and-islands</h2>
+<div class="prose">
+<p><code>GROUP BY day</code> тек дерегі <b>бар</b> күндерді қайтарады. Ешкім кірмеген күн нәтижеде мүлде болмайды. Графикте бұл «тесік» көрінбей қалады, ал жылжымалы орташа қате есептеледі: 7 жол 7 күн болмай шығады. Шешімі — <b>күнтізбе кестесі</b> (date spine): барлық күннің тізімі, оған дерек <code>LEFT JOIN</code> арқылы жалғанады.</p>
+<p>Бұл сабақта <code>metrics</code> базасының <code>daily_active(user_id, day)</code> кестесі қолданылады: 2024 жылғы қыркүйекте қай пайдаланушы қай күні қосымшаны ашқаны. 15 қыркүйекте ешкім кірмеген.</p>
+<h3>Рекурсивті CTE арқылы күндер тізімі</h3>
+<pre><code>WITH RECURSIVE cal(day) AS (
+  SELECT '2024-09-01'                 -- бастапқы жол
+  UNION ALL
+  SELECT date(day, '+1 day') FROM cal -- алдыңғы жолдан келесісін жасайды
+  WHERE day &lt; '2024-09-30'           -- тоқтау шарты
+)
+SELECT day FROM cal;</code></pre>
+<p>Рекурсивті CTE екі бөліктен тұрады: бірінші <code>SELECT</code> бір рет орындалады, екіншісі тоқтау шарты жалған болғанша өз нәтижесіне қайта-қайта қолданылады. Тоқтау шартын ұмытсаңыз, сұрау шексіз айналады.</p>
+<p>PostgreSQL-де дайын функция бар: <code>generate_series('2024-09-01'::date, '2024-09-30', interval '1 day')</code>. Компаниялардың қоймасында әдетте дайын <code>dim_date</code> кестесі тұрады.</p>
+<h3>Нөлмен толтыру (zero-fill)</h3>
+<pre><code>SELECT c.day, COUNT(a.user_id) AS dau
+FROM cal c
+LEFT JOIN daily_active a ON a.day = c.day
+GROUP BY c.day;</code></pre>
+<p>Күнтізбе <b>сол жақта</b> тұрады, сондықтан әр күн сақталады. <code>COUNT(a.user_id)</code> NULL-ды санамайды, сол себепті бос күнде 0 шығады. <code>COUNT(*)</code> жазсаңыз, бос күн 1 болып кетеді.</p>
+<h3>Gaps-and-islands: үзіліссіз серияларды табу</h3>
+<p>Сұрақ: «Пайдаланушы қатарынан неше күн кірді?» Қатар келген күндер — «арал» (island), араларындағы бос күндер — «үзік» (gap). Айла мынада: күннен оның реттік нөмірін азайтамыз. Бір арал ішінде күн де, нөмір де бірге 1-ге өседі, сондықтан айырма <b>тұрақты</b> болып қалады.</p>
+<table>
+<tr><th>day</th><th>rn</th><th>day − rn күн</th><th>Арал</th></tr>
+<tr><td>2024-09-01</td><td>1</td><td>2024-08-31</td><td>1-арал</td></tr>
+<tr><td>2024-09-02</td><td>2</td><td>2024-08-31</td><td>1-арал</td></tr>
+<tr><td>2024-09-04</td><td>3</td><td>2024-09-01</td><td>2-арал</td></tr>
+<tr><td>2024-09-05</td><td>4</td><td>2024-09-01</td><td>2-арал</td></tr>
+</table>
+<pre><code>WITH r AS (
+  SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn
+  FROM daily_active WHERE user_id = 1
+), g AS (
+  SELECT day, date(day, '-' || rn || ' day') AS grp FROM r
+)
+SELECT MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days
+FROM g GROUP BY grp;</code></pre>
+<p>Дәл осы тәсілмен «қатарынан неше ай төледі», «сервер қанша уақыт үзіліссіз жұмыс істеді», «қоймада тауар неше күн қатарынан болмады» деген сұрақтар шешіледі.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Күнтізбені оң жаққа қою немесе <code>WHERE a.user_id = 1</code> деп сүзу: LEFT JOIN INNER JOIN-ға айналады, бос күндер жоғалады. Оң жақ кестенің шартын <code>ON</code> ішіне жазыңыз.</li>
+<li>Бір күнде бірнеше жол болса (мысалы, оқиғалар кестесі), алдымен <code>DISTINCT</code> арқылы «бір пайдаланушы, бір күн» деңгейіне келтіріңіз. Әйтпесе <code>ROW_NUMBER</code> айырманы бұзады.</li>
+<li>Бірнеше пайдаланушы үшін <code>PARTITION BY user_id</code>-ді ұмыту.</li>
+</ul>
+<div class="tip">Сұхбатта «ең ұзын streak-ті табыңыз» деген тапсырма жиі кездеседі. Жауапты «күн минус ROW_NUMBER тұрақты болады» деген бір сөйлеммен бастаңыз: интервьюер тәсілді білетініңізді бірден көреді.</div></div>
+<p><a href="../../#lesson/m3-3/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-11">
+<h2>11. UNION, self-join, NTILE және FIRST_VALUE</h2>
+<div class="prose">
+<p>Бұл сабақта сұхбатта да, жұмыста да жиі кездесетін төрт құрал жиналған: кестені өз-өзімен біріктіру, жиын операциялары, квартильге бөлу және терезенің бірінші/соңғы мәнін алу.</p>
+<h3>Self-join: кесте өз-өзімен</h3>
+<p><code>staff</code> базасындағы <code>employees</code> кестесінде <code>manager_id</code> бағаны сол кестенің <code>id</code>-іне сілтейді. Қызметкердің жанына басшысының атын қою үшін кестені екі түрлі лақап атпен екі рет аламыз:</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;</code></pre>
+<p><code>e</code> — қызметкер, <code>m</code> — басшы. <code>LEFT JOIN</code> керек: директордың басшысы жоқ (<code>manager_id</code> NULL), <code>INNER JOIN</code> оны жоғалтады.</p>
+<h3>Жиын операциялары</h3>
+<table>
+<tr><th>Оператор</th><th>Не қайтарады</th></tr>
+<tr><td><code>UNION ALL</code></td><td>Екі нәтижені астына-үстіне қосады, қайталанғандарды сақтайды. Жылдам.</td></tr>
+<tr><td><code>UNION</code></td><td>Қосады да, қайталанған жолдарды алып тастайды (сұрыптау керек, сондықтан баяулау).</td></tr>
+<tr><td><code>INTERSECT</code></td><td>Екі нәтиженің екеуінде де бар жолдар.</td></tr>
+<tr><td><code>EXCEPT</code></td><td>Біріншісінде бар, екіншісінде жоқ жолдар.</td></tr>
+</table>
+<p>Екі сұраудың баған саны бірдей, типтері сәйкес болуы керек. Баған атаулары бірінші сұраудан алынады. Қайталану мүмкін емес екенін білсеңіз немесе қайталанғандар керек болса, <code>UNION ALL</code> жазыңыз.</p>
+<h3>NTILE және PERCENT_RANK</h3>
+<p><code>NTILE(4) OVER (ORDER BY salary DESC)</code> жолдарды саны шамамен тең 4 топқа бөледі: 1 — ең жоғары ширек (квартиль). <code>NTILE(10)</code> дециль береді. RFM сегментациясында дәл осы функция қолданылады.</p>
+<p><code>PERCENT_RANK()</code> жолдың орнын 0 мен 1 аралығында көрсетеді: 0.9 дегені «қалғандардың 90%-ынан жоғары».</p>
+<p>Мәндер тең болса, NTILE оларды әртүрлі топқа түсіріп жіберуі мүмкін. Нәтиже тұрақты болуы үшін <code>ORDER BY</code>-ға екінші баған қосыңыз: <code>ORDER BY salary DESC, name</code>.</p>
+<h3>FIRST_VALUE және LAST_VALUE</h3>
+<pre><code>SELECT name, department, salary,
+  FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS top_name
+FROM employees;</code></pre>
+<p>Әр жолға өз бөліміндегі ең жоғары жалақы алатын адамның аты қойылады. Қолданылуы: клиенттің бірінші тапсырыс арнасы, сессияның бірінші беті.</p>
+<h3>ROWS пен RANGE: терезе шекарасы</h3>
+<p><code>OVER</code> ішінде <code>ORDER BY</code> болып, шекара жазылмаса, әдепкі шекара — <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>. <code>RANGE</code> ағымдағы жолмен <b>мәні тең</b> жолдардың бәрін қоса алады. Аналитика бөлімі, жалақы бойынша өспелі сома:</p>
+<table>
+<tr><th>name</th><th>salary</th><th>RANGE (әдепкі)</th><th>ROWS</th></tr>
+<tr><td>Ерлан</td><td>410 000</td><td>410 000</td><td>410 000</td></tr>
+<tr><td>Ақжол</td><td>520 000</td><td>1 450 000</td><td>930 000</td></tr>
+<tr><td>Камила</td><td>520 000</td><td>1 450 000</td><td>1 450 000</td></tr>
+<tr><td>Гүлнар</td><td>750 000</td><td>2 200 000</td><td>2 200 000</td></tr>
+</table>
+<p>Ақжол мен Камиланың жалақысы тең, сондықтан RANGE екеуіне де бірдей сома береді. Жол-жолмен жинақталған сома керек болса, <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> деп анық жазыңыз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>LAST_VALUE</code>-ны шекарасыз жазу: әдепкі шекара ағымдағы жолда аяқталады, сондықтан ол «соңғы» емес, ағымдағы мәнді қайтарады. Шешімі: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code> қосу немесе ретті кері бұрып <code>FIRST_VALUE</code> қолдану.</li>
+<li>Self-join-да лақап аттарды шатастыру: <code>ON m.id = e.manager_id</code> орнына <code>ON e.id = m.manager_id</code> жазсаңыз, басшы мен бағынышты орын ауыстырады.</li>
+<li><code>UNION</code>-ды әдетпен жазу: ол қайталанған жолдарды үнсіз жояды, сома кеміп қалуы мүмкін.</li>
+</ul>
+<div class="tip">Екі сұраудың нәтижесін салыстырудың жылдам тәсілі: <code>SELECT ... EXCEPT SELECT ...</code>. Бос нәтиже шықса, бірінші сұраудың барлық жолы екіншісінде бар. Екі бағытта да тексеріңіз.</div></div>
+<p><a href="../../#lesson/m3-3/10">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="adv-12">
+<h2>12. Сессиялар және реттелген воронка</h2>
+<div class="prose">
+<p>Өнім аналитикасында дерек көбіне <b>оқиғалар журналы</b> түрінде келеді: кім, не істеді, қашан. <code>qazaq</code> базасына осындай кесте қосылды:</p>
+<table>
+<tr><th>Кесте</th><th>Бағандар</th><th>Не сақтайды</th></tr>
+<tr><td><code>events_ts</code></td><td>user_id, event, ts</td><td>50 пайдаланушының 2026 жылғы 1–15 наурыздағы 525 оқиғасы. <code>event</code>: view, cart, checkout, purchase. <code>ts</code>: <code>'2026-03-01 10:25:00'</code> түріндегі уақыт</td></tr>
+</table>
+<p>Журналда «сессия» деген баған жоқ. Оны аналитик өзі құрастырады.</p>
+<h3>1-қадам: алдыңғы оқиғадан бері қанша уақыт өтті</h3>
+<pre><code>SELECT user_id, event, ts,
+  (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min
+FROM events_ts;</code></pre>
+<p><code>julianday</code> уақытты күн санына айналдырады. Айырманы 1440-қа (бір тәуліктегі минут) көбейтсек, минут шығады. Бөлшек сандағы дәлсіздікті (10 орнына 9.9999) <code>ROUND</code> жояды. PostgreSQL-де: <code>EXTRACT(EPOCH FROM ts - LAG(ts) OVER (...)) / 60</code>.</p>
+<h3>2-қадам: сессияның басын белгілеу</h3>
+<p>Кең тараған ереже: екі оқиғаның арасы <b>30 минуттан асса</b>, жаңа сессия басталады. Пайдаланушының ең бірінші оқиғасы да (<code>gap_min IS NULL</code>) сессияның басы.</p>
+<pre><code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END AS is_new</code></pre>
+<h3>3-қадам: сессия нөмірі</h3>
+<p><code>is_new</code> бағанының өспелі сомасы сессия нөмірін береді: жаңа сессия басталған сайын сома 1-ге өседі.</p>
+<pre><code>SUM(is_new) OVER (PARTITION BY user_id ORDER BY ts) AS session_no</code></pre>
+<table>
+<tr><th>ts</th><th>event</th><th>gap_min</th><th>is_new</th><th>session_no</th></tr>
+<tr><td>03-01 11:10</td><td>checkout</td><td>2</td><td>0</td><td>1</td></tr>
+<tr><td>03-01 11:20</td><td>purchase</td><td>10</td><td>0</td><td>1</td></tr>
+<tr><td>03-03 09:51</td><td>view</td><td>2791</td><td>1</td><td>2</td></tr>
+<tr><td>03-03 09:58</td><td>view</td><td>7</td><td>0</td><td>2</td></tr>
+</table>
+<p>Енді <code>GROUP BY user_id, session_no</code> арқылы сессияның ұзақтығын, оқиға санын, сатып алумен аяқталғанын есептеуге болады. Бұл базада 128 сессия бар, олардың 28.9%-ы сатып алумен аяқталған.</p>
+<h3>Реттелген воронка</h3>
+<p>Business Analytics-тегі қарапайым воронка «осы оқиғасы бар пайдаланушыларды» санайды. Бірақ оқиғалардың <b>реті</b> маңызды: себетке салу қараудан <b>кейін</b>, сатып алу себеттен <b>кейін</b> болуы керек.</p>
+<pre><code>WITH v AS (
+  SELECT user_id, MIN(ts) AS view_ts
+  FROM events_ts WHERE event = 'view' GROUP BY user_id
+), c AS (
+  SELECT e.user_id, MIN(e.ts) AS cart_ts
+  FROM events_ts e JOIN v ON v.user_id = e.user_id
+  WHERE e.event = 'cart' AND e.ts &gt; v.view_ts
+  GROUP BY e.user_id
+)
+SELECT (SELECT COUNT(*) FROM v) AS viewed, (SELECT COUNT(*) FROM c) AS carted;</code></pre>
+<p>Осы базада себетке кемінде бір рет салған 42 пайдаланушы бар, бірақ оның тек 39-ы алғашқы қараудан кейін салған. Қалған үшеуі push-хабарламадағы сілтемемен бірден себетке түскен. Ретсіз воронка конверсияны асыра көрсетеді.</p>
+<h3>Конверсияға дейінгі уақыт</h3>
+<p>Алғашқы қарау мен алғашқы сатып алудың арасындағы уақыт (time-to-convert) маркетингке «еске салу хабарламасын қашан жіберу керек» дегенді айтады. Бұл таралу әдетте қатты қисық: көпшілігі сол сессияда алады, аз бөлігі бірнеше күннен кейін. Сондықтан орташаны емес, медиана мен үлестерді («1 сағат ішінде алғандар») көрсетіңіз.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>PARTITION BY user_id</code>-ді ұмыту: бір пайдаланушының оқиғасы екіншісінің оқиғасымен салыстырылады.</li>
+<li>Уақытты мәтін ретінде азайту: <code>ts - LAG(ts)</code> SQLite-та жылдардың айырмасын (0) береді. <code>julianday</code> немесе <code>strftime('%s', ts)</code> қолданыңыз.</li>
+<li>Воронкада «бірінші оқиғадан кейін» шартын қоймау.</li>
+<li>30 минуттық шекті заң деп қабылдау: бұл келісім ғана. Бейне сервисінде 30 минут үнсіздік — қалыпты қарау, шекті өнімге қарай таңдайды.</li>
+</ul>
+<div class="tip">Google Analytics пен AppMetrica сессияны дәл осы «30 минут әрекетсіздік» ережесімен бөледі. Дашбордтағы сессия саны сіздің SQL-ден өзгеше шықса, алдымен шектің бірдей екенін тексеріңіз.</div></div>
+<p><a href="../../#lesson/m3-3/11">Сабақты интерактивті түрде ашу →</a></p>
+</section>
 <section id="adv-gate">
-<h2>10. Модуль емтиханы: Advanced SQL</h2>
+<h2>13. Модуль емтиханы: Advanced SQL</h2>
 <div class="prose">
 <p>Қорытынды тексеріс: CTE, window functions, CASE және retention. Кеңес жоқ, бірақ «Іске қосу» арқылы аралық нәтижені көре аласыз.</p>
 <p>Дерекқорлар: <code>staff</code>, <code>shop</code>, <code>metrics</code>. Әр тапсырманың үстінде қай дерекқор екені көрсетілген.</p></div>
-<p><a href="../../#lesson/m3-3/9">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m3-3/12">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m3-3">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-3">Барлық тапсырмалар</a></p>
 </article>

@@ -1402,5 +1402,970 @@ DJ.addPractice('m5-2', {
     "tests": "from sklearn.metrics import recall_score as _rs\n_res = pd.DataFrame({'plan': X_test['plan'], 'y': y_test, 'pred': model.predict(X_test)})\n_r = {_p: round(_rs(_g['y'], _g['pred'], zero_division=0), 3) for _p, _g in _res.groupby('plan')}\nassert isinstance(card.get('recall_by_plan'), dict) and set(card['recall_by_plan']) == {'basic', 'standard', 'premium'}, \"card['recall_by_plan'] — үш тариф бойынша сөздік\"\nassert all(abs(card['recall_by_plan'][_p] - _r[_p]) < 1e-9 for _p in _r), 'Recall мәндері дұрыс емес: тек сол тарифтің test жолдары, 3 таңба'\nassert card.get('worst_plan') == min(_r, key=_r.get), f\"worst_plan = {min(_r, key=_r.get)} болуы керек\""
    }
   }
+ ],
+ "mp-ts": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "MAE және MAPE функциялары",
+   "prompt": "<p>Екі функция жазыңыз: <code>mae(y_true, y_pred)</code> — орташа абсолютті қате; <code>mape(y_true, y_pred)</code> — пайызбен орташа қате: <code>mean(|шын − болжам| / шын) · 100</code>. Екеуі де тізіммен де, numpy массивімен де жұмыс істесін.</p><p>Мысалы, <code>mae([100, 200], [110, 180])</code> → <code>15.0</code>, <code>mape([100, 200], [110, 180])</code> → <code>10.0</code>.</p>",
+   "starter": "import numpy as np\n\ndef mae(y_true, y_pred):\n    pass\n\ndef mape(y_true, y_pred):\n    pass\n",
+   "solution": "import numpy as np\n\ndef mae(y_true, y_pred):\n    y_true, y_pred = np.asarray(y_true, dtype=float), np.asarray(y_pred, dtype=float)\n    return np.abs(y_true - y_pred).mean()\n\ndef mape(y_true, y_pred):\n    y_true, y_pred = np.asarray(y_true, dtype=float), np.asarray(y_pred, dtype=float)\n    return (np.abs(y_true - y_pred) / y_true).mean() * 100\n\nprint(mae([100, 200], [110, 180]), mape([100, 200], [110, 180]))",
+   "hints": [
+    "Алдымен массивке айналдырыңыз: <code>np.asarray(y_true, dtype=float)</code>",
+    "<code>(np.abs(y_true - y_pred) / y_true).mean() * 100</code>"
+   ],
+   "check": {
+    "tests": "assert mae([100, 200], [110, 180]) is not None and abs(mae([100, 200], [110, 180]) - 15) < 1e-9, \"mae([100, 200], [110, 180]) = 15 болуы керек\"\nassert mape([100, 200], [110, 180]) is not None and abs(mape([100, 200], [110, 180]) - 10) < 1e-9, \"mape([100, 200], [110, 180]) = (10% + 10%) / 2 = 10 болуы керек\"\nassert abs(mae(np.array([200, 250, 300]), np.array([210, 240, 330])) - 50 / 3) < 1e-9, \"numpy массивімен де жұмыс істеуі керек: MAE ≈ 16.7\"\nassert abs(mape([200, 250, 300], [210, 240, 330]) - 19 / 3) < 1e-9, \"Сабақтағы мысал: MAPE ≈ 6.33\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жыл бойынша бөлу",
+   "prompt": "<p>Деректі уақыт бойынша бөліңіз: <code>train</code> — 2024 жыл (<code>2025-01-01</code>-ге дейін), <code>test</code> — 2025 жыл. Жолдар санын <code>n_train</code>, <code>n_test</code>-ке, орташа сатылымды <code>train_mean</code>, <code>test_mean</code>-ге жазыңыз. Тренд көріне ме?</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\ntrain = df[df['date'] < '2025-01-01']\ntest = df[df['date'] >= '2025-01-01']\nn_train, n_test = len(train), len(test)\ntrain_mean, test_mean = train['sales'].mean(), test['sales'].mean()\nprint(n_train, n_test, round(train_mean, 1), round(test_mean, 1))",
+   "hints": [
+    "<code>train = df[df['date'] &lt; '2025-01-01']</code>"
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_tr = _d[_d['date'] < '2025-01-01']['sales']; _te = _d[_d['date'] >= '2025-01-01']['sales']\nassert (n_train, n_test) == (366, 364), f\"n_train = 366 (2024 — кібісе жыл), n_test = 364 болуы керек, сізде {n_train} және {n_test}\"\nassert train['date'].max() < test['date'].min(), \"Train-нің бәрі test-тен бұрын болуы керек\"\nassert abs(train_mean - _tr.mean()) < 1e-9 and abs(test_mean - _te.mean()) < 1e-9, f\"train_mean ≈ {_tr.mean():.1f}, test_mean ≈ {_te.mean():.1f} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Орташа baseline",
+   "prompt": "<p>Ең қарапайым baseline: болашақтың бәріне train-нің орташасын болжау. Train — <code>2025-07-01</code>-ге дейін, test — сол күннен бастап. <code>pred_mean</code> — train-дегі орташа сатылым, <code>mae_mean</code> — test-тегі MAE.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\ntrain = df[df['date'] < '2025-07-01']\ntest = df[df['date'] >= '2025-07-01']\npred_mean = train['sales'].mean()\nmae_mean = (test['sales'] - pred_mean).abs().mean()\nprint(round(pred_mean, 1), round(mae_mean, 1))",
+   "hints": [
+    "<code>pred_mean = train['sales'].mean()</code>",
+    "<code>(test['sales'] - pred_mean).abs().mean()</code>"
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_m = _d[_d['date'] < '2025-07-01']['sales'].mean()\n_e = (_d[_d['date'] >= '2025-07-01']['sales'] - _m).abs().mean()\nassert abs(pred_mean - _m) < 1e-9, f\"pred_mean ≈ {_m:.1f} болуы керек: тек train-нің орташасы (2025-07-01-ге дейін)\"\nassert abs(mae_mean - _e) < 1e-9, f\"mae_mean ≈ {_e:.1f} болуы керек: test-тегі |sales − pred_mean| орташасы\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Апта күндерінің маусымдылығы",
+   "prompt": "<p><code>df['dow']</code> бағанын қосыңыз: апта күні, <code>df['date'].dt.dayofweek</code> (0 — дүйсенбі, 6 — жексенбі). Тек train-де (<code>2025-07-01</code>-ге дейін) әр күннің орташа сатылымын <code>dow_mean</code> Series-іне жазыңыз. Ең көп сатылатын күннің нөмірін <code>best_dow</code>-ге (int), ең жоғары орташаның ең төменгісіне қатынасын <code>ratio</code>-ға жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\ndf['dow'] = df['date'].dt.dayofweek\ntrain = df[df['date'] < '2025-07-01']\ndow_mean = train.groupby('dow')['sales'].mean()\nbest_dow = int(dow_mean.idxmax())\nratio = dow_mean.max() / dow_mean.min()\nprint(dow_mean.round(1), best_dow, round(ratio, 2))",
+   "hints": [
+    "<code>train.groupby('dow')['sales'].mean()</code>",
+    "<code>int(dow_mean.idxmax())</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\n_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_d['dow'] = _d['date'].dt.dayofweek\n_g = _d[_d['date'] < '2025-07-01'].groupby('dow')['sales'].mean()\nassert 'dow' in df.columns and (df['dow'] == _d['dow']).all(), \"df['dow'] = df['date'].dt.dayofweek\"\nassert len(dow_mean) == 7 and _np.allclose(_np.asarray(dow_mean, dtype=float), _g.values), \"dow_mean — 7 мән, тек train-де (2025-07-01-ге дейін)\"\nassert best_dow == int(_g.idxmax()), f\"best_dow = {int(_g.idxmax())} болуы керек\"\nassert abs(ratio - _g.max() / _g.min()) < 1e-9, f\"ratio ≈ {_g.max() / _g.min():.2f}: max / min\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ұзынырақ lag және rolling",
+   "prompt": "<p><code>df</code>-ке үш белгі қосыңыз: <code>lag_14</code> — 14 күн бұрынғы сатылым; <code>roll_28</code> — соңғы 28 күннің орташасы; <code>roll_max7</code> — соңғы 7 күннің максимумы. Rolling белгілеріне бүгінгі күн кірмеуі керек. Сосын <code>d = df.dropna()</code>, жолдар санын <code>n_rows</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\ndf['lag_14'] = df['sales'].shift(14)\ndf['roll_28'] = df['sales'].shift(1).rolling(28).mean()\ndf['roll_max7'] = df['sales'].shift(1).rolling(7).max()\nd = df.dropna()\nn_rows = len(d)\nprint(n_rows)",
+   "hints": [
+    "Бүгінді алып тастау: <code>df['sales'].shift(1).rolling(28).mean()</code>",
+    "Максимум: <code>.rolling(7).max()</code>"
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_s = _d['sales']\nassert abs(df.loc[30, 'lag_14'] - _s.iloc[16]) < 1e-9, \"lag_14 = shift(14)\"\nassert abs(df.loc[30, 'roll_28'] - _s.iloc[2:30].mean()) < 1e-9, \"roll_28 бүгінгі сатылымды қамтымауы керек: df['sales'].shift(1).rolling(28).mean()\"\nassert abs(df.loc[30, 'roll_max7'] - _s.iloc[23:30].max()) < 1e-9, \"roll_max7: df['sales'].shift(1).rolling(7).max()\"\nassert n_rows == 702 and len(d) == 702, f\"dropna-дан кейін 702 жол қалуы керек (алғашқы 28 күнде roll_28 жоқ), сізде {n_rows}\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "4 аптаның орташасы",
+   "prompt": "<p>Seasonal naive бір ғана өткен аптаға сүйенеді. Тұрақтырақ нұсқа: өткен 4 аптаның сол күнінің орташасы. <code>df['snaive']</code> = 7 күн бұрынғы сатылым, <code>df['snaive4']</code> = 7, 14, 21 және 28 күн бұрынғы сатылымдардың орташасы. Test кезеңіндегі (<code>2025-07-01</code>-ден бастап) MAE-лерін <code>mae_snaive</code> және <code>mae_snaive4</code>-ке жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\ndf['snaive'] = df['sales'].shift(7)\ndf['snaive4'] = (df['sales'].shift(7) + df['sales'].shift(14) + df['sales'].shift(21) + df['sales'].shift(28)) / 4\ntest = df[df['date'] >= '2025-07-01']\nmae_snaive = (test['sales'] - test['snaive']).abs().mean()\nmae_snaive4 = (test['sales'] - test['snaive4']).abs().mean()\nprint(round(mae_snaive, 2), round(mae_snaive4, 2))",
+   "hints": [
+    "<code>(df['sales'].shift(7) + df['sales'].shift(14) + df['sales'].shift(21) + df['sales'].shift(28)) / 4</code>",
+    "Baseline бағандарын бөлуден бұрын қосыңыз."
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_s = _d['sales']; _m = _d['date'] >= '2025-07-01'\n_a = (_s - _s.shift(7)).abs()[_m].mean()\n_b = (_s - (_s.shift(7) + _s.shift(14) + _s.shift(21) + _s.shift(28)) / 4).abs()[_m].mean()\nassert abs(df.loc[40, 'snaive4'] - (_s[33] + _s[26] + _s[19] + _s[12]) / 4) < 1e-9, \"snaive4 — 7, 14, 21, 28 күн бұрынғы мәндердің орташасы\"\nassert abs(mae_snaive - _a) < 1e-9, f\"mae_snaive ≈ {_a:.2f} болуы керек (тек test кезеңі)\"\nassert abs(mae_snaive4 - _b) < 1e-9, f\"mae_snaive4 ≈ {_b:.2f} болуы керек (тек test кезеңі)\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Апта күнін белгіге қосу",
+   "prompt": "<p>Белгілер <code>F</code> дайын. Апта күнін one-hot белгі етіп қосыңыз: <code>dummies = pd.get_dummies(df['date'].dt.dayofweek, prefix='dow', drop_first=True, dtype=int)</code>, <code>df = pd.concat([df, dummies], axis=1)</code>, <code>F2 = F + list(dummies.columns)</code>. Сосын <code>d = df.dropna()</code>, уақыт бойынша бөліңіз (<code>2025-07-01</code>). Екі <code>LinearRegression</code> үйретіңіз: <code>F</code>-пен (test MAE → <code>mae_base</code>) және <code>F2</code>-мен (test MAE → <code>mae_dow</code>).</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression\ndf['lag_1'] = df['sales'].shift(1)\ndf['lag_7'] = df['sales'].shift(7)\ndf['roll_7'] = df['sales'].shift(1).rolling(7).mean()\nF = ['lag_1', 'lag_7', 'roll_7', 'promo']\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression\ndf['lag_1'] = df['sales'].shift(1)\ndf['lag_7'] = df['sales'].shift(7)\ndf['roll_7'] = df['sales'].shift(1).rolling(7).mean()\nF = ['lag_1', 'lag_7', 'roll_7', 'promo']\ndummies = pd.get_dummies(df['date'].dt.dayofweek, prefix='dow', drop_first=True, dtype=int)\ndf = pd.concat([df, dummies], axis=1)\nF2 = F + list(dummies.columns)\nd = df.dropna()\ntrain = d[d['date'] < '2025-07-01']\ntest = d[d['date'] >= '2025-07-01']\nm1 = LinearRegression().fit(train[F], train['sales'])\nm2 = LinearRegression().fit(train[F2], train['sales'])\nmae_base = np.abs(test['sales'] - m1.predict(test[F])).mean()\nmae_dow = np.abs(test['sales'] - m2.predict(test[F2])).mean()\nprint(round(mae_base, 2), round(mae_dow, 2))",
+   "hints": [
+    "<code>pd.concat([df, dummies], axis=1)</code> бағандарды қатар қосады.",
+    "Train: <code>d[d['date'] &lt; '2025-07-01']</code>; MAE: <code>np.abs(test['sales'] - pred).mean()</code>"
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression as _LR\n_d['lag_1'] = _d['sales'].shift(1); _d['lag_7'] = _d['sales'].shift(7); _d['roll_7'] = _d['sales'].shift(1).rolling(7).mean()\n_dm = pd.get_dummies(_d['date'].dt.dayofweek, prefix='dow', drop_first=True, dtype=int)\n_d = pd.concat([_d, _dm], axis=1).dropna()\n_F = ['lag_1', 'lag_7', 'roll_7', 'promo']; _F2 = _F + list(_dm.columns)\n_tr = _d[_d['date'] < '2025-07-01']; _te = _d[_d['date'] >= '2025-07-01']\n_a = (_te['sales'] - _LR().fit(_tr[_F], _tr['sales']).predict(_te[_F])).abs().mean()\n_b = (_te['sales'] - _LR().fit(_tr[_F2], _tr['sales']).predict(_te[_F2])).abs().mean()\nassert len(F2) == 10, \"F2-де 10 белгі болуы керек: 4 + 6 апта күні (drop_first=True)\"\nassert abs(mae_base - _a) < 1e-6, f\"mae_base ≈ {_a:.2f} болуы керек\"\nassert abs(mae_dow - _b) < 1e-6, f\"mae_dow ≈ {_b:.2f} болуы керек: F2 белгілерімен, train 2025-07-01-ге дейін\"\nassert mae_dow < mae_base, \"Апта күні қатені азайтуы керек\"",
+    "mustInclude": [
+     "get_dummies("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "7 күн алға болжау",
+   "prompt": "<p>Дүкен тауарға тапсырысты бір апта бұрын береді: болжам 7 күн алға керек. Сондықтан кешегі сатылым (lag_1) белгісіз. Тек 7 күн және одан бұрынғы мәндерден белгілер жасаңыз: <code>h_lag7</code> = shift(7), <code>h_lag14</code> = shift(14), <code>h_roll7</code> = 7 күн бұрын аяқталған 7 күндік орташа (<code>shift(7).rolling(7).mean()</code>). <code>H = ['h_lag7', 'h_lag14', 'h_roll7', 'promo']</code>, <code>d = df.dropna()</code>, бөлу <code>2025-07-01</code>. <code>LinearRegression</code>-ның test MAE-сін <code>mae_h7</code>-ге, сол test жолдарындағы seasonal naive (<code>h_lag7</code>) MAE-сін <code>mae_snaive</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression\ndf['h_lag7'] = df['sales'].shift(7)\ndf['h_lag14'] = df['sales'].shift(14)\ndf['h_roll7'] = df['sales'].shift(7).rolling(7).mean()\nH = ['h_lag7', 'h_lag14', 'h_roll7', 'promo']\nd = df.dropna()\ntrain = d[d['date'] < '2025-07-01']\ntest = d[d['date'] >= '2025-07-01']\nmodel = LinearRegression().fit(train[H], train['sales'])\nmae_h7 = np.abs(test['sales'] - model.predict(test[H])).mean()\nmae_snaive = np.abs(test['sales'] - test['h_lag7']).mean()\nprint(round(mae_h7, 2), round(mae_snaive, 2))",
+   "hints": [
+    "<code>df['h_roll7'] = df['sales'].shift(7).rolling(7).mean()</code>",
+    "<code>mae_snaive = np.abs(test['sales'] - test['h_lag7']).mean()</code>"
+   ],
+   "check": {
+    "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression as _LR\n_s = _d['sales']\nassert abs(df.loc[30, 'h_roll7'] - _s.iloc[17:24].mean()) < 1e-9, \"h_roll7 соңғы 7 күнді қамтымауы керек: df['sales'].shift(7).rolling(7).mean()\"\nassert abs(df.loc[30, 'h_lag7'] - _s.iloc[23]) < 1e-9 and abs(df.loc[30, 'h_lag14'] - _s.iloc[16]) < 1e-9, \"h_lag7 = shift(7), h_lag14 = shift(14)\"\n_d['h_lag7'] = _s.shift(7); _d['h_lag14'] = _s.shift(14); _d['h_roll7'] = _s.shift(7).rolling(7).mean(); _d = _d.dropna()\n_H = ['h_lag7', 'h_lag14', 'h_roll7', 'promo']\n_tr = _d[_d['date'] < '2025-07-01']; _te = _d[_d['date'] >= '2025-07-01']\n_a = (_te['sales'] - _LR().fit(_tr[_H], _tr['sales']).predict(_te[_H])).abs().mean()\n_b = (_te['sales'] - _te['h_lag7']).abs().mean()\nassert abs(mae_h7 - _a) < 1e-6, f\"mae_h7 ≈ {_a:.2f} болуы керек\"\nassert abs(mae_snaive - _b) < 1e-9, f\"mae_snaive ≈ {_b:.2f} болуы керек: test жолдарындағы |sales − h_lag7|\""
+   }
+  }
+ ],
+ "mp-gbm": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Category типі",
+   "prompt": "<p><code>X</code>-тегі <code>city</code> мен <code>plan</code> бағандарын pandas-тың <code>category</code> типіне айналдырыңыз. Қала категорияларының санын <code>n_city</code>-ге, тариф категорияларының санын <code>n_plan</code>-ға жазыңыз (<code>.cat.categories</code>).</p>",
+   "starter": "import pandas as pd\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\n",
+   "solution": "import pandas as pd\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\nfor c in cat:\n    X[c] = X[c].astype('category')\nn_city = len(X['city'].cat.categories)\nn_plan = len(X['plan'].cat.categories)\nprint(X.dtypes, n_city, n_plan)",
+   "hints": [
+    "<code>X[c] = X[c].astype('category')</code>",
+    "<code>len(X['city'].cat.categories)</code>"
+   ],
+   "check": {
+    "tests": "assert str(X['city'].dtype) == 'category' and str(X['plan'].dtype) == 'category', \"city мен plan category типінде болуы керек: X[c].astype('category')\"\nassert str(X['age'].dtype) != 'category', \"Сандық бағандарды өзгертпеңіз\"\nassert n_city == df['city'].nunique() and n_plan == df['plan'].nunique(), f\"n_city = {df['city'].nunique()}, n_plan = {df['plan'].nunique()} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Параметр аудармашысы",
+   "prompt": "<p>Сабақтағы сөздік бойынша <code>translate(params)</code> функциясын жазыңыз: sklearn HistGB параметрлерінің сөздігін CatBoost атауларына аударсын. <code>max_iter</code> → <code>iterations</code>, <code>max_depth</code> → <code>depth</code>, <code>l2_regularization</code> → <code>l2_leaf_reg</code>; қалған кілттер (мысалы <code>learning_rate</code>) өзгермейді. Мәндер сақталады.</p><p>Мысалы, <code>translate({'max_iter': 500, 'learning_rate': 0.05})</code> → <code>{'iterations': 500, 'learning_rate': 0.05}</code>.</p>",
+   "starter": "def translate(params):\n    pass\n",
+   "solution": "NAMES = {'max_iter': 'iterations', 'max_depth': 'depth', 'l2_regularization': 'l2_leaf_reg'}\n\ndef translate(params):\n    return {NAMES.get(k, k): v for k, v in params.items()}\n\nprint(translate({'max_iter': 500, 'learning_rate': 0.05}))",
+   "hints": [
+    "Аударма сөздігін жасаңыз, сосын <code>NAMES.get(k, k)</code>: кілт сөздікте болмаса, өзі қалады."
+   ],
+   "check": {
+    "tests": "_r = translate({'max_iter': 500, 'learning_rate': 0.05})\nassert _r == {'iterations': 500, 'learning_rate': 0.05}, \"translate({'max_iter': 500, 'learning_rate': 0.05}) → {'iterations': 500, 'learning_rate': 0.05}\"\nassert translate({'max_depth': 4, 'l2_regularization': 3}) == {'depth': 4, 'l2_leaf_reg': 3}, \"max_depth → depth, l2_regularization → l2_leaf_reg\"\nassert translate({}) == {}, \"Бос сөздік → бос сөздік\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бірінші HistGB",
+   "prompt": "<p>Сандық бағандарда (<code>X_train[num]</code>) <code>model = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code> үйретіңіз. Нақты ағаш санын <code>n_trees</code>-ке (<code>n_iter_</code>), test ROC AUC-ін <code>auc</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nmodel = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(X_train[num], y_train)\nn_trees = model.n_iter_\nauc = roc_auc_score(y_test, model.predict_proba(X_test[num])[:, 1])\nprint(n_trees, round(auc, 3))",
+   "hints": [
+    "<code>model.fit(X_train[num], y_train)</code>",
+    "<code>roc_auc_score(y_test, model.predict_proba(X_test[num])[:, 1])</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_m = _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr, _ytr)\n_a = _ras(_yte, _m.predict_proba(_Xte)[:, 1])\nassert n_trees == 100, f\"Early stopping-сіз 100 ағаш өседі, сізде {n_trees}\"\nassert abs(auc - _a) < 1e-6, f\"auc ≈ {_a:.3f} болуы керек: параметрлерді және random_state=0 тексеріңіз\"",
+    "mustInclude": [
+     "HistGradientBoostingClassifier("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "learning_rate және ағаш саны",
+   "prompt": "<p>Әр <code>lr</code> ∈ <code>[0.03, 0.1, 0.3]</code> үшін сандық бағандарда <code>HistGradientBoostingClassifier(max_iter=500, learning_rate=lr, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0)</code> үйретіңіз. Early stopping тапқан ағаш санын <code>iters[lr]</code>-ге, test ROC AUC-ін <code>aucs[lr]</code>-ге жазыңыз. Қадам кішірейсе, ағаш саны қалай өзгереді?</p>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\niters = {}\naucs = {}\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\niters = {}\naucs = {}\nfor lr in [0.03, 0.1, 0.3]:\n    m = HistGradientBoostingClassifier(max_iter=500, learning_rate=lr, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0).fit(X_train[num], y_train)\n    iters[lr] = m.n_iter_\n    aucs[lr] = roc_auc_score(y_test, m.predict_proba(X_test[num])[:, 1])\nprint(iters, aucs)",
+   "hints": [
+    "Цикл: <code>for lr in [0.03, 0.1, 0.3]:</code>, ішінде модель және <code>iters[lr] = m.n_iter_</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_ms = {lr: _H(max_iter=500, learning_rate=lr, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0).fit(_Xtr, _ytr) for lr in [0.03, 0.1, 0.3]}\nassert sorted(iters) == [0.03, 0.1, 0.3] and sorted(aucs) == [0.03, 0.1, 0.3], \"Кілттер: 0.03, 0.1, 0.3\"\nassert all(iters[lr] == _ms[lr].n_iter_ for lr in _ms), f\"iters мәндері {[_ms[k].n_iter_ for k in _ms]} болуы керек: max_iter=500, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10\"\nassert all(abs(aucs[lr] - _ras(_yte, _ms[lr].predict_proba(_Xte)[:, 1])) < 1e-6 for lr in _ms), \"Test AUC сәйкес емес\"\nassert iters[0.03] > iters[0.3], \"Кіші қадаммен көбірек ағаш керек\"",
+    "mustInclude": [
+     "early_stopping=True"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "NaN-ды толтырмай",
+   "prompt": "<p>Churn-де <code>age</code> мен <code>data_gb</code>-да бос мәндер бар. <code>n_nan</code> — <code>X_train[num]</code>-дағы барлық NaN саны (int). Екі модель үйретіңіз, екеуі де <code>HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code>:</p><ul><li><code>raw</code> — <code>X_train[num]</code>-де тікелей (NaN-мен), test AUC → <code>auc_raw</code>;</li><li><code>filled</code> — NaN train медианасымен толтырылған деректе: <code>med = X_train[num].median()</code>, <code>X_train[num].fillna(med)</code> және <code>X_test[num].fillna(med)</code>; test AUC → <code>auc_filled</code>.</li></ul>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nn_nan = int(X_train[num].isna().sum().sum())\nraw = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(X_train[num], y_train)\nauc_raw = roc_auc_score(y_test, raw.predict_proba(X_test[num])[:, 1])\nmed = X_train[num].median()\nfilled = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(X_train[num].fillna(med), y_train)\nauc_filled = roc_auc_score(y_test, filled.predict_proba(X_test[num].fillna(med))[:, 1])\nprint(n_nan, round(auc_raw, 3), round(auc_filled, 3))",
+   "hints": [
+    "<code>X_train[num].isna().sum().sum()</code> — алдымен бағандар, сосын жалпы",
+    "Медиана тек train-нен: <code>med = X_train[num].median()</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_med = _Xtr.median()\n_a = _ras(_yte, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1])\n_b = _ras(_yte, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr.fillna(_med), _ytr).predict_proba(_Xte.fillna(_med))[:, 1])\nassert n_nan == int(_Xtr.isna().sum().sum()), f\"n_nan = {int(_Xtr.isna().sum().sum())} болуы керек\"\nassert abs(auc_raw - _a) < 1e-6, f\"auc_raw ≈ {_a:.3f} болуы керек: модель NaN-ды өзі өңдейді\"\nassert abs(auc_filled - _b) < 1e-6, f\"auc_filled ≈ {_b:.3f} болуы керек: test-ті де train медианасымен толтырыңыз\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "L2 регуляризация",
+   "prompt": "<p>Әр <code>l2</code> ∈ <code>[0, 1, 10]</code> үшін сандық бағандарда <code>HistGradientBoostingClassifier(max_iter=200, learning_rate=0.1, max_depth=3, l2_regularization=l2, early_stopping=False, random_state=0)</code> үйретіп, test ROC AUC-ін <code>auc_l2[l2]</code>-ге жазыңыз. AUC ең жоғары мәнді <code>best_l2</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nauc_l2 = {}\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nauc_l2 = {}\nfor l2 in [0, 1, 10]:\n    m = HistGradientBoostingClassifier(max_iter=200, learning_rate=0.1, max_depth=3, l2_regularization=l2, early_stopping=False, random_state=0).fit(X_train[num], y_train)\n    auc_l2[l2] = roc_auc_score(y_test, m.predict_proba(X_test[num])[:, 1])\nbest_l2 = max(auc_l2, key=auc_l2.get)\nprint(auc_l2, best_l2)",
+   "hints": [
+    "<code>l2_regularization=l2</code> — sklearn-дегі L2 айыппұлы (XGBoost-та <code>reg_lambda</code>)",
+    "<code>max(auc_l2, key=auc_l2.get)</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_a = {l2: _ras(_yte, _H(max_iter=200, learning_rate=0.1, max_depth=3, l2_regularization=l2, early_stopping=False, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]) for l2 in [0, 1, 10]}\nassert sorted(auc_l2) == [0, 1, 10], \"auc_l2 кілттері: 0, 1, 10\"\nassert all(abs(auc_l2[k] - _a[k]) < 1e-6 for k in _a), \"AUC мәндері сәйкес емес: max_iter=200, l2_regularization=l2, early_stopping=False, random_state=0\"\nassert best_l2 == max(_a, key=_a.get), f\"best_l2 = {max(_a, key=_a.get)} болуы керек\"",
+    "mustInclude": [
+     "l2_regularization="
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Ағаш санын validation-мен таңдау",
+   "prompt": "<p>Early stopping-ті қолмен жасаңыз. Train-ді тағы бөліңіз: <code>X_tr, X_val, y_tr, y_val = train_test_split(X_train[num], y_train, test_size=0.25, random_state=0, stratify=y_train)</code>. Әр <code>n</code> ∈ <code>[10, 25, 50, 100, 200]</code> үшін <code>HistGradientBoostingClassifier(max_iter=n, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code>-ды <code>X_tr</code>-да үйретіп, <b>validation</b> AUC-ін <code>val_auc[n]</code>-ге жазыңыз. Ең жақсы <code>n</code> → <code>best_n</code>. Сол модельдің test AUC-ін бір рет есептеп, <code>test_auc</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nval_auc = {}\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\ny = df['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nval_auc = {}\nX_tr, X_val, y_tr, y_val = train_test_split(X_train[num], y_train, test_size=0.25, random_state=0, stratify=y_train)\nmodels = {}\nfor n in [10, 25, 50, 100, 200]:\n    models[n] = HistGradientBoostingClassifier(max_iter=n, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(X_tr, y_tr)\n    val_auc[n] = roc_auc_score(y_val, models[n].predict_proba(X_val)[:, 1])\nbest_n = max(val_auc, key=val_auc.get)\ntest_auc = roc_auc_score(y_test, models[best_n].predict_proba(X_test[num])[:, 1])\nprint(val_auc, best_n, round(test_auc, 3))",
+   "hints": [
+    "Модельдерді сөздікке сақтаңыз: <code>models[n] = ...fit(X_tr, y_tr)</code>",
+    "<code>val_auc[n] = roc_auc_score(y_val, models[n].predict_proba(X_val)[:, 1])</code>",
+    "Test-ке тек <code>best_n</code> модельмен, бір рет қараймыз."
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_a, _v, _b, _w = _tts(_Xtr, _ytr, test_size=0.25, random_state=0, stratify=_ytr)\n_ms = {n: _H(max_iter=n, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_a, _b) for n in [10, 25, 50, 100, 200]}\n_va = {n: _ras(_w, m.predict_proba(_v)[:, 1]) for n, m in _ms.items()}\n_bn = max(_va, key=_va.get)\nassert len(X_tr) == len(_a) and len(X_val) == len(_v), f\"X_tr {len(_a)} жол, X_val {len(_v)} жол болуы керек: X_train[num]-ді test_size=0.25-пен бөліңіз\"\nassert sorted(val_auc) == [10, 25, 50, 100, 200] and all(abs(val_auc[n] - _va[n]) < 1e-6 for n in _va), \"val_auc сәйкес емес: модель X_tr-да үйретіледі, X_val-да бағаланады\"\nassert best_n == _bn, f\"best_n = {_bn} болуы керек: validation AUC ең жоғары\"\nassert abs(test_auc - _ras(_yte, _ms[_bn].predict_proba(_Xte)[:, 1])) < 1e-6, \"test_auc — best_n модельдің X_test[num]-дағы AUC-і\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Категория ме, сан коды ма",
+   "prompt": "<p><code>X</code>-те <code>city</code> мен <code>plan</code> category типінде. Екінші кесте <code>X_codes</code> жасаңыз: <code>X.copy()</code>, онда екі бағанды <code>X[c].cat.codes</code>-пен сандарға (0, 1, 2…) айналдырыңыз — бұл «жалған рет». Екеуін де <code>train_test_split(..., y, test_size=0.25, random_state=0, stratify=y)</code>-пен бөліңіз. Екі модель, параметрлері <code>max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0</code>:</p><ul><li><code>native</code> — <code>categorical_features='from_dtype'</code>, <code>X</code>-те; test AUC → <code>auc_native</code>;</li><li><code>codes</code> — <code>X_codes</code>-та (бәрі сандық); test AUC → <code>auc_codes</code>.</li></ul><p>Айырма үлкен бе? Мұнда қала мен тариф аз (4–5 мән), сондықтан айырма шағын; категория жүздеген болғанда native тәсіл әдетте айқын жеңеді.</p>",
+   "starter": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\nfor c in cat:\n    X[c] = X[c].astype('category')\ny = df['churned']\n",
+   "solution": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import roc_auc_score\ndf = pd.read_csv('churn.csv')\nnum = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\ncat = ['city', 'plan']\nX = df[num + cat].copy()\nfor c in cat:\n    X[c] = X[c].astype('category')\ny = df['churned']\nX_codes = X.copy()\nfor c in cat:\n    X_codes[c] = X[c].cat.codes\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\nC_train, C_test, _, _ = train_test_split(X_codes, y, test_size=0.25, random_state=0, stratify=y)\nnative = HistGradientBoostingClassifier(categorical_features='from_dtype', max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(X_train, y_train)\ncodes = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(C_train, y_train)\nauc_native = roc_auc_score(y_test, native.predict_proba(X_test)[:, 1])\nauc_codes = roc_auc_score(y_test, codes.predict_proba(C_test)[:, 1])\nprint(round(auc_native, 3), round(auc_codes, 3))",
+   "hints": [
+    "<code>X_codes[c] = X[c].cat.codes</code>",
+    "Бірдей <code>random_state=0</code> мен <code>stratify=y</code> екі бөлуде де бірдей жолдарды береді."
+   ],
+   "check": {
+    "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\nassert str(X_codes['city'].dtype) != 'category' and int(X_codes['city'].max()) == X['city'].cat.categories.size - 1, \"X_codes-та city сан болуы керек: X[c].cat.codes\"\n_xa, _xb, _ya, _yb = _tts(X, y, test_size=0.25, random_state=0, stratify=y)\n_ca, _cb, _, _ = _tts(X_codes, y, test_size=0.25, random_state=0, stratify=y)\n_n = _ras(_yb, _H(categorical_features='from_dtype', max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_xa, _ya).predict_proba(_xb)[:, 1])\n_k = _ras(_yb, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_ca, _ya).predict_proba(_cb)[:, 1])\nassert abs(auc_native - _n) < 1e-6, f\"auc_native ≈ {_n:.3f} болуы керек: categorical_features='from_dtype'\"\nassert abs(auc_codes - _k) < 1e-6, f\"auc_codes ≈ {_k:.3f} болуы керек: X_codes-та, сол параметрлермен\"",
+    "mustInclude": [
+     "cat.codes",
+     "from_dtype"
+    ]
+   }
+  }
+ ],
+ "mp-pca": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Қайталанатын ақпарат",
+   "prompt": "<p>Белгілер арасындағы корреляция PCA-ның пайдасын көрсетеді. <code>r_size</code> — <code>rooms</code> мен <code>area_m2</code> корреляциясы, <code>r_height</code> — <code>floor</code> мен <code>floors_total</code> корреляциясы (<code>.corr()</code>).</p>",
+   "starter": "import pandas as pd\nflats = pd.read_csv('flats.csv')\n",
+   "solution": "import pandas as pd\nflats = pd.read_csv('flats.csv')\nr_size = flats['rooms'].corr(flats['area_m2'])\nr_height = flats['floor'].corr(flats['floors_total'])\nprint(round(r_size, 3), round(r_height, 3))",
+   "hints": [
+    "<code>flats['rooms'].corr(flats['area_m2'])</code>"
+   ],
+   "check": {
+    "tests": "_r1 = flats['rooms'].corr(flats['area_m2']); _r2 = flats['floor'].corr(flats['floors_total'])\nassert abs(r_size - _r1) < 1e-9, f\"r_size ≈ {_r1:.3f} болуы керек\"\nassert abs(r_height - _r2) < 1e-9, f\"r_height ≈ {_r2:.3f} болуы керек: floor пен floors_total\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Сақталған дисперсия үлесі",
+   "prompt": "<p><code>kept_share(variances, k)</code> функциясын жазыңыз: компоненттердің дисперсиялары (кему ретімен) берілген, алғашқы <code>k</code> компонент жалпы дисперсияның қандай үлесін сақтайтынын қайтарсын.</p><p>Мысалы, <code>kept_share([6, 3, 1], 2)</code> → <code>0.9</code>.</p>",
+   "starter": "def kept_share(variances, k):\n    pass\n",
+   "solution": "def kept_share(variances, k):\n    return sum(variances[:k]) / sum(variances)\n\nprint(kept_share([6, 3, 1], 2))",
+   "hints": [
+    "<code>sum(variances[:k]) / sum(variances)</code>"
+   ],
+   "check": {
+    "tests": "assert kept_share([6, 3, 1], 2) is not None and abs(kept_share([6, 3, 1], 2) - 0.9) < 1e-9, \"kept_share([6, 3, 1], 2) = 9 / 10 = 0.9 болуы керек\"\nassert abs(kept_share([4, 4, 2], 1) - 0.4) < 1e-9, \"kept_share([4, 4, 2], 1) = 0.4 болуы керек\"\nassert abs(kept_share([5, 3, 2], 3) - 1) < 1e-9, \"Барлық компонент — 100%\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "95% үшін компонент саны",
+   "prompt": "<p><code>Xs</code> (масштабталған 5 белгі) дайын. <code>PCA(n_components=0.95)</code>-ті <code>pca</code> атымен үйретіңіз: ол дисперсияның кемінде 95%-ын сақтайтын компонент санын өзі таңдайды. Таңдалған санды <code>n95</code>-ке (<code>pca.n_components_</code>), сақталған үлесті <code>kept</code>-ке жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\npca = PCA(n_components=0.95).fit(Xs)\nn95 = pca.n_components_\nkept = pca.explained_variance_ratio_.sum()\nprint(n95, round(kept, 3))",
+   "hints": [
+    "<code>pca = PCA(n_components=0.95).fit(Xs)</code>",
+    "<code>kept = pca.explained_variance_ratio_.sum()</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_c = _np.cumsum(_PCA().fit(_Xs).explained_variance_ratio_); _n = int(_np.argmax(_c >= 0.95)) + 1\nassert n95 == _n, f\"n95 = {_n} болуы керек: PCA(n_components=0.95), масштабталған Xs-те\"\nassert abs(kept - _c[_n - 1]) < 1e-6 and kept >= 0.95, f\"kept ≈ {_c[_n - 1]:.3f}: explained_variance_ratio_.sum()\"",
+    "mustInclude": [
+     "PCA("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Компоненттердің рецепті",
+   "prompt": "<p><code>PCA(n_components=2)</code>-ні <code>Xs</code>-те үйретіңіз. Салмақтарды <code>loadings</code> DataFrame-іне жазыңыз: индексі <code>['PC1', 'PC2']</code>, бағандары — <code>num</code> (<code>pca.components_</code>). Әр компонентте модулі ең үлкен белгінің атын <code>top_pc1</code>, <code>top_pc2</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\npca = PCA(n_components=2).fit(Xs)\nloadings = pd.DataFrame(pca.components_, index=['PC1', 'PC2'], columns=num)\ntop_pc1 = loadings.loc['PC1'].abs().idxmax()\ntop_pc2 = loadings.loc['PC2'].abs().idxmax()\nprint(loadings.round(2), top_pc1, top_pc2)",
+   "hints": [
+    "<code>pd.DataFrame(pca.components_, index=['PC1', 'PC2'], columns=num)</code>",
+    "Таңба маңызды емес: <code>loadings.loc['PC1'].abs().idxmax()</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_L = pd.DataFrame(_PCA(n_components=2).fit(_Xs).components_, index=['PC1', 'PC2'], columns=list(_X.columns))\nassert isinstance(loadings, pd.DataFrame) and loadings.shape == (2, 5) and list(loadings.index) == ['PC1', 'PC2'], \"loadings — 2 × 5 DataFrame, индексі ['PC1', 'PC2']\"\nassert _np.allclose(_np.abs(loadings[list(_X.columns)].values), _np.abs(_L.values), atol=1e-6), \"Салмақтар сәйкес емес: PCA(n_components=2), масштабталған Xs-те\"\nassert top_pc1 == _L.loc['PC1'].abs().idxmax() and top_pc2 == _L.loc['PC2'].abs().idxmax(), f\"top_pc1 = {_L.loc['PC1'].abs().idxmax()}, top_pc2 = {_L.loc['PC2'].abs().idxmax()} болуы керек\"",
+    "mustInclude": [
+     "components_"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Масштабсыз PCA",
+   "prompt": "<p>Масштабтау неге міндетті екенін көрсетіңіз. <code>PCA(n_components=1)</code>-ді екі рет үйретіңіз: шикі <code>X</code>-те және масштабталған <code>Xs</code>-те. PC1 салмақтарының модульдерін <code>w_raw</code> және <code>w_scaled</code> Series-іне жазыңыз (индексі — <code>num</code>). <code>raw_top</code> — шикі деректе салмағы ең үлкен белгі, <code>raw_evr</code> — шикі деректегі PC1-дің дисперсия үлесі.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\np_raw = PCA(n_components=1).fit(X)\np_sc = PCA(n_components=1).fit(Xs)\nw_raw = pd.Series(np.abs(p_raw.components_[0]), index=num)\nw_scaled = pd.Series(np.abs(p_sc.components_[0]), index=num)\nraw_top = w_raw.idxmax()\nraw_evr = p_raw.explained_variance_ratio_[0]\nprint(w_raw.round(2), w_scaled.round(2), raw_top, round(raw_evr, 3))",
+   "hints": [
+    "<code>pd.Series(np.abs(p_raw.components_[0]), index=num)</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_pr = _PCA(n_components=1).fit(_X); _ps = _PCA(n_components=1).fit(_Xs)\n_wr = pd.Series(_np.abs(_pr.components_[0]), index=list(_X.columns)); _ws = pd.Series(_np.abs(_ps.components_[0]), index=list(_X.columns))\nassert _np.allclose(_np.asarray(w_raw, dtype=float), _wr.values, atol=1e-6), \"w_raw сәйкес емес: шикі X-те PCA(n_components=1), components_[0] модулі\"\nassert _np.allclose(_np.asarray(w_scaled, dtype=float), _ws.values, atol=1e-6), \"w_scaled сәйкес емес: масштабталған Xs-те\"\nassert raw_top == 'area_m2', \"Шикі деректе PC1 іс жүзінде area_m2: raw_top = w_raw.idxmax()\"\nassert abs(raw_evr - _pr.explained_variance_ratio_[0]) < 1e-6, f\"raw_evr ≈ {_pr.explained_variance_ratio_[0]:.3f} болуы керек\"",
+    "mustInclude": [
+     "PCA("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "PCA + KMeans",
+   "prompt": "<p>PCA-ны визуализацияға дайындық ретінде қолданыңыз. <code>X2 = PCA(n_components=2).fit_transform(Xs)</code>. <code>km = KMeans(n_clusters=3, n_init=10, random_state=0)</code>-ды <code>X2</code>-де үйретіп, белгілерді <code>labels</code>-ке жазыңыз. Кластер өлшемдерін өсу ретімен <code>sizes</code> тізіміне жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\nfrom sklearn.cluster import KMeans\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\nXs = StandardScaler().fit_transform(X)\nfrom sklearn.cluster import KMeans\nX2 = PCA(n_components=2).fit_transform(Xs)\nkm = KMeans(n_clusters=3, n_init=10, random_state=0).fit(X2)\nlabels = km.labels_\nsizes = sorted(int(v) for v in np.bincount(labels))\nprint(X2.shape, sizes)",
+   "hints": [
+    "<code>km.labels_</code> — әр пәтердің кластері",
+    "Өлшемдер: <code>sorted(np.bincount(labels))</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\nfrom sklearn.cluster import KMeans as _KM\n_X2 = _PCA(n_components=2).fit_transform(_Xs)\n_sz = sorted(int(v) for v in _np.bincount(_KM(n_clusters=3, n_init=10, random_state=0).fit(_X2).labels_))\nassert _np.asarray(X2).shape == (400, 2), \"X2 — 400 × 2: PCA(n_components=2).fit_transform(Xs)\"\nassert len(labels) == 400 and len(set(labels)) == 3, \"labels — 400 мән, 3 кластер\"\nassert list(sizes) == _sz, f\"sizes = {_sz} болуы керек: KMeans(n_clusters=3, n_init=10, random_state=0), X2-де\"",
+    "mustInclude": [
+     "KMeans("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Компонент саны мен сапа",
+   "prompt": "<p>Қысудың бағасын өлшеңіз. Әр <code>k</code> = 1, 2, 3, 4, 5 үшін <code>make_pipeline(StandardScaler(), PCA(n_components=k), LinearRegression())</code>-ның 5-fold CV орташа R²-ын <code>cv_r2[k]</code>-ға жазыңыз. Ең жақсы <code>k</code> → <code>best_k</code>. 5 компоненттен 2-ге өткенде R² қаншаға түседі: <code>drop_2 = cv_r2[5] - cv_r2[2]</code>.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import cross_val_score\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\ny = flats['price_mln']\ncv_r2 = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import cross_val_score\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX = flats[num]\ny = flats['price_mln']\ncv_r2 = {}\nfor k in range(1, 6):\n    pipe = make_pipeline(StandardScaler(), PCA(n_components=k), LinearRegression())\n    cv_r2[k] = cross_val_score(pipe, X, y, cv=5).mean()\nbest_k = max(cv_r2, key=cv_r2.get)\ndrop_2 = cv_r2[5] - cv_r2[2]\nprint({k: round(v, 3) for k, v in cv_r2.items()}, best_k, round(drop_2, 3))",
+   "hints": [
+    "Pipeline ішіндегі PCA әр fold-та тек train бөлігінде fit етіледі — leakage жоқ.",
+    "<code>cross_val_score(pipe, X, y, cv=5).mean()</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\nfrom sklearn.linear_model import LinearRegression as _LR\nfrom sklearn.model_selection import cross_val_score as _cvs\n_r = {k: _cvs(_mp(_SS(), _PCA(n_components=k), _LR()), X, y, cv=5).mean() for k in range(1, 6)}\nassert sorted(cv_r2) == [1, 2, 3, 4, 5], \"cv_r2 кілттері: 1, 2, 3, 4, 5\"\nassert all(abs(cv_r2[k] - _r[k]) < 1e-6 for k in _r), \"CV R² сәйкес емес: StandardScaler → PCA(n_components=k) → LinearRegression, cv=5\"\nassert best_k == max(_r, key=_r.get), f\"best_k = {max(_r, key=_r.get)} болуы керек\"\nassert abs(drop_2 - (_r[5] - _r[2])) < 1e-6, \"drop_2 = cv_r2[5] - cv_r2[2]\"",
+    "mustInclude": [
+     "PCA("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "PCA тек train-де",
+   "prompt": "<p>Бөлу дайын. <code>pipe = make_pipeline(StandardScaler(), PCA(n_components=3), LinearRegression())</code>-ды тек train-де үйретіп, test R²-ын <code>test_r2</code>-ге жазыңыз. Pipeline ішіндегі PCA-ның дисперсия үлестерін <code>evr3</code>-ке (<code>pipe.named_steps['pca']</code>), test деректің PCA кеңістігіндегі көрінісін <code>Z_test</code>-ке жазыңыз (алғашқы екі қадамның <code>transform</code>-ы: <code>pipe[:-1].transform(X_test)</code>).</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LinearRegression\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX_train, X_test, y_train, y_test = train_test_split(flats[num], flats['price_mln'], test_size=0.25, random_state=0)\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LinearRegression\nflats = pd.read_csv('flats.csv')\nnum = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']\nX_train, X_test, y_train, y_test = train_test_split(flats[num], flats['price_mln'], test_size=0.25, random_state=0)\npipe = make_pipeline(StandardScaler(), PCA(n_components=3), LinearRegression()).fit(X_train, y_train)\ntest_r2 = pipe.score(X_test, y_test)\nevr3 = pipe.named_steps['pca'].explained_variance_ratio_\nZ_test = pipe[:-1].transform(X_test)\nprint(round(test_r2, 3), evr3.round(3), Z_test.shape)",
+   "hints": [
+    "<code>make_pipeline</code> қадамдарды кіші әріппен атайды: <code>'standardscaler'</code>, <code>'pca'</code>, <code>'linearregression'</code>.",
+    "<code>pipe[:-1]</code> — соңғы модельсіз Pipeline: scaler + PCA."
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\nfrom sklearn.linear_model import LinearRegression as _LR\n_sc = _SS().fit(X_train); _p = _PCA(n_components=3).fit(_sc.transform(X_train))\n_Z = _p.transform(_sc.transform(X_test))\n_r2 = _LR().fit(_p.transform(_sc.transform(X_train)), y_train).score(_Z, y_test)\nassert _np.allclose(pipe.named_steps['standardscaler'].mean_, X_train.mean().values), \"Scaler тек train-де fit етілуі керек\"\nassert _np.allclose(evr3, _p.explained_variance_ratio_, atol=1e-6), f\"evr3 ≈ {_p.explained_variance_ratio_.round(3)} болуы керек: PCA train-де fit етіледі\"\nassert _np.asarray(Z_test).shape == (100, 3) and _np.allclose(_np.abs(_np.asarray(Z_test)), _np.abs(_Z), atol=1e-6), \"Z_test — 100 × 3: pipe[:-1].transform(X_test) (test-те fit етпейміз)\"\nassert abs(test_r2 - _r2) < 1e-6, f\"test_r2 ≈ {_r2:.3f} болуы керек\"",
+    "mustInclude": [
+     "PCA("
+    ]
+   }
+  }
+ ],
+ "mp-text": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Пікірлерді тану",
+   "prompt": "<p><code>counts</code> — тіл мен белгінің кестесі: <code>pd.crosstab(df['lang'], df['label'])</code>. <code>share_neg_kk</code> — қазақша (<code>kk</code>) пікірлердің ішіндегі <code>negative</code> үлесі.</p>",
+   "starter": "import pandas as pd\ndf = pd.read_csv('reviews.csv')\n",
+   "solution": "import pandas as pd\ndf = pd.read_csv('reviews.csv')\ncounts = pd.crosstab(df['lang'], df['label'])\nshare_neg_kk = counts.loc['kk', 'negative'] / counts.loc['kk'].sum()\nprint(counts, round(share_neg_kk, 3))",
+   "hints": [
+    "<code>counts.loc['kk', 'negative'] / counts.loc['kk'].sum()</code>"
+   ],
+   "check": {
+    "tests": "_k = df[df['lang'] == 'kk']\nassert isinstance(counts, pd.DataFrame) and counts.shape == (2, 2) and int(counts.values.sum()) == 300, \"counts — 2 × 2 кесте, қосындысы 300: pd.crosstab(df['lang'], df['label'])\"\nassert abs(share_neg_kk - (_k['label'] == 'negative').mean()) < 1e-9, f\"share_neg_kk ≈ {(_k['label'] == 'negative').mean():.3f} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "IDF формуласы",
+   "prompt": "<p>sklearn-дегі IDF: <code>idf = ln((1 + n) / (1 + df)) + 1</code>, мұнда <code>n</code> — пікір саны, <code>df</code> — сөз кездесетін пікір саны. <code>idf(n, df_count)</code> функциясын жазыңыз.</p><p>Мысалы, <code>idf(225, 100)</code> → <code>1.805</code>.</p>",
+   "starter": "import math\n\ndef idf(n, df_count):\n    pass\n",
+   "solution": "import math\n\ndef idf(n, df_count):\n    return math.log((1 + n) / (1 + df_count)) + 1\n\nprint(round(idf(225, 100), 3), round(idf(225, 3), 3))",
+   "hints": [
+    "<code>math.log((1 + n) / (1 + df_count)) + 1</code>"
+   ],
+   "check": {
+    "tests": "assert idf(225, 100) is not None and abs(idf(225, 100) - 1.80541) < 1e-4, \"idf(225, 100) ≈ 1.805 болуы керек\"\nassert abs(idf(225, 3) - 5.03432) < 1e-4, \"Сирек сөздің салмағы жоғары: idf(225, 3) ≈ 5.034\"\nassert abs(idf(10, 10) - 1) < 1e-9, \"Барлық пікірде кездесетін сөз: idf = 1\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "«және» сөзінің салмағы",
+   "prompt": "<p><code>vec = TfidfVectorizer().fit(X_train)</code>. «және» сөзінің IDF салмағын <code>idf_jane</code>-ге жазыңыз: <code>vec.idf_</code> массивінде, позициясы <code>vec.vocabulary_['және']</code>. Салыстыру үшін ең үлкен IDF-ті <code>idf_max</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nvec = TfidfVectorizer().fit(X_train)\nidf_jane = vec.idf_[vec.vocabulary_['және']]\nidf_max = vec.idf_.max()\nprint(round(idf_jane, 3), round(idf_max, 3))",
+   "hints": [
+    "<code>vec.idf_[vec.vocabulary_['және']]</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_v = _TV().fit(_a)\n_j = _v.idf_[_v.vocabulary_['және']]\nassert abs(idf_jane - _j) < 1e-9, f\"idf_jane ≈ {_j:.3f} болуы керек: векторизатор тек X_train-де fit етіледі\"\nassert abs(idf_max - _v.idf_.max()) < 1e-9, f\"idf_max ≈ {_v.idf_.max():.3f} болуы керек\"\nassert idf_jane < idf_max, \"Жиі сөздің салмағы сирек сөздікінен төмен\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Unigram мен bigram",
+   "prompt": "<p>Екі Pipeline үйретіңіз (<code>'tfidf'</code> + <code>'clf'</code>, <code>LogisticRegression(max_iter=1000)</code>): <code>uni</code> — <code>TfidfVectorizer()</code>, <code>bi</code> — <code>TfidfVectorizer(ngram_range=(1, 2))</code>. Test accuracy-лерін <code>acc_uni</code>, <code>acc_bi</code>-ге, сөздік өлшемдерін <code>n_uni</code>, <code>n_bi</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nuni = Pipeline([('tfidf', TfidfVectorizer()), ('clf', LogisticRegression(max_iter=1000))]).fit(X_train, y_train)\nbi = Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(max_iter=1000))]).fit(X_train, y_train)\nacc_uni, acc_bi = uni.score(X_test, y_test), bi.score(X_test, y_test)\nn_uni, n_bi = len(uni['tfidf'].vocabulary_), len(bi['tfidf'].vocabulary_)\nprint(round(acc_uni, 3), round(acc_bi, 3), n_uni, n_bi)",
+   "hints": [
+    "<code>Pipeline([('tfidf', TfidfVectorizer()), ('clf', LogisticRegression(max_iter=1000))])</code>",
+    "<code>len(bi['tfidf'].vocabulary_)</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_u = _P([('tfidf', _TV()), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\n_bm = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\nassert n_uni == len(_u['tfidf'].vocabulary_) and n_bi == len(_bm['tfidf'].vocabulary_), f\"n_uni = {len(_u['tfidf'].vocabulary_)}, n_bi = {len(_bm['tfidf'].vocabulary_)} болуы керек\"\nassert abs(acc_uni - _u.score(_b, _e)) < 1e-9 and abs(acc_bi - _bm.score(_b, _e)) < 1e-9, f\"acc_uni ≈ {_u.score(_b, _e):.3f}, acc_bi ≈ {_bm.score(_b, _e):.3f} болуы керек\"",
+    "mustInclude": [
+     "ngram_range"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Шағымдарды қаншалық табамыз",
+   "prompt": "<p>Шағымдар (<code>negative</code>) — бизнеске маңызды класс. Bigram Pipeline-ды (<code>Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(max_iter=1000))])</code>) <code>model</code> атымен үйретіп, test-те <code>negative</code> класы үшін <code>prec_neg</code> және <code>rec_neg</code> есептеңіз (<code>pos_label='negative'</code>).</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nfrom sklearn.metrics import precision_score, recall_score\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nfrom sklearn.metrics import precision_score, recall_score\nmodel = Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(max_iter=1000))]).fit(X_train, y_train)\npred = model.predict(X_test)\nprec_neg = precision_score(y_test, pred, pos_label='negative')\nrec_neg = recall_score(y_test, pred, pos_label='negative')\nprint(round(prec_neg, 3), round(rec_neg, 3))",
+   "hints": [
+    "<code>precision_score(y_test, pred, pos_label='negative')</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\nfrom sklearn.metrics import precision_score as _ps, recall_score as _rs\n_pr = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c).predict(_b)\n_pn, _rn = _ps(_e, _pr, pos_label='negative'), _rs(_e, _pr, pos_label='negative')\nassert abs(prec_neg - _pn) < 1e-9, f\"prec_neg ≈ {_pn:.3f} болуы керек: pos_label='negative'\"\nassert abs(rec_neg - _rn) < 1e-9, f\"rec_neg ≈ {_rn:.3f} болуы керек\"",
+    "mustInclude": [
+     "pos_label='negative'"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Қате жіктелген пікірлер",
+   "prompt": "<p>Ең пайдалы диагностика — қателерді оқу. Bigram Pipeline-ды үйретіп, test-те болжам шын белгімен сәйкес келмеген пікірлерді <code>errors</code> DataFrame-іне жинаңыз: бағандары <code>text</code>, <code>true</code>, <code>pred</code>. Қате санын <code>n_err</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nmodel = Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(max_iter=1000))]).fit(X_train, y_train)\nres = pd.DataFrame({'text': X_test, 'true': y_test, 'pred': model.predict(X_test)})\nerrors = res[res['true'] != res['pred']]\nn_err = len(errors)\nprint(n_err)\nprint(errors)",
+   "hints": [
+    "<code>pd.DataFrame({'text': X_test, 'true': y_test, 'pred': model.predict(X_test)})</code>",
+    "<code>res[res['true'] != res['pred']]</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_pr = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c).predict(_b)\n_bad = _b[_pr != _e.values]\nassert isinstance(errors, pd.DataFrame) and {'text', 'true', 'pred'} <= set(errors.columns), \"errors — text, true, pred бағандары бар DataFrame\"\nassert n_err == len(_bad) and len(errors) == len(_bad), f\"Қате саны {len(_bad)} болуы керек\"\nassert set(errors['text']) == set(_bad) and (errors['true'] != errors['pred']).all(), \"errors-та тек true != pred жолдары болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Әріптік n-граммалар",
+   "prompt": "<p>Жалғамалы қазақ тіліне әріптік n-граммалар көмектеседі. <code>char = Pipeline([('tfidf', TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))), ('clf', LogisticRegression(max_iter=1000))])</code> үйретіп, test accuracy-ін <code>acc_char</code>-ға жазыңыз. Әр тіл бойынша test accuracy-ін <code>acc_lang</code> сөздігіне жазыңыз (кілттері <code>'kk'</code>, <code>'ru'</code>; тілі: <code>df.loc[X_test.index, 'lang']</code>).</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nchar = Pipeline([('tfidf', TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))), ('clf', LogisticRegression(max_iter=1000))]).fit(X_train, y_train)\nacc_char = char.score(X_test, y_test)\nlang = df.loc[X_test.index, 'lang']\nacc_lang = {}\nfor l in ['kk', 'ru']:\n    m = (lang == l).values\n    acc_lang[l] = char.score(X_test[m], y_test[m])\nprint(round(acc_char, 3), acc_lang)",
+   "hints": [
+    "<code>lang = df.loc[X_test.index, 'lang']</code>; mask: <code>m = (lang == 'kk').values</code>",
+    "<code>char.score(X_test[m], y_test[m])</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_ch = _P([('tfidf', _TV(analyzer='char_wb', ngram_range=(2, 4))), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\n_lg = _df.loc[_b.index, 'lang'].values\n_al = {l: _ch.score(_b[_lg == l], _e[_lg == l]) for l in ['kk', 'ru']}\nassert abs(acc_char - _ch.score(_b, _e)) < 1e-9, f\"acc_char ≈ {_ch.score(_b, _e):.3f} болуы керек: analyzer='char_wb', ngram_range=(2, 4)\"\nassert sorted(acc_lang) == ['kk', 'ru'], \"acc_lang кілттері: 'kk', 'ru'\"\nassert all(abs(acc_lang[l] - _al[l]) < 1e-9 for l in _al), f\"acc_lang ≈ {_al} болуы керек\"",
+    "mustInclude": [
+     "char_wb"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Мәтін моделінде C таңдау",
+   "prompt": "<p>Белгі көп болғанда C маңызды. Әр <code>C</code> ∈ <code>[0.1, 1, 10]</code> үшін <code>Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(C=C, max_iter=1000))])</code>-ның train-дегі 5-fold CV орташа accuracy-ін <code>cv_acc[C]</code>-ға жазыңыз. Ең жақсы C → <code>best_C</code>. Сол C-мен train-де үйретіп, test accuracy-ін <code>test_acc</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nfrom sklearn.model_selection import cross_val_score\ncv_acc = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import Pipeline\ndf = pd.read_csv('reviews.csv')\nX_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])\nfrom sklearn.model_selection import cross_val_score\ncv_acc = {}\ndef make(C):\n    return Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(C=C, max_iter=1000))])\n\nfor C in [0.1, 1, 10]:\n    cv_acc[C] = cross_val_score(make(C), X_train, y_train, cv=5).mean()\nbest_C = max(cv_acc, key=cv_acc.get)\ntest_acc = make(best_C).fit(X_train, y_train).score(X_test, y_test)\nprint(cv_acc, best_C, round(test_acc, 3))",
+   "hints": [
+    "Pipeline жасайтын шағын функция ыңғайлы: <code>def make(C): return Pipeline([...])</code>",
+    "<code>cross_val_score(make(C), X_train, y_train, cv=5).mean()</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\nfrom sklearn.model_selection import cross_val_score as _cvs\n_mk = lambda c: _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(C=c, max_iter=1000))])\n_s = {c: _cvs(_mk(c), _a, _c, cv=5).mean() for c in [0.1, 1, 10]}\n_bc = max(_s, key=_s.get)\nassert sorted(cv_acc) == [0.1, 1, 10] and all(abs(cv_acc[c] - _s[c]) < 1e-9 for c in _s), \"cv_acc сәйкес емес: train-дегі 5-fold CV, кілттері 0.1, 1, 10\"\nassert best_C == _bc, f\"best_C = {_bc} болуы керек\"\nassert abs(test_acc - _mk(_bc).fit(_a, _c).score(_b, _e)) < 1e-9, \"test_acc — best_C-мен train-де үйретілген модельдің test accuracy-і\"",
+    "mustInclude": [
+     "cross_val_score("
+    ]
+   }
+  }
+ ],
+ "mp-ops": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Табыс өсті ме",
+   "prompt": "<p><code>old</code> — 2024 жылғы өтінімдер (<code>month &lt; '2025-01'</code>), <code>new</code> — 2025 жылғы. Орташа табысты <code>inc_old</code>, <code>inc_new</code>-ге, өсімді пайызбен <code>growth = (inc_new / inc_old − 1) · 100</code> жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nold = df[df['month'] < '2025-01']\nnew = df[df['month'] >= '2025-01']\ninc_old, inc_new = old['income'].mean(), new['income'].mean()\ngrowth = (inc_new / inc_old - 1) * 100\nprint(round(inc_old, 1), round(inc_new, 1), round(growth, 1))",
+   "hints": [
+    "<code>old = df[df['month'] &lt; '2025-01']</code>"
+   ],
+   "check": {
+    "tests": "_o = df[df['month'] < '2025-01']['income'].mean(); _n = df[df['month'] >= '2025-01']['income'].mean()\nassert abs(inc_old - _o) < 1e-9 and abs(inc_new - _n) < 1e-9, f\"inc_old ≈ {_o:.1f}, inc_new ≈ {_n:.1f} болуы керек\"\nassert abs(growth - (_n / _o - 1) * 100) < 1e-9, f\"growth ≈ {(_n / _o - 1) * 100:.1f}% болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "PSI деңгейі",
+   "prompt": "<p>Сабақтағы кесте бойынша <code>psi_level(v)</code> функциясын жазыңыз: PSI &lt; 0.1 болса <code>'stable'</code>, 0.1-ден 0.25-ке дейін (қоса) <code>'moderate'</code>, 0.25-тен жоғары болса <code>'major'</code> қайтарсын.</p>",
+   "starter": "def psi_level(v):\n    pass\n",
+   "solution": "def psi_level(v):\n    if v < 0.1:\n        return 'stable'\n    if v <= 0.25:\n        return 'moderate'\n    return 'major'\n\nprint(psi_level(0.05), psi_level(0.15), psi_level(0.35))",
+   "hints": [
+    "Шарттарды кішіден үлкенге қарай тексеріңіз: <code>if v &lt; 0.1</code>, сосын <code>if v &lt;= 0.25</code>."
+   ],
+   "check": {
+    "tests": "assert psi_level(0.05) == 'stable' and psi_level(0.0) == 'stable', \"PSI < 0.1 → 'stable'\"\nassert psi_level(0.1) == 'moderate' and psi_level(0.25) == 'moderate', \"0.1 және 0.25 — 'moderate' (шекаралар қоса)\"\nassert psi_level(0.35) == 'major', \"Loans-тағы income PSI 0.35 → 'major'\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Эксперимент журналы",
+   "prompt": "<p>MLflow-сыз да журнал жүргізуге болады: <code>runs</code> — сөздіктер тізімі. OOT Gini-і ең жоғары run-ның атын <code>best_run</code>-ға жазыңыз. Әр run үшін validation мен OOT Gini айырмасын <code>gaps</code> сөздігіне жазыңыз (<code>{атауы: gini_val − gini_oot}</code>). Айырмасы ең үлкен run-ды <code>most_overfit</code>-ке жазыңыз.</p>",
+   "starter": "runs = [\n    {'name': 'logreg_C1', 'C': 1.0, 'gini_val': 0.47, 'gini_oot': 0.41},\n    {'name': 'logreg_C01', 'C': 0.1, 'gini_val': 0.45, 'gini_oot': 0.43},\n    {'name': 'boost_d3', 'C': None, 'gini_val': 0.55, 'gini_oot': 0.38},\n]\n",
+   "solution": "runs = [\n    {'name': 'logreg_C1', 'C': 1.0, 'gini_val': 0.47, 'gini_oot': 0.41},\n    {'name': 'logreg_C01', 'C': 0.1, 'gini_val': 0.45, 'gini_oot': 0.43},\n    {'name': 'boost_d3', 'C': None, 'gini_val': 0.55, 'gini_oot': 0.38},\n]\nbest_run = max(runs, key=lambda r: r['gini_oot'])['name']\ngaps = {r['name']: r['gini_val'] - r['gini_oot'] for r in runs}\nmost_overfit = max(gaps, key=gaps.get)\nprint(best_run, gaps, most_overfit)",
+   "hints": [
+    "<code>max(runs, key=lambda r: r['gini_oot'])['name']</code>",
+    "<code>{r['name']: r['gini_val'] - r['gini_oot'] for r in runs}</code>"
+   ],
+   "check": {
+    "tests": "assert best_run == 'logreg_C01', \"best_run — OOT Gini ең жоғары run: logreg_C01\"\nassert set(gaps) == {'logreg_C1', 'logreg_C01', 'boost_d3'} and abs(gaps['boost_d3'] - 0.17) < 1e-9 and abs(gaps['logreg_C1'] - 0.06) < 1e-9, \"gaps = {атауы: gini_val − gini_oot}\"\nassert most_overfit == 'boost_d3', \"most_overfit — айырмасы ең үлкен run: boost_d3 (validation-да ең жақсы, OOT-те ең нашар)\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ай сайынғы дефолт",
+   "prompt": "<p>Нақты дефолт үлесін ай бойынша <code>rate_by_month</code> Series-іне жазыңыз (<code>groupby('month')</code>). Үлесі ең жоғары айды <code>worst_month</code>-қа жазыңыз. 2024 және 2025 жылдардағы жалпы дефолт үлесін <code>rate_2024</code>, <code>rate_2025</code>-ке жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nrate_by_month = df.groupby('month')['default'].mean()\nworst_month = rate_by_month.idxmax()\nrate_2024 = df[df['month'] < '2025-01']['default'].mean()\nrate_2025 = df[df['month'] >= '2025-01']['default'].mean()\nprint(rate_by_month.round(3), worst_month, round(rate_2024, 3), round(rate_2025, 3))",
+   "hints": [
+    "<code>df.groupby('month')['default'].mean()</code>",
+    "<code>rate_by_month.idxmax()</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\n_g = df.groupby('month')['default'].mean()\nassert len(rate_by_month) == 18 and _np.allclose(_np.asarray(rate_by_month, dtype=float), _g.values), \"rate_by_month — 18 айдың дефолт үлесі\"\nassert worst_month == _g.idxmax(), f\"worst_month = {_g.idxmax()} болуы керек\"\nassert abs(rate_2024 - df[df['month'] < '2025-01']['default'].mean()) < 1e-9 and abs(rate_2025 - df[df['month'] >= '2025-01']['default'].mean()) < 1e-9, \"rate_2024, rate_2025 — әр жылдың барлық өтінімдері бойынша үлес\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "4 топпен PSI",
+   "prompt": "<p>Табыс PSI-ін 4 квартильдік топпен қолмен есептеңіз. Шекаралар <b>ескі</b> кезеңнен: <code>edges = np.quantile(old['income'], [0, 0.25, 0.5, 0.75, 1])</code>, сосын <code>edges[0], edges[-1] = -np.inf, np.inf</code>. Үлестер: <code>e = np.histogram(old['income'], edges)[0] / len(old)</code>, <code>a</code> — <code>new</code> үшін солай. <code>psi_inc4 = Σ (a − e) · ln(a / e)</code>.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nold = df[df['month'] < '2025-01']\nnew = df[df['month'] >= '2025-01']\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nold = df[df['month'] < '2025-01']\nnew = df[df['month'] >= '2025-01']\nedges = np.quantile(old['income'], [0, 0.25, 0.5, 0.75, 1])\nedges[0], edges[-1] = -np.inf, np.inf\ne = np.histogram(old['income'], edges)[0] / len(old)\na = np.histogram(new['income'], edges)[0] / len(new)\npsi_inc4 = float(np.sum((a - e) * np.log(a / e)))\nprint(e.round(3), a.round(3), round(psi_inc4, 3))",
+   "hints": [
+    "<code>a = np.histogram(new['income'], edges)[0] / len(new)</code>",
+    "<code>np.sum((a - e) * np.log(a / e))</code>"
+   ],
+   "check": {
+    "tests": "_o = df[df['month'] < '2025-01']['income']; _n = df[df['month'] >= '2025-01']['income']\n_ed = np.quantile(_o, [0, 0.25, 0.5, 0.75, 1]); _ed[0], _ed[-1] = -np.inf, np.inf\n_e = np.histogram(_o, _ed)[0] / len(_o); _a = np.histogram(_n, _ed)[0] / len(_n)\n_v = float(np.sum((_a - _e) * np.log(_a / _e)))\nassert np.allclose(e, _e) and np.allclose(a, _a), \"e, a үлестері сәйкес емес: шекаралар ескі кезеңнен, np.histogram(...)[0] / len(...)\"\nassert abs(psi_inc4 - _v) < 1e-9, f\"psi_inc4 ≈ {_v:.3f} болуы керек\"",
+    "mustInclude": [
+     "np.histogram("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Скор PSI-і",
+   "prompt": "<p>Факт әлі белгісіз, бірақ модель скорының таралуын бірден салыстыруға болады. Стартерде <code>psi()</code> функциясы мен <code>dev</code>-те үйретілген <code>model</code> дайын. <code>s_dev</code> — <code>dev</code>-тегі, <code>s_oot</code> — <code>oot</code>-тағы болжам ықтималдықтары. <code>psi_score = psi(s_dev, s_oot)</code>. Орташа скорларды <code>mean_dev</code>, <code>mean_oot</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\ndef psi(expected, actual, bins=10):\n    expected = np.asarray(expected, dtype=float)\n    actual = np.asarray(actual, dtype=float)\n    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))\n    edges[0], edges[-1] = -np.inf, np.inf\n    e = np.clip(np.histogram(expected, edges)[0] / len(expected), 0.0001, None)\n    a = np.clip(np.histogram(actual, edges)[0] / len(actual), 0.0001, None)\n    return float(np.sum((a - e) * np.log(a / e)))\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\ndef psi(expected, actual, bins=10):\n    expected = np.asarray(expected, dtype=float)\n    actual = np.asarray(actual, dtype=float)\n    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))\n    edges[0], edges[-1] = -np.inf, np.inf\n    e = np.clip(np.histogram(expected, edges)[0] / len(expected), 0.0001, None)\n    a = np.clip(np.histogram(actual, edges)[0] / len(actual), 0.0001, None)\n    return float(np.sum((a - e) * np.log(a / e)))\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\ns_dev = model.predict_proba(dev[F])[:, 1]\ns_oot = model.predict_proba(oot[F])[:, 1]\npsi_score = psi(s_dev, s_oot)\nmean_dev, mean_oot = s_dev.mean(), s_oot.mean()\nprint(round(psi_score, 3), round(mean_dev, 3), round(mean_oot, 3))",
+   "hints": [
+    "<code>s_oot = model.predict_proba(oot[F])[:, 1]</code>",
+    "Бірінші аргумент — эталон (ескі) кезең: <code>psi(s_dev, s_oot)</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_sd = _m.predict_proba(_dev[_F])[:, 1]; _so = _m.predict_proba(_oot[_F])[:, 1]\nassert len(s_dev) == 630 and len(s_oot) == 420, \"s_dev — 630, s_oot — 420 болжам\"\nassert abs(psi_score - psi(_sd, _so)) < 1e-9, f\"psi_score ≈ {psi(_sd, _so):.3f} болуы керек: psi(s_dev, s_oot)\"\nassert abs(mean_dev - _sd.mean()) < 1e-9 and abs(mean_oot - _so.mean()) < 1e-9, \"mean_dev, mean_oot — скорлардың орташасы\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Қарапайым рекалибровка",
+   "prompt": "<p>Модель OOT-те тәуекелді кем бағалайды. Ең қарапайым рекалибровка: ықтималдықтарды бір коэффициентке көбейту. <code>oot1</code> — <code>2025-01</code> … <code>2025-03</code>, <code>oot2</code> — <code>2025-04</code> … <code>2025-06</code>.</p><ul><li><code>k</code> = oot1-дегі нақты дефолт үлесі / oot1-дегі орташа болжам;</li><li><code>p2</code> — oot2-дегі болжам, <code>p2_new = np.clip(p2 * k, 0, 1)</code>;</li><li><code>pred_before</code>, <code>pred_after</code> — <code>p2</code> мен <code>p2_new</code> орташалары, <code>fact2</code> — oot2-дегі нақты үлес;</li><li><code>gini_before</code>, <code>gini_after</code> — oot2-дегі Gini.</li></ul><p>Деңгей түзелді ме? Gini өзгерді ме?</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\noot1 = oot[oot['month'] <= '2025-03']\noot2 = oot[oot['month'] >= '2025-04']\nk = oot1['default'].mean() / model.predict_proba(oot1[F])[:, 1].mean()\np2 = model.predict_proba(oot2[F])[:, 1]\np2_new = np.clip(p2 * k, 0, 1)\npred_before, pred_after = p2.mean(), p2_new.mean()\nfact2 = oot2['default'].mean()\ngini_before = 2 * roc_auc_score(oot2['default'], p2) - 1\ngini_after = 2 * roc_auc_score(oot2['default'], p2_new) - 1\nprint(round(k, 3), round(pred_before, 3), round(pred_after, 3), round(fact2, 3), round(gini_before, 3), round(gini_after, 3))",
+   "hints": [
+    "<code>oot1 = oot[oot['month'] &lt;= '2025-03']</code>, <code>oot2 = oot[oot['month'] &gt;= '2025-04']</code>",
+    "<code>k = oot1['default'].mean() / model.predict_proba(oot1[F])[:, 1].mean()</code>",
+    "Бір санға көбейту ретті өзгертпейді, сондықтан Gini сол күйінде қалады."
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_o1 = _oot[_oot['month'] <= '2025-03']; _o2 = _oot[_oot['month'] >= '2025-04']\n_k = _o1['default'].mean() / _m.predict_proba(_o1[_F])[:, 1].mean()\n_p2 = _m.predict_proba(_o2[_F])[:, 1]; _pn = _np.clip(_p2 * _k, 0, 1)\nassert abs(k - _k) < 1e-9, f\"k ≈ {_k:.3f} болуы керек: oot1-дегі нақты үлес / орташа болжам\"\nassert abs(pred_before - _p2.mean()) < 1e-9 and abs(pred_after - _pn.mean()) < 1e-9, f\"pred_before ≈ {_p2.mean():.3f}, pred_after ≈ {_pn.mean():.3f} болуы керек (oot2-де)\"\nassert abs(fact2 - _o2['default'].mean()) < 1e-9, f\"fact2 ≈ {_o2['default'].mean():.3f}: oot2['default'].mean()\"\nassert abs(gini_before - (2 * _ras(_o2['default'], _p2) - 1)) < 1e-9 and abs(gini_after - (2 * _ras(_o2['default'], _pn) - 1)) < 1e-9, \"Gini oot2-де есептеледі: 2 * AUC - 1\"\nassert abs(fact2 - pred_after) < abs(fact2 - pred_before), \"Рекалибровкадан кейін орташа болжам нақты үлеске жақындауы керек\"",
+    "mustInclude": [
+     "np.clip("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Ай сайынғы мониторинг кестесі",
+   "prompt": "<p>Мониторинг дашбордының кестесін жасаңыз. <code>dev</code>-те үйретілген <code>model</code> дайын. OOT-тің әр айы үшін (<code>2025-01</code> … <code>2025-06</code>) үш сан есептеңіз: <code>gini</code> (2 · AUC − 1), <code>pd_pred</code> (орташа болжам), <code>pd_fact</code> (нақты дефолт үлесі). Нәтиже — <code>monitor</code> DataFrame: индексі — ай (өсу ретімен), бағандары — <code>gini</code>, <code>pd_pred</code>, <code>pd_fact</code>. <code>gap_max</code> — айлар ішіндегі <code>pd_fact − pd_pred</code>-тің ең үлкен мәні.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\ndev = df[df['month'] <= '2024-09']\noot = df[df['month'] >= '2025-01']\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(dev[F], dev['default'])\nrows = {}\nfor month, g in oot.groupby('month'):\n    p = model.predict_proba(g[F])[:, 1]\n    rows[month] = {'gini': 2 * roc_auc_score(g['default'], p) - 1, 'pd_pred': p.mean(), 'pd_fact': g['default'].mean()}\nmonitor = pd.DataFrame(rows).T.sort_index()\ngap_max = (monitor['pd_fact'] - monitor['pd_pred']).max()\nprint(monitor.round(3), round(gap_max, 3))",
+   "hints": [
+    "<code>for month, g in oot.groupby('month'):</code>",
+    "Сөздіктер сөздігінен кесте: <code>pd.DataFrame(rows).T</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_ms = sorted(_oot['month'].unique())\n_r = {mo: (2 * _ras(g['default'], _m.predict_proba(g[_F])[:, 1]) - 1, _m.predict_proba(g[_F])[:, 1].mean(), g['default'].mean()) for mo, g in _oot.groupby('month')}\nassert isinstance(monitor, pd.DataFrame) and list(monitor.index) == _ms, f\"monitor индексі — OOT айлары, өсу ретімен: {_ms}\"\nassert {'gini', 'pd_pred', 'pd_fact'} <= set(monitor.columns), \"Бағандар: gini, pd_pred, pd_fact\"\nassert all(abs(float(monitor.loc[mo, 'gini']) - _r[mo][0]) < 1e-6 for mo in _ms), \"gini сәйкес емес: әр айда 2 * AUC - 1\"\nassert all(abs(float(monitor.loc[mo, 'pd_pred']) - _r[mo][1]) < 1e-9 and abs(float(monitor.loc[mo, 'pd_fact']) - _r[mo][2]) < 1e-9 for mo in _ms), \"pd_pred — орташа болжам, pd_fact — нақты үлес (әр айда)\"\nassert abs(gap_max - max(_r[mo][2] - _r[mo][1] for mo in _ms)) < 1e-9, \"gap_max = (pd_fact - pd_pred).max()\""
+   }
+  }
+ ],
+ "mp-anom": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Accuracy неге алдайды",
+   "prompt": "<p><code>n_fraud</code> — алаяқтық транзакциялар саны (int), <code>fraud_rate</code> — олардың үлесі. Барлығын «таза» деп болжайтын «модельдің» accuracy-ін <code>acc_all_clean</code>-ға жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nn_fraud = int(df['is_fraud'].sum())\nfraud_rate = df['is_fraud'].mean()\nacc_all_clean = (df['is_fraud'] == 0).mean()\nprint(n_fraud, fraud_rate, acc_all_clean)",
+   "hints": [
+    "<code>(df['is_fraud'] == 0).mean()</code>"
+   ],
+   "check": {
+    "tests": "assert n_fraud == 30, \"n_fraud = 30 болуы керек\"\nassert abs(fraud_rate - 0.03) < 1e-9, \"fraud_rate = 0.03\"\nassert abs(acc_all_clean - 0.97) < 1e-9, \"Ештеңе таппайтын модельдің accuracy-і 0.97\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "z-score ережесі",
+   "prompt": "<p><code>z_flags(values, k=3)</code> функциясын жазыңыз: <code>|x − орташа| / std &gt; k</code> болған мәндер үшін <code>True</code>, басқаларына <code>False</code> болатын bool массив қайтарсын. <code>std</code> — <code>np.std</code> (әдепкі).</p><p>Мысалы, <code>z_flags([1, 1, 1, 1, 1, 1, 1, 1, 1, 100], k=2)</code> соңғы мәнді ғана белгілейді.</p>",
+   "starter": "import numpy as np\n\ndef z_flags(values, k=3):\n    pass\n",
+   "solution": "import numpy as np\n\ndef z_flags(values, k=3):\n    x = np.asarray(values, dtype=float)\n    return np.abs(x - x.mean()) / x.std() > k\n\nprint(z_flags([1, 1, 1, 1, 1, 1, 1, 1, 1, 100], k=2))",
+   "hints": [
+    "<code>x = np.asarray(values, dtype=float)</code>; <code>np.abs(x - x.mean()) / x.std() &gt; k</code>"
+   ],
+   "check": {
+    "tests": "_r = z_flags([1, 1, 1, 1, 1, 1, 1, 1, 1, 100], k=2)\nassert _r is not None and list(np.asarray(_r)) == [False] * 9 + [True], \"z_flags([1, ..., 1, 100], k=2) тек соңғы мәнді белгілеуі керек\"\nassert not np.asarray(z_flags([10, 12, 11, 13, 9, 10])).any(), \"Шығыңқы мән жоқ болса, бәрі False (k=3 әдепкі)\"\nassert list(np.asarray(z_flags([0, 0, 0, 10], k=1))) == [False, False, False, True], \"k параметрі ескерілуі керек: z_flags([0, 0, 0, 10], k=1)\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бизнес ереже",
+   "prompt": "<p>Ереже: «жаңа құрылғы <b>және</b> шетел». <code>rule</code> — <code>new_device == 1</code> және <code>foreign == 1</code> болған транзакциялар (bool Series). <code>n_alerts</code> — дабыл саны, <code>n_hit</code> — олардың ішіндегі алаяқтық саны, <code>prec_rule</code> — precision.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nrule = (df['new_device'] == 1) & (df['foreign'] == 1)\nn_alerts = int(rule.sum())\nn_hit = int((rule & (df['is_fraud'] == 1)).sum())\nprec_rule = n_hit / n_alerts\nprint(n_alerts, n_hit, round(prec_rule, 3))",
+   "hints": [
+    "<code>(df['new_device'] == 1) &amp; (df['foreign'] == 1)</code>"
+   ],
+   "check": {
+    "tests": "_r = (df['new_device'] == 1) & (df['foreign'] == 1)\n_h = int((_r & (df['is_fraud'] == 1)).sum())\nassert len(rule) == 1000 and int(rule.sum()) == int(_r.sum()), \"rule — екі шарт та орындалған жолдар (&)\"\nassert n_alerts == int(_r.sum()) and n_hit == _h, f\"n_alerts = {int(_r.sum())}, n_hit = {_h} болуы керек\"\nassert abs(prec_rule - _h / _r.sum()) < 1e-9, \"prec_rule = n_hit / n_alerts\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Логарифмдік z-score",
+   "prompt": "<p>Сома қисық таралған, сондықтан алдымен логарифм аламыз. <code>log_amt = np.log(df['amount'])</code>, <code>z = (log_amt − log_amt.mean()) / log_amt.std()</code>. <code>flag</code> — <code>z &gt; 3</code> болған транзакциялар (тек тым үлкен сомалар). <code>n_flag</code>, <code>precision_z</code>, <code>recall_z</code> есептеңіз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nlog_amt = np.log(df['amount'])\nz = (log_amt - log_amt.mean()) / log_amt.std()\nflag = z > 3\nn_flag = int(flag.sum())\nhit = int((flag & (df['is_fraud'] == 1)).sum())\nprecision_z = hit / n_flag\nrecall_z = hit / df['is_fraud'].sum()\nprint(n_flag, round(precision_z, 3), round(recall_z, 3))",
+   "hints": [
+    "<code>z = (log_amt - log_amt.mean()) / log_amt.std()</code>",
+    "Recall: табылған алаяқтық / барлық алаяқтық (30)"
+   ],
+   "check": {
+    "tests": "_l = np.log(df['amount']); _z = (_l - _l.mean()) / _l.std(); _f = _z > 3\n_h = int((_f & (df['is_fraud'] == 1)).sum())\nassert n_flag == int(_f.sum()), f\"n_flag = {int(_f.sum())} болуы керек: логарифмнің z-score-ы > 3\"\nassert abs(precision_z - _h / _f.sum()) < 1e-9, f\"precision_z ≈ {_h / _f.sum():.3f} болуы керек\"\nassert abs(recall_z - _h / df['is_fraud'].sum()) < 1e-9, f\"recall_z ≈ {_h / df['is_fraud'].sum():.3f} болуы керек\"",
+    "mustInclude": [
+     "np.log("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "precision@k функциясы",
+   "prompt": "<p><code>precision_at_k(y_true, scores, k)</code> функциясын жазыңыз: скоры ең жоғары <code>k</code> мысалдың ішіндегі оң класс үлесін қайтарсын. Ретті <code>np.argsort(-scores, kind='stable')</code>-мен алыңыз. Сосын «модель» ретінде сомның өзін алып, <code>p30_amount = precision_at_k(df['is_fraud'], df['amount'], 30)</code> есептеңіз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n\ndef precision_at_k(y_true, scores, k):\n    pass\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n\ndef precision_at_k(y_true, scores, k):\n    top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]\n    return np.asarray(y_true)[top].mean()\np30_amount = precision_at_k(df['is_fraud'], df['amount'], 30)\nprint(round(p30_amount, 3))",
+   "hints": [
+    "<code>top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]</code>",
+    "<code>np.asarray(y_true)[top].mean()</code>"
+   ],
+   "check": {
+    "tests": "_r = precision_at_k([1, 0, 1, 0, 0], [0.9, 0.8, 0.7, 0.2, 0.1], 2)\nassert _r is not None and abs(_r - 0.5) < 1e-9, \"precision_at_k([1, 0, 1, 0, 0], [0.9, 0.8, 0.7, 0.2, 0.1], 2) = 0.5: топ-2 ішінде бір алаяқтық\"\nassert abs(precision_at_k([0, 0, 1], [1, 2, 3], 1) - 1) < 1e-9, \"Скоры ең жоғары мысал бірінші алынады\"\n_t = np.argsort(-df['amount'].values.astype(float), kind='stable')[:30]\nassert abs(p30_amount - df['is_fraud'].values[_t].mean()) < 1e-9, f\"p30_amount ≈ {df['is_fraud'].values[_t].mean():.3f} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Екі ереже бірге",
+   "prompt": "<p>Екі ережені біріктіріңіз: <code>rule_a</code> — <code>amount</code> IQR ережесінің жоғарғы шегінен асады (<code>Q3 + 1.5 · IQR</code>); <code>rule_b</code> — <code>tx_24h &gt;= 8</code>. Дабыл: <code>alerts = rule_a | rule_b</code>. <code>n_alerts</code>, <code>precision_ab</code>, <code>recall_ab</code> есептеңіз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nq1, q3 = df['amount'].quantile(0.25), df['amount'].quantile(0.75)\nrule_a = df['amount'] > q3 + 1.5 * (q3 - q1)\nrule_b = df['tx_24h'] >= 8\nalerts = rule_a | rule_b\nn_alerts = int(alerts.sum())\nhit = int((alerts & (df['is_fraud'] == 1)).sum())\nprecision_ab = hit / n_alerts\nrecall_ab = hit / df['is_fraud'].sum()\nprint(n_alerts, round(precision_ab, 3), round(recall_ab, 3))",
+   "hints": [
+    "<code>rule_a = df['amount'] &gt; q3 + 1.5 * (q3 - q1)</code>",
+    "«Немесе»: <code>rule_a | rule_b</code>"
+   ],
+   "check": {
+    "tests": "_q1, _q3 = df['amount'].quantile(0.25), df['amount'].quantile(0.75)\n_al = (df['amount'] > _q3 + 1.5 * (_q3 - _q1)) | (df['tx_24h'] >= 8)\n_h = int((_al & (df['is_fraud'] == 1)).sum())\nassert int(rule_b.sum()) == int((df['tx_24h'] >= 8).sum()), \"rule_b = tx_24h >= 8\"\nassert n_alerts == int(_al.sum()), f\"n_alerts = {int(_al.sum())} болуы керек: rule_a | rule_b\"\nassert abs(precision_ab - _h / _al.sum()) < 1e-9 and abs(recall_ab - _h / df['is_fraud'].sum()) < 1e-9, f\"precision_ab ≈ {_h / _al.sum():.3f}, recall_ab ≈ {_h / 30:.3f} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "IsolationForest.predict",
+   "prompt": "<p>Скорсыз, дайын шекпен жұмыс істеп көріңіз. <code>iso = IsolationForest(n_estimators=100, contamination=0.05, random_state=0)</code>-ды <code>df[F]</code>-те үйретіңіз. <code>pred = iso.predict(df[F])</code>: <code>-1</code> — аномалия, <code>1</code> — қалыпты. <code>flag = pred == -1</code>. <code>n_anom</code>, <code>precision_iso</code>, <code>recall_iso</code> есептеңіз. <code>contamination</code> дабыл санына қалай әсер етеді?</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nfrom sklearn.ensemble import IsolationForest\nF = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nfrom sklearn.ensemble import IsolationForest\nF = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\niso = IsolationForest(n_estimators=100, contamination=0.05, random_state=0).fit(df[F])\npred = iso.predict(df[F])\nflag = pred == -1\nn_anom = int(flag.sum())\nhit = int((flag & (df['is_fraud'].values == 1)).sum())\nprecision_iso = hit / n_anom\nrecall_iso = hit / df['is_fraud'].sum()\nprint(n_anom, round(precision_iso, 3), round(recall_iso, 3))",
+   "hints": [
+    "Модельге <code>is_fraud</code> берілмейді: тек <code>df[F]</code>.",
+    "<code>hit = int((flag &amp; (df['is_fraud'].values == 1)).sum())</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.ensemble import IsolationForest as _IF\n_F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n_p = _IF(n_estimators=100, contamination=0.05, random_state=0).fit(df[_F]).predict(df[_F])\n_f = _p == -1; _h = int((_f & (df['is_fraud'].values == 1)).sum())\nassert n_anom == int(_f.sum()), f\"n_anom = {int(_f.sum())} болуы керек: contamination=0.05 — шамамен 5% дабыл\"\nassert abs(precision_iso - _h / _f.sum()) < 1e-9, f\"precision_iso ≈ {_h / _f.sum():.3f} болуы керек\"\nassert abs(recall_iso - _h / 30) < 1e-9, f\"recall_iso ≈ {_h / 30:.3f} болуы керек\"",
+    "mustInclude": [
+     "IsolationForest(",
+     ".predict("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Модель ме, сома ма",
+   "prompt": "<p>IsolationForest қарапайым «ең үлкен сома» ережесінен жақсы ма? <code>precision_at_k</code> функциясын жазыңыз (скоры ең жоғары <code>k</code> ішіндегі оң үлес, <code>np.argsort(-scores, kind='stable')</code>). <code>IsolationForest(n_estimators=100, contamination=0.03, random_state=0)</code> үйретіп, <code>score = -iso.score_samples(df[F])</code>. Әр <code>k</code> ∈ <code>[10, 30, 50]</code> үшін <code>p_iso[k]</code> (скор бойынша) және <code>p_amt[k]</code> (<code>amount</code> бойынша) есептеңіз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nfrom sklearn.ensemble import IsolationForest\nF = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n\ndef precision_at_k(y_true, scores, k):\n    pass\n\np_iso = {}\np_amt = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('transactions.csv')\nfrom sklearn.ensemble import IsolationForest\nF = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n\ndef precision_at_k(y_true, scores, k):\n    top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]\n    return np.asarray(y_true)[top].mean()\n\np_iso = {}\np_amt = {}\niso = IsolationForest(n_estimators=100, contamination=0.03, random_state=0).fit(df[F])\nscore = -iso.score_samples(df[F])\nfor k in [10, 30, 50]:\n    p_iso[k] = precision_at_k(df['is_fraud'], score, k)\n    p_amt[k] = precision_at_k(df['is_fraud'], df['amount'], k)\nprint(p_iso, p_amt)",
+   "hints": [
+    "<code>top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]</code>",
+    "<code>p_iso[k] = precision_at_k(df['is_fraud'], score, k)</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.ensemble import IsolationForest as _IF\n_F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n_s = -_IF(n_estimators=100, contamination=0.03, random_state=0).fit(df[_F]).score_samples(df[_F])\n_y = df['is_fraud'].values\n_pk = lambda sc, k: _y[np.argsort(-np.asarray(sc, dtype=float), kind='stable')[:k]].mean()\nassert abs(precision_at_k([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1], 2) - 0.5) < 1e-9, \"precision_at_k([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1], 2) = 0.5 болуы керек\"\nassert sorted(p_iso) == [10, 30, 50] and sorted(p_amt) == [10, 30, 50], \"Кілттер: 10, 30, 50\"\nassert all(abs(p_iso[k] - _pk(_s, k)) <= 1 / k + 1e-9 for k in [10, 30, 50]), \"p_iso сәйкес емес: score = -iso.score_samples(df[F]); n_estimators=100, contamination=0.03, random_state=0\"\nassert all(abs(p_amt[k] - _pk(df['amount'], k)) <= 1 / k + 1e-9 for k in [10, 30, 50]), \"p_amt сәйкес емес: скор ретінде df['amount']\"",
+    "mustInclude": [
+     "score_samples("
+    ]
+   }
+  }
+ ],
+ "mp-rec": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Себет өлшемі",
+   "prompt": "<p><code>basket</code> — әр клиенттің сатып алу саны (<code>groupby('user_id').size()</code>). Орташасын <code>avg_basket</code>-ке, бір ғана тауар алған клиенттер санын <code>n_single</code>-ге (int) жазыңыз — оларға item-item ұсынысы қиын.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\nbasket = df.groupby('user_id').size()\navg_basket = basket.mean()\nn_single = int((basket == 1).sum())\nprint(round(avg_basket, 2), n_single)",
+   "hints": [
+    "<code>basket = df.groupby('user_id').size()</code>",
+    "<code>int((basket == 1).sum())</code>"
+   ],
+   "check": {
+    "tests": "_b = df.groupby('user_id').size()\nassert len(basket) == 117, \"basket — 117 клиент\"\nassert abs(avg_basket - _b.mean()) < 1e-9, f\"avg_basket ≈ {_b.mean():.2f} болуы керек\"\nassert n_single == int((_b == 1).sum()), f\"n_single = {int((_b == 1).sum())} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жиындар арасындағы косинус",
+   "prompt": "<p>0/1 векторлар үшін косинус = ортақ сатып алушылар / √(|A| · |B|). <code>cosine_sets(a, b)</code> функциясын жазыңыз: <code>a</code>, <code>b</code> — тауарды алған клиенттердің жиындары.</p><p>Мысалы, <code>cosine_sets({1, 2, 3}, {2, 3, 4, 5})</code> → <code>0.577</code>.</p>",
+   "starter": "import math\n\ndef cosine_sets(a, b):\n    pass\n",
+   "solution": "import math\n\ndef cosine_sets(a, b):\n    return len(a & b) / math.sqrt(len(a) * len(b))\n\nprint(round(cosine_sets({1, 2, 3}, {2, 3, 4, 5}), 3))",
+   "hints": [
+    "Ортақ элементтер: <code>a &amp; b</code>",
+    "<code>len(a &amp; b) / math.sqrt(len(a) * len(b))</code>"
+   ],
+   "check": {
+    "tests": "assert cosine_sets({1, 2, 3}, {2, 3, 4, 5}) is not None and abs(cosine_sets({1, 2, 3}, {2, 3, 4, 5}) - 2 / 12 ** 0.5) < 1e-9, \"cosine_sets({1, 2, 3}, {2, 3, 4, 5}) = 2 / √12 ≈ 0.577 болуы керек\"\nassert abs(cosine_sets({7, 8}, {7, 8}) - 1) < 1e-9, \"Бірдей жиындар: 1\"\nassert cosine_sets({1}, {2, 3}) == 0, \"Ортақ клиент жоқ: 0\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Ұсыныстың precision@k-сы",
+   "prompt": "<p><code>precision_at_k(recommended, bought, k)</code> функциясын жазыңыз: <code>recommended</code> тізімінің алғашқы <code>k</code> тауарының қаншасы <code>bought</code> ішінде, сол үлесті қайтарсын.</p><p>Мысалы, <code>precision_at_k(['сөмке', 'ноутбук', 'кітап'], ['ноутбук'], 3)</code> → <code>0.333</code>.</p>",
+   "starter": "def precision_at_k(recommended, bought, k):\n    pass\n",
+   "solution": "def precision_at_k(recommended, bought, k):\n    return len(set(recommended[:k]) & set(bought)) / k\n\nprint(precision_at_k(['сөмке', 'ноутбук', 'кітап'], ['ноутбук'], 3))",
+   "hints": [
+    "<code>len(set(recommended[:k]) &amp; set(bought)) / k</code>"
+   ],
+   "check": {
+    "tests": "_r = precision_at_k(['сөмке', 'ноутбук', 'кітап'], ['ноутбук'], 3)\nassert _r is not None and abs(_r - 1 / 3) < 1e-9, \"Үш ұсыныстың біреуі сатып алынды: 1/3\"\nassert abs(precision_at_k(['a', 'b', 'c', 'd', 'e'], ['b', 'e', 'x'], 5) - 0.4) < 1e-9, \"Сабақтағы мысал: precision@5 = 2 / 5 = 0.4\"\nassert precision_at_k(['a', 'b', 'c'], ['c'], 2) == 0, \"Тек алғашқы k тауар есептеледі\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Танымалдылық, алынғандарсыз",
+   "prompt": "<p><code>pop = df['item'].value_counts()</code>. <code>popular_for(user_id, k=3)</code> функциясын жазыңыз: <code>pop</code> ретімен ең танымал, бірақ клиент әлі алмаған <code>k</code> тауардың тізімін қайтарсын.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\npop = df['item'].value_counts()\n\ndef popular_for(user_id, k=3):\n    pass\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\npop = df['item'].value_counts()\n\ndef popular_for(user_id, k=3):\n    owned = set(df.loc[df['user_id'] == user_id, 'item'])\n    return [i for i in pop.index if i not in owned][:k]\n\nprint(popular_for(1), popular_for(2))",
+   "hints": [
+    "<code>owned = set(df.loc[df['user_id'] == user_id, 'item'])</code>",
+    "<code>[i for i in pop.index if i not in owned][:k]</code>"
+   ],
+   "check": {
+    "tests": "_pop = df['item'].value_counts()\n_own = lambda u: set(df.loc[df['user_id'] == u, 'item'])\n_ok = lambda u: [i for i in _pop.index if i not in _own(u)][:3]\n_us = [u for u in sorted(df['user_id'].unique())[:40] if len(_own(u) & set(_pop.index[:5])) <= 2]\nassert popular_for(1) is not None and list(popular_for(1)) == ['бөтелке', 'зарядтағыш', 'смартфон'], \"popular_for(1) → ['бөтелке', 'зарядтағыш', 'смартфон']\"\nassert all(list(popular_for(u)) == _ok(u) for u in _us), \"Клиент алған тауарлар ұсынылмауы керек, рет — pop бойынша\"\nassert len(popular_for(1, k=5)) == 5, \"k параметрі ескерілуі керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бірге сатып алу саны",
+   "prompt": "<p>User-item матрицасы <code>M</code> (0/1) дайын. <code>co = M.T @ M</code> — 15 × 15 кесте: ұяшықта екі тауарды бірге алған клиенттер саны, диагоналда — тауардың өз сатылымы. <code>n_both</code> — смартфон мен құлаққапты бірге алғандар саны (int). <code>co_phone</code> — смартфонмен ең жиі бірге алынған 3 тауар (өзін қоспай, кему ретімен).</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\nM = pd.crosstab(df['user_id'], df['item'])\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\nM = pd.crosstab(df['user_id'], df['item'])\nco = M.T @ M\nn_both = int(co.loc['смартфон', 'құлаққап'])\nco_phone = list(co['смартфон'].drop('смартфон').sort_values(ascending=False).head(3).index)\nprint(n_both, co_phone)",
+   "hints": [
+    "<code>M.T @ M</code> — матрицалық көбейту; нәтиже DataFrame, индексі мен бағандары — тауарлар",
+    "<code>co['смартфон'].drop('смартфон').sort_values(ascending=False).head(3).index</code>"
+   ],
+   "check": {
+    "tests": "_u = set(df.loc[df['item'] == 'смартфон', 'user_id']); _h = set(df.loc[df['item'] == 'құлаққап', 'user_id'])\n_cnt = {i: len(_u & set(df.loc[df['item'] == i, 'user_id'])) for i in df['item'].unique() if i != 'смартфон'}\nassert co.shape == (15, 15) and int(co.loc['смартфон', 'смартфон']) == len(_u), \"co — 15 × 15: M.T @ M; диагональ — тауардың сатылымы\"\nassert n_both == len(_u & _h), f\"n_both = {len(_u & _h)} болуы керек\"\nassert len(co_phone) == 3 and 'смартфон' not in co_phone and sorted((_cnt[i] for i in co_phone), reverse=True) == sorted(_cnt.values(), reverse=True)[:3], \"co_phone — смартфонмен бірге ең жиі алынған 3 тауар\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ұқсас тауарлар функциясы",
+   "prompt": "<p>«Осыны алғандар мынаны да алды» блогы. <code>sim</code> — тауарлар арасындағы косинус ұқсастық кестесі (<code>cosine_similarity(M.T)</code>). <code>similar_items(item, k=3)</code> функциясы <code>item</code>-ге ең ұқсас <code>k</code> тауардың тізімін (өзін қоспай, ұқсастық кему ретімен) қайтарсын.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\nM = pd.crosstab(df['user_id'], df['item'])\nfrom sklearn.metrics.pairwise import cosine_similarity\n\ndef similar_items(item, k=3):\n    pass\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\nM = pd.crosstab(df['user_id'], df['item'])\nfrom sklearn.metrics.pairwise import cosine_similarity\nsim = pd.DataFrame(cosine_similarity(M.T), index=M.columns, columns=M.columns)\n\ndef similar_items(item, k=3):\n    return list(sim[item].drop(item).sort_values(ascending=False).head(k).index)\n\nprint(similar_items('ноутбук'), similar_items('футболка'))",
+   "hints": [
+    "<code>sim = pd.DataFrame(cosine_similarity(M.T), index=M.columns, columns=M.columns)</code>",
+    "<code>sim[item].drop(item).sort_values(ascending=False).head(k).index</code>"
+   ],
+   "check": {
+    "tests": "_A = M.values.astype(float); _nr = np.sqrt((_A ** 2).sum(axis=0))\n_S = pd.DataFrame((_A.T @ _A) / np.outer(_nr, _nr), index=M.columns, columns=M.columns)\n_top = lambda it, k: sorted(_S[it].drop(it).values, reverse=True)[:k]\n_chk = lambda it, k: len(similar_items(it, k)) == k and it not in similar_items(it, k) and _np_ok(it, k)\n_np_ok = lambda it, k: np.allclose(sorted((_S.loc[it, j] for j in similar_items(it, k)), reverse=True), _top(it, k))\nassert similar_items('ноутбук') is not None and _chk('ноутбук', 3), \"similar_items('ноутбук') — ноутбукке косинусы ең жоғары 3 тауар (өзін қоспай)\"\nassert _chk('футболка', 3) and _chk('смартфон', 5), \"Басқа тауарлар мен k үшін де жұмыс істеуі керек\"",
+    "mustInclude": [
+     "cosine_similarity("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Танымалдылықты офлайн бағалау",
+   "prompt": "<p>Әр клиенттің (кемінде 2 сатып алуы бар) соңғы сатып алуы жасырылды: <code>test</code> — жасырылғандар, <code>train</code> — қалғаны. Танымалдылық baseline-ын бағалаңыз: <code>pop = train['item'].value_counts()</code>; әр test клиентіне <code>pop</code> ретімен ол train-де алмаған алғашқы 3 тауарды ұсыныңыз. Жасырылған тауар сол 3-тің ішінде болса — «hit». <code>hit_pop</code> — hit үлесі, <code>n_users</code> — test клиенттерінің саны.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\ncnt = df['user_id'].value_counts()\nmulti = df[df['user_id'].isin(cnt[cnt >= 2].index)]\ntest = multi.groupby('user_id').tail(1)\ntrain = df.drop(test.index)\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\ncnt = df['user_id'].value_counts()\nmulti = df[df['user_id'].isin(cnt[cnt >= 2].index)]\ntest = multi.groupby('user_id').tail(1)\ntrain = df.drop(test.index)\npop = train['item'].value_counts()\nhits = []\nfor u, hidden in zip(test['user_id'], test['item']):\n    owned = set(train.loc[train['user_id'] == u, 'item'])\n    recs = [i for i in pop.index if i not in owned][:3]\n    hits.append(hidden in recs)\nhit_pop = np.mean(hits)\nn_users = len(test)\nprint(n_users, round(hit_pop, 3))",
+   "hints": [
+    "<code>for u, hidden in zip(test['user_id'], test['item']):</code>",
+    "<code>owned = set(train.loc[train['user_id'] == u, 'item'])</code>; <code>recs = [i for i in pop.index if i not in owned][:3]</code>"
+   ],
+   "check": {
+    "tests": "_cnt = df['user_id'].value_counts()\n_mu = df[df['user_id'].isin(_cnt[_cnt >= 2].index)]\n_te = _mu.groupby('user_id').tail(1); _tr = df.drop(_te.index)\n_pop = _tr['item'].value_counts()\n_h = [it in [i for i in _pop.index if i not in set(_tr.loc[_tr['user_id'] == u, 'item'])][:3] for u, it in zip(_te['user_id'], _te['item'])]\nassert n_users == len(_te), f\"n_users = {len(_te)} болуы керек\"\nassert abs(hit_pop - np.mean(_h)) <= 0.03, f\"hit_pop ≈ {np.mean(_h):.3f} болуы керек: pop = train['item'].value_counts(), алынған тауарларды алып тастаңыз\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Item-item офлайн бағалау",
+   "prompt": "<p>Сол бөлу бойынша item-item-ді бағалаңыз. Тек train-нен: <code>M = pd.crosstab(train['user_id'], train['item'])</code>, <code>sim = cosine_similarity(M.T)</code>. Әр test клиенті үшін скор = <code>sim @ M.loc[u].values</code>; train-де алынған тауарларды алып тастап, скоры ең жоғары 3 тауарды ұсыныңыз (<code>sort_values(ascending=False, kind='stable')</code>). <code>hit_item</code> — hit үлесі. Салыстыру үшін танымалдылықтың hit үлесі <code>hit_pop</code> (алдыңғы есептегідей). <code>better</code> = <code>'item'</code> немесе <code>'pop'</code>.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\ncnt = df['user_id'].value_counts()\nmulti = df[df['user_id'].isin(cnt[cnt >= 2].index)]\ntest = multi.groupby('user_id').tail(1)\ntrain = df.drop(test.index)\nfrom sklearn.metrics.pairwise import cosine_similarity\n",
+   "solution": "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('purchases.csv')\ncnt = df['user_id'].value_counts()\nmulti = df[df['user_id'].isin(cnt[cnt >= 2].index)]\ntest = multi.groupby('user_id').tail(1)\ntrain = df.drop(test.index)\nfrom sklearn.metrics.pairwise import cosine_similarity\nM = pd.crosstab(train['user_id'], train['item'])\nsim = cosine_similarity(M.T)\npop = train['item'].value_counts()\nhi, hp = [], []\nfor u, hidden in zip(test['user_id'], test['item']):\n    own = M.loc[u]\n    scores = pd.Series(sim @ own.values, index=M.columns)\n    recs = list(scores[own == 0].sort_values(ascending=False, kind='stable').head(3).index)\n    hi.append(hidden in recs)\n    hp.append(hidden in [i for i in pop.index if own.get(i, 0) == 0][:3])\nhit_item, hit_pop = np.mean(hi), np.mean(hp)\nbetter = 'item' if hit_item > hit_pop else 'pop'\nprint(round(hit_item, 3), round(hit_pop, 3), better)",
+   "hints": [
+    "<code>own = M.loc[u]</code>; <code>scores = pd.Series(sim @ own.values, index=M.columns)</code>",
+    "<code>scores[own == 0].sort_values(ascending=False, kind='stable').head(3).index</code>",
+    "Барлық test клиенті train-де бар (кемінде 1 сатып алу қалды), сондықтан <code>M.loc[u]</code> қате бермейді."
+   ],
+   "check": {
+    "tests": "_cnt = df['user_id'].value_counts()\n_mu = df[df['user_id'].isin(_cnt[_cnt >= 2].index)]\n_te = _mu.groupby('user_id').tail(1); _tr = df.drop(_te.index)\nfrom sklearn.metrics.pairwise import cosine_similarity as _cs\n_M = pd.crosstab(_tr['user_id'], _tr['item']); _S = _cs(_M.T); _pop = _tr['item'].value_counts()\n_hi = []; _hp = []\nfor _u, _it in zip(_te['user_id'], _te['item']):\n    _o = _M.loc[_u]; _sc = pd.Series(_S @ _o.values, index=_M.columns)\n    _hi.append(_it in list(_sc[_o == 0].sort_values(ascending=False, kind='stable').head(3).index))\n    _hp.append(_it in [i for i in _pop.index if _o.get(i, 0) == 0][:3])\nassert abs(hit_item - np.mean(_hi)) <= 0.03, f\"hit_item ≈ {np.mean(_hi):.3f} болуы керек: sim тек train-нен, алынған тауарлар алынып тасталады\"\nassert abs(hit_pop - np.mean(_hp)) <= 0.03, f\"hit_pop ≈ {np.mean(_hp):.3f} болуы керек\"\nassert better == ('item' if np.mean(_hi) > np.mean(_hp) else 'pop'), \"better — hit үлесі жоғары тәсіл\"",
+    "mustInclude": [
+     "cosine_similarity("
+    ]
+   }
+  }
  ]
 });

@@ -376,9 +376,81 @@ print(round(w, 3), round(b, 3))    # 2.0 1.0</code></pre>
       ]
     },
     {
+      id: 'mm-log', title: 'Логарифм, экспонента, сигмоид және тізбек ережесі', minutes: 18,
+      body: `
+<p>Сызықтық модель кез келген санды болжай алады. Бірақ классификацияда бізге <b>ықтималдық</b> керек: 0 мен 1 аралығындағы сан. Сол үшін үш құрал қажет: экспонента, логарифм және оларды біріктіретін сигмоид. Ал модельді үйрету үшін күрделі функцияның туындысын табатын тізбек ережесі (chain rule) керек. Логистикалық регрессия, нейрондық желілер, градиенттік бустинг — бәрі осы төртеуіне сүйенеді.</p>
+<h3>1. Экспонента мен логарифм: бір-біріне кері амалдар</h3>
+<p><b>Экспонента</b> e^x (e ≈ 2.718) — «x рет еселеп өсу». <b>Натурал логарифм</b> ln(y) кері сұраққа жауап береді: «y алу үшін e-ні қандай дәрежеге шығару керек?»</p>
+<pre><code>e^0 = 1          ln(1) = 0
+e^1 ≈ 2.718      ln(2.718) ≈ 1
+ln(e^x) = x      e^(ln y) = y        # ln тек y &gt; 0 үшін анықталған</code></pre>
+<table>
+<tr><th>Ереже</th><th>Мағынасы</th><th>Мысал</th></tr>
+<tr><td>ln(a × b) = ln a + ln b</td><td>көбейту → қосу</td><td>ln(6) = ln(2) + ln(3) ≈ 0.693 + 1.099</td></tr>
+<tr><td>ln(a / b) = ln a − ln b</td><td>бөлу → азайту</td><td>ln(0.5) = ln(1) − ln(2) ≈ −0.693</td></tr>
+<tr><td>ln(a^k) = k × ln a</td><td>дәреже → көбейткіш</td><td>ln(8) = 3 × ln(2) ≈ 2.079</td></tr>
+<tr><td>e^(a + b) = e^a × e^b</td><td>қосу → көбейту</td><td>e^3 = e^1 × e^2</td></tr>
+</table>
+<p>Python-да: <code>math.exp(x)</code>, <code>math.log(x)</code> (натурал), <code>math.log10(x)</code>, <code>math.log2(x)</code>; NumPy-да <code>np.exp</code>, <code>np.log</code>.</p>
+<h3>2. Неге log шкаласы?</h3>
+<ul>
+<li><b>Қисық деректі түзетеді.</b> Жалақы: 200 мың, 300 мың, 500 мың, 5 млн ₸. Соңғы мән графикті де, орташаны да бұзады. ln алсақ: 12.2, 12.6, 13.1, 15.4 — мәндер жақындайды. Модельдерде табыс, баға, көрілім саны сияқты белгілерге жиі <code>np.log1p(x)</code> (= ln(1 + x), нөлге де жарайды) қолданылады.</li>
+<li><b>Еселік өсуді түзу сызыққа айналдырады.</b> Ай сайын 10% өсу log шкаласында түзу. log айырмасы ≈ салыстырмалы өзгеріс: ln(110) − ln(100) ≈ 0.095.</li>
+<li><b>Көбейтіндіні қосындыға айналдырады.</b> 1 000 ықтималдықты көбейтсек (әрқайсысы 0.5), нәтиже 0.5^1000 ≈ 10^(−301), ал тағы бірнеше жүз көбейткіштен кейін компьютер оны дәл 0 деп сақтайды (underflow). Логарифмдерін қоссақ, 1000 × ln(0.5) ≈ −693 — қалыпты сан. Сондықтан ML-де likelihood емес, <b>log-likelihood</b> қолданылады.</li>
+</ul>
+<h3>3. Сигмоид: кез келген санды ықтималдыққа айналдыру</h3>
+<pre><code>σ(z) = 1 / (1 + e^(−z))</code></pre>
+<table>
+<tr><th>z</th><td>−4</td><td>−2</td><td>0</td><td>2</td><td>4</td></tr>
+<tr><th>σ(z)</th><td>0.018</td><td>0.119</td><td>0.5</td><td>0.881</td><td>0.982</td></tr>
+</table>
+<ul>
+<li>z үлкен оң болса, σ → 1; үлкен теріс болса, σ → 0; σ(0) = 0.5.</li>
+<li>Симметрия: σ(−z) = 1 − σ(z).</li>
+<li>Логистикалық регрессия: z = w · x + b (сызықтық модель, mm-5), p = σ(z).</li>
+<li>Кері бағыт: z = ln(p / (1 − p)) — <b>log-odds</b> (логит). Сондықтан логистикалық регрессияның коэффициенті «белгі 1-ге өскенде log-odds қаншаға өзгереді» дегенді білдіреді.</li>
+</ul>
+<h3>4. Log-loss: сенімді қате қымбат тұрады</h3>
+<p>Ықтималдық болжайтын модельге MSE емес, <b>log-loss</b> (binary cross-entropy) қолданылады. Бір мысал үшін:</p>
+<pre><code>loss = −[ y × ln(p) + (1 − y) × ln(1 − p) ]</code></pre>
+<p>y = 1 болса, loss = −ln(p); y = 0 болса, loss = −ln(1 − p). Яғни «дұрыс жауапқа берілген ықтималдықтың минус логарифмі».</p>
+<p><b>Қадамдап мысал.</b> Үш клиент: шын жауап y = [1, 0, 1], модель болжамы p = [0.9, 0.2, 0.6].</p>
+<ol>
+<li>1-клиент (y = 1, p = 0.9): −ln(0.9) = 0.105. Сенімді әрі дұрыс — айыппұл аз.</li>
+<li>2-клиент (y = 0, p = 0.2): −ln(1 − 0.2) = −ln(0.8) = 0.223.</li>
+<li>3-клиент (y = 1, p = 0.6): −ln(0.6) = 0.511. Дұрыс жақта, бірақ сенімсіз.</li>
+<li>Log-loss = (0.105 + 0.223 + 0.511) / 3 ≈ <b>0.280</b>.</li>
+</ol>
+<p>Егер 1-клиентке p = 0.1 берсек (сенімді әрі қате): −ln(0.1) = 2.303 — 22 есе үлкен айыппұл. p → 0 кезінде айыппұл шексіздікке ұмтылады. Әрдайым p = 0.5 деп жауап беретін модельдің log-loss-ы ln(2) ≈ 0.693: бұл «ештеңе білмейтін» деңгей.</p>
+<h3>5. Тізбек ережесі (chain rule)</h3>
+<p>Функциялар бірінің ішіне бірі салынса, туындылар <b>көбейтіледі</b>:</p>
+<pre><code>y = f(g(x))     →     dy/dx = f′(g(x)) × g′(x)</code></pre>
+<p><b>Интуиция.</b> x 1-ге өссе, g 3 есе жылдам өзгереді; g 1-ге өссе, f 4 есе жылдам өзгереді. Сонда x-тің f-ке әсері 3 × 4 = 12 есе. Тісті дөңгелектер сияқты.</p>
+<p><b>Қадамдап мысал.</b> y = (3x + 1)², x = 1 нүктесіндегі туынды.</p>
+<ol>
+<li>Ішкі функция: g = 3x + 1, g′ = 3. x = 1-де g = 4.</li>
+<li>Сыртқы функция: f = g², f′ = 2g = 8.</li>
+<li>dy/dx = 8 × 3 = <b>24</b>.</li>
+<li>Тексеру: (3 × 1.001 + 1)² − 16 = 0.024009, бөлеміз 0.001-ге → ≈ 24.</li>
+</ol>
+<p><b>Логистикалық регрессияның градиенті.</b> Бір мысал үшін үш функция тізбектеледі: z = w × x → p = σ(z) → loss(p). Тізбек ережесі:</p>
+<pre><code>dloss/dw = dloss/dp × dp/dz × dz/dw
+         = (p − y) / (p(1 − p))  ×  p(1 − p)  ×  x
+         = (p − y) × x</code></pre>
+<p>Мұнда σ′(z) = σ(z)(1 − σ(z)) қолданылды. Нәтиже таңғаларлық қарапайым: <b>қате (p − y) × белгі x</b>. Бұл MSE градиентімен (mm-9) бірдей пішін. Нейрондық желілердегі backpropagation — осы ереженің көп қабатқа қайталануы.</p>
+<div class="tip"><b>Жиі қателер:</b> (1) <code>math.log(0)</code> қате береді: log-loss есептегенде p-ны [1e-15, 1 − 1e-15] аралығына қысыңыз. (2) ln(a + b) = ln a + ln b деп жазу: ереже тек көбейтіндіге жарайды. (3) Тізбек ережесінде ішкі функцияның туындысын (g′) ұмыту. (4) log-loss-қа ықтималдық орнына класс белгісін (0/1) беру: <code>predict</code> емес, <code>predict_proba</code> керек. (5) <code>math.log</code>-ты ондық логарифм деп ойлау: ол натурал.</div>`,
+      exercises: [
+        { type: 'number', xp: 10, prompt: 'ln(a) = 2.0 және ln(b) = 1.5 екені белгілі. ln(a² / b) қанша?', answer: 2.5, tol: 0.001, explain: 'ln(a² / b) = 2 × ln(a) − ln(b) = 2 × 2.0 − 1.5 = 2.5.' },
+        { type: 'number', xp: 10, prompt: 'y = (2x + 1)³. Тізбек ережесімен x = 1 нүктесіндегі dy/dx мәнін табыңыз.', answer: 54, tol: 0.01, explain: 'Ішкі g = 2x + 1, g′ = 2, x = 1-де g = 3. Сыртқы f = g³, f′ = 3g² = 27. dy/dx = 27 × 2 = 54.' },
+        { type: 'python', xp: 20, prompt: '<code>sigmoid(z)</code> және <code>log_loss(y, p)</code> функцияларын жазыңыз. <code>log_loss</code> екі тізім алады (шын белгілер 0/1 және болжанған ықтималдықтар) және барлық мысал бойынша <b>орташа</b> log-loss қайтарады.', starter: 'import math\n\ndef sigmoid(z):\n    pass\n\ndef log_loss(y, p):\n    pass\n', solution: 'import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\ndef log_loss(y, p):\n    total = 0\n    for yi, pi in zip(y, p):\n        total += -(yi * math.log(pi) + (1 - yi) * math.log(1 - pi))\n    return total / len(y)', check: { tests: 'import math as _m\nassert sigmoid(0) is not None, "sigmoid мән қайтаруы керек"\nassert abs(sigmoid(0) - 0.5) < 1e-12, "sigmoid(0) = 0.5"\nassert abs(sigmoid(2) - 0.8807970779778823) < 1e-9, "sigmoid(2) ≈ 0.881: 1 / (1 + e^(−z))"\nassert abs(sigmoid(-3) + sigmoid(3) - 1) < 1e-12, "sigmoid(−z) = 1 − sigmoid(z)"\n_l = log_loss([1, 0, 1], [0.9, 0.2, 0.6])\nassert _l is not None, "log_loss мән қайтаруы керек"\nassert abs(_l - 0.2797765635793423) < 1e-9, f"log_loss([1, 0, 1], [0.9, 0.2, 0.6]) ≈ 0.280 болуы керек, сізде {_l:.4f}. Орташа алуды және y = 0 үшін ln(1 − p) қолдануды тексеріңіз"\nassert abs(log_loss([1], [0.1]) - _m.log(10)) < 1e-9, "Сенімді қате: log_loss([1], [0.1]) = −ln(0.1) ≈ 2.303"\nassert abs(log_loss([0, 1], [0.5, 0.5]) - _m.log(2)) < 1e-9, "p = 0.5 болса, log-loss = ln(2) ≈ 0.693"', mustInclude: ['def sigmoid', 'def log_loss'] }, hints: ['<code>1 / (1 + math.exp(-z))</code>', 'Бір мысал: <code>-(yi * math.log(pi) + (1 - yi) * math.log(1 - pi))</code>', 'Қосындыны <code>len(y)</code>-ке бөліңіз.'] },
+        { type: 'python', xp: 25, prompt: 'Бір мысал, бір салмақ: z = w × x, p = sigmoid(z), loss = −[y ln p + (1 − y) ln(1 − p)]. Тізбек ережесінен шыққан формуламен <code>grad(w, x, y)</code> функциясын жазыңыз: dloss/dw = (p − y) × x. Сосын <code>w = 0.5, x = 2, y = 1</code> үшін бір gradient descent қадамын жасаңыз: <code>w_new = w − lr × grad</code>, <code>lr = 0.1</code>.', starter: 'import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\ndef loss(w, x, y):\n    p = sigmoid(w * x)\n    return -(y * math.log(p) + (1 - y) * math.log(1 - p))\n\ndef grad(w, x, y):\n    pass\n\nw, x, y, lr = 0.5, 2, 1, 0.1\n', solution: 'import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\ndef loss(w, x, y):\n    p = sigmoid(w * x)\n    return -(y * math.log(p) + (1 - y) * math.log(1 - p))\n\ndef grad(w, x, y):\n    return (sigmoid(w * x) - y) * x\n\nw, x, y, lr = 0.5, 2, 1, 0.1\nw_new = w - lr * grad(w, x, y)\nprint(grad(w, x, y), w_new, loss(w, x, y), loss(w_new, x, y))', check: { tests: 'import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\n_ls = lambda w, x, y: -(y * _m.log(_sg(w * x)) + (1 - y) * _m.log(1 - _sg(w * x)))\nassert grad(0.5, 2, 1) is not None, "grad мән қайтаруы керек"\nfor _w, _x, _y in [(0.5, 2, 1), (-1.0, 3, 0), (0.2, -1.5, 1), (2.0, 0.5, 0)]:\n    _num = (_ls(_w + 1e-6, _x, _y) - _ls(_w - 1e-6, _x, _y)) / 2e-6\n    assert abs(grad(_w, _x, _y) - _num) < 1e-5, f"grad({_w}, {_x}, {_y}) ≈ {_num:.4f} болуы керек (сандық туынды), сізде {grad(_w, _x, _y):.4f}. Формула: (p − y) × x"\n_g = (_sg(1.0) - 1) * 2\nassert abs(w_new - (0.5 - 0.1 * _g)) < 1e-9, f"w_new = 0.5 − 0.1 × ({_g:.4f}) ≈ {0.5 - 0.1 * _g:.4f} болуы керек"\nassert _ls(w_new, 2, 1) < _ls(0.5, 2, 1), "Қадамнан кейін loss азаюы керек"', mustInclude: ['def grad'] }, hints: ['<code>p = sigmoid(w * x)</code>, сосын <code>(p - y) * x</code>', '<code>w_new = w - lr * grad(w, x, y)</code>'] },
+        { type: 'quiz', xp: 10, prompt: 'Модель 2 000 тәуелсіз бақылаудың likelihood-ын есептеуі керек (әрқайсысының ықтималдығы 0.3 шамасында). Неге ықтималдықтарды көбейтпей, логарифмдерін қосады?', options: ['Логарифм ықтималдықтарды үлкейтеді', 'Көбейтінді тым кішкентай болып, компьютерде 0-ге дөңгелектенеді; логарифмдер қосындысы тұрақты әрі максимум нүктесі сол күйінде қалады', 'Қосу көбейтуден әрдайым дәлірек', 'Логарифм теріс ықтималдықтарды түзетеді'], answer: 1, explain: '0.3^2000 float-тың ең кіші мәнінен әлдеқайда кіші (underflow). ln өспелі функция, сондықтан likelihood пен log-likelihood бір нүктеде максимумға жетеді. Қосындының туындысын алу да оңай.' }
+      ]
+    },
+    {
       id: 'mm-gate', gate: true, title: 'Модуль емтиханы: Math for ML', minutes: 25,
       body: `
-<p>Қорытынды тексеріс. Python тапсырмаларында тек стандарт кітапхана мен тізімдер (NumPy жоқ).</p>`,
+<p>Қорытынды тексеріс. Емтихан тапсырмаларын стандарт кітапхана мен тізімдер арқылы шешесіз (NumPy-сыз): формулаларды өзіңіз жазыңыз.</p>`,
       exercises: [
         { type: 'python', xp: 40, prompt: '<code>knn_predict(points, labels, q, k)</code> функциясын жазыңыз: <code>q</code>-ға Евклид бойынша ең жақын <code>k</code> нүктенің <code>labels</code> мәндерінің орташасын қайтарсын.', starter: 'def knn_predict(points, labels, q, k):\n    pass\n', solution: 'def knn_predict(points, labels, q, k):\n    def dist(u, v):\n        return sum((a - b) ** 2 for a, b in zip(u, v)) ** 0.5\n    idx = sorted(range(len(points)), key=lambda i: dist(points[i], q))[:k]\n    return sum(labels[i] for i in idx) / k', check: { tests: '_pts = [[0, 0], [1, 0], [5, 5], [6, 5], [10, 10]]\n_lab = [10, 20, 50, 70, 100]\nassert abs(knn_predict(_pts, _lab, [0.2, 0], 1) - 10) < 1e-9, "k=1: ең жақын [0, 0], нәтиже 10"\nassert abs(knn_predict(_pts, _lab, [0.4, 0], 2) - 15) < 1e-9, "k=2: [0, 0] мен [1, 0], орташа 15"\nassert abs(knn_predict(_pts, _lab, [5.4, 5], 2) - 60) < 1e-9, "k=2: [5, 5] мен [6, 5], орташа 60"\nassert abs(knn_predict(_pts, _lab, [9, 9], 3) - (50 + 70 + 100) / 3) < 1e-9, "k=3: [10, 10], [6, 5], [5, 5]"' }, hints: [] },
         { type: 'python', xp: 40, prompt: 'Екі белгілі модель ŷ = X · w (X-те intercept бағаны бар). <code>gd_matrix(X, y, lr, epochs)</code> функциясын тізімдермен жазыңыз: w нөлдерден басталады, әр қадамда ∂MSE/∂wⱼ = (2/n) Σᵢ eᵢ · X[i][j], мұнда eᵢ = ŷᵢ − yᵢ. Соңғы w тізімін қайтарсын.', starter: 'def gd_matrix(X, y, lr, epochs):\n    pass\n', solution: 'def gd_matrix(X, y, lr, epochs):\n    n, d = len(X), len(X[0])\n    w = [0.0] * d\n    for _ in range(epochs):\n        errs = [sum(a * b for a, b in zip(row, w)) - t for row, t in zip(X, y)]\n        grad = [2 / n * sum(errs[i] * X[i][j] for i in range(n)) for j in range(d)]\n        w = [wj - lr * gj for wj, gj in zip(w, grad)]\n    return w', check: { tests: '_X = [[1, 0, 1], [1, 1, 0], [1, 1, 1], [1, 2, 1], [1, 0, 2]]\n_y = [1 + 2 * r[1] + 3 * r[2] for r in _X]\n_w = gd_matrix(_X, _y, 0.05, 5000)\nassert isinstance(_w, list) and len(_w) == 3, "Ұзындығы 3 тізім қайтарыңыз"\nfor _a, _e in zip(_w, [1, 2, 3]):\n    assert abs(_a - _e) < 0.01, f"w ≈ [1, 2, 3] күтілді, {[round(v, 3) for v in _w]} шықты"\n_w1 = gd_matrix([[1, 1], [1, 2]], [3, 5], 0.1, 1)\nassert abs(_w1[0] - 0.8) < 1e-9 and abs(_w1[1] - 1.3) < 1e-9, "1 қадамнан кейін w = [0.8, 1.3] болуы керек"' }, hints: [] },

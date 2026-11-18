@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 2: Бағдарламалау / M2.1</nav>
 <article class="reading">
-<p class="eyebrow">M2.1 · 35–50 сағат · 14 сабақ</p>
+<p class="eyebrow">M2.1 · 35–50 сағат · 15 сабақ</p>
 <h1>M2.1 Python Fundamentals: Python негіздері қазақша</h1>
 <p class="prose">Python — data маманының негізгі тілі. Мұнда кодты браузерде жазып, бірден іске қосасыз. Алғаш іске қосқанда Python ортасы жүктеледі (шамамен 10 МБ), кейін код жылдам орындалады.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m2-1">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m2-1">Барлық тапсырмалар</a></p>
@@ -1114,7 +1114,7 @@ print(f"Орташа чек: {8450.567:.2f}")   # 8450.57</code></pre>
 <tr><th>Әдіс</th><th>Мысал</th><th>Нәтиже</th></tr>
 <tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
 <tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
-<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>2</code></td></tr>
 <tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
 </table>
 <p>Жол әдістері бастапқы жолды өзгертпейді, жаңа жол қайтарады. Сондықтан нәтижені сақтау керек: <code>name = name.strip()</code>.</p>
@@ -1181,7 +1181,7 @@ print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
 items = ["Термос", "Блокнот", "Рюкзак"]
 items.sort()
 print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
-<p>Мәтіндер әліпби ретімен сұрыпталады. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
+<p>Мәтіндер әріптердің код нөмірі бойынша сұрыпталады: орыс әліпбиіндегі әріптер үшін бұл әліпби ретімен бірдей, ал қазақтың төл әріптері (Ә, Қ, Ө, Ү…) басқа орынға түсуі мүмкін. <code>.sort()</code> тізімнің өзін өзгертеді, ал <code>sorted()</code> жаңа тізім қайтарады, ескісі өзгермейді.</p>
 <h3>SQL-мен салыстыру</h3>
 <table>
 <tr><th>SQL</th><th>Python list</th></tr>
@@ -1323,7 +1323,7 @@ print(customer.get("phone", "жоқ"))   # кілт жоқ болса, әдеп�
 counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
-print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
+print(counts)   # {'Алматы': 3, 'Астана': 1, 'Шымкент': 1}</code></pre>
 <p>Кілттер мен мәндерді аралау: <code>for key, value in counts.items():</code></p>
 <h3>Сөздіктер тізімі: деректер кестесі</h3>
 <p>Бір сөздік бір жазбаны сипаттаса, сөздіктер тізімі бүтін кестені сипаттайды. Әр сөздік — бір жол, кілттер — баған атаулары:</p>
@@ -1403,7 +1403,7 @@ print(sum(values))   # 355</code></pre>
     if visitors &lt; 0 or buyers &lt; 0:
         raise ValueError("сандар теріс болмауы керек")
     return buyers / visitors * 100 if visitors else 0</code></pre>
-<p><code>raise</code> қатені бірден тоқтатып, себебін хабарлайды. Мұндай функцияны қолданған адам қатесін бірден көреді.</p>
+<p><code>raise</code> функцияны бірден тоқтатып, қатенің себебін хабарлайды. Мұндай функцияны қолданған адам қатесін бірден көреді.</p>
 <div class="tip"><code>try</code> блогын тек қате болуы мүмкін жолға қойыңыз. Бүкіл кодты <code>try</code>-ға орасаңыз, қай жерде қате болғанын табу қиын.</div></div>
 <p><a href="../../#lesson/m2-1/11">Сабақты интерактивті түрде ашу →</a></p>
 </section>
@@ -1434,12 +1434,100 @@ def top_city(rows): ...</code></pre>
 <p>Қалалар бойынша табыстардың қосындысы жалпы табысқа тең болуы керек. Мұндай «тексеру теңдігі» аналитикте маңызды әдет: егер сандар сәйкес келмесе, бір жерде жол жоғалды немесе екі рет саналды.</p></div>
 <p><a href="../../#lesson/m2-1/12">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="py-14">
+<h2>14. Кортеж, жиын, lambda және модульдер</h2>
+<div class="prose">
+<p>Тізім мен сөздікті білесіз. Python-да дерекпен жұмыста күнде кездесетін тағы екі жинақ бар: <b>кортеж</b> (tuple) және <b>жиын</b> (set). Оған қоса бұл сабақта бір жолдық функцияны (<code>lambda</code>), дайын модульдерді және файлды оқуды үйренесіз. pandas-қа өтпес бұрын осының бәрі керек.</p>
+<h3>Кортеж (tuple)</h3>
+<p>Кортеж — өзгермейтін тізім. Жай жақшамен жазылады. Бір жазбаның бірнеше өрісін бірге ұстауға ыңғайлы:</p>
+<pre><code>row = ("Алматы", 69000)
+print(row[0])        # Алматы
+print(len(row))      # 2
+row[1] = 70000       # TypeError: кортежді өзгертуге болмайды</code></pre>
+<p>Ең пайдалысы — <b>жаю</b> (unpacking): кортеждің мәндерін бірден бірнеше айнымалыға тарату.</p>
+<pre><code>city, revenue = row
+print(city, revenue)             # Алматы 69000
+
+a, b = 5, 10
+a, b = b, a                      # мәндерді ауыстыру
+
+for city, revenue in [("Алматы", 69000), ("Астана", 104000)]:
+    print(f"{city}: {revenue}")</code></pre>
+<p>Сіз кортежді бұрын да көрдіңіз: <code>d.items()</code> кілт пен мәнді кортеж етіп береді, ал функция бірнеше мән қайтарғанда (<code>return total, count</code>) да кортеж қайтады.</p>
+<h3>Жиын (set)</h3>
+<p>Жиын — <b>қайталанбайтын</b> мәндер жинағы. Реті сақталмайды. SQL-дегі <code>DISTINCT</code> сияқты:</p>
+<pre><code>cities = ["Алматы", "Астана", "Алматы", "Шымкент", "Алматы"]
+unique = set(cities)
+print(len(unique))               # 3  (COUNT(DISTINCT city))
+print("Астана" in unique)        # True: жиында іздеу өте жылдам</code></pre>
+<p>Екі жиынмен SQL-дегі жиын операцияларын жасауға болады:</p>
+<table>
+<tr><th>Python</th><th>Мағынасы</th><th>SQL</th></tr>
+<tr><td><code>a | b</code></td><td>кемінде біреуінде бар</td><td><code>UNION</code></td></tr>
+<tr><td><code>a &amp; b</code></td><td>екеуінде де бар</td><td><code>INTERSECT</code></td></tr>
+<tr><td><code>a - b</code></td><td>a-да бар, b-да жоқ</td><td><code>EXCEPT</code></td></tr>
+</table>
+<pre><code>march = {1, 2, 3, 7}
+april = {2, 3, 8}
+print(march &amp; april)   # {2, 3}  екі айда да сатып алғандар
+print(april - march)   # {8}     сәуірдегі жаңа клиенттер</code></pre>
+<p>Бос жиын <code>set()</code> деп жазылады. <code>{}</code> — бос сөздік.</p>
+<h3>lambda және sorted(key=...)</h3>
+<p><code>lambda</code> — атаусыз, бір жолдық шағын функция. <code>lambda x: x * 2</code> дегеніміз — «x-ті алып, x * 2 қайтар». Ол көбіне басқа функцияға «неге қарап сұрыптау керек» дегенді айту үшін қолданылады:</p>
+<pre><code>sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000)]
+
+ranked = sorted(sales, key=lambda row: row[1], reverse=True)
+print(ranked)
+# [('Астана', 104000), ('Алматы', 69000), ('Шымкент', 15000)]</code></pre>
+<p><code>key</code> әр элементке қолданылады, ал сұрыптау соның нәтижесі бойынша жүреді. Мұнда <code>row[1]</code> — табыс. <code>key</code> болмаса, кортеждер бірінші элементі (қала атауы) бойынша сұрыпталар еді. <code>max</code> пен <code>min</code> да <code>key</code> қабылдайды: <code>max(sales, key=lambda row: row[1])</code>.</p>
+<h3>Модульдер: import</h3>
+<p>Python-мен бірге жүздеген дайын модуль келеді (стандартты кітапхана). Оларды орнатудың қажеті жоқ, тек <code>import</code> жазасыз:</p>
+<pre><code>import math
+print(math.sqrt(144))            # 12.0
+print(math.ceil(4.1))            # 5 (жоғары қарай дөңгелектеу)
+
+import statistics
+checks = [2150, 2250, 2550, 48000]
+print(statistics.mean(checks))   # 13737.5
+print(statistics.median(checks)) # 2400.0
+
+from datetime import date
+d1 = date.fromisoformat("2024-03-05")
+d2 = date.fromisoformat("2024-04-09")
+print((d2 - d1).days)            # 35
+print(d1.year, d1.month)         # 2024 3
+print(d1.strftime("%Y-%m"))      # 2024-03</code></pre>
+<p><code>import math</code> бүкіл модульді әкеледі, функциясы <code>math.sqrt</code> деп шақырылады. <code>from datetime import date</code> модульден тек бір нәрсені алады, оны бірден <code>date</code> деп жазасыз. Келесі модульдегі <code>import pandas as pd</code> — дәл осы, тек қысқа атаумен.</p>
+<h3>Файлды оқу: with open</h3>
+<p>Осы уақытқа дейін дерек кодтың ішінде жазылған еді. Нақты жұмыста ол файлда жатады. Жұмыс қалтасында <code>orders.csv</code> файлы бар (кофехана тапсырыстары):</p>
+<pre><code>with open("orders.csv", encoding="utf-8") as f:
+    lines = f.read().splitlines()
+
+print(lines[0])      # id,customer_id,order_date,amount,status
+print(len(lines))    # 151 (тақырып + 150 тапсырыс)</code></pre>
+<p><code>with</code> блогы біткенде файл өзі жабылады, тіпті қате шықса да. <code>encoding="utf-8"</code> қазақша мәтін дұрыс оқылуы үшін керек. CSV-ді сөздіктерге айналдыру үшін өткен сабақтағы <code>csv.DictReader</code>-ді қолданамыз, тек енді оған файлдың өзін береміз:</p>
+<pre><code>import csv
+with open("orders.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
+
+print(rows[0]["amount"])   # '2150'  (мәтін!)</code></pre>
+<div class="tip">Файлдан оқылған әр мән — мәтін, ал бос ұяшық — бос жол <code>""</code>. Сондықтан <code>int(r["amount"])</code> жазбас бұрын мәннің бос емес екенін тексеріңіз: <code>if r["amount"]:</code>.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Бір элементті кортеж.</b> <code>(5)</code> — жай сан. Кортеж үшін үтір керек: <code>(5,)</code>.</li>
+<li><b>Жаюда сандардың сәйкес келмеуі.</b> <code>a, b = (1, 2, 3)</code> → <code>ValueError: too many values to unpack</code>.</li>
+<li><b>Жиыннан индекспен алу.</b> <code>unique[0]</code> қате: жиында рет жоқ. Рет керек болса, <code>sorted(unique)</code> жазыңыз.</li>
+<li><b>with блогынан тыс оқу.</b> Блок біткен соң файл жабық: <code>f.read()</code> қате береді. Деректі блок ішінде айнымалыға сақтап алыңыз.</li>
+<li><b>Файл атауында қате.</b> <code>FileNotFoundError</code> шықса, атауды және файл жатқан қалтаны тексеріңіз.</li>
+</ul></div>
+<p><a href="../../#lesson/m2-1/13">Сабақты интерактивті түрде ашу →</a></p>
+</section>
 <section id="py-gate">
-<h2>14. Модуль емтиханы: Python Fundamentals</h2>
+<h2>15. Модуль емтиханы: Python Fundamentals</h2>
 <div class="prose">
 <p>Қорытынды тексеріс: кеңессіз үш тапсырма. Барлығын өтсеңіз, <b>L3 Python for Data</b> деңгейіне бір қадам қаласыз (келесісі — pandas).</p>
 <div class="tip">Функцияның <b>қайтаратын</b> мәні тексеріледі. print міндетті емес.</div></div>
-<p><a href="../../#lesson/m2-1/13">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m2-1/14">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m2-1">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m2-1">Барлық тапсырмалар</a></p>
 </article>

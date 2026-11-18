@@ -127,6 +127,19 @@ print(model.score(X_test, y_test))    # 0.587</code></pre>
 <li><code>fit</code> — только на train. Test R² (0.587) немного ниже train (0.633) — это нормально. Если разница большая — overfitting.</li>
 </ol>
 <div class="tip">В classification добавляйте <code>stratify=y</code>: тогда доля ушедших абонентов в train и test будет одинаковой (≈26%).</div>
+<h3>Train, validation, test: три части</h3>
+<p>В реальном проекте сравнивают не одну модель, а десятки вариантов: какие признаки, какие параметры. Если проверять каждый вариант на test и выбирать лучший, test тоже станет «увиденным». Поэтому данные делят на <b>три</b> части:</p>
+<table>
+<tr><th>Часть</th><th>Доля</th><th>Зачем</th></tr>
+<tr><td><b>Train</b></td><td>≈60%</td><td>модель учится (<code>fit</code>)</td></tr>
+<tr><td><b>Validation</b></td><td>≈20%</td><td>сравниваем варианты, выбираем параметры и порог</td></tr>
+<tr><td><b>Test</b></td><td>≈20%</td><td>в самом конце, <b>один раз</b>: честная оценка выбранной модели</td></tr>
+</table>
+<pre><code># сначала отделяем test, затем делим остаток на train и validation
+X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.25, random_state=42)
+print(len(X_train), len(X_val), len(X_test))   # 240 80 80</code></pre>
+<p>Во втором разбиении <code>test_size=0.25</code>, потому что четверть оставшихся 80% — это 20% всех данных. Если данных мало, вместо отдельной validation используют <b>cross-validation</b> (в конце этого модуля): она по очереди меняет validation внутри train. Какой бы путь вы ни выбрали, правило одно: <b>решения — на validation, итоговая оценка — на test</b>.</p>
 <h3>Частые ошибки</h3>
 <ul>
 <li>Обучить модель на всех данных, а потом оценить на test: модель «уже видела» test.</li>
@@ -306,6 +319,14 @@ print(clf.score(X_test, y_test))  # 0.807 (accuracy)</code></pre>
 </ol>
 <h3>Меняем порог</h3>
 <p>0.5 — не закон. Если отдел удержания (retention) хочет удержать больше абонентов, он снижает порог: <code>(proba &gt;= 0.3).astype(int)</code> — и «рискованными» помечается больше людей.</p>
+<h3>Больше двух классов (multiclass)</h3>
+<p>А если у target не два значения, а три? Например, прогноз тарифа абонента: basic, standard, premium. Код не меняется: <code>LogisticRegression</code> справляется с этим сама.</p>
+<ul>
+<li><code>predict_proba</code> даёт по столбцу на каждый класс (три столбца), сумма в каждой строке равна 1. Порядок столбцов — <code>clf.classes_</code>.</li>
+<li><code>predict</code> выбирает класс с наибольшей вероятностью.</li>
+<li>Precision, recall, F1 считаются отдельно для каждого класса. Свести к одному числу: <code>f1_score(y_test, pred, average='macro')</code> — простое среднее по классам (у редкого класса такой же голос), <code>average='weighted'</code> — взвешенное по размеру классов.</li>
+<li>Confusion matrix становится 3 × 3: она показывает, какой класс с каким путают.</li>
+</ul>
 <div class="tip">Если появилось <i>ConvergenceWarning</i>, поставьте <code>max_iter=1000</code> или отмасштабируйте признаки.</div>
 <h3>Частые ошибки</h3>
 <ul>
@@ -455,6 +476,136 @@ print(scores.mean(), scores.std())  # 0.778 0.037</code></pre>
         { prompt: "Выполните <code>cross_val_score</code> для <code>make_pipeline(StandardScaler(), LogisticRegression())</code> с <code>cv=5</code> на всех <code>X</code>, <code>y</code>. Запишите результат в <code>scores</code>, среднее — в <code>cv_mean</code>, SD — в <code>cv_std</code> и выведите.", hints: ["<code>pipe = make_pipeline(StandardScaler(), LogisticRegression())</code>","<code>cross_val_score(pipe, X, y, cv=5)</code>"], check: {"tests":"import numpy as _np\nassert len(scores) == 5, 'cv=5: должно быть 5 оценок'\nassert abs(cv_mean - _np.mean(scores)) < 1e-9 and abs(cv_std - _np.std(scores)) < 1e-9, 'cv_mean = scores.mean(), cv_std = scores.std()'\nassert abs(cv_mean - 0.79) < 0.02, f'Должно быть cv_mean ≈ 0.79, у вас {cv_mean:.3f}. Вы оценили Pipeline на всех X, y с cv=5?'"} },
         { prompt: "Для глубин <code>[1, 2, 3, 4, 5, None]</code> запишите среднее 5-fold CV для <code>DecisionTreeClassifier(max_depth=d, random_state=0)</code> в словарь <code>cv_means</code>. Лучшую глубину запишите в <code>best_depth</code>.", hints: ["<code>cross_val_score(DecisionTreeClassifier(max_depth=d, random_state=0), X, y, cv=5).mean()</code>","<code>max(cv_means, key=cv_means.get)</code>"], check: {"tests":"from sklearn.model_selection import cross_val_score as _cvs\nfrom sklearn.tree import DecisionTreeClassifier as _DT\nassert set(cv_means) == {1, 2, 3, 4, 5, None}, 'В cv_means должно быть 6 глубин (включая None)'\n_ref = {d: _cvs(_DT(max_depth=d, random_state=0), X, y, cv=5).mean() for d in [1, 2, 3, 4, 5, None]}\nassert all(abs(cv_means[d] - _ref[d]) < 0.01 for d in _ref), 'Средние CV не совпадают: cv=5, random_state=0, все X, y'\nassert best_depth == max(_ref, key=_ref.get), f'Должно быть best_depth = {max(_ref, key=_ref.get)}: глубина с наибольшим средним CV'\nassert cv_means[None] < cv_means[best_depth], 'CV-результат дерева без ограничений должен быть ниже лучшего'"} },
         { prompt: "У модели train accuracy 0.74, CV accuracy 0.74, и baseline «никто не уйдёт» тоже 0.74. Что это?", options: ["High variance (overfitting)","High bias (underfitting): модель слишком простая","Отличная модель","Data leakage"], explain: "И на train, и на CV — уровень baseline: модель не уловила закономерность. Нужна более сложная модель или лучшие признаки." }
+      ]
+    },
+    "ml-reg": {
+      title: "Регуляризация: Ridge, Lasso и C",
+      body: `
+<p>В прошлом уроке мы видели overfitting: модель заучивает train и плохо работает на новых данных. Как это выглядит в линейной модели? <b>Коэффициенты становятся слишком большими</b>: модель принимает случайный шум за «закономерность» и даёт ему большой вес.</p>
+<p><b>Регуляризация</b> — это сказать модели: «за большие коэффициенты ты платишь штраф». Тогда модель даёт вес только действительно полезным признакам.</p>
+<h3>Ridge и Lasso</h3>
+<table>
+<tr><th>Модель</th><th>Что минимизирует</th><th>Результат</th></tr>
+<tr><td><code>LinearRegression</code></td><td>MSE</td><td>штрафа нет</td></tr>
+<tr><td><code>Ridge(alpha)</code></td><td>MSE + alpha · Σ b²</td><td>все коэффициенты <b>сжимаются</b> к нулю, но нулём не становятся</td></tr>
+<tr><td><code>Lasso(alpha)</code></td><td>MSE + alpha · Σ |b|</td><td>коэффициенты бесполезных признаков становятся <b>ровно 0</b></td></tr>
+</table>
+<p><code>alpha</code> — сила штрафа. alpha = 0 — обычная линейная регрессия. Чем больше alpha, тем проще модель. Слишком большая alpha — underfitting: все коэффициенты близки к нулю, модель предсказывает только среднее.</p>
+<h3>Пример по шагам</h3>
+<p>Устроим overfitting намеренно: возьмём в train всего 60 квартир, а к 5 настоящим признакам добавим 20 бессмысленных случайных столбцов (<code>noise_0 … noise_19</code>).</p>
+<pre><code>from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+lin = make_pipeline(StandardScaler(), LinearRegression()).fit(X_train, y_train)
+print(lin.score(X_train, y_train))   # 0.856
+print(lin.score(X_test, y_test))     # 0.419</code></pre>
+<ol>
+<li>Train R² = 0.86, test R² = 0.42. Модель дала вес и шумовым столбцам: сумма их |коэффициентов| равна 22.6.</li>
+<li>Теперь сравним Ridge с разными alpha через 5-fold CV внутри train:</li>
+</ol>
+<table>
+<tr><th>alpha</th><th>CV R²</th><th>Test R²</th><th>Сумма шумовых коэффициентов</th></tr>
+<tr><td>0.01</td><td>0.00</td><td>0.42</td><td>22.5</td></tr>
+<tr><td>1</td><td>0.18</td><td>0.44</td><td>21.6</td></tr>
+<tr><td><b>10</b></td><td><b>0.52</b></td><td><b>0.55</b></td><td>15.2</td></tr>
+<tr><td>100</td><td>0.49</td><td>0.49</td><td>7.3</td></tr>
+<tr><td>1000</td><td>0.11</td><td>0.11</td><td>1.9</td></tr>
+</table>
+<ol start="3">
+<li>С ростом alpha коэффициенты уменьшаются. alpha = 10 — лучший баланс. При alpha = 1000 модель «выключила» всё: underfitting.</li>
+<li>alpha мы выбрали <b>по CV</b>, а не глядя на test. Test — только финальная проверка.</li>
+<li><code>Lasso(alpha=1.0)</code> на этих данных обнуляет 18 из 25 коэффициентов: гаснут 18 из 20 шумовых столбцов, все 5 настоящих признаков остаются. Test R² = 0.64. Lasso — это автоматический <b>отбор признаков</b> (feature selection).</li>
+</ol>
+<div class="tip">Перед Ridge и Lasso всегда ставьте <code>StandardScaler</code>. Штраф накладывается на величину коэффициента, а величина зависит от единиц измерения: м² и год — в разных масштабах. Без масштабирования штраф распределяется несправедливо.</div>
+<h3>C в LogisticRegression</h3>
+<p><code>LogisticRegression</code> по умолчанию работает с регуляризацией (как Ridge, L2). Но параметр записан наоборот: <code>C = 1 / alpha</code>.</p>
+<ul>
+<li><b>Маленькое C</b> (0.01) — сильная регуляризация, коэффициенты маленькие.</li>
+<li><b>Большое C</b> (100) — слабая регуляризация, модель свободна.</li>
+<li>Значение по умолчанию — <code>C=1.0</code>.</li>
+</ul>
+<p>На данных churn (4 масштабированных признака) коэффициент <code>tenure_months</code>: −0.09 при C = 0.001 и −1.14 при C = 1. Здесь признаков мало и шума нет, поэтому CV AUC не меняется (≈0.825). Когда признаков много (например, тысячи слов в тексте), выбор C сильно влияет на результат.</p>
+<p><code>LogisticRegression(penalty='l1', solver='liblinear')</code> обнуляет признаки, как Lasso.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Путать alpha и C: большая alpha — сильный штраф, большое C — <b>слабый</b> штраф.</li>
+<li>Применять Ridge/Lasso без масштабирования.</li>
+<li>Выбирать alpha по результату на test. Правильно: cross-validation.</li>
+<li>Называть признак, который обнулил Lasso, «совершенно бесполезным». Если два признака похожи друг на друга, Lasso оставляет только один.</li>
+<li>Думать, что регуляризация исправляет плохие данные. Она лишь уменьшает overfitting и новой информации не добавляет.</li>
+</ul>`,
+      ex: [
+        { prompt: "В стартере готов небольшой train (60 квартир) с 5 настоящими признаками и 20 шумовыми столбцами. Для каждой alpha из <code>[0.01, 1, 10, 100, 1000]</code> запишите в словарь <code>scores</code> средний R² по 5-fold CV на train для <code>make_pipeline(StandardScaler(), Ridge(alpha=a))</code>. Лучшая alpha → <code>best_alpha</code>. Обучите модель с этой alpha на train и запишите test R² в <code>test_r2</code>.", check: { tests: "import numpy as _np\nfrom sklearn.linear_model import Ridge as _Rd, Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, 'X_train нельзя менять: 60 строк, 25 столбцов'\n_s = {a: _cvs(_mp(_SS(), _Rd(alpha=a)), X_train, y_train, cv=5).mean() for a in [0.01, 1, 10, 100, 1000]}\nassert sorted(scores) == [0.01, 1, 10, 100, 1000], \"Ключи scores: 0.01, 1, 10, 100, 1000\"\nassert all(abs(scores[a] - _s[a]) < 1e-6 for a in _s), \"Значения CV не совпадают: cross_val_score(make_pipeline(StandardScaler(), Ridge(alpha=a)), X_train, y_train, cv=5).mean()\"\n_b = max(_s, key=_s.get)\nassert best_alpha == _b, f\"best_alpha должна быть = {_b}: alpha с наибольшим CV R²\"\n_t = _mp(_SS(), _Rd(alpha=_b)).fit(X_train, y_train).score(X_test, y_test)\nassert abs(test_r2 - _t) < 1e-6, f\"test_r2 должен быть ≈ {_t:.3f}: обучите на train с лучшей alpha и оцените на test\"" }, hints: ["Цикл: внутри <code>for a in [0.01, 1, 10, 100, 1000]:</code> — <code>scores[a] = cross_val_score(m, X_train, y_train, cv=5).mean()</code>", "<code>best_alpha = max(scores, key=scores.get)</code>"] },
+        { prompt: "На тех же данных обучите на train <code>make_pipeline(StandardScaler(), Lasso(alpha=1.0))</code> под именем <code>lasso</code>. Запишите коэффициенты в Series <code>coefs</code> (индекс — названия столбцов). <code>n_zero</code> — число коэффициентов, равных ровно 0, <code>kept</code> — названия ненулевых признаков (список), <code>lasso_r2</code> — test R².", check: { tests: "import numpy as _np\nfrom sklearn.linear_model import Ridge as _Rd, Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, 'X_train нельзя менять: 60 строк, 25 столбцов'\n_l = _mp(_SS(), _Ls(alpha=1.0)).fit(X_train, y_train)\n_c = _l[-1].coef_\nassert len(coefs) == 25 and list(coefs.index) == list(X_train.columns), \"coefs — 25 коэффициентов с индексом X_train.columns: pd.Series(lasso[-1].coef_, index=X_train.columns)\"\nassert _np.allclose(_np.asarray(coefs, dtype=float), _c, atol=1e-6), \"Коэффициенты не совпадают: Lasso(alpha=1.0), перед ним StandardScaler, обучение на train\"\nassert n_zero == int((_c == 0).sum()), f\"n_zero должно быть = {int((_c == 0).sum())}: (coefs == 0).sum()\"\nassert list(kept) == [n for n, v in zip(X_train.columns, _c) if v != 0], \"kept — названия столбцов с ненулевым коэффициентом (в порядке столбцов)\"\nassert abs(lasso_r2 - _l.score(X_test, y_test)) < 1e-6, f\"lasso_r2 должен быть ≈ {_l.score(X_test, y_test):.3f}\"" }, hints: ["Последний шаг Pipeline: <code>lasso[-1].coef_</code>", "<code>kept = list(coefs[coefs != 0].index)</code>"] },
+        { prompt: "Штраф Ridge = alpha · Σ b². alpha = 0.5, коэффициенты b = [3, −4]. Чему равен штраф?", explain: "3² + (−4)² = 9 + 16 = 25. 0.5 · 25 = 12.5. В Lasso это было бы 0.5 · (3 + 4) = 3.5." },
+        { prompt: "Модель с большим числом текстовых признаков (5 000 столбцов) дала accuracy 0.99 на train и 0.80 на CV. Как правильно изменить <code>LogisticRegression(C=1.0)</code>?", options: ["Увеличить C до 100: больше свободы модели", "Попробовать уменьшить C (например, до 0.1): регуляризация усилится, overfitting уменьшится", "Уменьшить max_iter", "Ничего не менять: accuracy на train высокая"], explain: "C = 1 / alpha. При маленьком C штраф сильный: коэффициенты уменьшаются, и модель меньше заучивает шум. Точное значение подбирайте через CV." }
+      ]
+    },
+    "ml-curves": {
+      title: "Кривые ROC и PR, PR-AUC, log loss, калибровка, Gini/KS",
+      body: `
+<p>Precision и recall привязаны к одному порогу (threshold). А если порог ещё не выбран? Или мы хотим сравнить две модели «в целом»? Для этого есть метрики, <b>не зависящие от порога</b>: они смотрят на вероятности модели целиком.</p>
+<h3>ROC-кривая</h3>
+<p>Двигаем порог от 1 до 0 и на каждом пороге считаем два числа:</p>
+<ul>
+<li><b>TPR</b> (recall) = TP / (TP + FN): какую долю уходящих мы нашли.</li>
+<li><b>FPR</b> = FP / (FP + TN): какой доле остающихся мы зря подняли тревогу.</li>
+</ul>
+<table>
+<tr><th>Порог</th><th>TPR</th><th>FPR</th><th>TPR − FPR</th></tr>
+<tr><td>0.5</td><td>0.41</td><td>0.05</td><td>0.36</td></tr>
+<tr><td>0.3</td><td>0.77</td><td>0.26</td><td>0.51</td></tr>
+<tr><td>0.2</td><td>0.82</td><td>0.43</td><td>0.39</td></tr>
+<tr><td>0.1</td><td>0.97</td><td>0.63</td><td>0.34</td></tr>
+</table>
+<p>Если нанести эти точки (FPR, TPR) на график, получится ROC-кривая. Площадь под ней — <b>ROC AUC</b>. У нашей модели churn она равна 0.816.</p>
+<h3>Gini и KS: язык банков</h3>
+<p>В скоринговых вакансиях банков Казахстана <b>Gini</b> и <b>KS</b> упоминают чаще, чем AUC. Оба получаются из ROC.</p>
+<ul>
+<li><b>Gini = 2 · AUC − 1</b>. AUC 0.5 (подбрасывание монеты) → Gini 0; AUC 1.0 → Gini 1. У нас: 2 · 0.816 − 1 = <b>0.632</b>.</li>
+<li><b>KS</b> (Колмогоров–Смирнов) = max(TPR − FPR): точка, в которой модель сильнее всего разделяет «хороших» и «плохих» клиентов. У нас <b>0.526</b> при пороге ≈ 0.33.</li>
+</ul>
+<pre><code>from sklearn.metrics import roc_auc_score, roc_curve
+auc = roc_auc_score(y_test, proba)       # 0.816
+gini = 2 * auc - 1                       # 0.632
+fpr, tpr, thr = roc_curve(y_test, proba)
+ks = (tpr - fpr).max()                   # 0.526</code></pre>
+<h3>PR-кривая и PR-AUC</h3>
+<p>Слабое место ROC: когда класс очень редкий (мошенничество 1%), FPR всегда выглядит маленьким, потому что «нормальных» примеров слишком много. Даже при ROC AUC = 0.95 большинство тревог может быть ложными.</p>
+<p><b>PR-кривая</b> показывает precision и recall на каждом пороге. Площадь под ней считает <code>average_precision_score</code> (PR-AUC). Её baseline — не 0.5, а <b>доля положительного класса</b>: для churn это 0.26. Наша модель даёт 0.664 — в 2.5 раза лучше случайной.</p>
+<div class="tip">Правило: если классы примерно равны — ROC AUC. Если положительный класс редкий и важен вам именно он (fraud, дефолт, болезнь) — дополнительно смотрите PR-AUC.</div>
+<h3>Log loss: качество вероятностей</h3>
+<p>AUC смотрит только на <b>порядок</b>: выше ли вероятность у уходящего, чем у остающегося. А верна ли сама вероятность? Это измеряет <b>log loss</b>: −ln вероятности, отданной истинному ответу, в среднем.</p>
+<ol>
+<li>Ушедшему абоненту мы дали p = 0.9: −ln(0.9) = 0.105. Штраф маленький.</li>
+<li>Дали p = 0.6: −ln(0.6) = 0.511.</li>
+<li>Дали p = 0.01 («точно не уйдёт»), а он ушёл: −ln(0.01) = 4.6. <b>Уверенная ошибка наказывается сильно.</b></li>
+</ol>
+<p>Чем меньше, тем лучше. Наша модель: 0.434. Baseline, который всем говорит одинаковые 0.26: 0.573.</p>
+<h3>Калибровка</h3>
+<p>Если из абонентов, которым модель дала «30%», действительно уходит около 30%, модель <b>откалибрована</b>. Проверка: делим прогнозы на группы и сравниваем средний прогноз с фактической долей.</p>
+<table>
+<tr><th>Диапазон прогноза</th><th>Абонентов</th><th>Средний прогноз</th><th>Фактический churn</th></tr>
+<tr><td>0–0.1</td><td>42</td><td>0.05</td><td>0.02</td></tr>
+<tr><td>0.1–0.2</td><td>28</td><td>0.14</td><td>0.21</td></tr>
+<tr><td>0.2–0.4</td><td>43</td><td>0.30</td><td>0.23</td></tr>
+<tr><td>0.4–1.0</td><td>37</td><td>0.58</td><td>0.59</td></tr>
+</table>
+<p>Числа близки: logistic regression обычно хорошо откалибрована. Ансамбли деревьев и <code>class_weight='balanced'</code> искажают вероятности; это исправляет <code>CalibratedClassifierCV</code>. Калибровка важна, когда вероятность умножают на деньги: ожидаемые потери = PD × сумма.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Передавать в метрики результат <code>predict</code> (0/1). Для AUC, PR-AUC и log loss нужна <b>вероятность</b>.</li>
+<li>Доверять только ROC AUC на редком классе.</li>
+<li>Сравнивать PR-AUC с 0.5. Её baseline — доля положительного класса.</li>
+<li>Думать, что при высоком AUC и вероятности верны. AUC проверяет только порядок, а не калибровку.</li>
+<li>Путать Gini с Gini «неравенства доходов»: в скоринге это просто 2 · AUC − 1.</li>
+</ul>`,
+      ex: [
+        { prompt: "Модель и <code>proba</code> готовы. Посчитайте на test: <code>auc</code> (ROC AUC), <code>gini</code> (2 · AUC − 1), <code>pr_auc</code> (<code>average_precision_score</code>), <code>ll</code> (<code>log_loss</code>). Выведите все четыре.", check: { tests: "import pandas as _pd\nimport numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = _pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_m = _LogR(max_iter=1000).fit(_Xtr, _ytr)\n_p = _m.predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras, average_precision_score as _aps, log_loss as _lls\n_a = _ras(_yte, _p)\nassert abs(auc - _a) < 1e-6, f\"auc должен быть ≈ {_a:.3f}: roc_auc_score(y_test, proba). proba — вероятность, а не 0/1\"\nassert abs(gini - (2 * _a - 1)) < 1e-6, f\"gini = 2 * auc - 1 ≈ {2 * _a - 1:.3f}\"\nassert abs(pr_auc - _aps(_yte, _p)) < 1e-6, f\"pr_auc должен быть ≈ {_aps(_yte, _p):.3f}: average_precision_score(y_test, proba)\"\nassert abs(ll - _lls(_yte, _p)) < 1e-6, f\"ll должен быть ≈ {_lls(_yte, _p):.3f}: log_loss(y_test, proba)\"" }, hints: ["<code>roc_auc_score(y_test, proba)</code>, <code>average_precision_score(y_test, proba)</code>", "<code>gini = 2 * auc - 1</code>, <code>ll = log_loss(y_test, proba)</code>"] },
+        { prompt: "Посчитайте статистику KS. <code>roc_curve(y_test, proba)</code> возвращает три массива: <code>fpr</code>, <code>tpr</code>, <code>thr</code>. <code>ks</code> — наибольшее значение (tpr − fpr), <code>ks_thr</code> — порог в этой точке.", check: { tests: "import pandas as _pd\nimport numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = _pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_m = _LogR(max_iter=1000).fit(_Xtr, _ytr)\n_p = _m.predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_curve as _rc\n_fp, _tp, _th = _rc(_yte, _p)\n_i = _np.argmax(_tp - _fp)\nassert abs(ks - (_tp - _fp)[_i]) < 1e-6, f\"ks должна быть ≈ {(_tp - _fp)[_i]:.3f}: (tpr - fpr).max()\"\nassert abs(ks_thr - _th[_i]) < 1e-6, f\"ks_thr должен быть ≈ {_th[_i]:.3f}: thr[np.argmax(tpr - fpr)]\"" }, hints: ["<code>fpr, tpr, thr = roc_curve(y_test, proba)</code>", "<code>i = np.argmax(tpr - fpr)</code>, затем <code>ks = (tpr - fpr)[i]</code>, <code>ks_thr = thr[i]</code>"] },
+        { prompt: "Антифрод-модель: 1% транзакций — мошенничество. ROC AUC = 0.95, PR-AUC = 0.20. Как это понимать?", options: ["Модель отличная: 0.95 — это очень много", "Модель хорошо ранжирует, но большинство тревог будут ложными: на редком классе PR-AUC даёт более честную картину", "PR-AUC ниже 0.5, значит, модель хуже случайной", "Две метрики противоречат друг другу, в расчёте ошибка"], explain: "Baseline для PR-AUC — доля положительного класса (0.01). 0.20 в 20 раз лучше, но precision всё ещё низкая. На редком классе ROC AUC выглядит слишком оптимистично." },
+        { prompt: "ROC AUC скоринговой модели равен 0.80. Чему равен её коэффициент Gini?", explain: "Gini = 2 · AUC − 1 = 2 · 0.80 − 1 = 0.60." }
       ]
     },
     "ml-gate": {

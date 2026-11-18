@@ -88,7 +88,7 @@ Recommendation: send a promo code 14 days after the first order,
 <ol>
 <li>Full name, city, phone, email, LinkedIn, GitHub/portfolio link.</li>
 <li>A short summary (2 lines): who you are and what you can do.</li>
-<li><b>Skills:</b> SQL, Python (pandas), Excel, Power BI, statistics, A/B testing.</li>
+<li><b>Skills:</b> SQL, Python (pandas), Excel, Power BI, statistics, A/B testing. The Data Scientist version: Python (pandas, scikit-learn), SQL, statistics, gradient boosting, model validation.</li>
 <li><b>Projects</b> (if you have little experience, put projects higher).</li>
 <li>Experience (any job, internship, freelance), Education, languages.</li>
 </ol>
@@ -99,6 +99,7 @@ Recommendation: send a promo code 14 days after the first order,
 <tr><th>Weak</th><th>Strong</th></tr>
 <tr><td>Worked with reports in Excel</td><td>Moved the weekly sales report from Excel to SQL + Power BI, cutting preparation time from 4 hours to 20 minutes</td></tr>
 <tr><td>Did an A/B test</td><td>Analysed an A/B test of the checkout page (n = 8 000): conversion grew from 2.0% to 2.5%, p = 0.03; version B was shipped</td></tr>
+<tr><td>Built an ML model (DS version)</td><td>Built a credit scoring model (LightGBM, 120 thousand applications): out-of-time ROC-AUC rose from 0.71 to 0.76, and I removed leakage with a Pipeline</td></tr>
 </table>
 <ol>
 <li>Start from the weak line: what did I do?</li>
@@ -107,7 +108,7 @@ Recommendation: send a promo code 14 days after the first order,
 <li>Give a comparison: "before → after".</li>
 </ol>
 <p>Compute relative growth correctly: growth from 2.0% to 2.5% is <b>0.5 percentage points</b>, but in relative terms it is (2.5 − 2.0) / 2.0 = <b>25%</b>.</p>
-<p><b>ATS keywords:</b> write the words from the posting exactly as they appear (Power BI, SQL, A/B testing). Don't complicate the CV with tables, images or two columns: an ATS may not read it correctly. Save the file as a PDF and name it "Aty_Zhoni_Data_Analyst.pdf" (your first and last name).</p>
+<p><b>ATS keywords:</b> write the words from the posting exactly as they appear (Power BI, SQL, A/B testing). Don't complicate the CV with tables, images or two columns: an ATS may not read it correctly. Save the file as a PDF and name it "Aty_Zhoni_Data_Analyst.pdf" (your first and last name; for a DS role, "Aty_Zhoni_Data_Scientist.pdf").</p>
 <p>Tailor your CV to each posting for 10–15 minutes: change the role name in the summary, move the matching project up, check that the posting's keywords are present.</p>
 <div class="tip"><b>Common mistakes:</b> (1) two or three pages; (2) a list of duties without results; (3) made-up numbers: in the interview you must be able to explain every number; (4) mixing up percentage points and percent.</div>`,
       ex: [
@@ -127,7 +128,7 @@ Recommendation: send a promo code 14 days after the first order,
 <p>If a recruiter likes your CV, the next step is opening your LinkedIn and GitHub. Both should tell the same story: "this person can answer business questions with data".</p>
 <h3>LinkedIn</h3>
 <ul>
-<li><b>Headline:</b> not just "Student", but a concrete role and tools: "Junior Data Analyst | SQL, Python, Power BI".</li>
+<li><b>Headline:</b> not just "Student", but a concrete role and tools: "Junior Data Analyst | SQL, Python, Power BI". The DS version: "Junior Data Scientist | Python, SQL, scikit-learn, A/B Testing".</li>
 <li><b>About:</b> 3–5 sentences: who you are, what problems you solve, 1–2 projects with results, what interests you.</li>
 <li><b>Featured:</b> links to portfolio projects, a dashboard screenshot.</li>
 <li><b>Skills:</b> matching the names used in job postings.</li>
@@ -143,8 +144,8 @@ Recommendation: send a promo code 14 days after the first order,
 <h3>Step-by-step example: headline and About</h3>
 <ol>
 <li>Starting point: "Student. Interested in data."</li>
-<li>Add a role: "Junior Data Analyst".</li>
-<li>Tools: "SQL, Python (pandas), Power BI".</li>
+<li>Add a role: "Junior Data Analyst" (on the DS track, "Junior Data Scientist").</li>
+<li>Tools: "SQL, Python (pandas), Power BI" (on the DS track, "Python, SQL, scikit-learn, CatBoost").</li>
 <li>Evidence in About: "I did a retention analysis on online shop data and showed that only 50% of customers place a repeat order; I proposed a test of a promo code after the first order."</li>
 <li>A call to action at the end: "Open to junior DA/BI roles in Almaty/Astana or remote."</li>
 </ol>
@@ -390,6 +391,99 @@ FROM t;</code></pre>
         { prompt: 'Offer A: 450 000 ₸ a month, no bonus. Offer B: 400 000 ₸ a month + an annual bonus of 1 000 000 ₸. What is the annual difference (B − A) in tenge?', unit: '₸', explain: 'A: 5 400 000 ₸. B: 4 800 000 + 1 000 000 = 5 800 000 ₸. The difference is 400 000 ₸. Don\'t forget to clarify the bonus conditions.' },
         { prompt: 'HR: "What salary do you expect?" What is the best answer?', options: ['"Whatever you offer is fine"', 'Name a justified range based on similar hh.kz postings and clarify whether it is take-home or gross', 'Name a number twice the market rate', 'Don\'t answer and change the subject'], explain: 'A range based on market data leaves room for negotiation and shows you are prepared.' },
         { prompt: 'What is the most important goal in the first 30 days of a new job?', options: ['Redoing all the dashboards', 'Getting to know the data, metric definitions and people, and finishing one small task well', 'Asking for a promotion', 'Trying to figure everything out yourself without asking questions'], explain: 'The first month\'s job is learning the context and building trust. Big changes come after 60–90 days.' }
+      ]
+    },
+    'cr-ds': {
+      title: 'The Data Scientist interview: statistics, ML theory and the ML take-home',
+      body: `
+<p>A junior Data Scientist interview usually has four parts: SQL/Python live coding (cr-5, cr-6), questions on statistics and ML theory, a take-home ML task, and a discussion of it. In Kazakhstan most DS vacancies are in banks and fintech (scoring, antifraud, churn), so questions about validation, metrics and model monitoring are guaranteed.</p>
+<p>Do not memorise the answers below. You should be able to give each one <b>in your own words, with one example, in 30–60 seconds</b>. A good answer has this structure: definition → example → what you do in practice.</p>
+<h3>Statistics (1–7)</h3>
+<ol>
+<li><b>What is a p-value?</b> The probability of getting the result we saw, or a more extreme one, given that H0 is true. It is <b>not</b> "the probability that H0 is true", and it says nothing about the size of the effect.</li>
+<li><b>What does a 95% confidence interval mean?</b> If we repeated the study many times, about 95% of the intervals built this way would cover the true value. Saying "it is inside with 95% probability" about one specific interval is not exact, but its width does show the uncertainty.</li>
+<li><b>Type I and Type II errors, power.</b> Type I: there is no effect but we said there is (probability α). Type II: there is an effect but we missed it (β). Power = 1 − β: the probability of finding an effect that exists, usually 80%.</li>
+<li><b>How many users does an A/B test need?</b> It depends on four things: baseline, MDE, α, power. It is calculated <b>before</b> the test. If the MDE is halved, the sample grows four times. Looking midway and stopping (peeking) inflates false positives.</li>
+<li><b>Correlation and causation.</b> A correlation can come from a third factor (a confounder): ice cream sales and drownings both come from hot weather. Causation is shown by a randomised experiment; when that is impossible — DiD, matching.</li>
+<li><b>Why does the central limit theorem matter?</b> Whatever the original distribution, the means of large enough samples are approximately normally distributed, with SE = SD / √n. That is why z- and t-tests work even on skewed data.</li>
+<li><b>t-test, Mann–Whitney, bootstrap: which one when?</b> Comparing means with a large n — the Welch t-test. Heavily skewed data, outliers, a small n — Mann–Whitney (but it compares ranks, not means). A median, a percentile, a ratio metric — the bootstrap.</li>
+</ol>
+<h3>ML theory (8–16)</h3>
+<ol start="8">
+<li><b>The bias–variance tradeoff.</b> Bias: the model is too simple and misses the pattern (underfitting: bad on both train and test). Variance: the model memorises the noise in train (overfitting: good on train, bad on test). As complexity grows, bias falls and variance rises; the goal is the minimum of the test error.</li>
+<li><b>How do you spot and reduce overfitting?</b> By the gap between the train and validation metrics. To reduce it: more data, a simpler model, regularisation, limiting tree depth, early stopping, cross-validation, dropping unnecessary features.</li>
+<li><b>What is data leakage?</b> During training the model sees information that is not available at prediction time. Kinds: (a) a feature that appears after the target ("number of calls from the collections department" when predicting default); (b) fitting a scaler or imputer on the whole dataset; (c) rows of one customer split across train and test; (d) future data mixed into the past. The symptom is a metric that is "too good". The fix: a <code>Pipeline</code>, doing the split first of all, and asking of every feature "is this known at prediction time?"</li>
+<li><b>How do you choose a metric?</b> I start from the cost of an error to the business. Accuracy — only when the classes are balanced. If a false alarm is expensive — precision; if a miss is expensive (fraud, illness) — recall; a balance of the two — F1. Ranking quality (scoring) — ROC-AUC/Gini; a rare class — PR-AUC. In regression, MAE (robust to outliers) or RMSE (punishes large errors hard).</li>
+<li><b>What do you do with imbalanced data?</b> If fraud is 0.5%, a model that says "everything is clean" has 99.5% accuracy. So: a stratified split, PR-AUC/recall/precision, <code>class_weight='balanced'</code> or <code>scale_pos_weight</code>, and a decision threshold chosen by business cost. Oversampling/SMOTE — <b>on train only</b>, otherwise it is leakage.</li>
+<li><b>ROC-AUC, Gini and KS.</b> ROC-AUC is the probability that a randomly chosen positive example scores higher than a randomly chosen negative one (0.5 — random, 1 — perfect). Gini = 2 × AUC − 1 (this is how banks put it: AUC 0.75 → Gini 0.50). KS is the largest gap between the cumulative shares of "good" and "bad" customers: max |TPR − FPR|.</li>
+<li><b>The difference between random forest and boosting.</b> Both are ensembles of trees. Random forest (bagging): deep trees that are <b>independent</b>, each trained on a bootstrap sample and a random subset of features, with their answers averaged — this reduces variance. Boosting: shallow trees built <b>one after another</b>, each correcting the errors of the previous ones — this reduces bias.</li>
+<li><b>How does gradient boosting work?</b> The initial prediction is a constant (the mean). At each step we compute the gradient of the loss (in regression, the residuals), fit a small tree to it, multiply it by the learning rate and add it to the prediction. The main parameters: <code>n_estimators</code>, <code>learning_rate</code>, <code>max_depth</code>, subsample; early stopping on validation picks the number of trees. XGBoost, LightGBM and CatBoost are fast versions of this idea; CatBoost handles categorical features by itself. On tabular data it is usually the strongest method.</li>
+<li><b>Regularisation: L1 and L2.</b> We add a penalty for the size of the weights to the loss. L2 (Ridge): Σw² — shrinks the weights and is stable with correlated features. L1 (Lasso): Σ|w| — sets some weights to exactly 0, that is, it selects features. The strength is chosen by cross-validation; the features must be scaled first. <code>C</code> in sklearn is the inverse of the strength.</li>
+</ol>
+<h3>Practice and production (17–20)</h3>
+<ol start="17">
+<li><b>Why validate by time?</b> A model learns from the past and predicts the future. A random split mixes future rows into train and artificially lifts the metric. The right way: train on the earlier period, validate on the later one (out-of-time); if you need several folds, use <code>TimeSeriesSplit</code>. Features, too, must be computed only from data up to that date.</li>
+<li><b>PSI and drift.</b> A model ages in production: customers and the market change. PSI (Population Stability Index) compares the distribution of a feature or score with the training period: PSI = Σ (a − e) × ln(a / e), where e and a are the shares in each bin (at training time and now). Rule-of-thumb thresholds: below 0.1 — stable, 0.1–0.25 — watch it, above 0.25 — a significant shift; find the cause and retrain the model. Gini/KS are also tracked every month.</li>
+<li><b>How do you explain a model to the business?</b> First the result in money: "the model finds 60% of defaults in the riskiest 20% of applications, which cuts losses by roughly X mln ₸ a year". Then the top 3–5 factors (feature importance, SHAP) in plain language, plus one concrete customer example. I name the limitations too. The sentence "ROC-AUC is 0.78" gives a manager nothing.</li>
+<li><b>Why do banks still use logistic regression?</b> It is interpretable: each coefficient is the effect of a feature on the log-odds, and a scorecard (a table of points) is built from it. The regulator and the risk department ask for the reason behind a rejection. It is stable, works with little data and is easy to monitor. Boosting usually lifts Gini by a few points but is harder to explain and validate; often both are built and compared.</li>
+</ol>
+<h3>ML take-home: a checklist</h3>
+<p>The task is usually: a table (10–100 thousand rows), a target (default, churn, fraud) and "build a model and describe the result". What is graded is not the highest metric but <b>a correct process</b>.</p>
+<ol>
+<li><b>Goal and metric:</b> what we predict, what an error costs, why this metric.</li>
+<li><b>Check the target:</b> class share, definition, time window.</li>
+<li><b>Split first:</b> by time if there is a date column; otherwise stratified. We do not touch test until the very end.</li>
+<li><b>Leakage audit:</b> is every feature known at prediction time? IDs, columns that come after the target, suspiciously high correlation with the target.</li>
+<li><b>Baseline:</b> the simplest model (the overall rate, one feature, logistic regression). Every complex model is compared against it.</li>
+<li><b>Pipeline:</b> imputer, scaler, encoder — all inside a <code>Pipeline</code>/<code>ColumnTransformer</code>, fitted on train only.</li>
+<li><b>Main model:</b> gradient boosting, tuning 2–3 parameters with cross-validation. There is no need to try 50 models.</li>
+<li><b>Evaluation:</b> on test once; the metric, the confusion matrix, a threshold chosen by business logic.</li>
+<li><b>Error analysis:</b> in which segment the model goes wrong; whether the feature importance makes sense.</li>
+<li><b>Reproducible:</b> <code>random_state</code>, <code>requirements.txt</code>, and the notebook runs from top to bottom without errors.</li>
+</ol>
+<h3>A write-up template (one page)</h3>
+<pre><code>1. Summary (3 sentences): what we predicted, what the result is, what I recommend.
+2. Data: size, period, target share, cleaning decisions.
+3. Validation: how I split and why; what I did against leakage.
+4. Result: a baseline vs model table (test metric).
+5. Business meaning: the threshold, how many customers, roughly how many ₸.
+6. Main factors: 3–5 features, in plain language.
+7. Limitations and next steps: what I did not do, what I would monitor in production (PSI, Gini).</code></pre>
+<p>An example of the results table:</p>
+<table>
+<tr><th>Model</th><th>ROC-AUC (out-of-time)</th><th>Gini</th><th>Default rate in the riskiest 20%</th></tr>
+<tr><td>Baseline: logistic regression, 5 features</td><td>0.71</td><td>0.42</td><td>48%</td></tr>
+<tr><td>LightGBM, 24 features</td><td>0.76</td><td>0.52</td><td>57%</td></tr>
+</table>
+<h3>CV and LinkedIn: the DS version</h3>
+<p>The formula does not change (cr-3): verb + what you did + tool + a result <b>that states its validation</b>. A DS bullet must say which data the metric was measured on.</p>
+<table>
+<tr><th>Weak</th><th>Strong</th></tr>
+<tr><td>Built a churn model, 95% accuracy</td><td>Built a churn model for telecom customers (LightGBM, 40 thousand customers): out-of-time ROC-AUC 0.81, capturing 38% of churn in the riskiest 10% segment</td></tr>
+<tr><td>Did scoring on Kaggle</td><td>Found and removed target leakage in credit scoring: the metric dropped from a "too good" 0.97 to a realistic 0.76; Gini +10 pp over the logistic regression baseline</td></tr>
+<tr><td>Worked with A/B tests</td><td>Analysed a checkout test with CUPED and cut variance by 40%; the test duration fell from 4 weeks to 2.5</td></tr>
+<tr><td>Monitored models</td><td>Wrote monthly PSI and Gini monitoring for a scoring model (Python, SQL); caught a shift in 2 features (PSI &gt; 0.25) early</td></tr>
+</table>
+<p><b>LinkedIn headline examples:</b></p>
+<ul>
+<li>"Junior Data Scientist | Python, SQL, scikit-learn, CatBoost | Credit Scoring"</li>
+<li>"Data Scientist (Junior) | A/B Testing, Statistics, ML | Python &amp; SQL"</li>
+<li>"Data Analyst → Data Scientist | Churn &amp; Antifraud models | Python, SQL, LightGBM"</li>
+</ul>
+<p><b>The Skills line:</b> Python (pandas, NumPy, scikit-learn), SQL, statistics and A/B testing, gradient boosting (LightGBM/CatBoost), model validation (ROC-AUC, Gini, KS, PSI), Git. List tools such as Docker, MLflow, PyTorch or LLMs only if you have really used them.</p>
+<div class="tip"><b>Common mistakes:</b> (1) Boasting about accuracy on imbalanced data. (2) Not saying whether the metric comes from train, cross-validation or test. (3) No baseline: is 0.76 good or bad? There is nothing to compare it with. (4) Applying a scaler or target encoding before the split. (5) A random split on data with a time dimension. (6) Not doubting a "too good" result (AUC 0.99): it is usually leakage. (7) Reciting a definition at the interview and being unable to give an example.</div>`,
+      ex: [
+        { prompt: 'An A/B test gave p = 0.03. Which interpretation is correct?', options: ['The probability that H0 is true is 3%', 'The probability that variant B is better is 97%', 'If there is no effect, the probability of seeing a difference this large or larger is 3%', 'The effect equals 3%'], explain: 'A p-value is the probability of the data computed on the condition that H0 is true. It is not the probability of the hypothesis, and it does not tell you the size of the effect.' },
+        { prompt: 'A model predicting loan default got a test ROC-AUC of 0.98. The most important feature is "number of calls to the customer from the collections department". What is your first thought?', options: ['A great model, ship it to production right away', 'This is target leakage: the calls start <b>after</b> a payment is late, and the feature does not exist at application time', 'The model is underfitting', 'We need more trees'], explain: 'The feature is a consequence of the target, not a cause. It is unknown when the loan is granted, so the model will not work in production. A "too good" metric plus a suspicious top feature is the classic sign of leakage.' },
+        { prompt: 'You have applications from January–December 2024, and the model will be used in 2025. How do you set up validation?', options: ['Shuffle all the rows and split 80/20 at random', 'Train on January–September and validate on October–December (out-of-time)', 'Look at the train metric only', 'Train on December and validate on January'], explain: 'The model predicts the future, so validation must also be on a "future" period. A random split mixes future information into train, artificially lifts the metric and hides drift.' },
+        { prompt: 'Antifraud: 0.5% of transactions are fraud. A missed fraud is expensive, while a false alarm only means a phone call to the customer. Which approach to evaluating the model fits best?', options: ['Accuracy: above 99% is enough', 'PR-AUC, plus recall and precision at the chosen threshold', 'MSE', 'ROC-AUC on train only'], explain: 'A model that says "everything is clean" has 99.5% accuracy but is useless. For a rare class PR-AUC is more informative, and the threshold is chosen by the cost of errors: here recall matters more.' },
+        { prompt: 'A classic scoring-interview task: compute ROC-AUC without a library. Write the function <code>auc(y_true, scores)</code>: among all (positive, negative) pairs, the share of pairs where the positive example has the higher score; if the scores are equal, the pair counts as 0.5. Then <code>gini(y_true, scores)</code> = 2 × AUC − 1.', check: { tests: '_y = [1, 0, 1, 0, 0]\n_s = [0.9, 0.8, 0.7, 0.3, 0.1]\nassert auc(_y, _s) is not None, "auc should return a value"\nassert abs(auc(_y, _s) - 5 / 6) < 1e-9, f"The positive example is higher in 5 of the 6 pairs: AUC = 5/6 ≈ 0.833, you have {auc(_y, _s):.3f}"\nassert abs(auc([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9]) - 1) < 1e-9, "With a perfect ranking AUC = 1"\nassert abs(auc([1, 1, 0, 0], [0.1, 0.2, 0.8, 0.9])) < 1e-9, "With a reversed ranking AUC = 0"\nassert abs(auc([1, 0], [0.5, 0.5]) - 0.5) < 1e-9, "Equal scores count as 0.5"\nassert abs(auc([1, 0, 0, 1], [0.6, 0.6, 0.2, 0.4]) - 0.625) < 1e-9, "auc([1, 0, 0, 1], [0.6, 0.6, 0.2, 0.4]) = 2.5 / 4 = 0.625"\nassert gini(_y, _s) is not None and abs(gini(_y, _s) - 2 / 3) < 1e-9, "gini = 2 × 5/6 − 1 = 2/3 ≈ 0.667"' }, hints: ['Split the scores into two lists: <code>pos</code> (y = 1) and <code>neg</code> (y = 0).', 'Two loops: for every <code>p</code> and every <code>n</code>, +1 if <code>p &gt; n</code> and +0.5 if they are equal.', 'The denominator is the number of pairs: <code>len(pos) * len(neg)</code>.'] },
+        { prompt: 'Write an ML take-home write-up (at least 80 words). The situation: a bank gave you a table of 50,000 loan applications (January–December 2024, default rate 6%), and you need to build a model that predicts default. Follow the template from the lesson: summary, validation approach, comparison with a baseline, business meaning, limitations. Take the numbers from your own project or make them up. Then grade it honestly; to pass, each criterion must be at least <b>3 / 4</b>.', criteria: [
+          { name: 'Goal and metric', levels: ['Not stated', 'A metric is named, with no reason', 'A metric and the reason for choosing it', 'The metric is tied to the cost of errors and to the class imbalance (6%)'] },
+          { name: 'Validation and leakage', levels: ['Nothing about the split', 'A random split, leakage not mentioned', 'A time-based or stratified split is explained', 'An out-of-time split, concrete steps against leakage (Pipeline, feature audit) and test used only once'] },
+          { name: 'Comparison with a baseline', levels: ['Just one number', 'A model metric but no baseline', 'Baseline and model compared on the same data', 'A comparison table and the business meaning of the difference (how many defaults are caught, roughly how many ₸)'] },
+          { name: 'Limitations and next step', levels: ['None', 'General words ("it could be improved")', 'A concrete limitation or next step', 'Limitations, monitoring in production (PSI, Gini) and a plan for the next experiment'] }
+        ] }
       ]
     },
     'cr-gate': {

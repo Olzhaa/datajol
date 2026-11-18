@@ -25,7 +25,7 @@ DJ.phases = [
       { id: 'm3-1', code: 'M3.1', title: 'Descriptive Statistics', desc: 'Таралу, шашыраңқылық, корреляция', hours: '20–30' },
       { id: 'm3-2', code: 'M3.2', title: 'Cleaning & EDA', desc: 'Profiling, missing, outliers, EDA чек-листі', hours: '20–30' },
       { id: 'm3-3', code: 'M3.3', title: 'Advanced SQL & Modeling', desc: 'CTE, window functions, star schema, оптимизация', hours: '25–35' },
-      { id: 'm3-8', code: 'M3.8', title: 'SQL практикум: Qazaq Market', desc: 'Онлайн-дүкен базасында 30+ нақты бизнес-сұрақ: сүзгі, агрегат, JOIN, CTE, window, когорта', hours: '8–12' },
+      { id: 'm3-8', code: 'M3.8', title: 'SQL практикум: Qazaq Market', desc: 'Онлайн-дүкен базасында нақты бизнес-сұрақтар: сүзгі, агрегат, JOIN, CTE, window, когорта, диалектілер, емтихан', hours: '8–12' },
       { id: 'm6-5', code: 'M6.5', title: 'Cloud & Data Eng Basics', desc: 'Warehouse, ETL, Spark/dbt шолуы', hours: '20–30' },
       { id: 'm3-4', code: 'M3.4', title: 'Visualization & Storytelling', desc: 'Диаграмма таңдау, matplotlib, memo жазу', hours: '15–20' },
       { id: 'm3-5', code: 'M3.5', title: 'Power BI', desc: 'Power Query, модель, DAX, интерактивті есеп', hours: '30–40' },
@@ -42,14 +42,14 @@ DJ.phases = [
     modules: [
       { id: 'm5-1', code: 'M5.1', title: 'ML Foundations', desc: 'Regression, classification, CV, метрикалар', hours: '40–55' },
       { id: 'm5-2', code: 'M5.2', title: 'ML in Practice', desc: 'Pipeline, leakage, tuning, boosting, clustering, SHAP', hours: '45–60' },
-      { id: 'm5-3', code: 'M5.3', title: 'DS Capstone', desc: 'Толық DS циклі, презентация', hours: '50–70' }
+      { id: 'm5-3', code: 'M5.3', title: 'DS Capstone', desc: 'Толық DS циклі, презентация', hours: '50–70' },
+      { id: 'm6-4', code: 'M6.4', title: 'Deep Learning Intro (қосымша)', desc: 'PyTorch, training loop, CNN', hours: '50–70' }
     ] },
   { id: 'p6', n: 6, title: 'ML Engineering', kz: 'ML инженерия', goal: 'Модельді өндіріске шығару', level: 'L7 ML Engineer',
     modules: [
       { id: 'm6-1', code: 'M6.1', title: 'Software Eng for Data', desc: 'OOP, тесттер, venv, REST API', hours: '25–35' },
       { id: 'm6-2', code: 'M6.2', title: 'Deployment', desc: 'FastAPI, Docker, бұлтқа деплой', hours: '25–35' },
       { id: 'm6-3', code: 'M6.3', title: 'MLOps Basics', desc: 'MLflow, CI, мониторинг, drift', hours: '25–35' },
-      { id: 'm6-4', code: 'M6.4', title: 'Deep Learning Intro', desc: 'PyTorch, training loop, CNN', hours: '50–70' },
       { id: 'm6-6', code: 'M6.6', title: 'ML Capstone', desc: 'End-to-end ML сервисі', hours: '40–60' },
       { id: 'm6-g', code: 'GenAI', title: 'GenAI Specialization', desc: 'LLM негізі, prompt, LLM API, chat, embeddings, RAG, function calling, агенттер, қауіпсіздік, LLMOps', hours: '40–60' },
       { id: 'm6-ai', code: 'AIE', title: 'AI Engineering', desc: 'Генерацияны басқару, RAG сапасы, ReAct агент, guardrails, LLM сервисі, бағалау, fine-tuning', hours: '40–60' }
@@ -93,7 +93,7 @@ DJ.careerLevels = [
   { id: 'L1', name: 'Data Literate', needs: ['m0-1', 'm0-2'] },
   { id: 'L2', name: 'SQL Practitioner', needs: ['m1-2'] },
   { id: 'L3', name: 'Python for Data', needs: ['m2-1'] },
-  { id: 'L4', name: 'Junior Data Analyst', needs: ['m3-1', 'm3-2', 'm3-3', 'm3-4', 'm3-5', 'm3-6', 'm3-7'] },
+  { id: 'L4', name: 'Junior Data Analyst', needs: ['m3-1', 'm3-2', 'm3-3', 'm3-8', 'm6-5', 'm3-4', 'm3-5', 'm3-6', 'm3-7'] },
   { id: 'L5', name: 'DS Foundation', needs: ['m4-1', 'm4-2', 'm4-3'] },
   { id: 'L6', name: 'Junior Data Scientist', needs: ['m5-1', 'm5-2', 'm5-3'] },
   { id: 'L7', name: 'ML Engineer', needs: ['m6-1', 'm6-2', 'm6-3', 'm6-6'] }
@@ -101,7 +101,7 @@ DJ.careerLevels = [
 
 // Сайтта жасырылған модульдер (Data Analyst + Data Science бағытына қатыссыздар). Коды мен сабақтары
 // content/ ішінде сақталады, оқушының прогресі өшпейді. Модульді қайта ашу үшін оны осы тізімнен алып тастап, build.py-ды іске қосыңыз.
-DJ.hiddenModules = ['m6-1', 'm6-2', 'm6-3', 'm6-4', 'm6-6', 'm6-g', 'm6-ai', 'py-2', 'java-1', 'cpp-1', 'dsa-1', 'dsa-2', 'py-3'];
+DJ.hiddenModules = ['m6-1', 'm6-2', 'm6-3', 'm6-6', 'm6-g', 'm6-ai', 'py-2', 'java-1', 'cpp-1', 'dsa-1', 'dsa-2', 'py-3'];
 (function () {
   const hide = new Set(DJ.hiddenModules);
   DJ.allPhases = DJ.phases;   // толық тізім: DJ.findModule жасырын модульді де табады (ескі прогресс, сертификаттар)

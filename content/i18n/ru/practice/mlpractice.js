@@ -880,5 +880,636 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "mp-ts": {
+  "pr": [
+   {
+    "title": "Функции MAE и MAPE",
+    "prompt": "<p>Напишите две функции: <code>mae(y_true, y_pred)</code> — средняя абсолютная ошибка; <code>mape(y_true, y_pred)</code> — средняя ошибка в процентах: <code>mean(|факт − прогноз| / факт) · 100</code>. Обе должны работать и со списками, и с массивами numpy.</p><p>Например, <code>mae([100, 200], [110, 180])</code> → <code>15.0</code>, <code>mape([100, 200], [110, 180])</code> → <code>10.0</code>.</p>",
+    "hints": [
+     "Сначала превратите в массив: <code>np.asarray(y_true, dtype=float)</code>",
+     "<code>(np.abs(y_true - y_pred) / y_true).mean() * 100</code>"
+    ],
+    "check": {
+     "tests": "assert mae([100, 200], [110, 180]) is not None and abs(mae([100, 200], [110, 180]) - 15) < 1e-9, \"mae([100, 200], [110, 180]) должно быть 15\"\nassert mape([100, 200], [110, 180]) is not None and abs(mape([100, 200], [110, 180]) - 10) < 1e-9, \"mape([100, 200], [110, 180]) должно быть (10% + 10%) / 2 = 10\"\nassert abs(mae(np.array([200, 250, 300]), np.array([210, 240, 330])) - 50 / 3) < 1e-9, \"Должно работать и с массивами numpy: MAE ≈ 16.7\"\nassert abs(mape([200, 250, 300], [210, 240, 330]) - 19 / 3) < 1e-9, \"Пример из урока: MAPE ≈ 6.33\""
+    }
+   },
+   {
+    "title": "Разбиение по году",
+    "prompt": "<p>Разбейте данные по времени: <code>train</code> — 2024 год (до <code>2025-01-01</code>), <code>test</code> — 2025 год. Число строк запишите в <code>n_train</code>, <code>n_test</code>, средние продажи — в <code>train_mean</code>, <code>test_mean</code>. Виден ли тренд?</p>",
+    "hints": [
+     "<code>train = df[df['date'] &lt; '2025-01-01']</code>"
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_tr = _d[_d['date'] < '2025-01-01']['sales']; _te = _d[_d['date'] >= '2025-01-01']['sales']\nassert (n_train, n_test) == (366, 364), f\"Должно быть n_train = 366 (2024 — високосный год), n_test = 364, у вас {n_train} и {n_test}\"\nassert train['date'].max() < test['date'].min(), \"Весь train должен быть раньше test\"\nassert abs(train_mean - _tr.mean()) < 1e-9 and abs(test_mean - _te.mean()) < 1e-9, f\"Должно быть train_mean ≈ {_tr.mean():.1f}, test_mean ≈ {_te.mean():.1f}\""
+    }
+   },
+   {
+    "title": "Baseline по среднему",
+    "prompt": "<p>Самый простой baseline: прогнозировать всему будущему среднее train. Train — до <code>2025-07-01</code>, test — с этого дня. <code>pred_mean</code> — средние продажи в train, <code>mae_mean</code> — MAE на test.</p>",
+    "hints": [
+     "<code>pred_mean = train['sales'].mean()</code>",
+     "<code>(test['sales'] - pred_mean).abs().mean()</code>"
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_m = _d[_d['date'] < '2025-07-01']['sales'].mean()\n_e = (_d[_d['date'] >= '2025-07-01']['sales'] - _m).abs().mean()\nassert abs(pred_mean - _m) < 1e-9, f\"pred_mean должно быть ≈ {_m:.1f}: среднее только по train (до 2025-07-01)\"\nassert abs(mae_mean - _e) < 1e-9, f\"mae_mean должно быть ≈ {_e:.1f}: среднее |sales − pred_mean| на test\""
+    }
+   },
+   {
+    "title": "Недельная сезонность",
+    "prompt": "<p>Добавьте столбец <code>df['dow']</code>: день недели, <code>df['date'].dt.dayofweek</code> (0 — понедельник, 6 — воскресенье). Только по train (до <code>2025-07-01</code>) запишите средние продажи по дням в Series <code>dow_mean</code>. Номер дня с наибольшими продажами запишите в <code>best_dow</code> (int), отношение наибольшего среднего к наименьшему — в <code>ratio</code>.</p>",
+    "hints": [
+     "<code>train.groupby('dow')['sales'].mean()</code>",
+     "<code>int(dow_mean.idxmax())</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\n_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_d['dow'] = _d['date'].dt.dayofweek\n_g = _d[_d['date'] < '2025-07-01'].groupby('dow')['sales'].mean()\nassert 'dow' in df.columns and (df['dow'] == _d['dow']).all(), \"df['dow'] = df['date'].dt.dayofweek\"\nassert len(dow_mean) == 7 and _np.allclose(_np.asarray(dow_mean, dtype=float), _g.values), \"dow_mean — 7 значений, только по train (до 2025-07-01)\"\nassert best_dow == int(_g.idxmax()), f\"best_dow должно быть {int(_g.idxmax())}\"\nassert abs(ratio - _g.max() / _g.min()) < 1e-9, f\"ratio ≈ {_g.max() / _g.min():.2f}: max / min\""
+    }
+   },
+   {
+    "title": "Более длинные lag и rolling",
+    "prompt": "<p>Добавьте в <code>df</code> три признака: <code>lag_14</code> — продажи 14 дней назад; <code>roll_28</code> — среднее за последние 28 дней; <code>roll_max7</code> — максимум за последние 7 дней. Сегодняшний день не должен попадать в rolling-признаки. Затем <code>d = df.dropna()</code>, число строк запишите в <code>n_rows</code>.</p>",
+    "hints": [
+     "Исключить сегодня: <code>df['sales'].shift(1).rolling(28).mean()</code>",
+     "Максимум: <code>.rolling(7).max()</code>"
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_s = _d['sales']\nassert abs(df.loc[30, 'lag_14'] - _s.iloc[16]) < 1e-9, \"lag_14 = shift(14)\"\nassert abs(df.loc[30, 'roll_28'] - _s.iloc[2:30].mean()) < 1e-9, \"roll_28 не должен включать сегодняшние продажи: df['sales'].shift(1).rolling(28).mean()\"\nassert abs(df.loc[30, 'roll_max7'] - _s.iloc[23:30].max()) < 1e-9, \"roll_max7: df['sales'].shift(1).rolling(7).max()\"\nassert n_rows == 702 and len(d) == 702, f\"После dropna должно остаться 702 строки (в первые 28 дней нет roll_28), у вас {n_rows}\""
+    }
+   },
+   {
+    "title": "Среднее за 4 недели",
+    "prompt": "<p>Seasonal naive опирается только на одну прошлую неделю. Более устойчивый вариант: среднее того же дня за прошлые 4 недели. <code>df['snaive']</code> = продажи 7 дней назад, <code>df['snaive4']</code> = среднее продаж 7, 14, 21 и 28 дней назад. MAE на тестовом периоде (с <code>2025-07-01</code>) запишите в <code>mae_snaive</code> и <code>mae_snaive4</code>.</p>",
+    "hints": [
+     "<code>(df['sales'].shift(7) + df['sales'].shift(14) + df['sales'].shift(21) + df['sales'].shift(28)) / 4</code>",
+     "Добавьте столбцы baseline до разбиения."
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_s = _d['sales']; _m = _d['date'] >= '2025-07-01'\n_a = (_s - _s.shift(7)).abs()[_m].mean()\n_b = (_s - (_s.shift(7) + _s.shift(14) + _s.shift(21) + _s.shift(28)) / 4).abs()[_m].mean()\nassert abs(df.loc[40, 'snaive4'] - (_s[33] + _s[26] + _s[19] + _s[12]) / 4) < 1e-9, \"snaive4 — среднее значений 7, 14, 21, 28 дней назад\"\nassert abs(mae_snaive - _a) < 1e-9, f\"mae_snaive должно быть ≈ {_a:.2f} (только тестовый период)\"\nassert abs(mae_snaive4 - _b) < 1e-9, f\"mae_snaive4 должно быть ≈ {_b:.2f} (только тестовый период)\""
+    }
+   },
+   {
+    "title": "День недели как признак",
+    "prompt": "<p>Признаки <code>F</code> готовы. Добавьте день недели как one-hot признаки: <code>dummies = pd.get_dummies(df['date'].dt.dayofweek, prefix='dow', drop_first=True, dtype=int)</code>, <code>df = pd.concat([df, dummies], axis=1)</code>, <code>F2 = F + list(dummies.columns)</code>. Затем <code>d = df.dropna()</code> и разбейте по времени (<code>2025-07-01</code>). Обучите две <code>LinearRegression</code>: с <code>F</code> (MAE на test → <code>mae_base</code>) и с <code>F2</code> (MAE на test → <code>mae_dow</code>).</p>",
+    "hints": [
+     "<code>pd.concat([df, dummies], axis=1)</code> добавляет столбцы рядом.",
+     "Train: <code>d[d['date'] &lt; '2025-07-01']</code>; MAE: <code>np.abs(test['sales'] - pred).mean()</code>"
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression as _LR\n_d['lag_1'] = _d['sales'].shift(1); _d['lag_7'] = _d['sales'].shift(7); _d['roll_7'] = _d['sales'].shift(1).rolling(7).mean()\n_dm = pd.get_dummies(_d['date'].dt.dayofweek, prefix='dow', drop_first=True, dtype=int)\n_d = pd.concat([_d, _dm], axis=1).dropna()\n_F = ['lag_1', 'lag_7', 'roll_7', 'promo']; _F2 = _F + list(_dm.columns)\n_tr = _d[_d['date'] < '2025-07-01']; _te = _d[_d['date'] >= '2025-07-01']\n_a = (_te['sales'] - _LR().fit(_tr[_F], _tr['sales']).predict(_te[_F])).abs().mean()\n_b = (_te['sales'] - _LR().fit(_tr[_F2], _tr['sales']).predict(_te[_F2])).abs().mean()\nassert len(F2) == 10, \"В F2 должно быть 10 признаков: 4 + 6 дней недели (drop_first=True)\"\nassert abs(mae_base - _a) < 1e-6, f\"mae_base должно быть ≈ {_a:.2f}\"\nassert abs(mae_dow - _b) < 1e-6, f\"mae_dow должно быть ≈ {_b:.2f}: с признаками F2, train до 2025-07-01\"\nassert mae_dow < mae_base, \"День недели должен уменьшить ошибку\""
+    }
+   },
+   {
+    "title": "Прогноз на 7 дней вперёд",
+    "prompt": "<p>Магазин заказывает товар за неделю: прогноз нужен на 7 дней вперёд. Поэтому вчерашние продажи (lag_1) неизвестны. Постройте признаки только из значений 7 и более дней назад: <code>h_lag7</code> = shift(7), <code>h_lag14</code> = shift(14), <code>h_roll7</code> = среднее за 7 дней, закончившихся 7 дней назад (<code>shift(7).rolling(7).mean()</code>). <code>H = ['h_lag7', 'h_lag14', 'h_roll7', 'promo']</code>, <code>d = df.dropna()</code>, разбиение <code>2025-07-01</code>. MAE <code>LinearRegression</code> на test запишите в <code>mae_h7</code>, MAE seasonal naive (<code>h_lag7</code>) на тех же строках test — в <code>mae_snaive</code>.</p>",
+    "hints": [
+     "<code>df['h_roll7'] = df['sales'].shift(7).rolling(7).mean()</code>",
+     "<code>mae_snaive = np.abs(test['sales'] - test['h_lag7']).mean()</code>"
+    ],
+    "check": {
+     "tests": "_d = pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression as _LR\n_s = _d['sales']\nassert abs(df.loc[30, 'h_roll7'] - _s.iloc[17:24].mean()) < 1e-9, \"h_roll7 не должен включать последние 7 дней: df['sales'].shift(7).rolling(7).mean()\"\nassert abs(df.loc[30, 'h_lag7'] - _s.iloc[23]) < 1e-9 and abs(df.loc[30, 'h_lag14'] - _s.iloc[16]) < 1e-9, \"h_lag7 = shift(7), h_lag14 = shift(14)\"\n_d['h_lag7'] = _s.shift(7); _d['h_lag14'] = _s.shift(14); _d['h_roll7'] = _s.shift(7).rolling(7).mean(); _d = _d.dropna()\n_H = ['h_lag7', 'h_lag14', 'h_roll7', 'promo']\n_tr = _d[_d['date'] < '2025-07-01']; _te = _d[_d['date'] >= '2025-07-01']\n_a = (_te['sales'] - _LR().fit(_tr[_H], _tr['sales']).predict(_te[_H])).abs().mean()\n_b = (_te['sales'] - _te['h_lag7']).abs().mean()\nassert abs(mae_h7 - _a) < 1e-6, f\"mae_h7 должно быть ≈ {_a:.2f}\"\nassert abs(mae_snaive - _b) < 1e-9, f\"mae_snaive должно быть ≈ {_b:.2f}: |sales − h_lag7| на строках test\""
+    }
+   }
+  ]
+ },
+ "mp-gbm": {
+  "pr": [
+   {
+    "title": "Тип category",
+    "prompt": "<p>Преобразуйте столбцы <code>city</code> и <code>plan</code> в <code>X</code> в тип pandas <code>category</code>. Число категорий городов запишите в <code>n_city</code>, тарифов — в <code>n_plan</code> (<code>.cat.categories</code>).</p>",
+    "hints": [
+     "<code>X[c] = X[c].astype('category')</code>",
+     "<code>len(X['city'].cat.categories)</code>"
+    ],
+    "check": {
+     "tests": "assert str(X['city'].dtype) == 'category' and str(X['plan'].dtype) == 'category', \"city и plan должны иметь тип category: X[c].astype('category')\"\nassert str(X['age'].dtype) != 'category', \"Числовые столбцы не меняйте\"\nassert n_city == df['city'].nunique() and n_plan == df['plan'].nunique(), f\"Должно быть n_city = {df['city'].nunique()}, n_plan = {df['plan'].nunique()}\""
+    }
+   },
+   {
+    "title": "Переводчик параметров",
+    "prompt": "<p>По словарю из урока напишите функцию <code>translate(params)</code>: она переводит словарь параметров sklearn HistGB в названия CatBoost. <code>max_iter</code> → <code>iterations</code>, <code>max_depth</code> → <code>depth</code>, <code>l2_regularization</code> → <code>l2_leaf_reg</code>; остальные ключи (например, <code>learning_rate</code>) не меняются. Значения сохраняются.</p><p>Например, <code>translate({'max_iter': 500, 'learning_rate': 0.05})</code> → <code>{'iterations': 500, 'learning_rate': 0.05}</code>.</p>",
+    "hints": [
+     "Создайте словарь перевода, затем <code>NAMES.get(k, k)</code>: если ключа нет в словаре, он остаётся как есть."
+    ],
+    "check": {
+     "tests": "_r = translate({'max_iter': 500, 'learning_rate': 0.05})\nassert _r == {'iterations': 500, 'learning_rate': 0.05}, \"translate({'max_iter': 500, 'learning_rate': 0.05}) → {'iterations': 500, 'learning_rate': 0.05}\"\nassert translate({'max_depth': 4, 'l2_regularization': 3}) == {'depth': 4, 'l2_leaf_reg': 3}, \"max_depth → depth, l2_regularization → l2_leaf_reg\"\nassert translate({}) == {}, \"Пустой словарь → пустой словарь\""
+    }
+   },
+   {
+    "title": "Первый HistGB",
+    "prompt": "<p>Обучите <code>model = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code> на числовых столбцах (<code>X_train[num]</code>). Фактическое число деревьев запишите в <code>n_trees</code> (<code>n_iter_</code>), ROC AUC на test — в <code>auc</code>.</p>",
+    "hints": [
+     "<code>model.fit(X_train[num], y_train)</code>",
+     "<code>roc_auc_score(y_test, model.predict_proba(X_test[num])[:, 1])</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_m = _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr, _ytr)\n_a = _ras(_yte, _m.predict_proba(_Xte)[:, 1])\nassert n_trees == 100, f\"Без early stopping вырастает 100 деревьев, у вас {n_trees}\"\nassert abs(auc - _a) < 1e-6, f\"auc должно быть ≈ {_a:.3f}: проверьте параметры и random_state=0\""
+    }
+   },
+   {
+    "title": "learning_rate и число деревьев",
+    "prompt": "<p>Для каждого <code>lr</code> ∈ <code>[0.03, 0.1, 0.3]</code> обучите на числовых столбцах <code>HistGradientBoostingClassifier(max_iter=500, learning_rate=lr, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0)</code>. Число деревьев, найденное early stopping, запишите в <code>iters[lr]</code>, ROC AUC на test — в <code>aucs[lr]</code>. Как меняется число деревьев при уменьшении шага?</p>",
+    "hints": [
+     "Цикл: <code>for lr in [0.03, 0.1, 0.3]:</code>, внутри модель и <code>iters[lr] = m.n_iter_</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_ms = {lr: _H(max_iter=500, learning_rate=lr, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0).fit(_Xtr, _ytr) for lr in [0.03, 0.1, 0.3]}\nassert sorted(iters) == [0.03, 0.1, 0.3] and sorted(aucs) == [0.03, 0.1, 0.3], \"Ключи: 0.03, 0.1, 0.3\"\nassert all(iters[lr] == _ms[lr].n_iter_ for lr in _ms), f\"Значения iters должны быть {[_ms[k].n_iter_ for k in _ms]}: max_iter=500, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10\"\nassert all(abs(aucs[lr] - _ras(_yte, _ms[lr].predict_proba(_Xte)[:, 1])) < 1e-6 for lr in _ms), \"Test AUC не совпадает\"\nassert iters[0.03] > iters[0.3], \"С маленьким шагом нужно больше деревьев\""
+    }
+   },
+   {
+    "title": "Без заполнения NaN",
+    "prompt": "<p>В churn есть пропуски в <code>age</code> и <code>data_gb</code>. <code>n_nan</code> — общее число NaN в <code>X_train[num]</code> (int). Обучите две модели, обе <code>HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code>:</p><ul><li><code>raw</code> — напрямую на <code>X_train[num]</code> (с NaN), AUC на test → <code>auc_raw</code>;</li><li><code>filled</code> — на данных, где NaN заполнены медианой train: <code>med = X_train[num].median()</code>, <code>X_train[num].fillna(med)</code> и <code>X_test[num].fillna(med)</code>; AUC на test → <code>auc_filled</code>.</li></ul>",
+    "hints": [
+     "<code>X_train[num].isna().sum().sum()</code> — сначала по столбцам, затем общая сумма",
+     "Медиана только из train: <code>med = X_train[num].median()</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_med = _Xtr.median()\n_a = _ras(_yte, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1])\n_b = _ras(_yte, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_Xtr.fillna(_med), _ytr).predict_proba(_Xte.fillna(_med))[:, 1])\nassert n_nan == int(_Xtr.isna().sum().sum()), f\"n_nan должно быть {int(_Xtr.isna().sum().sum())}\"\nassert abs(auc_raw - _a) < 1e-6, f\"auc_raw должно быть ≈ {_a:.3f}: модель сама обрабатывает NaN\"\nassert abs(auc_filled - _b) < 1e-6, f\"auc_filled должно быть ≈ {_b:.3f}: заполните и test медианой train\""
+    }
+   },
+   {
+    "title": "L2-регуляризация",
+    "prompt": "<p>Для каждого <code>l2</code> ∈ <code>[0, 1, 10]</code> обучите на числовых столбцах <code>HistGradientBoostingClassifier(max_iter=200, learning_rate=0.1, max_depth=3, l2_regularization=l2, early_stopping=False, random_state=0)</code> и запишите ROC AUC на test в <code>auc_l2[l2]</code>. Значение с наибольшим AUC запишите в <code>best_l2</code>.</p>",
+    "hints": [
+     "<code>l2_regularization=l2</code> — штраф L2 в sklearn (в XGBoost это <code>reg_lambda</code>)",
+     "<code>max(auc_l2, key=auc_l2.get)</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_a = {l2: _ras(_yte, _H(max_iter=200, learning_rate=0.1, max_depth=3, l2_regularization=l2, early_stopping=False, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]) for l2 in [0, 1, 10]}\nassert sorted(auc_l2) == [0, 1, 10], \"Ключи auc_l2: 0, 1, 10\"\nassert all(abs(auc_l2[k] - _a[k]) < 1e-6 for k in _a), \"Значения AUC не совпадают: max_iter=200, l2_regularization=l2, early_stopping=False, random_state=0\"\nassert best_l2 == max(_a, key=_a.get), f\"best_l2 должно быть {max(_a, key=_a.get)}\""
+    }
+   },
+   {
+    "title": "Выбор числа деревьев на validation",
+    "prompt": "<p>Сделайте early stopping вручную. Разбейте train ещё раз: <code>X_tr, X_val, y_tr, y_val = train_test_split(X_train[num], y_train, test_size=0.25, random_state=0, stratify=y_train)</code>. Для каждого <code>n</code> ∈ <code>[10, 25, 50, 100, 200]</code> обучите <code>HistGradientBoostingClassifier(max_iter=n, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0)</code> на <code>X_tr</code> и запишите AUC на <b>validation</b> в <code>val_auc[n]</code>. Лучшее <code>n</code> → <code>best_n</code>. Один раз посчитайте AUC этой модели на test и запишите в <code>test_auc</code>.</p>",
+    "hints": [
+     "Сохраняйте модели в словарь: <code>models[n] = ...fit(X_tr, y_tr)</code>",
+     "<code>val_auc[n] = roc_auc_score(y_val, models[n].predict_proba(X_val)[:, 1])</code>",
+     "На test смотрим один раз, только моделью <code>best_n</code>."
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_df = pd.read_csv('churn.csv')\n_num = ['age', 'tenure_months', 'monthly_fee', 'data_gb', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_df[_num], _df['churned'], test_size=0.25, random_state=0, stratify=_df['churned'])\n_a, _v, _b, _w = _tts(_Xtr, _ytr, test_size=0.25, random_state=0, stratify=_ytr)\n_ms = {n: _H(max_iter=n, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_a, _b) for n in [10, 25, 50, 100, 200]}\n_va = {n: _ras(_w, m.predict_proba(_v)[:, 1]) for n, m in _ms.items()}\n_bn = max(_va, key=_va.get)\nassert len(X_tr) == len(_a) and len(X_val) == len(_v), f\"В X_tr должно быть {len(_a)} строк, в X_val — {len(_v)}: разбейте X_train[num] с test_size=0.25\"\nassert sorted(val_auc) == [10, 25, 50, 100, 200] and all(abs(val_auc[n] - _va[n]) < 1e-6 for n in _va), \"val_auc не совпадает: модель обучается на X_tr, оценивается на X_val\"\nassert best_n == _bn, f\"best_n должно быть {_bn}: наибольший validation AUC\"\nassert abs(test_auc - _ras(_yte, _ms[_bn].predict_proba(_Xte)[:, 1])) < 1e-6, \"test_auc — AUC модели best_n на X_test[num]\""
+    }
+   },
+   {
+    "title": "Категория или числовой код",
+    "prompt": "<p>В <code>X</code> столбцы <code>city</code> и <code>plan</code> имеют тип category. Создайте вторую таблицу <code>X_codes</code>: <code>X.copy()</code>, в ней превратите оба столбца в числа (0, 1, 2…) через <code>X[c].cat.codes</code> — это «ложный порядок». Разбейте обе через <code>train_test_split(..., y, test_size=0.25, random_state=0, stratify=y)</code>. Две модели с параметрами <code>max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0</code>:</p><ul><li><code>native</code> — <code>categorical_features='from_dtype'</code>, на <code>X</code>; AUC на test → <code>auc_native</code>;</li><li><code>codes</code> — на <code>X_codes</code> (всё числовое); AUC на test → <code>auc_codes</code>.</li></ul><p>Велика ли разница? Здесь городов и тарифов мало (4–5 значений), поэтому разница небольшая; когда категорий сотни, нативный способ обычно заметно выигрывает.</p>",
+    "hints": [
+     "<code>X_codes[c] = X[c].cat.codes</code>",
+     "Одинаковые <code>random_state=0</code> и <code>stratify=y</code> дают одни и те же строки в обоих разбиениях."
+    ],
+    "check": {
+     "tests": "from sklearn.model_selection import train_test_split as _tts\nfrom sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\nassert str(X_codes['city'].dtype) != 'category' and int(X_codes['city'].max()) == X['city'].cat.categories.size - 1, \"В X_codes city должен быть числом: X[c].cat.codes\"\n_xa, _xb, _ya, _yb = _tts(X, y, test_size=0.25, random_state=0, stratify=y)\n_ca, _cb, _, _ = _tts(X_codes, y, test_size=0.25, random_state=0, stratify=y)\n_n = _ras(_yb, _H(categorical_features='from_dtype', max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_xa, _ya).predict_proba(_xb)[:, 1])\n_k = _ras(_yb, _H(max_iter=100, learning_rate=0.1, max_depth=3, early_stopping=False, random_state=0).fit(_ca, _ya).predict_proba(_cb)[:, 1])\nassert abs(auc_native - _n) < 1e-6, f\"auc_native должно быть ≈ {_n:.3f}: categorical_features='from_dtype'\"\nassert abs(auc_codes - _k) < 1e-6, f\"auc_codes должно быть ≈ {_k:.3f}: на X_codes, с теми же параметрами\""
+    }
+   }
+  ]
+ },
+ "mp-pca": {
+  "pr": [
+   {
+    "title": "Повторяющаяся информация",
+    "prompt": "<p>Корреляция между признаками показывает, чем полезен PCA. <code>r_size</code> — корреляция <code>rooms</code> и <code>area_m2</code>, <code>r_height</code> — корреляция <code>floor</code> и <code>floors_total</code> (<code>.corr()</code>).</p>",
+    "hints": [
+     "<code>flats['rooms'].corr(flats['area_m2'])</code>"
+    ],
+    "check": {
+     "tests": "_r1 = flats['rooms'].corr(flats['area_m2']); _r2 = flats['floor'].corr(flats['floors_total'])\nassert abs(r_size - _r1) < 1e-9, f\"r_size должно быть ≈ {_r1:.3f}\"\nassert abs(r_height - _r2) < 1e-9, f\"r_height должно быть ≈ {_r2:.3f}: floor и floors_total\""
+    }
+   },
+   {
+    "title": "Доля сохранённой дисперсии",
+    "prompt": "<p>Напишите функцию <code>kept_share(variances, k)</code>: даны дисперсии компонент (по убыванию), верните, какую долю общей дисперсии сохраняют первые <code>k</code> компонент.</p><p>Например, <code>kept_share([6, 3, 1], 2)</code> → <code>0.9</code>.</p>",
+    "hints": [
+     "<code>sum(variances[:k]) / sum(variances)</code>"
+    ],
+    "check": {
+     "tests": "assert kept_share([6, 3, 1], 2) is not None and abs(kept_share([6, 3, 1], 2) - 0.9) < 1e-9, \"kept_share([6, 3, 1], 2) должно быть 9 / 10 = 0.9\"\nassert abs(kept_share([4, 4, 2], 1) - 0.4) < 1e-9, \"kept_share([4, 4, 2], 1) должно быть 0.4\"\nassert abs(kept_share([5, 3, 2], 3) - 1) < 1e-9, \"Все компоненты — 100%\""
+    }
+   },
+   {
+    "title": "Число компонент для 95%",
+    "prompt": "<p><code>Xs</code> (5 масштабированных признаков) готов. Обучите <code>PCA(n_components=0.95)</code> под именем <code>pca</code>: он сам выбирает число компонент, сохраняющих не менее 95% дисперсии. Выбранное число запишите в <code>n95</code> (<code>pca.n_components_</code>), сохранённую долю — в <code>kept</code>.</p>",
+    "hints": [
+     "<code>pca = PCA(n_components=0.95).fit(Xs)</code>",
+     "<code>kept = pca.explained_variance_ratio_.sum()</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_c = _np.cumsum(_PCA().fit(_Xs).explained_variance_ratio_); _n = int(_np.argmax(_c >= 0.95)) + 1\nassert n95 == _n, f\"n95 должно быть {_n}: PCA(n_components=0.95) на масштабированном Xs\"\nassert abs(kept - _c[_n - 1]) < 1e-6 and kept >= 0.95, f\"kept ≈ {_c[_n - 1]:.3f}: explained_variance_ratio_.sum()\""
+    }
+   },
+   {
+    "title": "Рецепт компонент",
+    "prompt": "<p>Обучите <code>PCA(n_components=2)</code> на <code>Xs</code>. Запишите веса в DataFrame <code>loadings</code>: индекс <code>['PC1', 'PC2']</code>, столбцы — <code>num</code> (<code>pca.components_</code>). Название признака с наибольшим по модулю весом в каждой компоненте запишите в <code>top_pc1</code>, <code>top_pc2</code>.</p>",
+    "hints": [
+     "<code>pd.DataFrame(pca.components_, index=['PC1', 'PC2'], columns=num)</code>",
+     "Знак не важен: <code>loadings.loc['PC1'].abs().idxmax()</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_L = pd.DataFrame(_PCA(n_components=2).fit(_Xs).components_, index=['PC1', 'PC2'], columns=list(_X.columns))\nassert isinstance(loadings, pd.DataFrame) and loadings.shape == (2, 5) and list(loadings.index) == ['PC1', 'PC2'], \"loadings — DataFrame 2 × 5 с индексом ['PC1', 'PC2']\"\nassert _np.allclose(_np.abs(loadings[list(_X.columns)].values), _np.abs(_L.values), atol=1e-6), \"Веса не совпадают: PCA(n_components=2) на масштабированном Xs\"\nassert top_pc1 == _L.loc['PC1'].abs().idxmax() and top_pc2 == _L.loc['PC2'].abs().idxmax(), f\"Должно быть top_pc1 = {_L.loc['PC1'].abs().idxmax()}, top_pc2 = {_L.loc['PC2'].abs().idxmax()}\""
+    }
+   },
+   {
+    "title": "PCA без масштабирования",
+    "prompt": "<p>Покажите, почему масштабирование обязательно. Обучите <code>PCA(n_components=1)</code> дважды: на сыром <code>X</code> и на масштабированном <code>Xs</code>. Модули весов PC1 запишите в Series <code>w_raw</code> и <code>w_scaled</code> (индекс — <code>num</code>). <code>raw_top</code> — признак с наибольшим весом на сырых данных, <code>raw_evr</code> — доля дисперсии PC1 на сырых данных.</p>",
+    "hints": [
+     "<code>pd.Series(np.abs(p_raw.components_[0]), index=num)</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\n_pr = _PCA(n_components=1).fit(_X); _ps = _PCA(n_components=1).fit(_Xs)\n_wr = pd.Series(_np.abs(_pr.components_[0]), index=list(_X.columns)); _ws = pd.Series(_np.abs(_ps.components_[0]), index=list(_X.columns))\nassert _np.allclose(_np.asarray(w_raw, dtype=float), _wr.values, atol=1e-6), \"w_raw не совпадает: PCA(n_components=1) на сыром X, модуль components_[0]\"\nassert _np.allclose(_np.asarray(w_scaled, dtype=float), _ws.values, atol=1e-6), \"w_scaled не совпадает: на масштабированном Xs\"\nassert raw_top == 'area_m2', \"На сырых данных PC1 — фактически area_m2: raw_top = w_raw.idxmax()\"\nassert abs(raw_evr - _pr.explained_variance_ratio_[0]) < 1e-6, f\"raw_evr должно быть ≈ {_pr.explained_variance_ratio_[0]:.3f}\""
+    }
+   },
+   {
+    "title": "PCA + KMeans",
+    "prompt": "<p>Используйте PCA как подготовку к визуализации. <code>X2 = PCA(n_components=2).fit_transform(Xs)</code>. Обучите <code>km = KMeans(n_clusters=3, n_init=10, random_state=0)</code> на <code>X2</code> и запишите метки в <code>labels</code>. Размеры кластеров по возрастанию запишите в список <code>sizes</code>.</p>",
+    "hints": [
+     "<code>km.labels_</code> — кластер каждой квартиры",
+     "Размеры: <code>sorted(np.bincount(labels))</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_X = pd.read_csv('flats.csv')[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\n_Xs = _SS().fit_transform(_X)\nfrom sklearn.cluster import KMeans as _KM\n_X2 = _PCA(n_components=2).fit_transform(_Xs)\n_sz = sorted(int(v) for v in _np.bincount(_KM(n_clusters=3, n_init=10, random_state=0).fit(_X2).labels_))\nassert _np.asarray(X2).shape == (400, 2), \"X2 — 400 × 2: PCA(n_components=2).fit_transform(Xs)\"\nassert len(labels) == 400 and len(set(labels)) == 3, \"labels — 400 значений, 3 кластера\"\nassert list(sizes) == _sz, f\"sizes должно быть {_sz}: KMeans(n_clusters=3, n_init=10, random_state=0) на X2\""
+    }
+   },
+   {
+    "title": "Число компонент и качество",
+    "prompt": "<p>Измерьте цену сжатия. Для каждого <code>k</code> = 1, 2, 3, 4, 5 запишите средний R² по 5-fold CV для <code>make_pipeline(StandardScaler(), PCA(n_components=k), LinearRegression())</code> в <code>cv_r2[k]</code>. Лучшее <code>k</code> → <code>best_k</code>. Насколько падает R² при переходе от 5 компонент к 2: <code>drop_2 = cv_r2[5] - cv_r2[2]</code>.</p>",
+    "hints": [
+     "PCA внутри Pipeline обучается в каждом fold только на train-части — утечки нет.",
+     "<code>cross_val_score(pipe, X, y, cv=5).mean()</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\nfrom sklearn.linear_model import LinearRegression as _LR\nfrom sklearn.model_selection import cross_val_score as _cvs\n_r = {k: _cvs(_mp(_SS(), _PCA(n_components=k), _LR()), X, y, cv=5).mean() for k in range(1, 6)}\nassert sorted(cv_r2) == [1, 2, 3, 4, 5], \"Ключи cv_r2: 1, 2, 3, 4, 5\"\nassert all(abs(cv_r2[k] - _r[k]) < 1e-6 for k in _r), \"CV R² не совпадает: StandardScaler → PCA(n_components=k) → LinearRegression, cv=5\"\nassert best_k == max(_r, key=_r.get), f\"best_k должно быть {max(_r, key=_r.get)}\"\nassert abs(drop_2 - (_r[5] - _r[2])) < 1e-6, \"drop_2 = cv_r2[5] - cv_r2[2]\""
+    }
+   },
+   {
+    "title": "PCA только на train",
+    "prompt": "<p>Разбиение готово. Обучите <code>pipe = make_pipeline(StandardScaler(), PCA(n_components=3), LinearRegression())</code> только на train и запишите R² на test в <code>test_r2</code>. Доли дисперсии PCA внутри Pipeline запишите в <code>evr3</code> (<code>pipe.named_steps['pca']</code>), а представление тестовых данных в пространстве PCA — в <code>Z_test</code> (<code>transform</code> первых двух шагов: <code>pipe[:-1].transform(X_test)</code>).</p>",
+    "hints": [
+     "<code>make_pipeline</code> называет шаги строчными буквами: <code>'standardscaler'</code>, <code>'pca'</code>, <code>'linearregression'</code>.",
+     "<code>pipe[:-1]</code> — Pipeline без последней модели: scaler + PCA."
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\nfrom sklearn.linear_model import LinearRegression as _LR\n_sc = _SS().fit(X_train); _p = _PCA(n_components=3).fit(_sc.transform(X_train))\n_Z = _p.transform(_sc.transform(X_test))\n_r2 = _LR().fit(_p.transform(_sc.transform(X_train)), y_train).score(_Z, y_test)\nassert _np.allclose(pipe.named_steps['standardscaler'].mean_, X_train.mean().values), \"Scaler должен обучаться только на train\"\nassert _np.allclose(evr3, _p.explained_variance_ratio_, atol=1e-6), f\"evr3 должно быть ≈ {_p.explained_variance_ratio_.round(3)}: PCA обучается на train\"\nassert _np.asarray(Z_test).shape == (100, 3) and _np.allclose(_np.abs(_np.asarray(Z_test)), _np.abs(_Z), atol=1e-6), \"Z_test — 100 × 3: pipe[:-1].transform(X_test) (на test не обучаем)\"\nassert abs(test_r2 - _r2) < 1e-6, f\"test_r2 должно быть ≈ {_r2:.3f}\""
+    }
+   }
+  ]
+ },
+ "mp-text": {
+  "pr": [
+   {
+    "title": "Знакомство с отзывами",
+    "prompt": "<p><code>counts</code> — таблица языка и метки: <code>pd.crosstab(df['lang'], df['label'])</code>. <code>share_neg_kk</code> — доля <code>negative</code> среди казахских (<code>kk</code>) отзывов.</p>",
+    "hints": [
+     "<code>counts.loc['kk', 'negative'] / counts.loc['kk'].sum()</code>"
+    ],
+    "check": {
+     "tests": "_k = df[df['lang'] == 'kk']\nassert isinstance(counts, pd.DataFrame) and counts.shape == (2, 2) and int(counts.values.sum()) == 300, \"counts — таблица 2 × 2 с суммой 300: pd.crosstab(df['lang'], df['label'])\"\nassert abs(share_neg_kk - (_k['label'] == 'negative').mean()) < 1e-9, f\"share_neg_kk должно быть ≈ {(_k['label'] == 'negative').mean():.3f}\""
+    }
+   },
+   {
+    "title": "Формула IDF",
+    "prompt": "<p>IDF в sklearn: <code>idf = ln((1 + n) / (1 + df)) + 1</code>, где <code>n</code> — число отзывов, <code>df</code> — число отзывов, где встречается слово. Напишите функцию <code>idf(n, df_count)</code>.</p><p>Например, <code>idf(225, 100)</code> → <code>1.805</code>.</p>",
+    "hints": [
+     "<code>math.log((1 + n) / (1 + df_count)) + 1</code>"
+    ],
+    "check": {
+     "tests": "assert idf(225, 100) is not None and abs(idf(225, 100) - 1.80541) < 1e-4, \"idf(225, 100) должно быть ≈ 1.805\"\nassert abs(idf(225, 3) - 5.03432) < 1e-4, \"У редкого слова вес выше: idf(225, 3) ≈ 5.034\"\nassert abs(idf(10, 10) - 1) < 1e-9, \"Слово, которое есть во всех отзывах: idf = 1\""
+    }
+   },
+   {
+    "title": "Вес слова «және»",
+    "prompt": "<p><code>vec = TfidfVectorizer().fit(X_train)</code>. Запишите вес IDF слова «және» в <code>idf_jane</code>: он в массиве <code>vec.idf_</code> на позиции <code>vec.vocabulary_['және']</code>. Для сравнения наибольший IDF запишите в <code>idf_max</code>.</p>",
+    "hints": [
+     "<code>vec.idf_[vec.vocabulary_['және']]</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_v = _TV().fit(_a)\n_j = _v.idf_[_v.vocabulary_['және']]\nassert abs(idf_jane - _j) < 1e-9, f\"idf_jane должно быть ≈ {_j:.3f}: векторизатор обучается только на X_train\"\nassert abs(idf_max - _v.idf_.max()) < 1e-9, f\"idf_max должно быть ≈ {_v.idf_.max():.3f}\"\nassert idf_jane < idf_max, \"Вес частого слова ниже, чем у редкого\""
+    }
+   },
+   {
+    "title": "Униграммы и биграммы",
+    "prompt": "<p>Обучите два Pipeline (<code>'tfidf'</code> + <code>'clf'</code>, <code>LogisticRegression(max_iter=1000)</code>): <code>uni</code> — <code>TfidfVectorizer()</code>, <code>bi</code> — <code>TfidfVectorizer(ngram_range=(1, 2))</code>. Accuracy на test запишите в <code>acc_uni</code>, <code>acc_bi</code>, размеры словарей — в <code>n_uni</code>, <code>n_bi</code>.</p>",
+    "hints": [
+     "<code>Pipeline([('tfidf', TfidfVectorizer()), ('clf', LogisticRegression(max_iter=1000))])</code>",
+     "<code>len(bi['tfidf'].vocabulary_)</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_u = _P([('tfidf', _TV()), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\n_bm = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\nassert n_uni == len(_u['tfidf'].vocabulary_) and n_bi == len(_bm['tfidf'].vocabulary_), f\"Должно быть n_uni = {len(_u['tfidf'].vocabulary_)}, n_bi = {len(_bm['tfidf'].vocabulary_)}\"\nassert abs(acc_uni - _u.score(_b, _e)) < 1e-9 and abs(acc_bi - _bm.score(_b, _e)) < 1e-9, f\"Должно быть acc_uni ≈ {_u.score(_b, _e):.3f}, acc_bi ≈ {_bm.score(_b, _e):.3f}\""
+    }
+   },
+   {
+    "title": "Насколько хорошо находим жалобы",
+    "prompt": "<p>Жалобы (<code>negative</code>) — важный для бизнеса класс. Обучите bigram-Pipeline (<code>Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(max_iter=1000))])</code>) под именем <code>model</code> и посчитайте на test <code>prec_neg</code> и <code>rec_neg</code> для класса <code>negative</code> (<code>pos_label='negative'</code>).</p>",
+    "hints": [
+     "<code>precision_score(y_test, pred, pos_label='negative')</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\nfrom sklearn.metrics import precision_score as _ps, recall_score as _rs\n_pr = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c).predict(_b)\n_pn, _rn = _ps(_e, _pr, pos_label='negative'), _rs(_e, _pr, pos_label='negative')\nassert abs(prec_neg - _pn) < 1e-9, f\"prec_neg должно быть ≈ {_pn:.3f}: pos_label='negative'\"\nassert abs(rec_neg - _rn) < 1e-9, f\"rec_neg должно быть ≈ {_rn:.3f}\""
+    }
+   },
+   {
+    "title": "Ошибочно классифицированные отзывы",
+    "prompt": "<p>Самая полезная диагностика — читать ошибки. Обучите bigram-Pipeline и соберите на test отзывы, где прогноз не совпал с настоящей меткой, в DataFrame <code>errors</code>: столбцы <code>text</code>, <code>true</code>, <code>pred</code>. Число ошибок запишите в <code>n_err</code>.</p>",
+    "hints": [
+     "<code>pd.DataFrame({'text': X_test, 'true': y_test, 'pred': model.predict(X_test)})</code>",
+     "<code>res[res['true'] != res['pred']]</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_pr = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(_a, _c).predict(_b)\n_bad = _b[_pr != _e.values]\nassert isinstance(errors, pd.DataFrame) and {'text', 'true', 'pred'} <= set(errors.columns), \"errors — DataFrame со столбцами text, true, pred\"\nassert n_err == len(_bad) and len(errors) == len(_bad), f\"Число ошибок должно быть {len(_bad)}\"\nassert set(errors['text']) == set(_bad) and (errors['true'] != errors['pred']).all(), \"В errors должны быть только строки, где true != pred\""
+    }
+   },
+   {
+    "title": "Символьные n-граммы",
+    "prompt": "<p>Для агглютинативного казахского помогают символьные n-граммы. Обучите <code>char = Pipeline([('tfidf', TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))), ('clf', LogisticRegression(max_iter=1000))])</code> и запишите accuracy на test в <code>acc_char</code>. Accuracy на test по каждому языку запишите в словарь <code>acc_lang</code> (ключи <code>'kk'</code>, <code>'ru'</code>; язык: <code>df.loc[X_test.index, 'lang']</code>).</p>",
+    "hints": [
+     "<code>lang = df.loc[X_test.index, 'lang']</code>; mask: <code>m = (lang == 'kk').values</code>",
+     "<code>char.score(X_test[m], y_test[m])</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\n_ch = _P([('tfidf', _TV(analyzer='char_wb', ngram_range=(2, 4))), ('clf', _LR(max_iter=1000))]).fit(_a, _c)\n_lg = _df.loc[_b.index, 'lang'].values\n_al = {l: _ch.score(_b[_lg == l], _e[_lg == l]) for l in ['kk', 'ru']}\nassert abs(acc_char - _ch.score(_b, _e)) < 1e-9, f\"acc_char должно быть ≈ {_ch.score(_b, _e):.3f}: analyzer='char_wb', ngram_range=(2, 4)\"\nassert sorted(acc_lang) == ['kk', 'ru'], \"Ключи acc_lang: 'kk', 'ru'\"\nassert all(abs(acc_lang[l] - _al[l]) < 1e-9 for l in _al), f\"acc_lang должно быть ≈ {_al}\""
+    }
+   },
+   {
+    "title": "Выбор C для текстовой модели",
+    "prompt": "<p>Когда признаков много, C важен. Для каждого <code>C</code> ∈ <code>[0.1, 1, 10]</code> запишите среднюю accuracy по 5-fold CV на train для <code>Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))), ('clf', LogisticRegression(C=C, max_iter=1000))])</code> в <code>cv_acc[C]</code>. Лучшее C → <code>best_C</code>. Обучите с этим C на train и запишите accuracy на test в <code>test_acc</code>.</p>",
+    "hints": [
+     "Удобна маленькая функция, создающая Pipeline: <code>def make(C): return Pipeline([...])</code>",
+     "<code>cross_val_score(make(C), X_train, y_train, cv=5).mean()</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_df = pd.read_csv('reviews.csv')\n_a, _b, _c, _e = _tts(_df['text'], _df['label'], test_size=0.25, random_state=0, stratify=_df['label'])\nfrom sklearn.model_selection import cross_val_score as _cvs\n_mk = lambda c: _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(C=c, max_iter=1000))])\n_s = {c: _cvs(_mk(c), _a, _c, cv=5).mean() for c in [0.1, 1, 10]}\n_bc = max(_s, key=_s.get)\nassert sorted(cv_acc) == [0.1, 1, 10] and all(abs(cv_acc[c] - _s[c]) < 1e-9 for c in _s), \"cv_acc не совпадает: 5-fold CV на train, ключи 0.1, 1, 10\"\nassert best_C == _bc, f\"best_C должно быть {_bc}\"\nassert abs(test_acc - _mk(_bc).fit(_a, _c).score(_b, _e)) < 1e-9, \"test_acc — accuracy на test модели, обученной на train с best_C\""
+    }
+   }
+  ]
+ },
+ "mp-ops": {
+  "pr": [
+   {
+    "title": "Вырос ли доход",
+    "prompt": "<p><code>old</code> — заявки 2024 года (<code>month &lt; '2025-01'</code>), <code>new</code> — 2025 года. Средний доход запишите в <code>inc_old</code>, <code>inc_new</code>, рост в процентах — <code>growth = (inc_new / inc_old − 1) · 100</code>.</p>",
+    "hints": [
+     "<code>old = df[df['month'] &lt; '2025-01']</code>"
+    ],
+    "check": {
+     "tests": "_o = df[df['month'] < '2025-01']['income'].mean(); _n = df[df['month'] >= '2025-01']['income'].mean()\nassert abs(inc_old - _o) < 1e-9 and abs(inc_new - _n) < 1e-9, f\"Должно быть inc_old ≈ {_o:.1f}, inc_new ≈ {_n:.1f}\"\nassert abs(growth - (_n / _o - 1) * 100) < 1e-9, f\"growth должно быть ≈ {(_n / _o - 1) * 100:.1f}%\""
+    }
+   },
+   {
+    "title": "Уровень PSI",
+    "prompt": "<p>По таблице из урока напишите функцию <code>psi_level(v)</code>: при PSI &lt; 0.1 она возвращает <code>'stable'</code>, от 0.1 до 0.25 (включительно) — <code>'moderate'</code>, выше 0.25 — <code>'major'</code>.</p>",
+    "hints": [
+     "Проверяйте условия от меньшего к большему: <code>if v &lt; 0.1</code>, затем <code>if v &lt;= 0.25</code>."
+    ],
+    "check": {
+     "tests": "assert psi_level(0.05) == 'stable' and psi_level(0.0) == 'stable', \"PSI < 0.1 → 'stable'\"\nassert psi_level(0.1) == 'moderate' and psi_level(0.25) == 'moderate', \"0.1 и 0.25 — 'moderate' (границы включены)\"\nassert psi_level(0.35) == 'major', \"PSI income в loans 0.35 → 'major'\""
+    }
+   },
+   {
+    "title": "Журнал экспериментов",
+    "prompt": "<p>Журнал можно вести и без MLflow: <code>runs</code> — список словарей. Название run с наибольшим OOT Gini запишите в <code>best_run</code>. Для каждого run запишите разницу Gini на validation и OOT в словарь <code>gaps</code> (<code>{название: gini_val − gini_oot}</code>). Run с наибольшей разницей запишите в <code>most_overfit</code>.</p>",
+    "hints": [
+     "<code>max(runs, key=lambda r: r['gini_oot'])['name']</code>",
+     "<code>{r['name']: r['gini_val'] - r['gini_oot'] for r in runs}</code>"
+    ],
+    "check": {
+     "tests": "assert best_run == 'logreg_C01', \"best_run — run с наибольшим OOT Gini: logreg_C01\"\nassert set(gaps) == {'logreg_C1', 'logreg_C01', 'boost_d3'} and abs(gaps['boost_d3'] - 0.17) < 1e-9 and abs(gaps['logreg_C1'] - 0.06) < 1e-9, \"gaps = {название: gini_val − gini_oot}\"\nassert most_overfit == 'boost_d3', \"most_overfit — run с наибольшей разницей: boost_d3 (лучший на validation, худший на OOT)\""
+    }
+   },
+   {
+    "title": "Дефолт по месяцам",
+    "prompt": "<p>Запишите фактическую долю дефолтов по месяцам в Series <code>rate_by_month</code> (<code>groupby('month')</code>). Месяц с наибольшей долей запишите в <code>worst_month</code>. Общую долю дефолтов в 2024 и 2025 годах запишите в <code>rate_2024</code>, <code>rate_2025</code>.</p>",
+    "hints": [
+     "<code>df.groupby('month')['default'].mean()</code>",
+     "<code>rate_by_month.idxmax()</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\n_g = df.groupby('month')['default'].mean()\nassert len(rate_by_month) == 18 and _np.allclose(_np.asarray(rate_by_month, dtype=float), _g.values), \"rate_by_month — доля дефолтов за 18 месяцев\"\nassert worst_month == _g.idxmax(), f\"worst_month должно быть {_g.idxmax()}\"\nassert abs(rate_2024 - df[df['month'] < '2025-01']['default'].mean()) < 1e-9 and abs(rate_2025 - df[df['month'] >= '2025-01']['default'].mean()) < 1e-9, \"rate_2024, rate_2025 — доля по всем заявкам каждого года\""
+    }
+   },
+   {
+    "title": "PSI по 4 группам",
+    "prompt": "<p>Посчитайте PSI дохода вручную по 4 квартильным группам. Границы — из <b>старого</b> периода: <code>edges = np.quantile(old['income'], [0, 0.25, 0.5, 0.75, 1])</code>, затем <code>edges[0], edges[-1] = -np.inf, np.inf</code>. Доли: <code>e = np.histogram(old['income'], edges)[0] / len(old)</code>, <code>a</code> — так же для <code>new</code>. <code>psi_inc4 = Σ (a − e) · ln(a / e)</code>.</p>",
+    "hints": [
+     "<code>a = np.histogram(new['income'], edges)[0] / len(new)</code>",
+     "<code>np.sum((a - e) * np.log(a / e))</code>"
+    ],
+    "check": {
+     "tests": "_o = df[df['month'] < '2025-01']['income']; _n = df[df['month'] >= '2025-01']['income']\n_ed = np.quantile(_o, [0, 0.25, 0.5, 0.75, 1]); _ed[0], _ed[-1] = -np.inf, np.inf\n_e = np.histogram(_o, _ed)[0] / len(_o); _a = np.histogram(_n, _ed)[0] / len(_n)\n_v = float(np.sum((_a - _e) * np.log(_a / _e)))\nassert np.allclose(e, _e) and np.allclose(a, _a), \"Доли e, a не совпадают: границы из старого периода, np.histogram(...)[0] / len(...)\"\nassert abs(psi_inc4 - _v) < 1e-9, f\"psi_inc4 должно быть ≈ {_v:.3f}\""
+    }
+   },
+   {
+    "title": "PSI скора",
+    "prompt": "<p>Факт ещё неизвестен, но распределение скора модели можно сравнить сразу. В стартере готовы функция <code>psi()</code> и <code>model</code>, обученная на <code>dev</code>. <code>s_dev</code> — предсказанные вероятности на <code>dev</code>, <code>s_oot</code> — на <code>oot</code>. <code>psi_score = psi(s_dev, s_oot)</code>. Средние скоры запишите в <code>mean_dev</code>, <code>mean_oot</code>.</p>",
+    "hints": [
+     "<code>s_oot = model.predict_proba(oot[F])[:, 1]</code>",
+     "Первый аргумент — эталонный (старый) период: <code>psi(s_dev, s_oot)</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_sd = _m.predict_proba(_dev[_F])[:, 1]; _so = _m.predict_proba(_oot[_F])[:, 1]\nassert len(s_dev) == 630 and len(s_oot) == 420, \"s_dev — 630, s_oot — 420 прогнозов\"\nassert abs(psi_score - psi(_sd, _so)) < 1e-9, f\"psi_score должно быть ≈ {psi(_sd, _so):.3f}: psi(s_dev, s_oot)\"\nassert abs(mean_dev - _sd.mean()) < 1e-9 and abs(mean_oot - _so.mean()) < 1e-9, \"mean_dev, mean_oot — средние скоров\""
+    }
+   },
+   {
+    "title": "Простая рекалибровка",
+    "prompt": "<p>На OOT модель занижает риск. Простейшая рекалибровка: умножить вероятности на один коэффициент. <code>oot1</code> — <code>2025-01</code> … <code>2025-03</code>, <code>oot2</code> — <code>2025-04</code> … <code>2025-06</code>.</p><ul><li><code>k</code> = фактическая доля дефолтов в oot1 / средний прогноз в oot1;</li><li><code>p2</code> — прогноз в oot2, <code>p2_new = np.clip(p2 * k, 0, 1)</code>;</li><li><code>pred_before</code>, <code>pred_after</code> — средние <code>p2</code> и <code>p2_new</code>, <code>fact2</code> — фактическая доля в oot2;</li><li><code>gini_before</code>, <code>gini_after</code> — Gini в oot2.</li></ul><p>Исправился ли уровень? Изменился ли Gini?</p>",
+    "hints": [
+     "<code>oot1 = oot[oot['month'] &lt;= '2025-03']</code>, <code>oot2 = oot[oot['month'] &gt;= '2025-04']</code>",
+     "<code>k = oot1['default'].mean() / model.predict_proba(oot1[F])[:, 1].mean()</code>",
+     "Умножение на одно число не меняет порядок, поэтому Gini остаётся прежним."
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_o1 = _oot[_oot['month'] <= '2025-03']; _o2 = _oot[_oot['month'] >= '2025-04']\n_k = _o1['default'].mean() / _m.predict_proba(_o1[_F])[:, 1].mean()\n_p2 = _m.predict_proba(_o2[_F])[:, 1]; _pn = _np.clip(_p2 * _k, 0, 1)\nassert abs(k - _k) < 1e-9, f\"k должно быть ≈ {_k:.3f}: фактическая доля / средний прогноз в oot1\"\nassert abs(pred_before - _p2.mean()) < 1e-9 and abs(pred_after - _pn.mean()) < 1e-9, f\"Должно быть pred_before ≈ {_p2.mean():.3f}, pred_after ≈ {_pn.mean():.3f} (в oot2)\"\nassert abs(fact2 - _o2['default'].mean()) < 1e-9, f\"fact2 ≈ {_o2['default'].mean():.3f}: oot2['default'].mean()\"\nassert abs(gini_before - (2 * _ras(_o2['default'], _p2) - 1)) < 1e-9 and abs(gini_after - (2 * _ras(_o2['default'], _pn) - 1)) < 1e-9, \"Gini считается на oot2: 2 * AUC - 1\"\nassert abs(fact2 - pred_after) < abs(fact2 - pred_before), \"После рекалибровки средний прогноз должен приблизиться к факту\""
+    }
+   },
+   {
+    "title": "Ежемесячная таблица мониторинга",
+    "prompt": "<p>Постройте таблицу для дашборда мониторинга. <code>model</code>, обученная на <code>dev</code>, готова. Для каждого месяца OOT (<code>2025-01</code> … <code>2025-06</code>) посчитайте три числа: <code>gini</code> (2 · AUC − 1), <code>pd_pred</code> (средний прогноз), <code>pd_fact</code> (фактическая доля дефолтов). Результат — DataFrame <code>monitor</code>: индекс — месяц (по возрастанию), столбцы — <code>gini</code>, <code>pd_pred</code>, <code>pd_fact</code>. <code>gap_max</code> — наибольшее значение <code>pd_fact − pd_pred</code> по месяцам.</p>",
+    "hints": [
+     "<code>for month, g in oot.groupby('month'):</code>",
+     "Таблица из словаря словарей: <code>pd.DataFrame(rows).T</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_dev[_F], _dev['default'])\n_ms = sorted(_oot['month'].unique())\n_r = {mo: (2 * _ras(g['default'], _m.predict_proba(g[_F])[:, 1]) - 1, _m.predict_proba(g[_F])[:, 1].mean(), g['default'].mean()) for mo, g in _oot.groupby('month')}\nassert isinstance(monitor, pd.DataFrame) and list(monitor.index) == _ms, f\"Индекс monitor — месяцы OOT по возрастанию: {_ms}\"\nassert {'gini', 'pd_pred', 'pd_fact'} <= set(monitor.columns), \"Столбцы: gini, pd_pred, pd_fact\"\nassert all(abs(float(monitor.loc[mo, 'gini']) - _r[mo][0]) < 1e-6 for mo in _ms), \"gini не совпадает: 2 * AUC - 1 в каждом месяце\"\nassert all(abs(float(monitor.loc[mo, 'pd_pred']) - _r[mo][1]) < 1e-9 and abs(float(monitor.loc[mo, 'pd_fact']) - _r[mo][2]) < 1e-9 for mo in _ms), \"pd_pred — средний прогноз, pd_fact — фактическая доля (в каждом месяце)\"\nassert abs(gap_max - max(_r[mo][2] - _r[mo][1] for mo in _ms)) < 1e-9, \"gap_max = (pd_fact - pd_pred).max()\""
+    }
+   }
+  ]
+ },
+ "mp-anom": {
+  "pr": [
+   {
+    "title": "Почему accuracy обманывает",
+    "prompt": "<p><code>n_fraud</code> — число мошеннических транзакций (int), <code>fraud_rate</code> — их доля. Accuracy «модели», которая считает все транзакции «чистыми», запишите в <code>acc_all_clean</code>.</p>",
+    "hints": [
+     "<code>(df['is_fraud'] == 0).mean()</code>"
+    ],
+    "check": {
+     "tests": "assert n_fraud == 30, \"n_fraud должно быть 30\"\nassert abs(fraud_rate - 0.03) < 1e-9, \"fraud_rate = 0.03\"\nassert abs(acc_all_clean - 0.97) < 1e-9, \"Accuracy модели, которая ничего не находит, — 0.97\""
+    }
+   },
+   {
+    "title": "Правило z-score",
+    "prompt": "<p>Напишите функцию <code>z_flags(values, k=3)</code>: она возвращает массив bool, где <code>True</code> для значений с <code>|x − среднее| / std &gt; k</code>, иначе <code>False</code>. <code>std</code> — <code>np.std</code> (по умолчанию).</p><p>Например, <code>z_flags([1, 1, 1, 1, 1, 1, 1, 1, 1, 100], k=2)</code> отмечает только последнее значение.</p>",
+    "hints": [
+     "<code>x = np.asarray(values, dtype=float)</code>; <code>np.abs(x - x.mean()) / x.std() &gt; k</code>"
+    ],
+    "check": {
+     "tests": "_r = z_flags([1, 1, 1, 1, 1, 1, 1, 1, 1, 100], k=2)\nassert _r is not None and list(np.asarray(_r)) == [False] * 9 + [True], \"z_flags([1, ..., 1, 100], k=2) должна отметить только последнее значение\"\nassert not np.asarray(z_flags([10, 12, 11, 13, 9, 10])).any(), \"Если выбросов нет, всё False (k=3 по умолчанию)\"\nassert list(np.asarray(z_flags([0, 0, 0, 10], k=1))) == [False, False, False, True], \"Параметр k должен учитываться: z_flags([0, 0, 0, 10], k=1)\""
+    }
+   },
+   {
+    "title": "Бизнес-правило",
+    "prompt": "<p>Правило: «новое устройство <b>и</b> заграница». <code>rule</code> — транзакции, где <code>new_device == 1</code> и <code>foreign == 1</code> (bool Series). <code>n_alerts</code> — число тревог, <code>n_hit</code> — число мошенничеств среди них, <code>prec_rule</code> — precision.</p>",
+    "hints": [
+     "<code>(df['new_device'] == 1) &amp; (df['foreign'] == 1)</code>"
+    ],
+    "check": {
+     "tests": "_r = (df['new_device'] == 1) & (df['foreign'] == 1)\n_h = int((_r & (df['is_fraud'] == 1)).sum())\nassert len(rule) == 1000 and int(rule.sum()) == int(_r.sum()), \"rule — строки, где выполнены оба условия (&)\"\nassert n_alerts == int(_r.sum()) and n_hit == _h, f\"Должно быть n_alerts = {int(_r.sum())}, n_hit = {_h}\"\nassert abs(prec_rule - _h / _r.sum()) < 1e-9, \"prec_rule = n_hit / n_alerts\""
+    }
+   },
+   {
+    "title": "z-score по логарифму",
+    "prompt": "<p>Сумма распределена несимметрично, поэтому сначала берём логарифм. <code>log_amt = np.log(df['amount'])</code>, <code>z = (log_amt − log_amt.mean()) / log_amt.std()</code>. <code>flag</code> — транзакции с <code>z &gt; 3</code> (только слишком большие суммы). Посчитайте <code>n_flag</code>, <code>precision_z</code>, <code>recall_z</code>.</p>",
+    "hints": [
+     "<code>z = (log_amt - log_amt.mean()) / log_amt.std()</code>",
+     "Recall: найденные мошенничества / все мошенничества (30)"
+    ],
+    "check": {
+     "tests": "_l = np.log(df['amount']); _z = (_l - _l.mean()) / _l.std(); _f = _z > 3\n_h = int((_f & (df['is_fraud'] == 1)).sum())\nassert n_flag == int(_f.sum()), f\"n_flag должно быть {int(_f.sum())}: z-score логарифма > 3\"\nassert abs(precision_z - _h / _f.sum()) < 1e-9, f\"precision_z должно быть ≈ {_h / _f.sum():.3f}\"\nassert abs(recall_z - _h / df['is_fraud'].sum()) < 1e-9, f\"recall_z должно быть ≈ {_h / df['is_fraud'].sum():.3f}\""
+    }
+   },
+   {
+    "title": "Функция precision@k",
+    "prompt": "<p>Напишите функцию <code>precision_at_k(y_true, scores, k)</code>: она возвращает долю положительного класса среди <code>k</code> примеров с наибольшим скором. Порядок получите через <code>np.argsort(-scores, kind='stable')</code>. Затем возьмите саму сумму как «модель» и посчитайте <code>p30_amount = precision_at_k(df['is_fraud'], df['amount'], 30)</code>.</p>",
+    "hints": [
+     "<code>top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]</code>",
+     "<code>np.asarray(y_true)[top].mean()</code>"
+    ],
+    "check": {
+     "tests": "_r = precision_at_k([1, 0, 1, 0, 0], [0.9, 0.8, 0.7, 0.2, 0.1], 2)\nassert _r is not None and abs(_r - 0.5) < 1e-9, \"precision_at_k([1, 0, 1, 0, 0], [0.9, 0.8, 0.7, 0.2, 0.1], 2) должно быть 0.5: в топ-2 одно мошенничество\"\nassert abs(precision_at_k([0, 0, 1], [1, 2, 3], 1) - 1) < 1e-9, \"Пример с наибольшим скором берётся первым\"\n_t = np.argsort(-df['amount'].values.astype(float), kind='stable')[:30]\nassert abs(p30_amount - df['is_fraud'].values[_t].mean()) < 1e-9, f\"p30_amount должно быть ≈ {df['is_fraud'].values[_t].mean():.3f}\""
+    }
+   },
+   {
+    "title": "Два правила вместе",
+    "prompt": "<p>Объедините два правила: <code>rule_a</code> — <code>amount</code> выше верхней границы правила IQR (<code>Q3 + 1.5 · IQR</code>); <code>rule_b</code> — <code>tx_24h &gt;= 8</code>. Тревога: <code>alerts = rule_a | rule_b</code>. Посчитайте <code>n_alerts</code>, <code>precision_ab</code>, <code>recall_ab</code>.</p>",
+    "hints": [
+     "<code>rule_a = df['amount'] &gt; q3 + 1.5 * (q3 - q1)</code>",
+     "«Или»: <code>rule_a | rule_b</code>"
+    ],
+    "check": {
+     "tests": "_q1, _q3 = df['amount'].quantile(0.25), df['amount'].quantile(0.75)\n_al = (df['amount'] > _q3 + 1.5 * (_q3 - _q1)) | (df['tx_24h'] >= 8)\n_h = int((_al & (df['is_fraud'] == 1)).sum())\nassert int(rule_b.sum()) == int((df['tx_24h'] >= 8).sum()), \"rule_b = tx_24h >= 8\"\nassert n_alerts == int(_al.sum()), f\"n_alerts должно быть {int(_al.sum())}: rule_a | rule_b\"\nassert abs(precision_ab - _h / _al.sum()) < 1e-9 and abs(recall_ab - _h / df['is_fraud'].sum()) < 1e-9, f\"Должно быть precision_ab ≈ {_h / _al.sum():.3f}, recall_ab ≈ {_h / 30:.3f}\""
+    }
+   },
+   {
+    "title": "IsolationForest.predict",
+    "prompt": "<p>Попробуйте работать не со скором, а с готовым порогом. Обучите <code>iso = IsolationForest(n_estimators=100, contamination=0.05, random_state=0)</code> на <code>df[F]</code>. <code>pred = iso.predict(df[F])</code>: <code>-1</code> — аномалия, <code>1</code> — норма. <code>flag = pred == -1</code>. Посчитайте <code>n_anom</code>, <code>precision_iso</code>, <code>recall_iso</code>. Как <code>contamination</code> влияет на число тревог?</p>",
+    "hints": [
+     "Модели не передаём <code>is_fraud</code>: только <code>df[F]</code>.",
+     "<code>hit = int((flag &amp; (df['is_fraud'].values == 1)).sum())</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.ensemble import IsolationForest as _IF\n_F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n_p = _IF(n_estimators=100, contamination=0.05, random_state=0).fit(df[_F]).predict(df[_F])\n_f = _p == -1; _h = int((_f & (df['is_fraud'].values == 1)).sum())\nassert n_anom == int(_f.sum()), f\"n_anom должно быть {int(_f.sum())}: contamination=0.05 — примерно 5% тревог\"\nassert abs(precision_iso - _h / _f.sum()) < 1e-9, f\"precision_iso должно быть ≈ {_h / _f.sum():.3f}\"\nassert abs(recall_iso - _h / 30) < 1e-9, f\"recall_iso должно быть ≈ {_h / 30:.3f}\""
+    }
+   },
+   {
+    "title": "Модель или сумма",
+    "prompt": "<p>Лучше ли IsolationForest простого правила «самая большая сумма»? Напишите функцию <code>precision_at_k</code> (доля положительных среди <code>k</code> с наибольшим скором, <code>np.argsort(-scores, kind='stable')</code>). Обучите <code>IsolationForest(n_estimators=100, contamination=0.03, random_state=0)</code>, <code>score = -iso.score_samples(df[F])</code>. Для каждого <code>k</code> ∈ <code>[10, 30, 50]</code> посчитайте <code>p_iso[k]</code> (по скору) и <code>p_amt[k]</code> (по <code>amount</code>).</p>",
+    "hints": [
+     "<code>top = np.argsort(-np.asarray(scores, dtype=float), kind='stable')[:k]</code>",
+     "<code>p_iso[k] = precision_at_k(df['is_fraud'], score, k)</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.ensemble import IsolationForest as _IF\n_F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n_s = -_IF(n_estimators=100, contamination=0.03, random_state=0).fit(df[_F]).score_samples(df[_F])\n_y = df['is_fraud'].values\n_pk = lambda sc, k: _y[np.argsort(-np.asarray(sc, dtype=float), kind='stable')[:k]].mean()\nassert abs(precision_at_k([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1], 2) - 0.5) < 1e-9, \"precision_at_k([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1], 2) должно быть 0.5\"\nassert sorted(p_iso) == [10, 30, 50] and sorted(p_amt) == [10, 30, 50], \"Ключи: 10, 30, 50\"\nassert all(abs(p_iso[k] - _pk(_s, k)) <= 1 / k + 1e-9 for k in [10, 30, 50]), \"p_iso не совпадает: score = -iso.score_samples(df[F]); n_estimators=100, contamination=0.03, random_state=0\"\nassert all(abs(p_amt[k] - _pk(df['amount'], k)) <= 1 / k + 1e-9 for k in [10, 30, 50]), \"p_amt не совпадает: в качестве скора df['amount']\""
+    }
+   }
+  ]
+ },
+ "mp-rec": {
+  "pr": [
+   {
+    "title": "Размер корзины",
+    "prompt": "<p><code>basket</code> — число покупок каждого клиента (<code>groupby('user_id').size()</code>). Среднее запишите в <code>avg_basket</code>, число клиентов, купивших только один товар, — в <code>n_single</code> (int): им сложно дать item-item рекомендацию.</p>",
+    "hints": [
+     "<code>basket = df.groupby('user_id').size()</code>",
+     "<code>int((basket == 1).sum())</code>"
+    ],
+    "check": {
+     "tests": "_b = df.groupby('user_id').size()\nassert len(basket) == 117, \"basket — 117 клиентов\"\nassert abs(avg_basket - _b.mean()) < 1e-9, f\"avg_basket должно быть ≈ {_b.mean():.2f}\"\nassert n_single == int((_b == 1).sum()), f\"n_single должно быть {int((_b == 1).sum())}\""
+    }
+   },
+   {
+    "title": "Косинус между множествами",
+    "prompt": "<p>Для векторов из 0/1 косинус = общие покупатели / √(|A| · |B|). Напишите функцию <code>cosine_sets(a, b)</code>: <code>a</code>, <code>b</code> — множества клиентов, купивших товар.</p><p>Например, <code>cosine_sets({1, 2, 3}, {2, 3, 4, 5})</code> → <code>0.577</code>.</p>",
+    "hints": [
+     "Общие элементы: <code>a &amp; b</code>",
+     "<code>len(a &amp; b) / math.sqrt(len(a) * len(b))</code>"
+    ],
+    "check": {
+     "tests": "assert cosine_sets({1, 2, 3}, {2, 3, 4, 5}) is not None and abs(cosine_sets({1, 2, 3}, {2, 3, 4, 5}) - 2 / 12 ** 0.5) < 1e-9, \"cosine_sets({1, 2, 3}, {2, 3, 4, 5}) должно быть 2 / √12 ≈ 0.577\"\nassert abs(cosine_sets({7, 8}, {7, 8}) - 1) < 1e-9, \"Одинаковые множества: 1\"\nassert cosine_sets({1}, {2, 3}) == 0, \"Нет общих клиентов: 0\""
+    }
+   },
+   {
+    "title": "precision@k рекомендации",
+    "prompt": "<p>Напишите функцию <code>precision_at_k(recommended, bought, k)</code>: она возвращает долю первых <code>k</code> товаров списка <code>recommended</code>, которые есть в <code>bought</code>.</p><p>Например, <code>precision_at_k(['сөмке', 'ноутбук', 'кітап'], ['ноутбук'], 3)</code> → <code>0.333</code>.</p>",
+    "hints": [
+     "<code>len(set(recommended[:k]) &amp; set(bought)) / k</code>"
+    ],
+    "check": {
+     "tests": "_r = precision_at_k(['сөмке', 'ноутбук', 'кітап'], ['ноутбук'], 3)\nassert _r is not None and abs(_r - 1 / 3) < 1e-9, \"Из трёх рекомендаций купили одну: 1/3\"\nassert abs(precision_at_k(['a', 'b', 'c', 'd', 'e'], ['b', 'e', 'x'], 5) - 0.4) < 1e-9, \"Пример из урока: precision@5 = 2 / 5 = 0.4\"\nassert precision_at_k(['a', 'b', 'c'], ['c'], 2) == 0, \"Учитываются только первые k товаров\""
+    }
+   },
+   {
+    "title": "Популярное без купленного",
+    "prompt": "<p><code>pop = df['item'].value_counts()</code>. Напишите функцию <code>popular_for(user_id, k=3)</code>: она возвращает список из <code>k</code> самых популярных (в порядке <code>pop</code>) товаров, которые клиент ещё не купил.</p>",
+    "hints": [
+     "<code>owned = set(df.loc[df['user_id'] == user_id, 'item'])</code>",
+     "<code>[i for i in pop.index if i not in owned][:k]</code>"
+    ],
+    "check": {
+     "tests": "_pop = df['item'].value_counts()\n_own = lambda u: set(df.loc[df['user_id'] == u, 'item'])\n_ok = lambda u: [i for i in _pop.index if i not in _own(u)][:3]\n_us = [u for u in sorted(df['user_id'].unique())[:40] if len(_own(u) & set(_pop.index[:5])) <= 2]\nassert popular_for(1) is not None and list(popular_for(1)) == ['бөтелке', 'зарядтағыш', 'смартфон'], \"popular_for(1) → ['бөтелке', 'зарядтағыш', 'смартфон']\"\nassert all(list(popular_for(u)) == _ok(u) for u in _us), \"Купленные клиентом товары не рекомендуются, порядок — по pop\"\nassert len(popular_for(1, k=5)) == 5, \"Параметр k должен учитываться\""
+    }
+   },
+   {
+    "title": "Число совместных покупок",
+    "prompt": "<p>Матрица user-item <code>M</code> (0/1) готова. <code>co = M.T @ M</code> — таблица 15 × 15: в ячейке — число клиентов, купивших оба товара, на диагонали — продажи самого товара. <code>n_both</code> — сколько клиентов купили и смартфон, и құлаққап (int). <code>co_phone</code> — 3 товара, которые чаще всего покупали вместе со смартфоном (без него самого, по убыванию).</p>",
+    "hints": [
+     "<code>M.T @ M</code> — матричное умножение; результат — DataFrame, индекс и столбцы — товары",
+     "<code>co['смартфон'].drop('смартфон').sort_values(ascending=False).head(3).index</code>"
+    ],
+    "check": {
+     "tests": "_u = set(df.loc[df['item'] == 'смартфон', 'user_id']); _h = set(df.loc[df['item'] == 'құлаққап', 'user_id'])\n_cnt = {i: len(_u & set(df.loc[df['item'] == i, 'user_id'])) for i in df['item'].unique() if i != 'смартфон'}\nassert co.shape == (15, 15) and int(co.loc['смартфон', 'смартфон']) == len(_u), \"co — 15 × 15: M.T @ M; на диагонали — продажи товара\"\nassert n_both == len(_u & _h), f\"n_both должно быть {len(_u & _h)}\"\nassert len(co_phone) == 3 and 'смартфон' not in co_phone and sorted((_cnt[i] for i in co_phone), reverse=True) == sorted(_cnt.values(), reverse=True)[:3], \"co_phone — 3 товара, чаще всего покупаемых со смартфоном\""
+    }
+   },
+   {
+    "title": "Функция похожих товаров",
+    "prompt": "<p>Блок «С этим товаром покупают». <code>sim</code> — таблица косинусного сходства между товарами (<code>cosine_similarity(M.T)</code>). Функция <code>similar_items(item, k=3)</code> возвращает список из <code>k</code> товаров, самых похожих на <code>item</code> (без него самого, по убыванию сходства).</p>",
+    "hints": [
+     "<code>sim = pd.DataFrame(cosine_similarity(M.T), index=M.columns, columns=M.columns)</code>",
+     "<code>sim[item].drop(item).sort_values(ascending=False).head(k).index</code>"
+    ],
+    "check": {
+     "tests": "_A = M.values.astype(float); _nr = np.sqrt((_A ** 2).sum(axis=0))\n_S = pd.DataFrame((_A.T @ _A) / np.outer(_nr, _nr), index=M.columns, columns=M.columns)\n_top = lambda it, k: sorted(_S[it].drop(it).values, reverse=True)[:k]\n_chk = lambda it, k: len(similar_items(it, k)) == k and it not in similar_items(it, k) and _np_ok(it, k)\n_np_ok = lambda it, k: np.allclose(sorted((_S.loc[it, j] for j in similar_items(it, k)), reverse=True), _top(it, k))\nassert similar_items('ноутбук') is not None and _chk('ноутбук', 3), \"similar_items('ноутбук') — 3 товара с наибольшим косинусом к ноутбуку (без него самого)\"\nassert _chk('футболка', 3) and _chk('смартфон', 5), \"Должна работать и для других товаров и k\""
+    }
+   },
+   {
+    "title": "Офлайн-оценка популярности",
+    "prompt": "<p>У каждого клиента (с не менее чем 2 покупками) скрыта последняя покупка: <code>test</code> — скрытые, <code>train</code> — остальные. Оцените baseline популярности: <code>pop = train['item'].value_counts()</code>; каждому клиенту из test порекомендуйте первые 3 товара в порядке <code>pop</code>, которые он не покупал в train. Если скрытый товар среди этих 3 — «hit». <code>hit_pop</code> — доля hit, <code>n_users</code> — число клиентов в test.</p>",
+    "hints": [
+     "<code>for u, hidden in zip(test['user_id'], test['item']):</code>",
+     "<code>owned = set(train.loc[train['user_id'] == u, 'item'])</code>; <code>recs = [i for i in pop.index if i not in owned][:3]</code>"
+    ],
+    "check": {
+     "tests": "_cnt = df['user_id'].value_counts()\n_mu = df[df['user_id'].isin(_cnt[_cnt >= 2].index)]\n_te = _mu.groupby('user_id').tail(1); _tr = df.drop(_te.index)\n_pop = _tr['item'].value_counts()\n_h = [it in [i for i in _pop.index if i not in set(_tr.loc[_tr['user_id'] == u, 'item'])][:3] for u, it in zip(_te['user_id'], _te['item'])]\nassert n_users == len(_te), f\"n_users должно быть {len(_te)}\"\nassert abs(hit_pop - np.mean(_h)) <= 0.03, f\"hit_pop должно быть ≈ {np.mean(_h):.3f}: pop = train['item'].value_counts(), уберите купленные товары\""
+    }
+   },
+   {
+    "title": "Офлайн-оценка item-item",
+    "prompt": "<p>Оцените item-item на том же разбиении. Только по train: <code>M = pd.crosstab(train['user_id'], train['item'])</code>, <code>sim = cosine_similarity(M.T)</code>. Для каждого клиента из test скор = <code>sim @ M.loc[u].values</code>; уберите купленные в train товары и порекомендуйте 3 товара с наибольшим скором (<code>sort_values(ascending=False, kind='stable')</code>). <code>hit_item</code> — доля hit. Для сравнения доля hit популярности — <code>hit_pop</code> (как в прошлой задаче). <code>better</code> = <code>'item'</code> или <code>'pop'</code>.</p>",
+    "hints": [
+     "<code>own = M.loc[u]</code>; <code>scores = pd.Series(sim @ own.values, index=M.columns)</code>",
+     "<code>scores[own == 0].sort_values(ascending=False, kind='stable').head(3).index</code>",
+     "Все клиенты из test есть в train (осталась хотя бы 1 покупка), поэтому <code>M.loc[u]</code> не даёт ошибки."
+    ],
+    "check": {
+     "tests": "_cnt = df['user_id'].value_counts()\n_mu = df[df['user_id'].isin(_cnt[_cnt >= 2].index)]\n_te = _mu.groupby('user_id').tail(1); _tr = df.drop(_te.index)\nfrom sklearn.metrics.pairwise import cosine_similarity as _cs\n_M = pd.crosstab(_tr['user_id'], _tr['item']); _S = _cs(_M.T); _pop = _tr['item'].value_counts()\n_hi = []; _hp = []\nfor _u, _it in zip(_te['user_id'], _te['item']):\n    _o = _M.loc[_u]; _sc = pd.Series(_S @ _o.values, index=_M.columns)\n    _hi.append(_it in list(_sc[_o == 0].sort_values(ascending=False, kind='stable').head(3).index))\n    _hp.append(_it in [i for i in _pop.index if _o.get(i, 0) == 0][:3])\nassert abs(hit_item - np.mean(_hi)) <= 0.03, f\"hit_item должно быть ≈ {np.mean(_hi):.3f}: sim только по train, купленные товары убираются\"\nassert abs(hit_pop - np.mean(_hp)) <= 0.03, f\"hit_pop должно быть ≈ {np.mean(_hp):.3f}\"\nassert better == ('item' if np.mean(_hi) > np.mean(_hp) else 'pop'), \"better — подход с большей долей hit\""
+    }
+   }
+  ]
  }
 } });

@@ -1769,5 +1769,150 @@ DJ.addPractice('m2-1', {
     "tests": "_s = city_share(rows)\nassert _s == {\"Алматы\": 41.1, \"Қарағанды\": 17.2, \"Астана\": 41.7}, \"Нәтиже: \" + str(_s)"
    }
   }
+ ],
+ "py-14": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жазбаны жаю",
+   "prompt": "<p><code>record</code> — бір клиенттің жазбасы: (аты, қаласы, тапсырыстар саны, жалпы сома).</p><p>Кортежді <code>name</code>, <code>city</code>, <code>n_orders</code>, <code>total</code> айнымалыларына бір жолда жайыңыз. Сосын орташа чекті <code>avg</code>-ке жазыңыз: <code>total / n_orders</code>.</p>",
+   "starter": "record = (\"Айгерім\", \"Алматы\", 3, 7350)\n\n",
+   "solution": "record = (\"Айгерім\", \"Алматы\", 3, 7350)\n\nname, city, n_orders, total = record\navg = total / n_orders\nprint(name, city, avg)",
+   "hints": [
+    "<code>name, city, n_orders, total = record</code>"
+   ],
+   "check": {
+    "tests": "assert name == 'Айгерім' and city == 'Алматы', 'name және city дұрыс емес: кортежді жайыңыз'\nassert n_orders == 3 and total == 7350, 'n_orders және total кортеждің 3- және 4-элементтері'\nassert avg == 2450, 'avg = total / n_orders, 2450 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бірегей қалалар",
+   "prompt": "<p><code>visits</code> — курьер барған қалалар (қайталанулар бар).</p><p>Жиын арқылы бірегей қалаларды <code>unique</code>-ке, олардың санын <code>n</code>-ге жазыңыз. Ақтөбенің тізімде бар-жоғын (<code>True</code>/<code>False</code>) <code>in</code> арқылы <code>has_aktobe</code>-ге жазыңыз.</p>",
+   "starter": "visits = [\"Алматы\", \"Тараз\", \"Алматы\", \"Шымкент\", \"Тараз\", \"Астана\", \"Алматы\"]\n\n",
+   "solution": "visits = [\"Алматы\", \"Тараз\", \"Алматы\", \"Шымкент\", \"Тараз\", \"Астана\", \"Алматы\"]\n\nunique = set(visits)\nn = len(unique)\nhas_aktobe = \"Ақтөбе\" in unique\nprint(unique, n, has_aktobe)",
+   "hints": [
+    "<code>set(visits)</code>, сосын <code>len(unique)</code>.",
+    "<code>\"Ақтөбе\" in unique</code> — True немесе False береді."
+   ],
+   "check": {
+    "tests": "assert isinstance(unique, set), 'unique жиын (set) болуы керек: set(visits)'\nassert unique == {'Алматы', 'Тараз', 'Шымкент', 'Астана'}, 'unique ішінде 4 қала болуы керек'\nassert n == 4, 'n = len(unique), 4 болуы керек'\nassert has_aktobe is False, 'has_aktobe False болуы керек: тізімде Ақтөбе жоқ'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Қораптар және орташа",
+   "prompt": "<p>Кофеханаға 47 кесе әкелу керек, бір қорапқа 12 кесе сыяды. <code>math</code> модулі арқылы керек қораптар санын <code>boxes</code>-ке жазыңыз (жарты қорап та тұтас қорап). Сосын <code>statistics</code> модулімен <code>checks</code> тізімінің орташасын <code>avg</code>-ке жазыңыз.</p>",
+   "starter": "import math\nimport statistics\n\ncups = 47\nper_box = 12\nchecks = [2100, 2250, 2550]\n\n",
+   "solution": "import math\nimport statistics\n\ncups = 47\nper_box = 12\nchecks = [2100, 2250, 2550]\n\nboxes = math.ceil(cups / per_box)\navg = statistics.mean(checks)\nprint(boxes, avg)",
+   "hints": [
+    "Жоғары қарай дөңгелектеу: <code>math.ceil(cups / per_box)</code>.",
+    "<code>statistics.mean(checks)</code>"
+   ],
+   "check": {
+    "tests": "assert boxes == 4, 'boxes 4 болуы керек: math.ceil(47 / 12)'\nassert avg == 2300, 'avg = statistics.mean(checks), 2300 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Арзанынан бастап",
+   "prompt": "<p><code>menu</code> — (сусын, баға, сатылған саны) кортеждері.</p><p>Сусындардың <b>атауларын</b> бағасы бойынша өсу ретімен <code>by_price</code> тізіміне жазыңыз (<code>sorted</code> және <code>key=lambda</code>). Ең көп сатылған сусынның атауын <code>max</code> мен <code>key=lambda</code> арқылы <code>best</code>-ке жазыңыз.</p>",
+   "starter": "menu = [(\"Латте\", 1450, 120), (\"Американо\", 1100, 95), (\"Раф\", 1700, 40), (\"Капучино\", 1350, 130)]\n\n",
+   "solution": "menu = [(\"Латте\", 1450, 120), (\"Американо\", 1100, 95), (\"Раф\", 1700, 40), (\"Капучино\", 1350, 130)]\n\nby_price = [row[0] for row in sorted(menu, key=lambda row: row[1])]\nbest = max(menu, key=lambda row: row[2])[0]\nprint(by_price, best)",
+   "hints": [
+    "<code>sorted(menu, key=lambda row: row[1])</code> кортеждерді береді, атауы — <code>row[0]</code>.",
+    "<code>max(menu, key=lambda row: row[2])</code> бүтін кортежді қайтарады."
+   ],
+   "check": {
+    "mustInclude": [
+     "lambda"
+    ],
+    "tests": "assert by_price == ['Американо', 'Капучино', 'Латте', 'Раф'], 'by_price: атаулар бағасы бойынша өсу ретімен, сізде: ' + str(by_price)\nassert best == 'Капучино', 'best — сатылған саны ең көп сусынның атауы (мәтін)'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Тапсырыстар арасындағы күндер",
+   "prompt": "<p><code>dates</code> — бір клиенттің тапсырыс күндері (мәтін, өсу ретімен).</p><p><code>datetime</code> арқылы әр көрші екі тапсырыстың арасындағы күндер санын <code>gaps</code> тізіміне жазыңыз. Сосын <code>statistics</code> арқылы олардың орташасын бір ондық таңбаға дейін дөңгелектеп, <code>avg_gap</code>-ке жазыңыз.</p>",
+   "starter": "from datetime import date\nimport statistics\n\ndates = [\"2024-03-05\", \"2024-03-25\", \"2024-04-09\", \"2024-04-30\"]\n\n",
+   "solution": "from datetime import date\nimport statistics\n\ndates = [\"2024-03-05\", \"2024-03-25\", \"2024-04-09\", \"2024-04-30\"]\n\ndays = [date.fromisoformat(d) for d in dates]\ngaps = [(days[i + 1] - days[i]).days for i in range(len(days) - 1)]\navg_gap = round(statistics.mean(gaps), 1)\nprint(gaps, avg_gap)",
+   "hints": [
+    "Алдымен мәтіндерді күнге айналдырыңыз: <code>[date.fromisoformat(d) for d in dates]</code>.",
+    "<code>(days[i + 1] - days[i]).days</code>, мұнда <code>i</code> 0-ден <code>len(days) - 2</code>-ге дейін."
+   ],
+   "check": {
+    "tests": "assert gaps == [20, 15, 21], 'gaps [20, 15, 21] болуы керек, сізде: ' + str(gaps)\nassert avg_gap == 18.7, 'avg_gap = round(statistics.mean(gaps), 1)'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Аймақтардың табысы файлдан",
+   "prompt": "<p><code>daily_sales.csv</code> файлында екі аймақтың күндік табысы бар: <code>day</code>, <code>region</code>, <code>revenue</code>.</p><p>Файлды <code>with open</code> және <code>csv.DictReader</code> арқылы оқып, аймақ → табыс қосындысы (int) сөздігін <code>totals</code>-қа жинаңыз. Табысы ең көп аймақты <code>best_region</code>-ға жазыңыз.</p>",
+   "starter": "import csv\n\n",
+   "solution": "import csv\n\nwith open(\"daily_sales.csv\", encoding=\"utf-8\") as f:\n    rows = list(csv.DictReader(f))\n\ntotals = {}\nfor r in rows:\n    totals[r[\"region\"]] = totals.get(r[\"region\"], 0) + int(r[\"revenue\"])\nbest_region = max(totals, key=totals.get)\nprint(totals, best_region)",
+   "hints": [
+    "<code>rows = list(csv.DictReader(f))</code> жолы <code>with</code> блогының ішінде.",
+    "Мәтінді санға айналдырыңыз: <code>int(r[\"revenue\"])</code>.",
+    "<code>max(totals, key=totals.get)</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "with open"
+    ],
+    "tests": "assert totals == {'Алматы': 1505, 'Астана': 1150}, 'totals дұрыс емес, сізде: ' + str(totals)\nassert best_region == 'Алматы', 'best_region — табысы ең көп аймақ'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Наурызда да, сәуірде де",
+   "prompt": "<p><code>orders.csv</code> файлын <code>with open</code> және <code>csv.DictReader</code> арқылы оқыңыз.</p><p>Наурызда (<code>2024-03</code>) тапсырыс берген клиенттердің <code>customer_id</code>-лерін (int) <code>march</code> жиынына, сәуірде (<code>2024-04</code>) бергендерді <code>april</code> жиынына жинаңыз. Сосын: <code>loyal</code> — екі айда да тапсырыс бергендер, <code>lost</code> — наурызда берген, бірақ сәуірде бермегендер.</p>",
+   "starter": "import csv\n\nwith open(\"orders.csv\", encoding=\"utf-8\") as f:\n    pass\n",
+   "solution": "import csv\n\nwith open(\"orders.csv\", encoding=\"utf-8\") as f:\n    rows = list(csv.DictReader(f))\n\nmarch = {int(r[\"customer_id\"]) for r in rows if r[\"order_date\"][:7] == \"2024-03\"}\napril = {int(r[\"customer_id\"]) for r in rows if r[\"order_date\"][:7] == \"2024-04\"}\nloyal = march & april\nlost = march - april\nprint(len(march), len(april), sorted(loyal), sorted(lost))",
+   "hints": [
+    "Бос жиыннан бастап, циклде <code>march.add(int(r[\"customer_id\"]))</code> жазуға болады.",
+    "Ай: <code>r[\"order_date\"][:7] == \"2024-03\"</code>.",
+    "<code>&amp;</code> — қиылысу, <code>-</code> — айырма."
+   ],
+   "check": {
+    "mustInclude": [
+     "with open"
+    ],
+    "tests": "import csv as _csv\nwith open('orders.csv', encoding='utf-8') as _f:\n    _rows = list(_csv.DictReader(_f))\n_m = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-03'}\n_a = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-04'}\nassert march == _m and april == _a, 'march және april жиындары дұрыс емес: customer_id-ді int-ке айналдырдыңыз ба?'\nassert set(loyal) == _m & _a, 'loyal = march & april'\nassert set(lost) == _m - _a, 'lost = march - april'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Үздік үш клиент",
+   "prompt": "<p><code>orders.csv</code> файлын <code>with open</code> арқылы оқып, статусы <code>paid</code> және <code>amount</code> бос емес тапсырыстар бойынша әр клиенттің жалпы сомасын <code>totals</code> сөздігіне жинаңыз (кілті — int <code>customer_id</code>, мәні — int сома).</p><p>Сөздіктің <code>items()</code>-ін сома бойынша кему ретімен сұрыптап (<code>key=lambda</code>), алғашқы үш кортежді <code>top3</code>-ке жазыңыз. Бірінші кортежді <code>top_id</code> және <code>top_total</code> айнымалыларына жайыңыз.</p>",
+   "starter": "import csv\n\nwith open(\"orders.csv\", encoding=\"utf-8\") as f:\n    rows = list(csv.DictReader(f))\n\ntotals = {}\n",
+   "solution": "import csv\n\nwith open(\"orders.csv\", encoding=\"utf-8\") as f:\n    rows = list(csv.DictReader(f))\n\ntotals = {}\nfor r in rows:\n    if r[\"status\"] == \"paid\" and r[\"amount\"]:\n        cid = int(r[\"customer_id\"])\n        totals[cid] = totals.get(cid, 0) + int(r[\"amount\"])\n\ntop3 = sorted(totals.items(), key=lambda kv: kv[1], reverse=True)[:3]\ntop_id, top_total = top3[0]\nprint(top3)\nprint(top_id, top_total)",
+   "hints": [
+    "Бос соманы өткізіңіз: <code>if r[\"status\"] == \"paid\" and r[\"amount\"]:</code>",
+    "<code>sorted(totals.items(), key=lambda kv: kv[1], reverse=True)[:3]</code>",
+    "Жаю: <code>top_id, top_total = top3[0]</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "with open",
+     "lambda"
+    ],
+    "tests": "assert totals.get(3) == 55950 and len(totals) == 39, 'totals дұрыс емес: тек paid және amount бос емес жолдар, кілті int'\nassert top3 == [(3, 55950), (29, 16400), (26, 14900)], 'top3 — (id, сома) кортеждерінің тізімі, сома бойынша кему ретімен, сізде: ' + str(top3)\nassert top_id == 3 and top_total == 55950, 'top3[0]-ді top_id және top_total-ға жайыңыз'"
+   }
+  }
  ]
 });

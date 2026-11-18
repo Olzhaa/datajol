@@ -867,5 +867,201 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "sql-15": {
+  "pr": [
+   {
+    "title": "Shared list of names",
+    "prompt": "Using <code>UNION ALL</code>, collect the client names and the product names into one <code>name</code> column. The result must have 21 rows.",
+    "hints": [
+     "The second SELECT: <code>SELECT name FROM products</code>.",
+     "Put <code>UNION ALL</code> between the two SELECTs."
+    ]
+   },
+   {
+    "title": "All channels",
+    "prompt": "Combine the channels (<code>channel</code>) from the <code>users</code> table and from the <code>ad_spend</code> table, and show each channel only once. Use <code>UNION</code>.",
+    "hints": [
+     "<code>UNION</code> removes duplicates by itself: no <code>DISTINCT</code> needed."
+    ]
+   },
+   {
+    "title": "Active and paying",
+    "prompt": "Using <code>INTERSECT</code>, find the <code>user_id</code> of the users who in September 2024 (<code>2024-09</code>) were both active (<code>activity</code>) and made a payment (<code>payments</code>).",
+    "hints": [
+     "The second set: <code>SELECT user_id FROM payments WHERE month = '2024-09'</code>."
+    ]
+   },
+   {
+    "title": "Churned users",
+    "prompt": "Using <code>EXCEPT</code>, find the <code>user_id</code> of the users who were active in August (<code>2024-08</code>) but <b>not</b> active in September (<code>2024-09</code>). These are the churned users.",
+    "hints": [
+     "The first set is August, the second is September.",
+     "Order matters in <code>EXCEPT</code>: \"in A, not in B\"."
+    ]
+   },
+   {
+    "title": "Comparing two months",
+    "prompt": "Show a two-row table: the first column holds the period name (<code>Тамыз</code> or <code>Қыркүйек</code>), the second holds the number of orders in that month. Compute each row with its own SELECT and combine them with <code>UNION ALL</code>.",
+    "hints": [
+     "The second SELECT has a different text and month: <code>SELECT 'Қыркүйек', COUNT(*) ... LIKE '2024-09%'</code>."
+    ]
+   },
+   {
+    "title": "Expensive and cheap in one list",
+    "prompt": "Collect into one list the products priced at 100,000 tenge or more with the label <code>қымбат</code>, and the products cheaper than 5,000 tenge with the label <code>арзан</code>. Three columns: label, <code>name</code>, <code>price</code>. Sort the whole result by price in descending order.",
+    "hints": [
+     "<code>ORDER BY</code> is written once, at the very end.",
+     "The second SELECT: <code>SELECT 'арзан', name, price FROM products WHERE price &lt; 5000</code>."
+    ]
+   },
+   {
+    "title": "Active in only one month",
+    "prompt": "Find the <code>user_id</code> of the users who were active in only <b>one</b> of the two months, August (<code>2024-08</code>) or September (<code>2024-09</code>). Approach: from the union of the two months (<code>UNION</code>), remove with <code>EXCEPT</code> those who were active in both months.",
+    "hints": [
+     "Set operators run from left to right: <code>A UNION B EXCEPT C</code> = <code>(A UNION B) EXCEPT C</code>.",
+     "C is the users active in both months: among the August users, <code>user_id IN (SELECT user_id FROM activity WHERE month = '2024-09')</code>."
+    ]
+   },
+   {
+    "title": "Managers and reports",
+    "prompt": "Build one list: the employees who manage someone, with the role <code>басшы</code>, and the employees who have a manager, with the role <code>бағынышты</code>. Two columns: <code>name</code> and the role. One person can have both roles. Sort the result by <code>name</code>, then by role.",
+    "hints": [
+     "The second SELECT: <code>WHERE manager_id IS NOT NULL</code>.",
+     "Sorting goes at the end: <code>ORDER BY name, role</code>. The column name comes from the first SELECT."
+    ]
+   }
+  ]
+ },
+ "sql-16": {
+  "pr": [
+   {
+    "title": "Name length",
+    "prompt": "Show the name of each product (<code>name</code>) and the number of characters in the name (<code>LENGTH</code>).",
+    "hints": [
+     "<code>LENGTH(name)</code> is the number of characters in the text (spaces count too)."
+    ]
+   },
+   {
+    "title": "Unknown city",
+    "prompt": "Show the name and city of each client. When the city is missing (<code>NULL</code>), show the text <code>белгісіз</code>. Use <code>COALESCE</code>.",
+    "hints": [
+     "<code>COALESCE(city, 'белгісіз')</code> returns the first value that is not NULL."
+    ]
+   },
+   {
+    "title": "Delivery deadline",
+    "prompt": "Orders with the status <code>shipped</code> must arrive within 7 days of the order date. Show the <code>id</code> of each such order and its delivery deadline (<code>order_date</code> + 7 days).",
+    "hints": [
+     "Shifting a date: <code>date(order_date, '+7 days')</code>."
+    ]
+   },
+   {
+    "title": "Price tag",
+    "prompt": "For the products cheaper than 10,000 tenge, make a one-column price tag in the form <code>Термос: 9000 ₸</code> (name, a colon and a space, the price, a space and <code>₸</code>).",
+    "hints": [
+     "Join the texts with <code>||</code>: <code>name || ': ' || price || ' ₸'</code>."
+    ]
+   },
+   {
+    "title": "By day of the week",
+    "prompt": "Count the orders by day of the week. Two columns: the weekday number (<code>strftime('%w', ...)</code>, 0 is Sunday) as an <b>integer</b>, and the number of orders. Sort by the weekday number in ascending order.",
+    "hints": [
+     "<code>strftime</code> returns text: <code>CAST(strftime('%w', order_date) AS INTEGER)</code>.",
+     "<code>GROUP BY wd ORDER BY wd</code>"
+    ]
+   },
+   {
+    "title": "Average units per line",
+    "prompt": "For each product: the name, the total units sold (0 if it never sold) and the average units per order line (<code>SUM(quantity) * 1.0 / COUNT(order_id)</code>). For a product that never sold, the average must be <code>NULL</code> instead of a division by zero: wrap the divisor in <code>NULLIF</code>. Every product must stay in the list.",
+    "hints": [
+     "For an unsold product <code>SUM</code> is NULL: <code>COALESCE(SUM(oi.quantity), 0)</code>.",
+     "The divisor: <code>NULLIF(COUNT(oi.order_id), 0)</code>."
+    ]
+   },
+   {
+    "title": "Dates to ISO",
+    "prompt": "In the <code>raw_customers</code> table, <code>signup</code> comes in three formats: <code>2024-01-15</code>, <code>15.02.2024</code>, <code>2024/03/28</code>. Show two columns: <code>id</code> and the date in the <code>YYYY-MM-DD</code> format. Split the dotted date into parts with <code>SUBSTR</code> and put it back together, and replace the slashes with <code>REPLACE</code>.",
+    "hints": [
+     "Detect the dotted format: <code>CASE WHEN signup LIKE '__.__.____' THEN ...</code>.",
+     "<code>SUBSTR(signup, 7, 4) || '-' || SUBSTR(signup, 4, 2) || '-' || SUBSTR(signup, 1, 2)</code>",
+     "<code>ELSE REPLACE(signup, '/', '-')</code>"
+    ]
+   },
+   {
+    "title": "Until the first order",
+    "prompt": "For each client with at least one order: the name and the number of days from sign-up (<code>signup_date</code>) to the <b>first</b> order (an integer).",
+    "hints": [
+     "The first order is <code>MIN(o.order_date)</code>; group by client.",
+     "<code>CAST(julianday(MIN(o.order_date)) - julianday(c.signup_date) AS INTEGER)</code>"
+    ]
+   }
+  ]
+ },
+ "sql-17": {
+  "pr": [
+   {
+    "title": "Гүлнар's team",
+    "prompt": "Show the names of the employees whose manager is <code>Гүлнар</code>. Join the table to itself (self join) and filter by the manager's name.",
+    "hints": [
+     "<code>WHERE m.name = 'Гүлнар'</code>: <code>m</code> is the copy of the table for the manager."
+    ]
+   },
+   {
+    "title": "City × category skeleton",
+    "prompt": "Build a report skeleton: every pair of a client city (without the empty city) and a product category. Two columns: <code>city</code>, <code>category</code>. Use <code>CROSS JOIN</code>.",
+    "hints": [
+     "The second derived table: <code>(SELECT DISTINCT category FROM products) p</code>.",
+     "5 cities × 4 categories = 20 rows."
+    ]
+   },
+   {
+    "title": "Counting orders correctly",
+    "prompt": "Because <code>order_items</code> is joined, this query counts product lines, not orders. Fix it: keep the JOINs and count each client's <b>orders</b> with <code>COUNT(DISTINCT ...)</code>.",
+    "hints": [
+     "One order was multiplied into several rows: <code>COUNT(DISTINCT o.id)</code> counts each order once."
+    ]
+   },
+   {
+    "title": "Colleagues with the same salary",
+    "prompt": "Find the pairs of employees who work in the same department and earn the same salary. Two columns: the name of the first employee and the name of the second. Each pair must appear only once (<code>e1.id &lt; e2.id</code>).",
+    "hints": [
+     "Three conditions in ON: same department, same salary, <code>e1.id &lt; e2.id</code>.",
+     "The last condition stops a person from pairing with themselves and a pair from appearing twice."
+    ]
+   },
+   {
+    "title": "Orders and units",
+    "prompt": "For each client: the name, the number of orders and the total units bought (the sum of <code>quantity</code>). Join <code>orders</code> and <code>order_items</code> in one query and protect the order count from fan-out.",
+    "hints": [
+     "One row is a product in an order. Units are stored at this level, so <code>SUM(oi.quantity)</code> is correct.",
+     "But each order repeats several times: <code>COUNT(DISTINCT o.id)</code>."
+    ]
+   },
+   {
+    "title": "The manager's manager",
+    "prompt": "For the employees whose manager also has a manager, show three columns: the employee's name, the manager's name and the name of the manager's manager. Join the table to itself twice.",
+    "hints": [
+     "The third copy: <code>JOIN employees mm ON mm.id = m.manager_id</code>.",
+     "A plain <code>JOIN</code> drops those whose manager has no manager by itself."
+    ]
+   },
+   {
+    "title": "Channel × month, empty months as 0",
+    "prompt": "For every pair of a channel (<code>channel</code>) and a sign-up month (<code>signup_month</code>), show the number of users who signed up. A pair with no users must also appear, with <b>0</b>. Three columns: channel, month, count. First build a skeleton with <code>CROSS JOIN</code>, then <code>LEFT JOIN</code> the <code>users</code> table.",
+    "hints": [
+     "The LEFT JOIN condition uses two columns: <code>ON u.channel = ch.channel AND u.signup_month = mo.signup_month</code>.",
+     "Use <code>COUNT(u.id)</code>, not <code>COUNT(*)</code>: it gives 0 for an empty pair."
+    ]
+   },
+   {
+    "title": "Cost per user",
+    "prompt": "For each ad channel: <code>channel</code>, the number of users (<code>users</code>), the total ad spend (<code>ad_spend</code>) and the cost of one user (spend / number of users). Both tables have several rows per channel, so a direct JOIN causes fan-out. First aggregate each table by channel in its own derived table, then join them.",
+    "hints": [
+     "<code>(SELECT channel, COUNT(*) AS users FROM users GROUP BY channel) u</code>",
+     "<code>(SELECT channel, SUM(spend) AS spend FROM ad_spend GROUP BY channel) a</code>, then <code>ON a.channel = u.channel</code>. The outer query needs no GROUP BY."
+    ]
+   }
+  ]
  }
 } });

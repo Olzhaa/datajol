@@ -585,5 +585,96 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "cl-9": {
+  "pr": [
+   {
+    "title": "Share of missing values",
+    "prompt": "<p>The function <code>missing_pct(df)</code> should return a dictionary <code>{column: percent_missing}</code> for the columns that have missing values only (percent rounded with <code>round</code> to 1 decimal). For <code>orders.csv</code> the result is <code>{'amount': 4.0}</code>.</p>",
+    "hints": [
+     "<code>df.isna().sum()</code> gives the number of missing values per column; divide it by <code>len(df)</code>.",
+     "Loop over <code>.items()</code> and keep only the counts above zero."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\nassert missing_pct(_pd.read_csv('orders.csv')) == {'amount': 4.0}, f\"orders.csv: expected {'amount': 4.0}, got {missing_pct(_pd.read_csv('orders.csv'))}\"\n_d = _pd.DataFrame({'a': [1, None, None, 4], 'b': [1, 2, 3, 4], 'c': ['x', None, 'y', 'z']})\nassert missing_pct(_d) == {'a': 50.0, 'c': 25.0}, \"A column without missing values is not included: expected {'a': 50.0, 'c': 25.0}\""
+    }
+   },
+   {
+    "title": "The most frequent value",
+    "prompt": "<p>The function <code>top_value(df, col)</code> should return the most frequent value in a column and its count as a pair <code>(value, count)</code>. For the <code>status</code> column of <code>orders.csv</code>: <code>('paid', 146)</code>.</p>",
+    "hints": [
+     "<code>value_counts()</code> sorts frequencies in descending order, so the first row is the most frequent value.",
+     "<code>vc.index[0]</code> and <code>int(vc.iloc[0])</code>"
+    ],
+    "check": {
+     "tests": "import pandas as _pd\nassert tuple(top_value(_pd.read_csv('orders.csv'), 'status')) == ('paid', 146), \"orders.csv, status: expected ('paid', 146)\"\nassert tuple(top_value(_pd.read_csv('customers.csv'), 'channel')) == ('instagram', 17), \"customers.csv, channel: expected ('instagram', 17)\""
+    }
+   },
+   {
+    "title": "Can it be a key",
+    "prompt": "<p>The function <code>is_key(df, col)</code> should return <code>True</code> if the column can serve as a key: its values are unique and none is missing. In <code>orders.csv</code>, <code>id</code> is a key and <code>customer_id</code> is not.</p>",
+    "hints": [
+     "<code>df[col].is_unique</code> and <code>df[col].notna().all()</code>"
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\nassert is_key(_o, 'id') is True, \"In orders.csv, id is a key: expected True\"\nassert is_key(_o, 'customer_id') is False, \"customer_id repeats: expected False\"\nassert is_key(_pd.DataFrame({'k': [1, 2, None]}), 'k') is False, \"A column with a missing value cannot be a key\""
+    }
+   },
+   {
+    "title": "How fresh is the data",
+    "prompt": "<p>A freshness check: the function <code>freshness(df, col)</code> should return a dictionary <code>{'first': ..., 'last': ..., 'days': ...}</code>. <code>first</code> and <code>last</code> are the earliest and latest dates as <code>'YYYY-MM-DD'</code> text; <code>days</code> is the number of days between them (<code>last − first</code>). Convert the column with <code>pd.to_datetime</code>.</p>",
+    "hints": [
+     "<code>d = pd.to_datetime(df[col])</code>, then <code>d.min()</code>, <code>d.max()</code>.",
+     "To text: <code>.strftime('%Y-%m-%d')</code>. The difference: <code>(d.max() - d.min()).days</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_r = freshness(_pd.read_csv('orders.csv'), 'order_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}, f\"orders.csv: expected {{'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}}, got {_r}\"\n_r = freshness(_pd.read_csv('customers.csv'), 'signup_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-05-23', 'days': 143}, f\"customers.csv, signup_date: 2024-01-01 … 2024-05-23, 143 days; got {_r}\""
+    }
+   },
+   {
+    "title": "Checks on the amount column",
+    "prompt": "<p>A validity check: the function <code>amount_checks(df)</code> should return a dictionary about the <code>amount</code> column: <code>missing</code> (missing values), <code>non_positive</code> (≤ 0), <code>outliers</code> (values more than 10 times the median), <code>refunds</code> (rows with <code>status</code> = <code>'refund'</code>). All values are <code>int</code>.</p>",
+    "hints": [
+     "A condition gives a True/False Series; <code>.sum()</code> counts the Trues: <code>(a &lt;= 0).sum()</code>.",
+     "<code>a.median()</code> skips missing values by itself. Wrap each number in <code>int(...)</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_r = amount_checks(_pd.read_csv('orders.csv'))\nassert _r == {'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}, f\"orders.csv: expected {{'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}}, got {_r}\"\n_d = _pd.DataFrame({'amount': [100.0, -5.0, 0.0, None, 100.0, 5000.0], 'status': ['paid', 'paid', 'refund', 'paid', 'refund', 'paid']})\nassert amount_checks(_d) == {'missing': 1, 'non_positive': 2, 'outliers': 1, 'refunds': 2}, \"On a small table: missing 1, non_positive 2, outliers 1, refunds 2\""
+    }
+   },
+   {
+    "title": "Customers without orders",
+    "prompt": "<p>Check consistency in the other direction: left join the unique <code>customer_id</code> values of <code>orders</code> onto <code>customers</code> and add <code>indicator=True</code> (call the result <code>check</code>). Put the <code>customer_id</code> of customers without a single order, in ascending order, into the list <code>no_orders</code>.</p>",
+    "hints": [
+     "Take the unique keys first: <code>orders[['customer_id']].drop_duplicates()</code>, or the row count grows.",
+     "<code>customers.merge(buyers, on='customer_id', how='left', indicator=True)</code>, then <code>_merge == 'left_only'</code>."
+    ],
+    "check": {
+     "tests": "assert 'check' in globals() and '_merge' in check.columns, \"Create the check table with indicator=True\"\nassert len(check) == 42, f\"The left join must keep the number of customers: 42 rows, got {len(check)}\"\nassert 'no_orders' in globals() and [int(x) for x in no_orders] == [41, 42], \"no_orders should be [41, 42]\""
+    }
+   },
+   {
+    "title": "Step-by-step reconciliation",
+    "prompt": "<p>The function <code>reconcile(orders, customers)</code> should return a list of <code>(step, rows, amount_sum)</code> triples after each step: <code>'raw'</code> is the original table; <code>'merged'</code> is after a left join on <code>customer_id</code>; <code>'paid'</code> keeps <code>status == 'paid'</code> with a non-missing <code>amount</code>; <code>'clean'</code> additionally keeps <code>amount &lt; 20000</code>. The sum is a <code>float</code>.</p>",
+    "hints": [
+     "After every step, <code>log.append((name, len(df), float(df['amount'].sum())))</code>.",
+     "<code>sum()</code> skips missing values, so the <code>'raw'</code> sum is 394,950. The last step should give 334,850, as in the lesson."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n_r = reconcile(_o, _c)\nassert isinstance(_r, list) and len(_r) == 4, \"Return a list of four steps\"\nassert [s for s, _, _ in _r] == ['raw', 'merged', 'paid', 'clean'], \"Step names and order: raw, merged, paid, clean\"\nassert [int(n) for _, n, _ in _r] == [150, 150, 140, 139], f\"Row counts should be 150, 150, 140, 139, got {[n for _, n, _ in _r]}\"\nassert [round(float(s)) for _, _, s in _r] == [394950, 394950, 382850, 334850], f\"Sums should be 394950, 394950, 382850, 334850, got {[s for _, _, s in _r]}\""
+    }
+   },
+   {
+    "title": "A pre-join check",
+    "prompt": "<p>The function <code>join_check(left, right, key)</code> should return a dictionary: <code>ok</code> is <code>True</code> if a left join with <code>validate='many_to_one'</code> runs without error and <code>False</code> if it raises <code>MergeError</code>; <code>orphans</code> is the number of left rows without a match on the right; <code>extra_rows</code> is how many extra rows a left join without validate produced (<code>len(m) - len(left)</code>).</p>",
+    "hints": [
+     "<code>try: left.merge(..., validate='many_to_one')</code>, <code>except pd.errors.MergeError: ok = False</code>.",
+     "For the counts, join a second time without validate but with <code>indicator=True</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nassert join_check(_o, _c, 'customer_id') == {'ok': True, 'orphans': 0, 'extra_rows': 0}, \"On clean tables: ok True, orphans 0, extra_rows 0\"\n_r = join_check(_o, _pd.concat([_c, _c.head(2)], ignore_index=True), 'customer_id')\nassert _r == {'ok': False, 'orphans': 0, 'extra_rows': 8}, f\"If customers 1 and 2 are duplicated: ok False, extra_rows 8 (their orders double); got {_r}\"\n_x = _pd.concat([_o, _pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})], ignore_index=True)\nassert join_check(_x, _c, 'customer_id') == {'ok': True, 'orphans': 2, 'extra_rows': 0}, \"Two orphan orders: ok True, orphans 2, extra_rows 0\""
+    }
+   }
+  ]
  }
 } });

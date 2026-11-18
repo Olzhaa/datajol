@@ -127,6 +127,19 @@ print(model.score(X_test, y_test))    # 0.587</code></pre>
 <li><code>fit</code> only on train. Test R² (0.587) is a bit below train (0.633), which is normal. A big gap means overfitting.</li>
 </ol>
 <div class="tip">For classification add <code>stratify=y</code>: then train and test have the same share of subscribers who left (≈26%).</div>
+<h3>Train, validation, test: three parts</h3>
+<p>In a real project you compare not one model but dozens of variants: which features, which parameters. If we check every variant on test and pick the best, test becomes "seen" as well. So the data is split into <b>three</b> parts:</p>
+<table>
+<tr><th>Part</th><th>Share</th><th>What for</th></tr>
+<tr><td><b>Train</b></td><td>≈60%</td><td>the model learns (<code>fit</code>)</td></tr>
+<tr><td><b>Validation</b></td><td>≈20%</td><td>we compare variants and choose parameters and the threshold</td></tr>
+<tr><td><b>Test</b></td><td>≈20%</td><td>at the very end, <b>once</b>: the honest score of the chosen model</td></tr>
+</table>
+<pre><code># first split off test, then divide the rest into train and validation
+X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.25, random_state=42)
+print(len(X_train), len(X_val), len(X_test))   # 240 80 80</code></pre>
+<p>The second split uses <code>test_size=0.25</code> because a quarter of the remaining 80% is 20% of all the data. When data is scarce, <b>cross-validation</b> is used instead of a separate validation set (at the end of this module): it rotates the validation part inside train. Whichever route you take, there is one rule: <b>decisions on validation, the final score on test</b>.</p>
 <h3>Common mistakes</h3>
 <ul>
 <li>Training the model on all the data and then scoring on test: the model has "already seen" the test.</li>
@@ -306,6 +319,14 @@ print(clf.score(X_test, y_test))  # 0.807 (accuracy)</code></pre>
 </ol>
 <h3>Changing the threshold</h3>
 <p>0.5 is not a law. If the retention team wants to hold on to more subscribers, it lowers the threshold with <code>(proba &gt;= 0.3).astype(int)</code>: more people get marked as "at risk".</p>
+<h3>More than two classes (multiclass)</h3>
+<p>What if the target has three values instead of two? For example, predicting a subscriber's plan: basic, standard, premium. The code does not change: <code>LogisticRegression</code> handles it by itself.</p>
+<ul>
+<li><code>predict_proba</code> gives one column per class (three columns), and each row sums to 1. The column order is <code>clf.classes_</code>.</li>
+<li><code>predict</code> picks the class with the highest probability.</li>
+<li>Precision, recall and F1 are computed separately for each class. To get a single number: <code>f1_score(y_test, pred, average='macro')</code> is the plain mean over classes (a rare class gets an equal vote), and <code>average='weighted'</code> weights by class size.</li>
+<li>The confusion matrix becomes 3 × 3: it shows which class gets confused with which.</li>
+</ul>
 <div class="tip">If you see a <i>ConvergenceWarning</i>, set <code>max_iter=1000</code> or scale the features.</div>
 <h3>Common mistakes</h3>
 <ul>
@@ -455,6 +476,136 @@ print(scores.mean(), scores.std())  # 0.778 0.037</code></pre>
         { prompt: "Run <code>cross_val_score</code> for <code>make_pipeline(StandardScaler(), LogisticRegression())</code> with <code>cv=5</code> on the whole <code>X</code>, <code>y</code>. Store the result in <code>scores</code>, the mean in <code>cv_mean</code> and the SD in <code>cv_std</code>, and print them.", hints: ["<code>pipe = make_pipeline(StandardScaler(), LogisticRegression())</code>","<code>cross_val_score(pipe, X, y, cv=5)</code>"], check: {"tests":"import numpy as _np\nassert len(scores) == 5, 'cv=5: there should be 5 scores'\nassert abs(cv_mean - _np.mean(scores)) < 1e-9 and abs(cv_std - _np.std(scores)) < 1e-9, 'cv_mean = scores.mean(), cv_std = scores.std()'\nassert abs(cv_mean - 0.79) < 0.02, f'cv_mean should be ≈ 0.79, you have {cv_mean:.3f}. Did you score the Pipeline on the whole X, y with cv=5?'"} },
         { prompt: "For depths <code>[1, 2, 3, 4, 5, None]</code> store the 5-fold CV mean of <code>DecisionTreeClassifier(max_depth=d, random_state=0)</code> in the dict <code>cv_means</code>. Store the best depth in <code>best_depth</code>.", hints: ["<code>cross_val_score(DecisionTreeClassifier(max_depth=d, random_state=0), X, y, cv=5).mean()</code>","<code>max(cv_means, key=cv_means.get)</code>"], check: {"tests":"from sklearn.model_selection import cross_val_score as _cvs\nfrom sklearn.tree import DecisionTreeClassifier as _DT\nassert set(cv_means) == {1, 2, 3, 4, 5, None}, 'cv_means should hold 6 depths (None included)'\n_ref = {d: _cvs(_DT(max_depth=d, random_state=0), X, y, cv=5).mean() for d in [1, 2, 3, 4, 5, None]}\nassert all(abs(cv_means[d] - _ref[d]) < 0.01 for d in _ref), 'CV means do not match: cv=5, random_state=0, the whole X, y'\nassert best_depth == max(_ref, key=_ref.get), f'best_depth should be {max(_ref, key=_ref.get)}: the depth with the largest CV mean'\nassert cv_means[None] < cv_means[best_depth], 'The unlimited tree should have a lower CV score than the best one'"} },
         { prompt: "A model has train accuracy 0.74, CV accuracy 0.74, and the \"nobody leaves\" baseline is also 0.74. What is this?", options: ["High variance (overfitting)","High bias (underfitting): the model is too simple","A great model","Data leakage"], explain: "Both train and CV are at baseline level: the model failed to capture the pattern. You need a more complex model or better features." }
+      ]
+    },
+    "ml-reg": {
+      title: "Regularization: Ridge, Lasso and C",
+      body: `
+<p>In the previous lesson we saw overfitting: the model memorises train and does badly on new data. What does that look like in a linear model? <b>The coefficients get too large</b>: the model takes random noise for a "pattern" and gives it a big weight.</p>
+<p><b>Regularization</b> means telling the model "you pay a penalty for large coefficients". Then the model gives weight only to features that are really useful.</p>
+<h3>Ridge and Lasso</h3>
+<table>
+<tr><th>Model</th><th>What it minimizes</th><th>Result</th></tr>
+<tr><td><code>LinearRegression</code></td><td>MSE</td><td>no penalty</td></tr>
+<tr><td><code>Ridge(alpha)</code></td><td>MSE + alpha · Σ b²</td><td>all coefficients <b>shrink</b> towards zero but do not become zero</td></tr>
+<tr><td><code>Lasso(alpha)</code></td><td>MSE + alpha · Σ |b|</td><td>the coefficients of useless features become <b>exactly 0</b></td></tr>
+</table>
+<p><code>alpha</code> is the strength of the penalty. alpha = 0 is ordinary linear regression. The larger alpha gets, the simpler the model. An alpha that is too large means underfitting: all coefficients are close to zero and the model predicts only the mean.</p>
+<h3>Step-by-step example</h3>
+<p>We create overfitting on purpose: train gets only 60 flats, and to the 5 real features we add 20 meaningless random columns (<code>noise_0 … noise_19</code>).</p>
+<pre><code>from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+lin = make_pipeline(StandardScaler(), LinearRegression()).fit(X_train, y_train)
+print(lin.score(X_train, y_train))   # 0.856
+print(lin.score(X_test, y_test))     # 0.419</code></pre>
+<ol>
+<li>Train R² = 0.86, test R² = 0.42. The model gave weight to the noise columns too: the sum of their |coefficients| is 22.6.</li>
+<li>Now we compare Ridge with different alphas using 5-fold CV inside train:</li>
+</ol>
+<table>
+<tr><th>alpha</th><th>CV R²</th><th>Test R²</th><th>Sum of noise coefficients</th></tr>
+<tr><td>0.01</td><td>0.00</td><td>0.42</td><td>22.5</td></tr>
+<tr><td>1</td><td>0.18</td><td>0.44</td><td>21.6</td></tr>
+<tr><td><b>10</b></td><td><b>0.52</b></td><td><b>0.55</b></td><td>15.2</td></tr>
+<tr><td>100</td><td>0.49</td><td>0.49</td><td>7.3</td></tr>
+<tr><td>1000</td><td>0.11</td><td>0.11</td><td>1.9</td></tr>
+</table>
+<ol start="3">
+<li>As alpha grows, the coefficients shrink. alpha = 10 is the best balance. At alpha = 1000 the model "switched off" everything: underfitting.</li>
+<li>We chose alpha <b>by CV</b>, not by looking at test. Test is only the final check.</li>
+<li>On this data <code>Lasso(alpha=1.0)</code> sets 18 of the 25 coefficients to exactly zero: 18 of the 20 noise columns go out, and all 5 real features stay. Test R² = 0.64. Lasso is automatic <b>feature selection</b>.</li>
+</ol>
+<div class="tip">Always put a <code>StandardScaler</code> before Ridge and Lasso. The penalty is applied to the size of a coefficient, and the size depends on the units: m² and year are on different scales. Without scaling the penalty is spread unfairly.</div>
+<h3>C in LogisticRegression</h3>
+<p><code>LogisticRegression</code> uses regularization by default (L2, like Ridge). But its parameter is written the other way round: <code>C = 1 / alpha</code>.</p>
+<ul>
+<li><b>Small C</b> (0.01) — strong regularization, small coefficients.</li>
+<li><b>Large C</b> (100) — weak regularization, the model is free.</li>
+<li>The default is <code>C=1.0</code>.</li>
+</ul>
+<p>On the churn data (4 scaled features) the <code>tenure_months</code> coefficient is −0.09 at C = 0.001 and −1.14 at C = 1. Here there are few features and no noise, so the CV AUC does not change (≈0.825). With many features (for example, thousands of words in text) the choice of C strongly affects the result.</p>
+<p><code>LogisticRegression(penalty='l1', solver='liblinear')</code> zeroes out features the way Lasso does.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Mixing up alpha and C: a large alpha is a strong penalty, a large C is a <b>weak</b> penalty.</li>
+<li>Using Ridge/Lasso without scaling.</li>
+<li>Choosing alpha by the test result. The right way: cross-validation.</li>
+<li>Calling a feature that Lasso zeroed out "completely useless". If two features are similar, Lasso keeps only one of them.</li>
+<li>Thinking regularization fixes bad data. It only reduces overfitting; it adds no new information.</li>
+</ul>`,
+      ex: [
+        { prompt: "The starter has a small train set ready (60 flats) with 5 real features and 20 noise columns. For each alpha in <code>[0.01, 1, 10, 100, 1000]</code>, store the mean 5-fold CV R² on train of <code>make_pipeline(StandardScaler(), Ridge(alpha=a))</code> in the <code>scores</code> dictionary. The best alpha → <code>best_alpha</code>. Train a model with that alpha on train and store its test R² in <code>test_r2</code>.", check: { tests: "import numpy as _np\nfrom sklearn.linear_model import Ridge as _Rd, Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, 'X_train must not be changed: 60 rows, 25 columns'\n_s = {a: _cvs(_mp(_SS(), _Rd(alpha=a)), X_train, y_train, cv=5).mean() for a in [0.01, 1, 10, 100, 1000]}\nassert sorted(scores) == [0.01, 1, 10, 100, 1000], \"The keys of scores: 0.01, 1, 10, 100, 1000\"\nassert all(abs(scores[a] - _s[a]) < 1e-6 for a in _s), \"The CV values do not match: cross_val_score(make_pipeline(StandardScaler(), Ridge(alpha=a)), X_train, y_train, cv=5).mean()\"\n_b = max(_s, key=_s.get)\nassert best_alpha == _b, f\"best_alpha should be {_b}: the alpha with the highest CV R²\"\n_t = _mp(_SS(), _Rd(alpha=_b)).fit(X_train, y_train).score(X_test, y_test)\nassert abs(test_r2 - _t) < 1e-6, f\"test_r2 should be ≈ {_t:.3f}: train on train with the best alpha and score on test\"" }, hints: ["A loop: inside <code>for a in [0.01, 1, 10, 100, 1000]:</code> write <code>scores[a] = cross_val_score(m, X_train, y_train, cv=5).mean()</code>", "<code>best_alpha = max(scores, key=scores.get)</code>"] },
+        { prompt: "On the same data, train <code>make_pipeline(StandardScaler(), Lasso(alpha=1.0))</code> on train under the name <code>lasso</code>. Store the coefficients in the Series <code>coefs</code> (indexed by column names). <code>n_zero</code> — the number of coefficients equal to exactly 0, <code>kept</code> — the names of the non-zero features (a list), <code>lasso_r2</code> — the test R².", check: { tests: "import numpy as _np\nfrom sklearn.linear_model import Ridge as _Rd, Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, 'X_train must not be changed: 60 rows, 25 columns'\n_l = _mp(_SS(), _Ls(alpha=1.0)).fit(X_train, y_train)\n_c = _l[-1].coef_\nassert len(coefs) == 25 and list(coefs.index) == list(X_train.columns), \"coefs is 25 coefficients indexed by X_train.columns: pd.Series(lasso[-1].coef_, index=X_train.columns)\"\nassert _np.allclose(_np.asarray(coefs, dtype=float), _c, atol=1e-6), \"The coefficients do not match: Lasso(alpha=1.0) with a StandardScaler before it, trained on train\"\nassert n_zero == int((_c == 0).sum()), f\"n_zero should be {int((_c == 0).sum())}: (coefs == 0).sum()\"\nassert list(kept) == [n for n, v in zip(X_train.columns, _c) if v != 0], \"kept is the names of the columns with a non-zero coefficient (in column order)\"\nassert abs(lasso_r2 - _l.score(X_test, y_test)) < 1e-6, f\"lasso_r2 should be ≈ {_l.score(X_test, y_test):.3f}\"" }, hints: ["The last step of the Pipeline: <code>lasso[-1].coef_</code>", "<code>kept = list(coefs[coefs != 0].index)</code>"] },
+        { prompt: "The Ridge penalty = alpha · Σ b². alpha = 0.5, coefficients b = [3, −4]. What is the penalty?", explain: "3² + (−4)² = 9 + 16 = 25. 0.5 · 25 = 12.5. For Lasso it would be 0.5 · (3 + 4) = 3.5." },
+        { prompt: "A model with many text features (5,000 columns) gives 0.99 accuracy on train and 0.80 on CV. What is the right change to <code>LogisticRegression(C=1.0)</code>?", options: ["Raise C to 100: more freedom for the model", "Try a smaller C (for example 0.1): regularization gets stronger and overfitting goes down", "Lower max_iter", "Change nothing: train accuracy is high"], explain: "C = 1 / alpha. With a small C the penalty is strong: the coefficients shrink and the model memorises less noise. Choose the exact value with CV." }
+      ]
+    },
+    "ml-curves": {
+      title: "ROC and PR curves, PR-AUC, log loss, calibration, Gini/KS",
+      body: `
+<p>Precision and recall are tied to one threshold. But what if we have not chosen a threshold yet? Or we want to compare two models "overall"? For that there are <b>threshold-independent</b> metrics: they look at the model's probabilities as a whole.</p>
+<h3>The ROC curve</h3>
+<p>We move the threshold from 1 down to 0 and compute two numbers at each threshold:</p>
+<ul>
+<li><b>TPR</b> (recall) = TP / (TP + FN): what share of the leavers we found.</li>
+<li><b>FPR</b> = FP / (FP + TN): what share of the stayers we raised a false alarm on.</li>
+</ul>
+<table>
+<tr><th>Threshold</th><th>TPR</th><th>FPR</th><th>TPR − FPR</th></tr>
+<tr><td>0.5</td><td>0.41</td><td>0.05</td><td>0.36</td></tr>
+<tr><td>0.3</td><td>0.77</td><td>0.26</td><td>0.51</td></tr>
+<tr><td>0.2</td><td>0.82</td><td>0.43</td><td>0.39</td></tr>
+<tr><td>0.1</td><td>0.97</td><td>0.63</td><td>0.34</td></tr>
+</table>
+<p>Plot these points (FPR, TPR) and you get the ROC curve. The area under it is the <b>ROC AUC</b>. For our churn model it is 0.816.</p>
+<h3>Gini and KS: the language of banks</h3>
+<p>In scoring vacancies at Kazakhstan's banks, <b>Gini</b> and <b>KS</b> are named more often than AUC. Both come from the ROC.</p>
+<ul>
+<li><b>Gini = 2 · AUC − 1</b>. AUC 0.5 (a coin toss) → Gini 0; AUC 1.0 → Gini 1. Ours: 2 · 0.816 − 1 = <b>0.632</b>.</li>
+<li><b>KS</b> (Kolmogorov–Smirnov) = max(TPR − FPR): the point where the model separates "good" and "bad" customers the most. Ours is <b>0.526</b>, at a threshold of ≈ 0.33.</li>
+</ul>
+<pre><code>from sklearn.metrics import roc_auc_score, roc_curve
+auc = roc_auc_score(y_test, proba)       # 0.816
+gini = 2 * auc - 1                       # 0.632
+fpr, tpr, thr = roc_curve(y_test, proba)
+ks = (tpr - fpr).max()                   # 0.526</code></pre>
+<h3>The PR curve and PR-AUC</h3>
+<p>The weak spot of ROC: when a class is very rare (fraud at 1%), FPR always looks small because there are so many "normal" examples. Even with ROC AUC = 0.95, most of the alarms can be false.</p>
+<p>The <b>PR curve</b> shows precision and recall at each threshold. <code>average_precision_score</code> computes the area under it (PR-AUC). Its baseline is not 0.5 but the <b>share of the positive class</b>: 0.26 for churn. Our model gives 0.664 — 2.5 times better than random.</p>
+<div class="tip">A rule: if the classes are roughly balanced — ROC AUC. If the positive class is rare and it is the one you care about (fraud, default, illness) — look at PR-AUC as well.</div>
+<h3>Log loss: the quality of the probabilities</h3>
+<p>AUC looks only at the <b>order</b>: is the leaver's probability higher than the stayer's. But is the probability itself right? That is what <b>log loss</b> measures: the −ln of the probability given to the true answer, averaged.</p>
+<ol>
+<li>We gave a subscriber who left p = 0.9: −ln(0.9) = 0.105. A small penalty.</li>
+<li>We gave p = 0.6: −ln(0.6) = 0.511.</li>
+<li>We gave p = 0.01 ("definitely staying"), and they left: −ln(0.01) = 4.6. <b>A confident mistake is punished hard.</b></li>
+</ol>
+<p>Lower is better. Our model: 0.434. A baseline that says the same 0.26 for everyone: 0.573.</p>
+<h3>Calibration</h3>
+<p>If about 30% of the subscribers the model called "30%" really leave, the model is <b>calibrated</b>. The check: split the predictions into groups and compare the mean prediction with the actual rate.</p>
+<table>
+<tr><th>Prediction range</th><th>Subscribers</th><th>Mean prediction</th><th>Actual churn</th></tr>
+<tr><td>0–0.1</td><td>42</td><td>0.05</td><td>0.02</td></tr>
+<tr><td>0.1–0.2</td><td>28</td><td>0.14</td><td>0.21</td></tr>
+<tr><td>0.2–0.4</td><td>43</td><td>0.30</td><td>0.23</td></tr>
+<tr><td>0.4–1.0</td><td>37</td><td>0.58</td><td>0.59</td></tr>
+</table>
+<p>The numbers are close: logistic regression is usually well calibrated. Tree ensembles and <code>class_weight='balanced'</code> distort the probabilities; <code>CalibratedClassifierCV</code> fixes that. Calibration matters when you multiply a probability by money: expected loss = PD × amount.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Passing the result of <code>predict</code> (0/1) to the metrics. AUC, PR-AUC and log loss need a <b>probability</b>.</li>
+<li>Trusting only ROC AUC on a rare class.</li>
+<li>Comparing PR-AUC with 0.5. Its baseline is the share of the positive class.</li>
+<li>Thinking that a high AUC means the probabilities are right too. AUC checks only the order, not the calibration.</li>
+<li>Confusing Gini with the "income inequality" Gini: in scoring it is simply 2 · AUC − 1.</li>
+</ul>`,
+      ex: [
+        { prompt: "The model and <code>proba</code> are ready. Compute on test: <code>auc</code> (ROC AUC), <code>gini</code> (2 · AUC − 1), <code>pr_auc</code> (<code>average_precision_score</code>), <code>ll</code> (<code>log_loss</code>). Print all four.", check: { tests: "import pandas as _pd\nimport numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = _pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_m = _LogR(max_iter=1000).fit(_Xtr, _ytr)\n_p = _m.predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras, average_precision_score as _aps, log_loss as _lls\n_a = _ras(_yte, _p)\nassert abs(auc - _a) < 1e-6, f\"auc should be ≈ {_a:.3f}: roc_auc_score(y_test, proba). proba is a probability, not 0/1\"\nassert abs(gini - (2 * _a - 1)) < 1e-6, f\"gini = 2 * auc - 1 ≈ {2 * _a - 1:.3f}\"\nassert abs(pr_auc - _aps(_yte, _p)) < 1e-6, f\"pr_auc should be ≈ {_aps(_yte, _p):.3f}: average_precision_score(y_test, proba)\"\nassert abs(ll - _lls(_yte, _p)) < 1e-6, f\"ll should be ≈ {_lls(_yte, _p):.3f}: log_loss(y_test, proba)\"" }, hints: ["<code>roc_auc_score(y_test, proba)</code>, <code>average_precision_score(y_test, proba)</code>", "<code>gini = 2 * auc - 1</code>, <code>ll = log_loss(y_test, proba)</code>"] },
+        { prompt: "Compute the KS statistic. <code>roc_curve(y_test, proba)</code> returns three arrays: <code>fpr</code>, <code>tpr</code>, <code>thr</code>. <code>ks</code> — the largest value of (tpr − fpr), <code>ks_thr</code> — the threshold at that point.", check: { tests: "import pandas as _pd\nimport numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = _pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_m = _LogR(max_iter=1000).fit(_Xtr, _ytr)\n_p = _m.predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_curve as _rc\n_fp, _tp, _th = _rc(_yte, _p)\n_i = _np.argmax(_tp - _fp)\nassert abs(ks - (_tp - _fp)[_i]) < 1e-6, f\"ks should be ≈ {(_tp - _fp)[_i]:.3f}: (tpr - fpr).max()\"\nassert abs(ks_thr - _th[_i]) < 1e-6, f\"ks_thr should be ≈ {_th[_i]:.3f}: thr[np.argmax(tpr - fpr)]\"" }, hints: ["<code>fpr, tpr, thr = roc_curve(y_test, proba)</code>", "<code>i = np.argmax(tpr - fpr)</code>, then <code>ks = (tpr - fpr)[i]</code>, <code>ks_thr = thr[i]</code>"] },
+        { prompt: "An antifraud model: 1% of transactions are fraud. ROC AUC = 0.95, PR-AUC = 0.20. How do we read this?", options: ["The model is excellent: 0.95 is very high", "The model ranks well, but most of the alarms will be false: on a rare class PR-AUC gives the more honest picture", "PR-AUC is below 0.5, so the model is worse than random", "The two metrics contradict each other, so there is a mistake in the calculation"], explain: "The baseline of PR-AUC is the share of the positive class (0.01). 0.20 is 20 times better than that, but precision is still low. ROC AUC looks too optimistic on a rare class." },
+        { prompt: "A scoring model has a ROC AUC of 0.80. What is its Gini coefficient?", explain: "Gini = 2 · AUC − 1 = 2 · 0.80 − 1 = 0.60." }
       ]
     },
     "ml-gate": {

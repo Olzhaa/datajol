@@ -1473,5 +1473,137 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "deng-ch": {
+  "pr": [
+   {
+    "title": "uniqExact by month",
+    "prompt": "<b>qazaq.</b> In ClickHouse: <code>SELECT toStartOfMonth(order_date) AS month, uniqExact(customer_id) AS buyers ... GROUP BY month</code>. Write the same in SQLite: over 2026 <code>delivered</code> orders, <code>month</code>, <code>buyers</code>. By month.",
+    "hints": [
+     "<code>toStartOfMonth(d)</code> → <code>date(d, 'start of month')</code>; <code>uniqExact(x)</code> → <code>COUNT(DISTINCT x)</code>."
+    ]
+   },
+   {
+    "title": "toYear",
+    "prompt": "<b>qazaq.</b> Using the SQLite equivalent of ClickHouse's <code>toYear(order_date)</code>, count all orders by year: <code>year</code> (text such as <code>'2025'</code>), <code>orders</code>. By year.",
+    "hints": [
+     "<code>strftime('%Y', order_date)</code>"
+    ]
+   },
+   {
+    "title": "avgIf",
+    "prompt": "<b>qazaq.</b> In ClickHouse: <code>SELECT avg(price) AS avg_all, avgIf(price, category = 'Спорт') AS avg_sport FROM products</code>. Write it as one SQLite query, with both values <code>ROUND</code>ed to whole numbers.",
+    "hints": [
+     "Leave out <code>ELSE</code> in the <code>CASE</code>: a non-match gives NULL, and <code>AVG</code> ignores NULLs.",
+     "With <code>ELSE 0</code>, the zeros would drag the average down."
+    ]
+   },
+   {
+    "title": "toMonday: weekly grouping",
+    "prompt": "<b>qazaq.</b> ClickHouse's <code>toMonday(order_date)</code> returns the Monday of the week. In SQLite it is <code>date(order_date, 'weekday 0', '-6 days')</code>. Count the <code>delivered</code> orders of May 2026 by week: <code>week_start</code>, <code>orders</code>. By week.",
+    "hints": [
+     "May: <code>order_date &gt;= '2026-05-01' AND order_date &lt; '2026-06-01'</code>.",
+     "1 May is a Friday, so the first week starts on 27 April. A week with no orders does not appear."
+    ]
+   },
+   {
+    "title": "A countIf table",
+    "prompt": "<b>qazaq.</b> In ClickHouse: <code>countIf(status = 'delivered')</code>, <code>countIf(status = 'cancelled')</code>, <code>countIf(status = 'returned')</code>. For each month of 2026, in one SQLite query: <code>month</code> (first day of the month), <code>delivered</code>, <code>cancelled</code>, <code>returned</code>. By month.",
+    "hints": [
+     "<code>countIf(cond)</code> → <code>SUM(CASE WHEN cond THEN 1 ELSE 0 END)</code>; three columns, three such expressions.",
+     "Here you need <code>ELSE 0</code>, so a status with no orders shows 0 rather than NULL."
+    ]
+   },
+   {
+    "title": "uniqIf",
+    "prompt": "<b>qazaq.</b> In ClickHouse: <code>uniqExactIf(customer_id, status = 'delivered')</code> and <code>uniqExactIf(customer_id, status = 'returned')</code>. For each city in SQLite: <code>city</code>, <code>buyers</code> (distinct customers with a delivered order), <code>returners</code> (distinct customers with a return). By city.",
+    "hints": [
+     "<code>COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.customer_id END)</code>: a non-match gives NULL, which <code>COUNT</code> skips.",
+     "Here <code>ELSE 0</code> is a bug: 0 would be counted as one more \"customer\"."
+    ]
+   },
+   {
+    "title": "argMax: a city's top customer",
+    "prompt": "<b>qazaq.</b> In ClickHouse, <code>argMax(customer_id, revenue)</code> returns the <code>customer_id</code> with the largest <code>revenue</code>. Write it in SQLite with a window function: the biggest spender in each city (<code>delivered</code> orders): <code>city</code>, <code>top_customer</code>, <code>revenue</code> (ties go to the smaller <code>customer_id</code>). By city.",
+    "hints": [
+     "CTE 1: revenue per \"city × customer\". CTE 2: <code>ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id)</code>.",
+     "Finally <code>WHERE rn = 1</code>."
+    ]
+   },
+   {
+    "title": "runningDifference → LAG",
+    "prompt": "<b>qazaq.</b> ClickHouse's <code>runningDifference(revenue)</code> (or <code>revenue - lagInFrame(revenue)</code>) gives the difference from the previous row. In SQLite with <code>LAG</code>: monthly revenue of 2026 <code>delivered</code> orders and the change from the previous month: <code>month</code> (<code>'YYYY-MM'</code>), <code>revenue</code>, <code>diff</code> (NULL in the first month). By month.",
+    "hints": [
+     "First the monthly revenue in a CTE, then <code>revenue - LAG(revenue) OVER (ORDER BY month)</code>."
+    ]
+   }
+  ]
+ },
+ "deng-mart": {
+  "pr": [
+   {
+    "title": "The watermark",
+    "prompt": "<b>qazaq.</b> Before an incremental load, find the watermark: the mart is built from <code>delivered</code> orders, and the watermark is their latest date. Column: <code>watermark</code>.",
+    "hints": [
+     "<code>MAX(order_date)</code> over <code>delivered</code> rows only."
+    ]
+   },
+   {
+    "title": "A city mart",
+    "prompt": "<b>qazaq.</b> Build a mart with <code>CREATE TABLE mart_city AS SELECT ...</code>. Grain: one row per city, <code>delivered</code> orders only. Columns in this order: <code>city</code>, <code>orders</code> (distinct orders), <code>revenue</code> (sum of quantity × unit_price).",
+    "hints": [
+     "Three tables: <code>orders</code>, <code>customers</code>, <code>order_items</code>; <code>GROUP BY c.city</code>.",
+     "The JOIN multiplies rows: <code>COUNT(DISTINCT o.order_id)</code>."
+    ]
+   },
+   {
+    "title": "A grain-key test",
+    "prompt": "<b>qazaq.</b> Before saving a \"month × category\" mart, test its key. Over the result of the ready CTE <code>m</code>, return one row: <code>rows_cnt</code> (number of rows) and <code>keys_cnt</code> (number of distinct <code>(month, category)</code> pairs). If they are equal, the key is unique.",
+    "hints": [
+     "Glue the two columns into one key: <code>month || '|' || category</code>.",
+     "<code>COUNT(*)</code> and <code>COUNT(DISTINCT month || '|' || category)</code>"
+    ]
+   },
+   {
+    "title": "Joining an SCD 2 table",
+    "prompt": "<b>qazaq.</b> Customer 7 moved from Karaganda to Astana in December 2025; this is recorded in the SCD 2 table <code>dim_city</code> (in the starter). List their <code>delivered</code> orders with the city <b>at the time of the order</b>: <code>order_id</code>, <code>order_date</code>, <code>city</code>. By <code>order_date</code>, <code>order_id</code>.",
+    "hints": [
+     "The condition from the lesson: <code>ON d.customer_id = o.customer_id AND o.order_date BETWEEN d.valid_from AND d.valid_to</code>.",
+     "Without the date-range condition every order comes out twice."
+    ]
+   },
+   {
+    "title": "Distinct counts do not add up",
+    "prompt": "<b>qazaq.</b> In a monthly mart, <code>customers</code> = distinct buyers. For 2025 (<code>delivered</code> only), show in one row: <code>sum_monthly</code>, the sum of the monthly distinct-buyer counts, and <code>year_distinct</code>, the distinct buyers over the whole year. The gap proves you cannot get the yearly customer count from a monthly mart.",
+    "hints": [
+     "CTE: the monthly <code>COUNT(DISTINCT customer_id)</code>, then its <code>SUM</code>.",
+     "The yearly number comes from a separate subquery over the raw <code>orders</code> table."
+    ]
+   },
+   {
+    "title": "A lookback for late data",
+    "prompt": "<b>qazaq.</b> The daily mart's watermark is <code>2026-05-31</code>. To catch late-arriving data, the last 7 days are recomputed: <code>order_date &gt; date('2026-05-31', '-7 days')</code>. Prepare the rows to load (<code>delivered</code> only): <code>order_date</code>, <code>orders</code>, <code>revenue</code>. By <code>order_date</code>.",
+    "hints": [
+     "<code>date('2026-05-31', '-7 days')</code> = <code>'2026-05-24'</code>; take the days after it, including those after the watermark.",
+     "<code>GROUP BY o.order_date</code>, <code>COUNT(DISTINCT o.order_id)</code>."
+    ]
+   },
+   {
+    "title": "An idempotent reload",
+    "prompt": "<b>qazaq.</b> The starter's <code>mart_daily</code> mart (day, <code>delivered</code>) is loaded from May, but the June load ran twice and June's rows doubled. Keep the starter code and add an idempotent fix below it: <code>DELETE</code> the June rows (<code>order_date &gt;= '2026-06-01'</code>) and reload that period once with <code>INSERT</code>. The check looks at the mart's final state.",
+    "hints": [
+     "The starter's first <code>INSERT</code> adds May and June; the second adds June again.",
+     "<code>DELETE FROM mart_daily WHERE order_date &gt;= '2026-06-01';</code>, then a copy of the second <code>INSERT</code>."
+    ]
+   },
+   {
+    "title": "SCD 2 from a change log",
+    "prompt": "<b>qazaq.</b> The starter's <code>city_changes</code> table records the day a customer's city changed. Build an SCD 2 dimension from it: <code>customer_id</code>, <code>city</code>, <code>valid_from</code> (= <code>changed_at</code>), <code>valid_to</code> (the day before the next change; <code>'9999-12-31'</code> on the latest row), <code>is_current</code> (1 on the latest row, 0 otherwise). By <code>customer_id</code>, <code>valid_from</code>.",
+    "hints": [
+     "The next change: <code>LEAD(changed_at) OVER (PARTITION BY customer_id ORDER BY changed_at)</code>; it is NULL on the latest row.",
+     "<code>COALESCE(date(LEAD(...), '-1 day'), '9999-12-31')</code>; <code>is_current</code> is 1 when <code>LEAD(...) IS NULL</code>."
+    ]
+   }
+  ]
  }
 } });

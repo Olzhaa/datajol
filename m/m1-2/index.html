@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 1: Дерек құралдары / M1.2</nav>
 <article class="reading">
-<p class="eyebrow">M1.2 · 30–45 сағат · 15 сабақ</p>
+<p class="eyebrow">M1.2 · 30–45 сағат · 18 сабақ</p>
 <h1>M1.2 SQL Core: SQL негіздері қазақша</h1>
 <p class="prose">Бұл модульде онлайн дүкеннің дерекқорымен жұмыс істейсіз: клиенттер, тауарлар, тапсырыстар. Сұрауды оң жақтағы редакторға жазып, «Іске қосу» батырмасымен нәтижені көріңіз, сосын «Тексеру» батырмасын басыңыз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m1-2">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m1-2">Барлық тапсырмалар</a></p>
@@ -1265,11 +1265,12 @@ HAVING COUNT(*) &gt;= 3;</code></pre>
 FROM products
 GROUP BY category
 HAVING AVG(price) &gt; 10000;</code></pre>
-<p>Толық реті: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Жазылу реті</b> (сұрауды осы ретпен жазасыз): <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Орындалу реті</b> (дерекқор іс жүзінде осы ретпен есептейді, оны логикалық рет дейді): <code>FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code>. Яғни дерекқор алдымен кестені алады (кейін үйренетін JOIN да осы қадамда), жолдарды сүзеді, топтайды, топтарды сүзеді, содан кейін ғана SELECT-тегі бағандарды есептейді. WHERE-де агрегат жазуға болмайтыны осыдан: ол орындалғанда топтар әлі құрылмаған.</p>
 <h3>Жиі қателер</h3>
 <ul>
 <li><b>Агрегатты WHERE-ге жазу:</b> <code>WHERE COUNT(*) &gt; 1</code> қате береді. WHERE орындалғанда топтар әлі жоқ — HAVING қолданыңыз.</li>
-<li><b>GROUP BY-ды ұмыту.</b> <code>SELECT city, COUNT(*) FROM customers</code> әр қалаға емес, бүкіл кестеге бір жол қайтарады.</li>
+<li><b>GROUP BY-ды ұмыту.</b> <code>SELECT city, COUNT(*) FROM customers</code> біздің браузердегі SQLite-та қате бермейді: бүкіл кестеге бір жол қайтарып, <code>city</code> орнына кездейсоқ бір қаланы қояды. Бұл — SQLite-тың ерекшелігі. PostgreSQL сияқты қатаң дерекқорлар мұндай сұрауға бірден қате береді («city бағаны GROUP BY-да болуы керек»).</li>
 <li><b>NULL тобын байқамау.</b> <code>city</code> бағаны бос жолдар бөлек <code>NULL</code> тобына жиналады. Ол керек болмаса, <code>WHERE city IS NOT NULL</code> қосыңыз.</li>
 </ul></div>
 <p><a href="../../#lesson/m1-2/7">Сабақты интерактивті түрде ашу →</a></p>
@@ -1566,13 +1567,243 @@ REVOKE DELETE ON orders FROM analyst;</code></pre>
 <div class="tip">VIEW әр оқылған сайын сұрауды қайта орындайды. Ауыр есептеулер үшін кейбір дерекқорларда <b>materialized view</b> бар: ол нәтижені сақтап, кесте сияқты жылдам оқылады, бірақ оны мезгіл-мезгіл жаңарту керек.</div></div>
 <p><a href="../../#lesson/m1-2/13">Сабақты интерактивті түрде ашу →</a></p>
 </section>
-<section id="sql-gate">
-<h2>15. Модуль емтиханы: SQL Core</h2>
+<section id="sql-15">
+<h2>15. UNION, UNION ALL және жиындар</h2>
 <div class="prose">
-<p>Бұл — модульдің қорытынды тексерісі. Тапсырмалар әр сабақтан араласып келеді, кеңес жоқ. Барлығын орындасаңыз, модуль аяқталады және <b>L2 SQL Practitioner</b> деңгейіне жақындайсыз.</p>
+<p><code>JOIN</code> кестелерді <b>көлденеңінен</b> қосады: жолға жаңа бағандар жалғанады. Ал кейде екі нәтижені <b>тігінен</b> қосу керек: бір тізімнің астына екіншісін қою. Мысалы, тамыздағы және қарашадағы клиенттерді бір тізімге жинау немесе кестенің соңына «Барлығы» жолын қосу. Бұл үшін жиын операторлары бар.</p>
+<table>
+<tr><th>Оператор</th><th>Не қайтарады</th><th>Қайталанулар</th></tr>
+<tr><td><code>UNION</code></td><td>екі нәтиженің бірігуі</td><td>жойылады</td></tr>
+<tr><td><code>UNION ALL</code></td><td>екі нәтиженің бірігуі</td><td>қалады</td></tr>
+<tr><td><code>INTERSECT</code></td><td>екеуінде де бар жолдар</td><td>жойылады</td></tr>
+<tr><td><code>EXCEPT</code></td><td>біріншіде бар, екіншіде жоқ жолдар</td><td>жойылады</td></tr>
+</table>
+<h3>Мысал: UNION және UNION ALL</h3>
+<p>Тамызда тапсырыс берген клиенттер: 1, 2, 1 (Айгерім екі рет). Қазанда: 2, 9, 5, 1.</p>
+<pre><code>SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+UNION
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';</code></pre>
+<p>Нәтиже — 4 жол: <code>1, 2, 5, 9</code>. <code>UNION</code> қайталануларды жойды: екі тізімнің арасындағыны да, бір тізімнің ішіндегіні де. Дәл осы сұрауды <code>UNION ALL</code>-мен жазсақ, 7 жол шығады: <code>1, 2, 1, 2, 9, 5, 1</code>. Ештеңе жойылмайды, жолдар жай ғана бірінің астына бірі қойылады.</p>
+<div class="tip">Қайталану болмайтынын білсеңіз немесе ол керек болса, <code>UNION ALL</code> жазыңыз. <code>UNION</code> қайталануды іздеу үшін бүкіл нәтижені салыстырады, сондықтан үлкен кестеде баяу. Табысты қосатын есепте <code>UNION</code> қауіпті: сомасы бірдей екі бөлек тапсырыс бір жолға айналып, табыс кеміп қалады.</div>
+<h3>Ереже: бағандар сәйкес келуі керек</h3>
+<ul>
+<li>Екі SELECT-те бағандар <b>саны бірдей</b> болуы керек.</li>
+<li>Сәйкес бағандардың <b>типі үйлесуі</b> керек: сан санның астына, мәтін мәтіннің астына. SQLite мұны тексермейді, ал PostgreSQL қате береді.</li>
+<li>Баған атаулары <b>бірінші</b> SELECT-тен алынады.</li>
+<li><code>ORDER BY</code> ең соңында бір рет жазылады және бүкіл біріккен нәтижеге қолданылады.</li>
+</ul>
+<h3>Мысал: «Барлығы» жолы</h3>
+<pre><code>SELECT status, COUNT(*) AS orders FROM orders GROUP BY status
+UNION ALL
+SELECT 'Барлығы', COUNT(*) FROM orders;</code></pre>
+<table>
+<tr><th>status</th><th>orders</th></tr>
+<tr><td>cancelled</td><td>2</td></tr>
+<tr><td>delivered</td><td>10</td></tr>
+<tr><td>shipped</td><td>3</td></tr>
+<tr><td>Барлығы</td><td>15</td></tr>
+</table>
+<p>Екінші SELECT-те <code>'Барлығы'</code> — жай мәтін (тұрақты мән). Ол <code>status</code> бағанының астына түседі.</p>
+<h3>INTERSECT және EXCEPT</h3>
+<pre><code>-- тамызда да, қазанда да тапсырыс бергендер
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+INTERSECT
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';   -- 1, 2
+
+-- ешқашан тапсырыс бермеген клиенттер
+SELECT id FROM customers
+EXCEPT
+SELECT customer_id FROM orders;                                     -- 8</code></pre>
+<p><code>EXCEPT</code>-те рет маңызды: «A-да бар, B-да жоқ». Орындарын ауыстырсаңыз, мүлде басқа сұрақ шығады. <code>EXCEPT</code> пен <code>NOT EXISTS</code> бір сұраққа жауап бере алады; айырмасы — <code>EXCEPT</code> бүтін жолдарды салыстырады және қайталануды жояды.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Бағандар саны әртүрлі:</b> <code>SELECT id, name ... UNION SELECT id ...</code> қате береді.</li>
+<li><b>Бағандардың реті шатасқан:</b> <code>SELECT name, city ... UNION SELECT city, name ...</code> қате бермейді, бірақ қала мен ат бір бағанда араласып кетеді. SQL бағандарды атауымен емес, <b>орнымен</b> сәйкестендіреді.</li>
+<li><b>UNION ALL орнына UNION:</b> керек қайталанулар үнсіз жойылады, сандар кеміп қалады.</li>
+<li><b>Әр SELECT-ке бөлек ORDER BY:</b> сұрыптау тек соңында жазылады.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/14">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-16">
+<h2>16. Күн және мәтін функциялары</h2>
+<div class="prose">
+<p>Нақты есептердің көбі уақытқа байланған: айлық табыс, тіркелуден бірінші тапсырысқа дейінгі күндер. Ал нақты дерек жиі лас: артық бос орын, әртүрлі регистр, мәтін болып сақталған сандар. Бұл сабақта екеуіне де керек функцияларды үйренесіз.</p>
+<div class="tip">Күн мен мәтін функциялары әр дерекқорда әртүрлі аталады. Мұнда браузердегі <b>SQLite</b> нұсқасын жазасыз, ал сабақтың соңында <b>PostgreSQL</b> баламаларының кестесі бар: жұмыста солар жиі кездеседі.</div>
+<h3>Күннің бөліктері: strftime</h3>
+<p>Біздің кестелерде күн <code>'2024-08-19'</code> түріндегі мәтін (ISO форматы: жыл-ай-күн). <code>strftime(формат, күн)</code> одан керек бөлікті алады:</p>
+<table>
+<tr><th>Өрнек</th><th>Нәтиже</th><th>Мағынасы</th></tr>
+<tr><td><code>strftime('%Y', '2024-08-19')</code></td><td>2024</td><td>жыл</td></tr>
+<tr><td><code>strftime('%m', '2024-08-19')</code></td><td>08</td><td>ай</td></tr>
+<tr><td><code>strftime('%d', '2024-08-19')</code></td><td>19</td><td>күн</td></tr>
+<tr><td><code>strftime('%Y-%m', '2024-08-19')</code></td><td>2024-08</td><td>ай кілті</td></tr>
+<tr><td><code>strftime('%w', '2024-08-19')</code></td><td>1</td><td>апта күні (0 — жексенбі)</td></tr>
+</table>
+<p>Нәтиже — мәтін. Сан керек болса, түрлендіріңіз: <code>CAST(strftime('%m', order_date) AS INTEGER)</code> → 8.</p>
+<h3>Айға дейін «кесу»</h3>
+<p>Айлық есеп үшін әр күнді өз айына келтіреміз. Екі тәсіл бар:</p>
+<pre><code>SELECT strftime('%Y-%m', order_date) AS month, COUNT(*) AS orders
+FROM orders
+GROUP BY month
+ORDER BY month;</code></pre>
+<table>
+<tr><th>month</th><th>orders</th></tr>
+<tr><td>2024-08</td><td>3</td></tr>
+<tr><td>2024-09</td><td>4</td></tr>
+<tr><td>2024-10</td><td>4</td></tr>
+<tr><td>…</td><td>…</td></tr>
+</table>
+<p>Екінші тәсіл — айдың бірінші күні: <code>date(order_date, 'start of month')</code> → <code>2024-08-01</code>. Мұны «month truncation» дейді. Жылды ұмытпаңыз: тек <code>'%m'</code> бойынша топтасаңыз, әртүрлі жылдардың тамызы бір топқа түседі.</p>
+<h3>Күндерді жылжыту және айырма</h3>
+<pre><code>date('2024-08-19', '+7 days')         -- 2024-08-26
+date('2024-08-19', '-1 month')        -- 2024-07-19
+date('now')                           -- бүгінгі күн
+
+julianday('2024-08-19') - julianday('2024-08-02')   -- 17.0</code></pre>
+<p><code>julianday</code> күнді бір санға айналдырады, сондықтан екі күнді азайтуға болады. Айырма — күн саны. Мәтін күйіндегі күндерді тікелей азайтсаңыз (<code>'2024-08-19' - '2024-08-02'</code>), SQLite тек жылдарды азайтып, 0 береді.</p>
+<pre><code>SELECT o.id,
+       CAST(julianday(o.order_date) - julianday(c.signup_date) AS INTEGER) AS days
+FROM orders o
+JOIN customers c ON c.id = o.customer_id;</code></pre>
+<p>101-тапсырыс: Айгерім 2024-01-15 күні тіркеліп, 2024-08-02 күні тапсырыс берді → 200 күн.</p>
+<h3>Мәтін функциялары</h3>
+<table>
+<tr><th>Функция</th><th>Мысал</th><th>Нәтиже</th></tr>
+<tr><td><code>LENGTH</code></td><td><code>LENGTH('Алматы')</code></td><td>6</td></tr>
+<tr><td><code>SUBSTR(мәтін, басы, ұзындығы)</code></td><td><code>SUBSTR('2024-08-19', 1, 7)</code></td><td>2024-08</td></tr>
+<tr><td><code>REPLACE</code></td><td><code>REPLACE('12 500', ' ', '')</code></td><td>12500</td></tr>
+<tr><td><code>TRIM</code></td><td><code>TRIM('  Айгерім ')</code></td><td>Айгерім</td></tr>
+<tr><td><code>UPPER</code>, <code>LOWER</code></td><td><code>LOWER('NURLAN@mail.kz')</code></td><td>nurlan@mail.kz</td></tr>
+<tr><td><code>||</code></td><td><code>name || ' (' || city || ')'</code></td><td>Айгерім (Алматы)</td></tr>
+</table>
+<p><code>SUBSTR</code>-да санау <b>1-ден</b> басталады (Python-дағыдай 0-ден емес). Күн ISO форматында тұрса, <code>SUBSTR(order_date, 1, 7)</code> да ай кілтін береді.</p>
+<div class="tip">SQLite-та <code>UPPER</code> мен <code>LOWER</code> тек латын әріптерін өзгертеді: <code>LOWER('АЛМАТЫ')</code> өзгеріссіз қалады. Email үшін бұл жеткілікті. PostgreSQL кириллицаны да дұрыс өзгертеді.</div>
+<h3>Типті өзгерту: CAST</h3>
+<p>«Лас деректер» дерекқорында сома мәтін болып сақталған: <code>'12 500'</code>, <code>'8000'</code>. Мәтінді қосуға, салыстыруға болмайды. Алдымен бос орынды алып, сосын санға айналдырамыз:</p>
+<pre><code>SELECT id, CAST(REPLACE(amount, ' ', '') AS INTEGER) AS amount_num
+FROM raw_orders;</code></pre>
+<p><code>CAST(мән AS тип)</code>: <code>INTEGER</code> — бүтін сан, <code>REAL</code> — бөлшек сан, <code>TEXT</code> — мәтін. Абайлаңыз: SQLite санға айналмайтын мәтінді (<code>'abc'</code>) қате бермей <b>0</b>-ге айналдырады. PostgreSQL мұндайда қате береді.</p>
+<p>Бүтін сандарды бөлгенде де CAST керек: <code>7 / 2</code> = 3, ал <code>CAST(7 AS REAL) / 2</code> немесе <code>7 * 1.0 / 2</code> = 3.5.</p>
+<h3>NULL-мен жұмыс: COALESCE және NULLIF</h3>
+<ul>
+<li><code>COALESCE(a, b, c)</code> — NULL емес бірінші мәнді қайтарады: <code>COALESCE(city, 'белгісіз')</code>.</li>
+<li><code>NULLIF(a, b)</code> — <code>a = b</code> болса NULL, әйтпесе <code>a</code>. Ең жиі қолданылуы — нөлге бөлуден қорғау: <code>revenue / NULLIF(orders, 0)</code>. Тапсырыс 0 болса, бөлгіш NULL болады да, нәтиже қате емес, NULL шығады.</li>
+<li>Бос мәтінді NULL-ға айналдыру: <code>NULLIF(TRIM(phone), '')</code>.</li>
+</ul>
+<h3>PostgreSQL баламалары</h3>
+<table>
+<tr><th>Не керек</th><th>SQLite</th><th>PostgreSQL</th></tr>
+<tr><td>Айдың басына кесу</td><td><code>date(d, 'start of month')</code></td><td><code>DATE_TRUNC('month', d)</code></td></tr>
+<tr><td>Ай кілті мәтін ретінде</td><td><code>strftime('%Y-%m', d)</code></td><td><code>TO_CHAR(d, 'YYYY-MM')</code></td></tr>
+<tr><td>Ай нөмірі</td><td><code>CAST(strftime('%m', d) AS INTEGER)</code></td><td><code>EXTRACT(MONTH FROM d)</code></td></tr>
+<tr><td>7 күн қосу</td><td><code>date(d, '+7 days')</code></td><td><code>d + INTERVAL '7 days'</code></td></tr>
+<tr><td>Екі күннің айырмасы</td><td><code>julianday(d2) - julianday(d1)</code></td><td><code>d2 - d1</code> (екеуі де <code>date</code> типінде болса)</td></tr>
+<tr><td>Бүгін</td><td><code>date('now')</code></td><td><code>CURRENT_DATE</code></td></tr>
+<tr><td>Типті өзгерту</td><td><code>CAST(x AS INTEGER)</code></td><td><code>CAST(x AS INTEGER)</code> немесе <code>x::int</code></td></tr>
+</table>
+<p><code>SUBSTR</code>, <code>LENGTH</code>, <code>REPLACE</code>, <code>TRIM</code>, <code>UPPER</code>, <code>LOWER</code>, <code>COALESCE</code>, <code>NULLIF</code> екеуінде де бірдей жазылады.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Жылсыз ай бойынша топтау.</b> <code>GROUP BY strftime('%m', order_date)</code> әртүрлі жылдарды араластырады. <code>'%Y-%m'</code> жазыңыз.</li>
+<li><b>Күндерді мәтін күйінде азайту.</b> Айырма үшін <code>julianday</code> керек.</li>
+<li><b>ISO емес формат.</b> <code>'15.02.2024'</code> түріндегі күнді <code>strftime</code> түсінбейді (NULL қайтарады), ал сұрыптағанда ол қате орынға түседі. Алдымен <code>SUBSTR</code> арқылы <code>ЖЖЖЖ-АА-КК</code> түріне келтіру керек.</li>
+<li><b>CAST-ты тексермеу.</b> <code>'abc'</code> үнсіз 0-ге айналады. Түрлендіруден кейін 0 мен NULL мәндерді қарап шығыңыз.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/15">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-17">
+<h2>17. Self join, fan-out тұзағы және орындалу реті</h2>
+<div class="prose">
+<p>JOIN-ды білесіз. Бұл сабақта оның үш маңызды жағын қарастырамыз: кестені өзімен біріктіру, JOIN-нан кейін сандардың үнсіз көбейіп кетуі және сұраудың іс жүзінде қандай ретпен орындалатыны. Алдымен кестелердің неге бөлек сақталатынын түсініп алайық.</p>
+<h3>Кілттер және нормализация</h3>
+<ul>
+<li><b>Primary key (PK)</b> — жолды бірегей анықтайтын баған: <code>customers.id</code>. Қайталанбайды және бос болмайды.</li>
+<li><b>Foreign key (FK)</b> — басқа кестенің PK-сына сілтейтін баған: <code>orders.customer_id</code> → <code>customers.id</code>.</li>
+</ul>
+<table>
+<tr><th>Байланыс</th><th>Мағынасы</th><th>Мысал</th></tr>
+<tr><td><b>1:N</b> (бірдің көпке)</td><td>бір клиентте көп тапсырыс, әр тапсырыста бір клиент</td><td><code>customers</code> → <code>orders</code></td></tr>
+<tr><td><b>M:N</b> (көптің көпке)</td><td>бір тапсырыста көп тауар, бір тауар көп тапсырыста</td><td><code>orders</code> ↔ <code>products</code>, арасында <code>order_items</code></td></tr>
+</table>
+<p>M:N байланыс тікелей сақталмайды: ортасына <b>байланыстырушы кесте</b> қойылады. <code>order_items</code> дәл сондай: онда екі FK бар (<code>order_id</code>, <code>product_id</code>).</p>
+<p>Неге бәрін бір үлкен кестеге жазбаймыз? Онда клиенттің қаласы оның әр тапсырысында қайталанар еді. Клиент көшсе, барлық жолды өзгерту керек, біреуін ұмытсаңыз, дерек қайшы келеді. Әр фактіні <b>бір жерде</b> сақтап, кестелерді кілттер арқылы байланыстыруды <b>нормализация</b> дейді. Оның бағасы — талдау кезінде JOIN жазу.</p>
+<h3>Self join: кестені өзімен біріктіру</h3>
+<p><code>employees</code> кестесінде <code>manager_id</code> бағаны сол кестенің өзіндегі <code>id</code>-ге сілтейді: басшы да — қызметкер.</p>
+<table>
+<tr><th>id</th><th>name</th><th>manager_id</th></tr>
+<tr><td>1</td><td>Серік</td><td>NULL</td></tr>
+<tr><td>2</td><td>Гүлнар</td><td>1</td></tr>
+<tr><td>3</td><td>Ақжол</td><td>2</td></tr>
+</table>
+<p>Қызметкердің жанына басшысының атын шығару үшін кестені өзімен біріктіреміз. Бір кестеге екі түрлі alias береміз: <code>e</code> — қызметкер, <code>m</code> — басшы.</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+JOIN employees m ON m.id = e.manager_id;</code></pre>
+<table>
+<tr><th>name</th><th>manager</th></tr>
+<tr><td>Гүлнар</td><td>Серік</td></tr>
+<tr><td>Ақжол</td><td>Гүлнар</td></tr>
+</table>
+<p>Серік нәтижеде жоқ: оның <code>manager_id</code>-і NULL, сәйкес жол табылмады. Оны да қалдыру үшін <code>LEFT JOIN</code> жазыңыз: сонда оның <code>manager</code> бағаны NULL болады.</p>
+<h3>CROSS JOIN</h3>
+<p><code>CROSS JOIN</code> шартсыз біріктіреді: бірінші кестенің әр жолы екіншінің әр жолымен жұптасады. 3 қала × 4 ай = 12 жол. Ол есептің «қаңқасын» жасауға керек: барлық қала мен айдың тізімін құрып, сосын оған нақты сатылымды LEFT JOIN жасайсыз. Сонда сатылым болмаған айлар да (0 болып) көрінеді.</p>
+<pre><code>SELECT c.city, m.month
+FROM (SELECT DISTINCT city FROM customers) c
+CROSS JOIN (SELECT DISTINCT strftime('%Y-%m', order_date) AS month FROM orders) m;</code></pre>
+<p>Мұнда <code>FROM</code> ішінде жақшадағы сұрау тұр. Оны <b>туынды кесте</b> (derived table) дейді: дерекқор алдымен ішкі сұрауды орындап, нәтижесін уақытша кесте ретінде қолданады. Оған alias беру міндетті.</p>
+<h3>Fan-out: JOIN жолдарды көбейтеді</h3>
+<p>1:N байланыспен JOIN жасағанда «бір» жақтың жолы «көп» жақтағы әр сәйкестік үшін қайталанады. Мұны <b>fan-out</b> дейді. Айгерімнің (id 1) үш тапсырысы бар: 101, 103, 111. 101-тапсырыста екі тауар бар.</p>
+<pre><code>SELECT c.name, COUNT(*) AS orders
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id
+WHERE c.id = 1;          -- 4 шығады, ал тапсырыс 3-еу</code></pre>
+<p><code>order_items</code> қосылғаннан кейін бір жол — енді тапсырыс емес, тапсырыстағы тауар. <code>COUNT(*)</code> тауар жолдарын санады. Қате хабарлама жоқ, сан жай ғана үлкенірек. Бұл — аналитиктің ең қымбат қатесі.</p>
+<h3>Екі «көп» кестені бірден біріктіру</h3>
+<p>«Өнім метрикалары» дерекқорында <code>users</code>-тен екі 1:N байланыс шығады: <code>activity</code> (белсенді айлар) және <code>payments</code> (төлемдер). 1-пайдаланушыда 3 белсенді ай және әрқайсысы 5 000 болатын 3 төлем бар.</p>
+<pre><code>SELECT u.id, COUNT(a.month) AS months, SUM(p.amount) AS total
+FROM users u
+JOIN activity a ON a.user_id = u.id
+JOIN payments p ON p.user_id = u.id
+GROUP BY u.id;           -- 1-пайдаланушы: months = 9, total = 45000</code></pre>
+<p>Әр белсенділік жолы әр төлем жолымен жұптасты: 3 × 3 = 9 жол. Дұрыс жауап — 3 ай және 15 000.</p>
+<h3>Шешім: алдымен агрегат, сосын JOIN</h3>
+<p>Әр «көп» кестені бөлек туынды кестеде <b>бір пайдаланушыға бір жол</b> болатындай жинаймыз, содан кейін ғана біріктіреміз:</p>
+<pre><code>SELECT u.id, a.months, p.total
+FROM users u
+JOIN (SELECT user_id, COUNT(*) AS months
+      FROM activity GROUP BY user_id) a ON a.user_id = u.id
+JOIN (SELECT user_id, SUM(amount) AS total
+      FROM payments GROUP BY user_id) p ON p.user_id = u.id;</code></pre>
+<p>Енді JOIN 1:1 болды, ештеңе көбеймейді. Тек санау керек болса, <code>COUNT(DISTINCT o.id)</code> та көмектеседі, бірақ <code>SUM</code>-ға <code>DISTINCT</code> жарамайды: сомасы бірдей екі төлем бір рет қана қосылады.</p>
+<div class="tip">Әр JOIN-нан кейін өзіңізден сұраңыз: «қазір бір жол — не?». Күмән болса, JOIN-ға дейінгі және кейінгі <code>COUNT(*)</code>-ты салыстырыңыз. Жол саны өссе, fan-out бар.</div>
+<h3>Орындалу реті</h3>
+<p>Сұрауды <code>SELECT</code>-тен бастап жазасыз, бірақ дерекқор оны басқа ретпен орындайды:</p>
+<pre><code>FROM / JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code></pre>
+<table>
+<tr><th>Салдары</th><th>Себебі</th></tr>
+<tr><td><code>WHERE</code>-де агрегат жазуға болмайды</td><td>WHERE орындалғанда топтар әлі жоқ</td></tr>
+<tr><td><code>SELECT</code>-тегі alias-ты <code>WHERE</code>-де қолдануға болмайды</td><td>WHERE SELECT-тен бұрын орындалады, alias әлі жасалмаған</td></tr>
+<tr><td>alias-ты <code>ORDER BY</code>-да қолдануға болады</td><td>ORDER BY SELECT-тен кейін орындалады</td></tr>
+<tr><td>fan-out агрегатты бұзады</td><td>JOIN ең бірінші орындалады: GROUP BY көбейген жолдарды көреді</td></tr>
+</table>
+<p>Ескерту: SQLite alias-ты <code>WHERE</code> мен <code>GROUP BY</code>-да да қабылдайды (осы курстағы <code>GROUP BY month</code> сияқты). PostgreSQL <code>WHERE</code> мен <code>HAVING</code>-те alias-қа қате береді: онда өрнекті қайта жазу керек.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Self join-да alias-ты ұмыту.</b> Бір кесте екі рет тұрғандықтан, әр бағанның алдына <code>e.</code> немесе <code>m.</code> жазу міндетті.</li>
+<li><b>ON-ның бағытын шатастыру.</b> <code>m.id = e.manager_id</code> — «m — e-нің басшысы». Керісінше жазсаңыз, басшының орнына қол астындағылар шығады.</li>
+<li><b>JOIN-нан кейін <code>COUNT(*)</code>-қа сену.</b> Алдымен бір жолдың не екенін анықтаңыз.</li>
+<li><b>Екі 1:N кестені бір сұрауда біріктіріп, екеуінен де агрегат алу.</b> Алдымен бөлек жинаңыз.</li>
+</ul></div>
+<p><a href="../../#lesson/m1-2/16">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="sql-gate">
+<h2>18. Модуль емтиханы: SQL Core</h2>
+<div class="prose">
+<p>Бұл — модульдің қорытынды тексерісі. Тапсырмалар әр сабақтан араласып келеді, қадамдық кеңестер (hint) жоқ. Барлығын орындасаңыз, модуль аяқталады және <b>L2 SQL Practitioner</b> деңгейіне жақындайсыз.</p>
 <p>Дерекқор сол: <code>customers</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>.</p>
 <div class="tip">Асықпаңыз: алдымен «Іске қосу» арқылы аралық нәтижені қарап, сосын тексеріңіз.</div></div>
-<p><a href="../../#lesson/m1-2/14">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m1-2/17">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m1-2">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m1-2">Барлық тапсырмалар</a></p>
 </article>

@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 3: Дерек аналитигі / M3.5</nav>
 <article class="reading">
-<p class="eyebrow">M3.5 · 30–40 сағат · 9 сабақ</p>
+<p class="eyebrow">M3.5 · 30–40 сағат · 10 сабақ</p>
 <h1>M3.5 Power BI: Power BI қазақша</h1>
 <p class="prose">Power BI — Қазақстандағы аналитик вакансияларында ең жиі сұралатын BI құралы. Бұл модульде жұмыс ағынын, Power Query, деректер моделін (star schema), DAX өлшемдерін, time intelligence, визуал дизайнын және жариялауды үйренесіз. Power BI браузерде іске қосылмайды, сондықтан сабақтар мәтін мен тесттен тұрады, ал DAX өлшемдерінің логикасын SQL-де тексереміз. Тегін Power BI Desktop-ты (Windows) орнатып, әр сабақты қатар қайталаңыз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m3-5">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-5">Барлық тапсырмалар</a></p>
@@ -1141,7 +1141,7 @@ dim_customer ── fact_orders ── dim_product
 Orders    = COUNTROWS(orders)
 Customers = DISTINCTCOUNT(orders[customer_id])
 AOV       = DIVIDE([Revenue], [Orders])</code></pre>
-<div class="tip"><code>DIVIDE(a, b)</code> нөлге бөлуде қате бермей, бос мән қайтарады. <code>a / b</code> орнына әрқашан соны қолданыңыз.</div>
+<div class="tip"><code>a / b</code> нөлге немесе бос мәнге бөлгенде қате бермейді, бірақ визуалда <code>∞</code> (Infinity) немесе <code>NaN</code> көрсетеді. <code>DIVIDE(a, b)</code> мұндайда бос мән (BLANK) қайтарады, сондықтан бөлуде соны қолданыңыз.</div>
 <p>Өлшемдер бір-біріне сілтей алады: <code>AOV</code> ішінде <code>[Revenue]</code> мен <code>[Orders]</code> қолданылды. Бұл кодты қайталамауға көмектеседі.</p>
 <h3>SQL баламасы</h3>
 <table>
@@ -1155,7 +1155,7 @@ AOV       = DIVIDE([Revenue], [Orders])</code></pre>
 <ul>
 <li>Қосындыны calculated column етіп жасау: ол slicer-ге қарай өзгермейді және жад алады.</li>
 <li>Бірегей клиенттерді <code>COUNT(orders[customer_id])</code> деп санау: бұл тапсырыстар санын береді, ал <code>COUNTROWS(customers)</code> әлі сатып алмағандарды да қосады.</li>
-<li><code>/</code> арқылы бөлу: бос сүзгіде нөлге бөлу қатесі шығады.</li>
+<li><code>/</code> арқылы бөлу: бөлгіш нөл немесе бос болса, кестеде <code>∞</code> не <code>NaN</code> шығады. <code>DIVIDE</code> мұндайда BLANK қайтарады.</li>
 </ul></div>
 <p><a href="../../#lesson/m3-5/3">Сабақты интерактивті түрде ашу →</a></p>
 </section>
@@ -1189,7 +1189,7 @@ Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
 <h3>Жиі қателер</h3>
 <ul>
 <li><code>ALL</code> ішіне басқа баған жазу: жолдар арна бойынша, ал <code>ALL(customers[city])</code> — арна сүзгісі қалады, үлес әр жолда 100% болады.</li>
-<li>Үлесті <code>/</code> арқылы бөлу: бос жолдарда қате. <code>DIVIDE</code> қолданыңыз.</li>
+<li>Үлесті <code>/</code> арқылы бөлу: бөлгіш бос немесе нөл жолдарда <code>∞</code> не <code>NaN</code> көрінеді. <code>DIVIDE</code> қолданыңыз: ол BLANK қайтарады.</li>
 <li>CALCULATE сыртқы сүзгіге «қосылады» деп ойлау: сол бағанда ол сыртқы сүзгіні <b>ауыстырады</b>.</li>
 </ul>
 <div class="tip">Сұхбатта жиі сұралады: «Row context пен filter context айырмасы?» Row context — calculated column-да «қазіргі жол». Filter context — визуал мен slicer қойған сүзгілер. CALCULATE row context-ті filter context-ке айналдырады (context transition).</div></div>
@@ -1218,7 +1218,7 @@ Revenue YTD = TOTALYTD([Revenue], 'Date'[Date])</code></pre>
 <tr><td>2024-03</td><td>45 000</td><td>60 000</td><td>−25%</td><td>155 000</td></tr>
 <tr><td>2024-04</td><td>54 000</td><td>45 000</td><td>20%</td><td>209 000</td></tr>
 </table>
-<p>Ақпан: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Наурыз: (45 000 − 60 000) / 60 000 = −25%. Қаңтарда өткен ай жоқ, сондықтан Revenue PM бос, ал <code>DIVIDE</code> қате емес, бос мән береді. YTD — жыл басынан бергі жинақты қосынды: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> дәл осылай жұмыс істейді, тек бір жылға артқа жылжиды (YoY). Біздің деректер тек 2024 жылы, сондықтан ол бос болады.</p>
+<p>Ақпан: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Наурыз: (45 000 − 60 000) / 60 000 = −25%. Қаңтарда өткен ай жоқ, сондықтан Revenue PM бос, ал <code>DIVIDE</code> ∞ не NaN емес, бос мән (BLANK) береді. YTD — жыл басынан бергі жинақты қосынды: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> дәл осылай жұмыс істейді, тек бір жылға артқа жылжиды (YoY). Біздің деректер тек 2024 жылы, сондықтан ол бос болады.</p>
 <h3>SQL баламасы</h3>
 <p>SQL-де өткен айды <code>LAG()</code>, жыл басынан жинақты <code>SUM() OVER (ORDER BY month)</code> береді. Алдымен айлық табысты CTE-де есептеп аламыз, сосын window функцияларын қосамыз.</p>
 <pre><code>SELECT month, revenue,
@@ -1304,10 +1304,71 @@ FROM monthly;</code></pre>
 </ul></div>
 <p><a href="../../#lesson/m3-5/7">Сабақты интерактивті түрде ашу →</a></p>
 </section>
-<section id="pbi-gate">
-<h2>9. Модуль емтиханы: Power BI</h2>
-<div class="prose"><p>Модуль бойынша қорытынды тест. Өту үшін барлық тапсырманы орындаңыз.</p></div>
+<section id="pbi-9">
+<h2>9. DAX итераторлары: SUMX, RELATED, VAR, ALLSELECTED</h2>
+<div class="prose">
+<p><code>SUM</code>, <code>CALCULATE</code>, <code>ALL</code> күнделікті есептің көбін жабады. Бірақ сұхбатта да, нақты модельде де келесі деңгей сұралады: жол-жолмен есептейтін <b>итераторлар</b>, байланысқан кестеден мән алу, айнымалылар және slicer-ді ескеретін үлес. Мысалдар бұрынғы кофехана моделінде: <code>orders</code> (факт) пен <code>customers</code> (өлшем). Сандар таза тапсырыстар бойынша берілген.</p>
+<h3>SUM мен SUMX айырмасы</h3>
+<p><code>SUM(orders[amount])</code> бір <b>бағанды</b> қосады. <code>SUMX(кесте, өрнек)</code> кестенің әр жолы үшін өрнекті есептеп, нәтижелерін қосады. Өрнек бағаннан күрделі болса (көбейту, шарт, басқа кестеден мән), итератор керек.</p>
+<pre><code>Revenue     = SUM(orders[amount])
+Net Revenue =
+SUMX(
+    orders,
+    orders[amount] *
+        SWITCH(RELATED(customers[channel]),
+               "referral", 0.90,     -- досына 10% кэшбэк
+               "2gis",     0.95,     -- 2GIS 5% комиссия алады
+               1)
+)</code></pre>
+<p>Итератор ішінде <b>жол контексті</b> (row context) бар: <code>orders[amount]</code> «қазіргі жолдың сомасы» дегенді білдіреді. Сол сияқты <code>AVERAGEX</code>, <code>MINX</code>, <code>MAXX</code>, <code>COUNTX</code>, <code>RANKX</code> жұмыс істейді.</p>
+<h3>RELATED: байланыс арқылы мән алу</h3>
+<p><code>RELATED(customers[channel])</code> <code>orders</code>-тың қазіргі жолына сәйкес клиенттің арнасын әкеледі. Ол модельдегі байланыспен «көп» жақтан «бір» жаққа қарай жүреді (тапсырыс → клиент). SQL-дегі баламасы — <code>JOIN</code>. Кері бағытқа (клиент → оның тапсырыстары) <code>RELATEDTABLE</code> қолданылады.</p>
+<p>Жоғарыдағы өлшемнің нәтижесі: instagram 124 050 × 1 + 2gis 133 900 × 0.95 + referral 76 900 × 0.90 = <b>320 465</b>.</p>
+<h3>Виртуал кесте бойынша итерация</h3>
+<p>«Бір клиентке шаққандағы орташа табыс» — орташа чек емес. Алдымен әр клиенттің табысын, сосын солардың орташасын есептеу керек:</p>
+<pre><code>Avg Revenue per Customer =
+AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code></pre>
+<p><code>VALUES(orders[customer_id])</code> — ағымдағы сүзгідегі бірегей клиенттердің бір бағандық кестесі. <code>AVERAGEX</code> оны жол-жолмен айналып, әр клиент үшін <code>[Revenue]</code>-ді есептейді (өлшем жол контекстін сүзгі контекстіне айналдырады: context transition). Нәтиже: 334 850 / 39 клиент ≈ <b>8 586</b>. Ал орташа чек <code>AVERAGE(orders[amount])</code> ≈ 2 409: мүлде басқа сұрақтың жауабы.</p>
+<h3>VAR және RETURN</h3>
+<pre><code>Big Customers =
+VAR Threshold = 8000
+VAR PerCustomer = VALUES(orders[customer_id])
+RETURN
+    COUNTROWS(FILTER(PerCustomer, [Revenue] &gt;= Threshold))</code></pre>
+<ul>
+<li>Айнымалы <b>бір рет</b>, өзі жазылған жердегі контексте есептеледі. Бір өрнекті екі рет жазудың орнына атау беріп, қайта қолданасыз: формула оқылады әрі жылдамырақ.</li>
+<li>Айнымалы — тұрақты мән. Оны кейін <code>CALCULATE</code> ішіне салсаңыз да, қайта есептелмейді.</li>
+<li>Күрделі өлшемді қадамдап тексеру оңай: <code>RETURN</code>-нан кейін уақытша басқа айнымалыны қойып, аралық нәтижені көресіз.</li>
+</ul>
+<p>Мұнда нәтиже — <b>20</b>: 39 клиенттің 20-сы 8 000 ₸ және одан көп жұмсаған.</p>
+<h3>ALL мен ALLSELECTED</h3>
+<p><code>ALL</code> бағандағы сүзгінің бәрін алып тастайды: slicer-ді де. <code>ALLSELECTED</code> тек визуалдың өз жолдарының сүзгісін алып тастайды, ал пайдаланушы <b>slicer-де таңдаған</b> мәндерді сақтайды.</p>
+<pre><code>Share of All %      = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))
+Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code></pre>
+<p>Slicer-де Алматы мен Астана таңдалған (Шымкент алынып тасталған):</p>
+<table>
+<tr><th>city</th><th>Revenue</th><th>Share of All %</th><th>Share of Selected %</th></tr>
+<tr><td>Алматы</td><td>154 400</td><td>46.1%</td><td>51.9%</td></tr>
+<tr><td>Астана</td><td>142 950</td><td>42.7%</td><td>48.1%</td></tr>
+<tr><td><b>Total</b></td><td>297 350</td><td>88.8%</td><td>100%</td></tr>
+</table>
+<p><code>ALL</code> бөлгішке үш қаланың 334 850 ₸-сін, <code>ALLSELECTED</code> көрініп тұрған екі қаланың 297 350 ₸-сін қояды. Пайдаланушы әдетте «көріп тұрғанымның ішіндегі үлесті» күтеді, яғни <code>ALLSELECTED</code>.</p>
+<h3>SQL-мен тексеру</h3>
+<p>Өлшемнің дұрыстығына күмән болса, сол санды SQL-мен бөлек есептеп салыстырыңыз. Аударма: <code>SUMX(orders, ...)</code> → <code>SUM(...)</code>, <code>RELATED</code> → <code>JOIN</code>, <code>SWITCH</code> → <code>CASE</code>, <code>AVERAGEX(VALUES(...), [Revenue])</code> → алдымен <code>GROUP BY</code> бар ішкі сұрау, сосын <code>AVG</code>.</p>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Қарапайым қосындыға <code>SUMX(orders, orders[amount])</code> жазу: нәтиже дұрыс, бірақ <code>SUM</code> қысқа әрі анық. Итератор тек жолдық есеп керек жерде қолданылады.</li>
+<li><code>RELATED</code>-ты жол контексті жоқ жерде (жай өлшемнің ішінде) шақыру: қате шығады. Ол итератордың немесе calculated column-ның ішінде ғана жұмыс істейді.</li>
+<li>Орташа чек пен клиентке шаққандағы орташаны шатастыру: <code>AVERAGE(orders[amount])</code> пен <code>AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code> екі түрлі сұраққа жауап береді.</li>
+<li>Үлесте <code>ALL</code> қолданып, slicer таңдалғанда пайыздардың қосындысы 100% болмай қалуы.</li>
+</ul>
+<div class="tip">Сұхбатта «SUM мен SUMX айырмасы неде?» деген сұраққа бір сөйлем жеткілікті: «SUM бір бағанды қосады, SUMX кестені жол-жолмен айналып, әр жолда өрнекті есептеп, сосын қосады».</div></div>
 <p><a href="../../#lesson/m3-5/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="pbi-gate">
+<h2>10. Модуль емтиханы: Power BI</h2>
+<div class="prose"><p>Модуль бойынша қорытынды тест. Өту үшін барлық тапсырманы орындаңыз.</p></div>
+<p><a href="../../#lesson/m3-5/9">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m3-5">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-5">Барлық тапсырмалар</a></p>
 </article>

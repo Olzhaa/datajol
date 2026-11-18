@@ -248,5 +248,73 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "pbi-9": {
+  "pr": [
+   {
+    "title": "SUM and AVERAGE",
+    "prompt": "Reproduce the measures <code>Revenue = SUM(orders[amount])</code> and <code>Avg Check = AVERAGE(orders[amount])</code> in SQL. Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000), one row: <code>revenue</code>, <code>avg_check</code> (<code>ROUND</code> to a whole number).",
+    "hints": [
+     "<code>SUM(o.amount)</code> and <code>ROUND(AVG(o.amount))</code>. Answer: 334,850 and 2,409."
+    ]
+   },
+   {
+    "title": "COUNTROWS(FILTER(...))",
+    "prompt": "Compute the measure <code>Big Orders = COUNTROWS(FILTER(orders, orders[amount] &gt;= 3000))</code> in SQL: over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000), the number of orders of 3,000 or more. Column: <code>big_orders</code>.",
+    "hints": [
+     "<code>FILTER</code> → <code>WHERE</code>, <code>COUNTROWS</code> → <code>COUNT(*)</code>.",
+     "Add <code>AND o.amount &gt;= 3000</code> to the cleaning condition."
+    ]
+   },
+   {
+    "title": "MAXX and MINX by channel",
+    "prompt": "What do <code>MAXX(orders, orders[amount])</code> and <code>MINX(orders, orders[amount])</code> show in matrix rows by channel (<code>customers[channel]</code>)? Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000): <code>channel</code>, <code>max_amount</code>, <code>min_amount</code>.",
+    "hints": [
+     "The channel lives in <code>customers</code>, so you need a <code>JOIN</code> (like <code>RELATED</code>).",
+     "<code>MAX(o.amount)</code>, <code>MIN(o.amount)</code>, <code>GROUP BY c.channel</code>."
+    ]
+   },
+   {
+    "title": "Net Revenue by channel",
+    "prompt": "What does the lesson's <code>Net Revenue</code> measure (referral × 0.90, 2gis × 0.95, everything else × 1) show in a matrix by channel? Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000): <code>channel</code>, <code>revenue</code>, <code>net_revenue</code> (<code>ROUND</code> to a whole number).",
+    "hints": [
+     "<code>SWITCH</code> → <code>CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END</code>",
+     "A matrix row = <code>GROUP BY c.channel</code>. The three <code>net_revenue</code> values should add up to 320,465."
+    ]
+   },
+   {
+    "title": "Big customers by city",
+    "prompt": "<pre><code>Big Customers =\nVAR Threshold = 10000\nRETURN COUNTROWS(FILTER(VALUES(orders[customer_id]), [Revenue] &gt;= Threshold))</code></pre>What does this measure show in a matrix by city? Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000): <code>city</code>, <code>big_customers</code> (customers with clean revenue of 10,000 ₸ or more).",
+    "hints": [
+     "<code>VALUES(orders[customer_id])</code> + <code>[Revenue]</code> → <code>GROUP BY c.id, c.city</code> in a CTE.",
+     "<code>COUNTROWS(FILTER(...))</code> → <code>SUM(CASE WHEN spent &gt;= 10000 THEN 1 ELSE 0 END)</code>, <code>GROUP BY city</code>."
+    ],
+    "starter": "WITH per AS (\n  -- [Revenue] for each customer\n  \n)\nSELECT "
+   },
+   {
+    "title": "Share of All %",
+    "prompt": "Compute <code>Share of All % = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))</code> for a city matrix with no slicer. Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000): <code>city</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 decimal).",
+    "hints": [
+     "The <code>ALL</code> denominator is revenue across all cities: <code>SUM(SUM(o.amount)) OVER ()</code> or a subquery.",
+     "<code>ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1)</code>"
+    ]
+   },
+   {
+    "title": "ALLSELECTED: two cities in the slicer",
+    "prompt": "The slicer has Астана and Шымкент selected. What does <code>Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code> show in the matrix? Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000), selected cities only: <code>city</code>, <code>revenue</code>, <code>share_selected</code> (%, 1 decimal).",
+    "hints": [
+     "The slicer is <code>WHERE c.city IN ('Астана', 'Шымкент')</code>: it affects the denominator too.",
+     "After the filter, <code>SUM(SUM(o.amount)) OVER ()</code> adds up only the two visible cities. The percentages should sum to 100."
+    ]
+   },
+   {
+    "title": "Monthly average: AVERAGEX(VALUES(month))",
+    "prompt": "<pre><code>Avg Monthly Revenue =\nAVERAGEX(VALUES('Date'[Month]), [Revenue])</code></pre>What does this measure show in a matrix by city? Over clean orders (<code>status = 'paid'</code>, <code>amount</code> not empty and below 20,000): <code>city</code>, <code>months</code> (months with sales), <code>avg_monthly</code> (the average of monthly revenues, <code>ROUND</code> to a whole number). Month: <code>substr(order_date, 1, 7)</code>.",
+    "hints": [
+     "Step 1 (<code>VALUES</code> + <code>[Revenue]</code>): revenue per \"city × month\", <code>GROUP BY c.city, month</code>.",
+     "Step 2 (<code>AVERAGEX</code>): <code>SELECT city, COUNT(*), ROUND(AVG(revenue)) FROM m GROUP BY city</code>."
+    ]
+   }
+  ]
  }
 } });

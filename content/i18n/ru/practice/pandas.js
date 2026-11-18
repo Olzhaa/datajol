@@ -700,6 +700,285 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "pd-9": {
+   "pr": [
+    {
+     "title": "Самый частый канал",
+     "prompt": "<p>С помощью <code>value_counts</code> запишите в <code>counts</code>, сколько раз встречается каждое значение столбца <code>channel</code> таблицы <code>customers</code>. Название самого частого канала запишите в <code>top_channel</code>.</p>",
+     "hints": [
+      "<code>customers['channel'].value_counts()</code>",
+      "Результат отсортирован по убыванию: название первого значения — <code>counts.index[0]</code>."
+     ],
+     "check": {
+      "tests": "assert int(counts['instagram']) == 17 and int(counts['2gis']) == 15 and int(counts['referral']) == 8, 'counts неверен: customers[\\'channel\\'].value_counts()'\nassert top_channel == 'instagram', 'top_channel — название самого частого канала (текст)'"
+     }
+    },
+    {
+     "title": "Доля Алматы",
+     "prompt": "<p>Запишите в <code>share</code> <b>долю</b> каждого города в столбце <code>city</code> (<code>normalize=True</code>). Долю клиентов из Алматы в процентах, округлённую до одного знака после запятой, запишите в <code>almaty_pct</code>.</p>",
+     "hints": [
+      "<code>customers['city'].value_counts(normalize=True)</code>",
+      "<code>round(share['Алматы'] * 100, 1)</code>"
+     ],
+     "check": {
+      "tests": "assert abs(float(share.sum()) - 1) < 1e-9, 'share должен содержать доли: normalize=True'\nassert abs(float(share['Астана']) - 0.45) < 1e-9, 'Доля Астаны должна быть 0.45'\nassert abs(float(almaty_pct) - 42.5) < 1e-9, 'almaty_pct должен быть равен 42.5'"
+     }
+    },
+    {
+     "title": "Прочерк и пустая строка",
+     "prompt": "<p><code>s</code> — суммы, заполненные вручную. Превратите их в числа через <code>pd.to_numeric</code>: то, что не превращается в число, должно стать NaN. Результат — <code>nums</code>. Сумму чисел запишите в <code>total</code>, число значений NaN — в <code>n_bad</code>.</p>",
+     "hints": [
+      "<code>pd.to_numeric(s, errors='coerce')</code>",
+      "<code>nums.sum()</code> пропускает NaN. Число NaN: <code>nums.isna().sum()</code>."
+     ],
+     "check": {
+      "tests": "assert len(nums) == 6, 'В nums должно быть 6 значений'\nassert float(total) == 6400, 'total должен быть равен 6400'\nassert int(n_bad) == 3, 'n_bad должен быть равен 3: прочерк, пустая строка и «жоқ»'"
+     }
+    },
+    {
+     "title": "Добавить новые заказы",
+     "prompt": "<p>Вечером пришли ещё два заказа (<code>new</code>). Добавьте их под таблицу <code>orders</code> через <code>pd.concat</code> и запишите в <code>all_orders</code>. Индекс должен идти с 0 без повторов.</p>",
+     "hints": [
+      "Таблицы передаются списком: <code>pd.concat([orders, new])</code>.",
+      "Добавьте <code>ignore_index=True</code>."
+     ],
+     "check": {
+      "tests": "assert len(all_orders) == 152, 'В all_orders должно быть 150 + 2 = 152 строки'\nassert list(all_orders.columns) == list(orders.columns), 'Столбцы не должны меняться'\nassert list(all_orders.index) == list(range(152)), 'Индекс нужно перенумеровать с 0: ignore_index=True'\nassert all_orders['id'].iloc[-1] == 1152 and all_orders['id'].iloc[0] == 1001, 'Сначала orders, затем new'"
+     }
+    },
+    {
+     "title": "Сохранить отчёт по городам",
+     "prompt": "<p>Соберите число клиентов в каждом городе в таблицу <code>report</code>: столбцы <code>city</code> и <code>n</code> (<code>groupby('city').size().reset_index(name='n')</code>). Сохраните её в файл <code>city_report.csv</code> <b>без индекса</b> и прочитайте файл обратно в <code>back</code>.</p>",
+     "hints": [
+      "<code>report.to_csv('city_report.csv', index=False)</code>",
+      "<code>back = pd.read_csv('city_report.csv')</code>"
+     ],
+     "check": {
+      "tests": "import os as _os, pandas as _pd\ntry:\n    assert _os.path.exists('city_report.csv'), 'Файла city_report.csv нет: используйте to_csv'\n    _f = _pd.read_csv('city_report.csv')\n    assert list(_f.columns) == ['city', 'n'], 'В файле должны быть только столбцы city и n: index=False'\n    assert sorted(_f['n'].tolist()) == [5, 17, 18], 'Число клиентов неверно'\n    assert list(back.columns) == ['city', 'n'] and len(back) == 3, 'back — таблица, прочитанная из файла: pd.read_csv'\nfinally:\n    if _os.path.exists('city_report.csv'):\n        _os.remove('city_report.csv')"
+     }
+    },
+    {
+     "title": "Считать и пустые ответы",
+     "prompt": "<p><code>answers</code> — ответы опроса, некоторые пустые (<code>None</code>). Посчитайте их вместе с пустыми ответами и запишите в <code>counts</code> (<code>value_counts</code>). Число непустых ответов запишите в <code>n_answered</code>.</p>",
+     "hints": [
+      "По умолчанию пустые значения не считаются: <code>value_counts(dropna=False)</code>.",
+      "<code>answers.notna().sum()</code> или <code>answers.value_counts().sum()</code>."
+     ],
+     "check": {
+      "tests": "assert len(counts) == 3 and int(counts.sum()) == 7, 'В counts должно быть 3 значения (иә, жоқ, пусто) и всего 7: dropna=False'\nassert int(counts['иә']) == 3, 'иә встречается 3 раза'\nassert int(n_answered) == 5, 'n_answered должен быть равен 5'"
+     }
+    },
+    {
+     "title": "Таблицы двух филиалов",
+     "prompt": "<p>Два филиала прислали продажи отдельно, <code>amount</code> — текст (есть пробелы, пустая строка, «жоқ»). Объедините таблицы через <code>pd.concat</code> в <code>both</code> с перенумерацией индекса. Добавьте столбец <code>amount_num</code>: сумму без пробелов, превращённую в число через <code>errors='coerce'</code>. Затем запишите сумму каждого филиала в <code>by_branch</code> (<code>groupby</code>), а число значений NaN — в <code>n_bad</code>.</p>",
+     "hints": [
+      "<code>pd.concat([a, b], ignore_index=True)</code>",
+      "<code>pd.to_numeric(both['amount'].str.replace(' ', ''), errors='coerce')</code>",
+      "<code>both.groupby('branch')['amount_num'].sum()</code>"
+     ],
+     "check": {
+      "tests": "assert len(both) == 6 and list(both.index) == list(range(6)), 'В both должно быть 6 строк с индексом от 0 до 5'\nassert 'amount_num' in both.columns and str(both['amount_num'].dtype).startswith('float'), 'amount_num должен быть числовым (float) столбцом'\nassert float(by_branch['Алматы']) == 4000 and float(by_branch['Астана']) == 5500, 'by_branch неверен: вы убрали пробелы?'\nassert int(n_bad) == 2, 'n_bad должен быть равен 2'"
+     }
+    },
+    {
+     "title": "Файл для Excel",
+     "prompt": "<p>Отфильтруйте в таблицу <code>big</code> заказы со статусом <code>paid</code> и суммой от 3000 и выше. Сохраните её в файл <code>big.csv</code> так, чтобы он правильно открывался в Excel: без индекса, разделитель — точка с запятой (<code>sep=';'</code>), кодировка — <code>utf-8-sig</code>. Затем прочитайте файл обратно в <code>check</code> с тем же разделителем.</p>",
+     "hints": [
+      "Фильтр: <code>(orders['status'] == 'paid') &amp; (orders['amount'] &gt;= 3000)</code>.",
+      "<code>big.to_csv('big.csv', index=False, sep=';', encoding='utf-8-sig')</code>",
+      "При чтении тоже укажите разделитель: <code>pd.read_csv('big.csv', sep=';', encoding='utf-8-sig')</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nimport os as _os\ntry:\n    assert _os.path.exists('big.csv'), 'Файла big.csv нет: используйте to_csv'\n    _raw = open('big.csv', 'rb').read()\n    assert _raw[:3] == b'\\xef\\xbb\\xbf', 'Файл нужно сохранить в кодировке utf-8-sig: encoding=\\'utf-8-sig\\''\n    assert _raw[3:].decode('utf-8').split('\\n')[0].strip() == 'id;customer_id;order_date;amount;status', 'Строка заголовка должна быть id;customer_id;order_date;amount;status: sep=\\';\\' и index=False'\n    _b = _o[(_o['status'] == 'paid') & (_o['amount'] >= 3000)]\n    assert len(big) == len(_b) == 26, 'В big должно быть 26 строк'\n    assert list(check.columns) == list(_o.columns) and len(check) == 26, 'check — таблица, прочитанная из файла с sep=\\';\\''\nfinally:\n    if _os.path.exists('big.csv'):\n        _os.remove('big.csv')"
+     }
+    }
+   ]
+  },
+  "pd-10": {
+   "pr": [
+    {
+     "title": "Какое число месяца",
+     "prompt": "<p>Добавьте в таблицу <code>orders</code> столбец <code>dd</code>: разбейте <code>order_date</code> по <code>-</code> (<code>.str.split</code>) и возьмите третью часть (число месяца, текст). Число заказов, сделанных первого числа месяца (<code>'01'</code>), запишите в <code>n_first</code>.</p>",
+     "hints": [
+      "<code>orders['order_date'].str.split('-').str[2]</code>",
+      "<code>(orders['dd'] == '01').sum()</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'dd' in orders.columns, 'Нет столбца dd'\nassert orders['dd'].tolist() == [d[8:10] for d in _o['order_date']], 'dd — третья часть даты: str.split(\\'-\\').str[2]'\nassert int(n_first) == 4, 'n_first должен быть равен 4'"
+     }
+    },
+    {
+     "title": "Группы каналов",
+     "prompt": "<p>Добавьте в таблицу <code>customers</code> столбец <code>source</code>: замените название канала на группу по словарю <code>groups</code> через <code>map</code>. Число клиентов в группе <code>карта</code> запишите в <code>n_map</code>.</p>",
+     "hints": [
+      "<code>customers['channel'].map(groups)</code>",
+      "<code>(customers['source'] == 'карта').sum()</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'source' in customers.columns, 'Нет столбца source'\nassert customers['source'].tolist() == _c['channel'].map(groups).tolist(), 'source = map столбца channel по словарю groups'\nassert int(n_map) == 15, 'n_map должен быть равен 15'"
+     }
+    },
+    {
+     "title": "Высокие и низкие дни",
+     "prompt": "<p>Добавьте в таблицу <code>daily</code> столбец <code>level</code>: если доход (<code>revenue</code>) 130 или больше — <code>'жоғары'</code>, иначе <code>'төмен'</code> (<code>np.where</code>). Число дней <code>жоғары</code> запишите в <code>n_high</code>.</p>",
+     "hints": [
+      "<code>np.where(daily['revenue'] &gt;= 130, 'жоғары', 'төмен')</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv')\nassert 'level' in daily.columns, 'Нет столбца level'\nassert list(daily['level']) == ['жоғары' if r >= 130 else 'төмен' for r in _d['revenue']], 'level: жоғары, если revenue >= 130, иначе төмен'\nassert int(n_high) == 11, 'n_high должен быть равен 11'"
+     }
+    },
+    {
+     "title": "Группы дохода",
+     "prompt": "<p>Добавьте в таблицу <code>daily</code> столбец <code>band</code>: разбейте доход через <code>pd.cut</code> на интервалы с границами <code>[0, 100, 150, 200]</code> и метками <code>low</code>, <code>mid</code>, <code>high</code>. Число дней в каждой метке запишите в <code>counts</code> (<code>value_counts</code>).</p>",
+     "hints": [
+      "<code>pd.cut(daily['revenue'], bins=[0, 100, 150, 200], labels=['low', 'mid', 'high'])</code>",
+      "Правая граница входит в интервал: 100 → <code>low</code>, 150 → <code>mid</code>."
+     ],
+     "check": {
+      "tests": "assert 'band' in daily.columns, 'Нет столбца band'\nassert [str(v) for v in daily['band']] == [('low' if r <= 100 else 'mid' if r <= 150 else 'high') for r in daily['revenue']], 'band: границы [0, 100, 150, 200], метки low, mid, high'\nassert int(counts['low']) == 3 and int(counts['mid']) == 12 and int(counts['high']) == 5, 'counts = daily[\\'band\\'].value_counts()'"
+     }
+    },
+    {
+     "title": "Дни падения дохода",
+     "prompt": "<p><code>ast</code> — дневной доход Астаны, отсортированный по дате. Добавьте столбец <code>diff</code>: доход за день минус доход предыдущего дня (<code>shift</code>). Число дней, когда доход упал по сравнению с предыдущим днём, запишите в <code>n_drop</code>.</p>",
+     "hints": [
+      "<code>ast['revenue'] - ast['revenue'].shift(1)</code>",
+      "День падения — <code>diff</code> отрицательный: <code>(ast['diff'] &lt; 0).sum()</code>. NaN первого дня не считается."
+     ],
+     "check": {
+      "tests": "assert 'diff' in ast.columns and len(ast) == 10, 'В ast должно быть 10 дней и столбец diff'\nassert ast['diff'].isna().sum() == 1 and ast['diff'].iloc[1:].tolist() == [5, 10, -20, 35, 10, -5, -15, 30, 10], 'diff = revenue - revenue.shift(1)'\nassert int(n_drop) == 3, 'n_drop должен быть равен 3'"
+     }
+    },
+    {
+     "title": "Рост внутри региона",
+     "prompt": "<p>В таблице <code>daily</code> два региона. Отсортируйте её по региону, затем по дате. Добавьте столбец <code>growth</code>: изменение к предыдущему дню в процентах (<code>pct_change() * 100</code>), но отдельно внутри каждого региона (<code>groupby('region')</code>). Первый день Астаны не должен сравниваться с последним днём Алматы.</p>",
+     "hints": [
+      "<code>daily.sort_values(['region', 'day'])</code>",
+      "<code>daily.groupby('region')['revenue'].pct_change() * 100</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv').sort_values(['region', 'day'])\n_g = _d.groupby('region')['revenue'].pct_change() * 100\nassert 'growth' in daily.columns, 'Нет столбца growth'\nassert daily['growth'].isna().sum() == 2, 'Первый день каждого региона должен быть NaN (всего 2): groupby(\\'region\\')'\nassert daily['region'].tolist() == _d['region'].tolist() and daily['day'].tolist() == _d['day'].tolist(), 'Отсортируйте таблицу по региону, затем по дате'\nassert [round(float(v), 4) for v in daily['growth'].dropna()] == [round(float(v), 4) for v in _g.dropna()], 'growth = pct_change() * 100 внутри каждого региона'"
+     }
+    },
+    {
+     "title": "Заказы по неделям",
+     "prompt": "<p>Даны чистые заказы (<code>clean</code>). Превратите <code>order_date</code> в тип даты, поставьте его в индекс и через <code>resample('W')</code> запишите <b>число</b> заказов за каждую неделю в Series <code>weekly</code>. Дату недели с наибольшим числом заказов (значение индекса) запишите в <code>best_week</code>, а число недель без заказов — в <code>n_empty</code>.</p>",
+     "hints": [
+      "<code>clean.set_index('order_date').resample('W')['id'].count()</code>",
+      "<code>weekly.idxmax()</code> возвращает индекс наибольшего значения.",
+      "resample показывает пустые недели с 0: <code>(weekly == 0).sum()</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_w = _clean.assign(order_date=_pd.to_datetime(_clean['order_date'])).set_index('order_date').resample('W')['id'].count()\nassert len(weekly) == len(_w), 'Число недель в weekly неверно: resample(\\'W\\')'\nassert [int(v) for v in weekly.values] == [int(v) for v in _w.values], 'Недельные числа неверны: используйте count()'\nassert str(best_week)[:10] == str(_w.idxmax())[:10], 'best_week = weekly.idxmax()'\nassert int(n_empty) == int((_w == 0).sum()), 'n_empty: число недель со значением 0'"
+     }
+    },
+    {
+     "title": "«Срок жизни» клиента",
+     "prompt": "<p>По чистым заказам найдите дату первого и последнего заказа каждого клиента (<code>groupby('customer_id')['order_date'].agg(['min', 'max'])</code>, затем <code>reset_index()</code>) и запишите в таблицу <code>life</code>. Добавьте в неё столбец <code>days</code>: число дней между последним и первым заказом. Затем соедините с <code>customers</code> и запишите среднее <code>days</code> по каждому городу, округлённое до одного знака после запятой, в <code>by_city</code>.</p>",
+     "hints": [
+      "<code>clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()</code>",
+      "Текст нельзя вычитать: <code>(pd.to_datetime(life['max']) - pd.to_datetime(life['min'])).dt.days</code>.",
+      "<code>life.merge(customers, left_on='customer_id', right_on='id')</code>, затем <code>groupby('city')['days'].mean().round(1)</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_l = _clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()\n_l['days'] = (_pd.to_datetime(_l['max']) - _pd.to_datetime(_l['min'])).dt.days\nassert len(life) == 39 and 'days' in life.columns, 'life — одна строка на клиента (39 строк) и столбец days'\nassert sorted(int(v) for v in life['days']) == sorted(int(v) for v in _l['days']), 'days = (max - min).dt.days; сначала pd.to_datetime'\nassert {k: float(v) for k, v in by_city.items()} == {'Алматы': 36.8, 'Астана': 48.2, 'Шымкент': 48.8}, 'by_city неверен, у вас: ' + str(dict(by_city))"
+     }
+    }
+   ]
+  },
+  "pd-11": {
+   "pr": [
+    {
+     "title": "Матрица от 1 до 12",
+     "prompt": "<p>Создайте через <code>np.arange</code> числа от 1 до 12 и приведите их к массиву <code>m</code> из 3 строк × 4 столбцов (<code>reshape</code>). Элемент в правом нижнем углу запишите в <code>corner</code>, второй столбец (индекс 1) — в <code>col</code>.</p>",
+     "hints": [
+      "<code>np.arange(1, 13)</code>: правая граница не входит.",
+      "<code>m[2, 3]</code> и <code>m[:, 1]</code>"
+     ],
+     "check": {
+      "tests": "assert m.shape == (3, 4) and m.tolist()[0] == [1, 2, 3, 4], 'm: np.arange(1, 13).reshape(3, 4)'\nassert int(corner) == 12, 'corner = m[2, 3], должно быть 12'\nassert list(col) == [2, 6, 10], 'col = m[:, 1]'"
+     }
+    },
+    {
+     "title": "Цены с равным шагом",
+     "prompt": "<p>Нужно проверить цену нового напитка в 5 вариантах от 1000 до 2000 тенге. Запишите через <code>np.linspace</code> 5 равномерно распределённых цен в <code>prices</code> (оба конца включены). Разницу между двумя соседними ценами запишите в <code>step</code>.</p>",
+     "hints": [
+      "<code>np.linspace(1000, 2000, 5)</code>: третий аргумент — число точек.",
+      "<code>prices[1] - prices[0]</code>"
+     ],
+     "check": {
+      "tests": "assert len(prices) == 5 and list(prices) == [1000, 1250, 1500, 1750, 2000], 'prices: np.linspace(1000, 2000, 5)'\nassert float(step) == 250, 'step должен быть равен 250'"
+     }
+    },
+    {
+     "title": "Среднее по предмету и ученику",
+     "prompt": "<p><code>scores</code> — баллы трёх учеников (строки) по трём предметам (столбцы). Запишите среднее по каждому предмету в <code>by_subject</code>, а среднее каждого ученика — в <code>by_student</code> (<code>mean</code> и <code>axis</code>).</p>",
+     "hints": [
+      "Предмет — столбец: <code>scores.mean(axis=0)</code>.",
+      "Ученик — строка: <code>scores.mean(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\nassert _np.allclose(by_subject, [80, 260 / 3, 245 / 3]), 'by_subject: среднее каждого столбца, axis=0'\nassert _np.allclose(by_student, [80, 220 / 3, 95]), 'by_student: среднее каждой строки, axis=1'"
+     }
+    },
+    {
+     "title": "Количество × цена",
+     "prompt": "<p><code>qty</code> — проданное количество четырёх напитков (столбцы) за три дня (строки), <code>price</code> — цены четырёх напитков. Без цикла, через broadcasting, запишите доход каждой ячейки в массив <code>revenue</code> (форма 3 × 4). Общий доход каждого дня запишите в <code>by_day</code>.</p>",
+     "hints": [
+      "<code>(3, 4) * (4,)</code> — последние размерности совпадают, поэтому <code>qty * price</code> работает.",
+      "День — строка: <code>revenue.sum(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "assert revenue.shape == (3, 4), 'Форма revenue должна быть (3, 4)'\nassert revenue[0].tolist() == [17400, 33000, 13600, 20250], 'revenue = qty * price: первая строка неверна'\nassert by_day.tolist() == [84250, 79200, 98400], 'by_day: сумма каждой строки, axis=1, у вас: ' + str(by_day.tolist())"
+     }
+    },
+    {
+     "title": "Воспроизводимая случайность",
+     "prompt": "<p>С помощью генератора с seed 7 (<code>np.random.default_rng(7)</code>) создайте 500 сумм чеков со средним 2500 и разбросом 300 и запишите их в <code>checks</code> (<code>rng.normal</code>). Число чеков больше 3000 запишите в <code>n_big</code>.</p>",
+     "hints": [
+      "<code>rng = np.random.default_rng(7)</code>",
+      "<code>rng.normal(2500, 300, size=500)</code>, затем <code>(checks &gt; 3000).sum()</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_x = _np.random.default_rng(7).normal(2500, 300, size=500)\nassert len(checks) == 500, 'В checks должно быть 500 чисел: size=500'\nassert _np.allclose(checks, _x), 'checks: первый вызов генератора с seed 7 — rng.normal(2500, 300, size=500)'\nassert int(n_big) == int((_x > 3000).sum()), 'n_big = (checks > 3000).sum()'"
+     }
+    },
+    {
+     "title": "Отклонение столбцов",
+     "prompt": "<p><code>m</code> — доход трёх кофеен (столбцы) за пять дней (строки). Запишите стандартное отклонение каждой кофейни как выборки (<code>ddof=1</code>) в <code>std_np</code> (NumPy, <code>axis=0</code>). Затем посчитайте то же самое в pandas: результат <code>pd.DataFrame(m).std()</code> запишите в <code>std_pd</code>. Они должны совпасть.</p>",
+     "hints": [
+      "<code>m.std(axis=0, ddof=1)</code>",
+      "pandas по умолчанию использует <code>ddof=1</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_m = _np.array([[120, 90, 60], [135, 95, 70], [110, 105, 65], [160, 85, 80], [150, 120, 75]])\nassert len(std_np) == 3, 'В std_np должно быть 3 значения: axis=0'\nassert _np.allclose(std_np, _m.std(axis=0, ddof=1)), 'std_np = m.std(axis=0, ddof=1)'\nassert _np.allclose(_np.array(std_pd, dtype=float), std_np), 'std_pd = pd.DataFrame(m).std(), он должен совпасть с std_np'"
+     }
+    },
+    {
+     "title": "Отклонение от своего среднего",
+     "prompt": "<p><code>m</code> — продажи трёх городов (строки) за четыре недели (столбцы). Вычтите из каждого значения среднее <b>его строки</b> и получите массив <code>centered</code> (форма 3 × 4, сумма каждой строки равна 0). Затем запишите в <code>above</code> число недель, когда город был выше своего среднего (форма (3,)).</p>",
+     "hints": [
+      "Форма средних по строкам — (3,): её нужно сделать (3, 1). <code>m.mean(axis=1, keepdims=True)</code>",
+      "<code>(centered &gt; 0)</code> — массив True/False, сложите его по строкам: <code>.sum(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_m = _np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\nassert centered.shape == (3, 4), 'Форма centered должна быть (3, 4)'\nassert _np.allclose(centered, _m - _m.mean(axis=1, keepdims=True)), 'centered: вычтите из каждой строки её среднее (keepdims=True)'\nassert list(above) == [2, 2, 2], 'above: число положительных значений в каждой строке, axis=1, у вас: ' + str(list(above))"
+     }
+    },
+    {
+     "title": "z-оценка по столбцам",
+     "prompt": "<p><code>X</code> — шесть заказов (строки) и два признака (столбцы): сумма и число товаров. Стандартизуйте каждый столбец: <code>z = (X - среднее столбца) / стандартное отклонение столбца</code>, отклонение — по выборке (<code>ddof=1</code>). Результат — <code>z</code> (форма 6 × 2). Число значений с модулем больше 1.5 (<code>(z &gt; 1.5) | (z &lt; -1.5)</code>) запишите в <code>n_extreme</code>.</p>",
+     "hints": [
+      "Среднее и отклонение столбцов: <code>X.mean(axis=0)</code>, <code>X.std(axis=0, ddof=1)</code>. Форма обоих — (2,), поэтому они сразу растягиваются на (6, 2).",
+      "<code>((z &gt; 1.5) | (z &lt; -1.5)).sum()</code>"
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_X = _np.array([[2150, 2], [2250, 3], [2550, 3], [2050, 1], [3100, 5], [1850, 2]])\n_z = (_X - _X.mean(axis=0)) / _X.std(axis=0, ddof=1)\nassert z.shape == (6, 2), 'Форма z должна быть (6, 2)'\nassert _np.allclose(z.mean(axis=0), 0), 'Среднее каждого столбца должно быть 0: вычтите X.mean(axis=0)'\nassert _np.allclose(z, _z), 'z неверен: отклонение с ddof=1 по axis=0'\nassert int(n_extreme) == int(((_z > 1.5) | (_z < -1.5)).sum()), 'n_extreme неверен'"
+     }
+    }
+   ]
   }
  }
 });

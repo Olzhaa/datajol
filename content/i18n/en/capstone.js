@@ -172,11 +172,11 @@ SELECT ... SUM(n >= 3) * 100.0 / COUNT(*) ...</code></pre>
 <pre><code>spend = {"instagram": 300000, "2gis": 150000, "referral": 40000}</code></pre>
 <p>If ROAS is below 1, the channel brought in less revenue than was spent on it (even before counting margin).</p>
 <h3>How do we calculate it in Python?</h3>
-<pre><code>revenue = {"instagram": 410000, "2gis": 260000, "referral": 120000}   # sample numbers
+<pre><code>revenue = {"instagram": 124050, "2gis": 133900, "referral": 76900}   # clean revenue from the lesson 5 query
 spend = {"instagram": 300000, "2gis": 150000, "referral": 40000}
 for ch in spend:
     print(ch, round(revenue[ch] / spend[ch], 2))</code></pre>
-<p>In this example, referral’s ROAS is 3.0 and Instagram’s is 1.37. But when you compare numbers, do not forget what stands behind them.</p>
+<p>Result: referral 1.92, 2GIS 0.89, Instagram 0.41. So only referral paid back its advertising spend. But when you compare numbers, do not forget what stands behind them.</p>
 <h3>Limitations of ROAS</h3>
 <ul>
 <li><b>Margin</b>: ROAS counts revenue, not profit. If the cost of coffee is 60%, even a ROAS of 1.5 can be a loss.</li>
@@ -185,7 +185,7 @@ for ch in spend:
 </ul>
 <div class="tip">To sort a dictionary, use the pattern <code>sorted(d.items(), key=lambda x: x[1], reverse=True)</code>.</div>`,
       ex: [
-        { prompt: 'Write the function <code>roas_ranking(revenue, spend)</code>: for each channel, return a list of <code>(channel, roas)</code> pairs sorted by ROAS in descending order. Round ROAS to two decimal places with <code>round</code>.', check: { tests: '_rev = {"instagram": 150000, "2gis": 138800, "referral": 79200}\n_sp = {"instagram": 300000, "2gis": 150000, "referral": 40000}\n_r = roas_ranking(_rev, _sp)\nassert _r == [("referral", 1.98), ("2gis", 0.93), ("instagram", 0.5)], f"Expected [(\'referral\', 1.98), (\'2gis\', 0.93), (\'instagram\', 0.5)], got {_r}"' }, hints: ['<code>round(revenue[ch] / spend[ch], 2)</code>', '<code>sorted(..., key=lambda p: p[1], reverse=True)</code>'] },
+        { prompt: 'Write the function <code>roas_ranking(revenue, spend)</code>: for each channel, return a list of <code>(channel, roas)</code> pairs sorted by ROAS in descending order. Round ROAS to two decimal places with <code>round</code>.', check: { tests: '_rev = {"instagram": 124050, "2gis": 133900, "referral": 76900}\n_sp = {"instagram": 300000, "2gis": 150000, "referral": 40000}\n_r = roas_ranking(_rev, _sp)\nassert _r == [("referral", 1.92), ("2gis", 0.89), ("instagram", 0.41)], f"Expected [(\'referral\', 1.92), (\'2gis\', 0.89), (\'instagram\', 0.41)], got {_r}"' }, hints: ['<code>round(revenue[ch] / spend[ch], 2)</code>', '<code>sorted(..., key=lambda p: p[1], reverse=True)</code>'] },
         { prompt: 'Referral has the highest ROAS. Can you immediately increase its budget tenfold?', options: ['Yes, of course', 'Be careful: referral has a limited reach (the number of customers who can bring in others), so increase the budget gradually and measure the result', 'No, referral is bad', 'Instagram should be switched off completely'], explain: 'A small channel’s efficiency may not hold up as it scales. Run an experiment.' }
       ]
     },
@@ -206,17 +206,17 @@ for ch in spend:
 <li>In your résumé: “Analysed 6 months of transactions, calculated ROAS and retention by channel, and prepared a recommendation for reallocating the budget.”</li>
 </ul>
 <h3>Signs of a good memo</h3>
-<p>The numbers below are only an example. In your own memo, write your own results.</p>
+<p>The numbers below come from this project’s queries. In your own memo, check every number with your own query too.</p>
 <ul>
 <li>The first sentence answers the question: “We recommend moving part of the budget from Instagram to referral.”</li>
-<li>Each conclusion has a number next to it: “40% of referral customers come back, versus 22% for Instagram.”</li>
+<li>Each conclusion has a number next to it: “87.5% of referral customers bought at least 3 times, versus 62.5% for Instagram; ROAS 1.92 and 0.41.”</li>
 <li>The recommendation is framed as a testable experiment: “For one month, we double the referral budget and measure the number of new customers.”</li>
 <li>Limitations are not hidden. They show your competence.</li>
 </ul>
 <h3>Common mistakes</h3>
 <p>Writing the memo as a diary of your analysis (“first I did profiling, then…”) — the reader needs the result, not the process. Adding too many charts — one main table or one chart is enough. Ending without a recommendation — the director will ask again: “So what do we do?”</p>`,
       ex: [
-        { prompt: 'Which opening paragraph for the memo is the best?', options: ['“I analysed 150 orders using SQL.”', '“Referral customers come back more often and bring in more revenue per advertising tenge (ROAS ≈ 2), while Instagram ads do not pay back their cost (ROAS ≈ 0.5). We recommend moving part of the budget from Instagram to referral and measuring the result over the quarter.”', '“There are many interesting things in the data.”', '“Instagram is bad.”'], explain: 'Result, evidence and action in one paragraph. (Your real numbers must match the results of your queries.)' },
+        { prompt: 'Which opening paragraph for the memo is the best?', options: ['“I analysed 150 orders using SQL.”', '“Referral customers come back more often and bring in more revenue per advertising tenge (ROAS 1.92), while Instagram ads do not pay back their cost (ROAS 0.41). We recommend moving part of the budget from Instagram to referral and measuring the result over the quarter.”', '“There are many interesting things in the data.”', '“Instagram is bad.”'], explain: 'Result, evidence and action in one paragraph. (Your real numbers must match the results of your queries.)' },
         { prompt: 'Write your own memo (at least 60 words), then score it honestly against four criteria. To pass, each criterion must reach at least <b>3 / 4</b>. This is how an employer will judge your project.', done: 'Paste the memo into your portfolio README.', criteria: [
             { name: 'Answers the business question', levels: ['No answer', 'There is an answer, but it is at the end or unclear', 'The first paragraph has a clear answer', 'The first sentence has the answer, a number and a recommendation'] },
             { name: 'Evidence and numbers', levels: ['No numbers', 'One or two numbers, not verified', 'The main conclusions are backed by numbers', 'Every conclusion has a number from your queries (revenue, repeat rate, ROAS)'] },
@@ -253,7 +253,7 @@ WHERE rn = 2</code></pre>
 <p><b>S</b>: a coffee-shop chain wanted to reallocate its advertising budget. <b>T</b>: find out which channel is effective. <b>A</b>: I cleaned the orders and calculated retention and ROAS by channel. <b>R</b>: I proposed moving 20% of the budget to referral and running a test experiment.</p>`,
       ex: [
         { prompt: 'Return the date of each customer’s <b>second</b> order (any status): <code>customer_id</code>, <code>second_order</code>. Only for customers with at least two orders.', hints: ['<code>ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date, id)</code>, with <code>rn = 2</code> outside.'] },
-        { prompt: 'Customers who placed no orders from <code>2024-04-01</code> onward (inclusive): <code>id</code>, <code>city</code>, <code>channel</code>.', hints: ['<code>NOT IN (SELECT customer_id FROM orders WHERE ...)</code> or <code>LEFT JOIN ... IS NULL</code>.'] },
+        { prompt: 'Customers who placed no orders from <code>2024-04-01</code> onward (inclusive): <code>id</code>, <code>city</code>, <code>channel</code>.', hints: ['<code>WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.order_date &gt;= ...)</code> or <code>LEFT JOIN ... IS NULL</code>.'] },
         { prompt: 'Interviewer: “Orders dropped by 30% last week. What do you do?” What is the best first step?', options: ['Blame marketing immediately', 'Check the data itself (export error, incomplete day), then break it down by city, channel and platform to find where the drop is', 'Build a model', 'Wait'], explain: 'First check whether the data is right, then answer “where?”, and only then “why?”.' }
       ]
     },
@@ -266,6 +266,87 @@ WHERE rn = 2</code></pre>
         { prompt: 'In each city, the customer who spent the most on clean orders: <code>city</code>, <code>customer_id</code>, <code>spent</code>.', hints: [] },
         { prompt: 'Cohorts by sign-up month (the YYYY-MM part of <code>signup_date</code>): <code>cohort</code>, <code>customers</code> (all customers in the cohort), <code>buyers_q2</code> (how many of them placed at least one clean order on or after 2024-04-01). Ordered by cohort.', hints: [] },
         { prompt: 'The analysis shows that Instagram customers have a high average order value, but the reason is a single 48,000 ₸ corporate order. How will you write this in the memo?', options: ['“Instagram has the highest average order value” — with no qualification', 'I will single out the corporate order and report the average order value without it', 'I will quietly delete the order', 'I will not show the average order value at all'], explain: 'Transparency: name the outlier and show both versions. This builds trust.' }
+      ]
+    },
+    'cap-ai': {
+      title: 'Analysis with an AI assistant: getting a query written and checking it',
+      body: `
+<p>A good share of vacancies now say "able to use AI tools". That does not mean "AI works instead of me". The requirement is different: <b>get a quick draft from AI and be able to check it as an analyst</b>.</p>
+<h3>How to write a good prompt</h3>
+<ol>
+<li><b>Give the schema:</b> the names of the tables and columns, their types and relationships. Without it, AI invents columns.</li>
+<li><b>Name the database:</b> PostgreSQL, ClickHouse or SQLite. Their date functions differ.</li>
+<li><b>State the question precisely:</b> not "revenue" but "the sum of quantity × unit_price for delivered orders, 2026, by city".</li>
+<li><b>Describe the shape of the result:</b> which columns, in what order.</li>
+</ol>
+<pre><code>Schema (SQLite): orders(order_id, customer_id, order_date, status),
+order_items(order_id, product_id, quantity, unit_price), customers(customer_id, city).
+Question: the number of delivered orders and their revenue in each city in 2026.
+Columns: city, orders_cnt, revenue. In descending order of revenue.</code></pre>
+<h3>How to check AI's answer</h3>
+<ul>
+<li><b>Check the row count.</b> Did the number of orders grow after the JOIN? AI often writes <code>COUNT(*)</code> where you need <code>COUNT(DISTINCT order_id)</code>.</li>
+<li><b>Check one number by hand.</b> Compute the result for one city or one month with a separate simple query and compare.</li>
+<li><b>Read the filters.</b> Are the status, the date range and NULL handled correctly?</li>
+<li><b>Does it make sense?</b> If you get a 140% conversion or negative revenue, the query has a mistake.</li>
+</ul>
+<h3>Privacy</h3>
+<p>Do not send personal data such as customers' names, phone numbers or emails to an external AI service. The schema and some made-up sample rows are enough. Find out your company's internal rules in advance.</p>
+<div class="tip">If an interviewer asks "how do you use AI?", name three things: speeding up the draft query, specific ways of checking it, and protecting personal data.</div>`,
+      ex: [
+        { prompt: 'What should you give AI first when you ask it to write a SQL query?', options: ['Only the question itself', 'The schema of the tables and columns, and the database type', 'The full list of customers', 'Nothing, AI already knows'], explain: 'Without a schema AI invents column names, and without the database type it mixes up date functions.' },
+        { prompt: 'A query from AI showed 1.7 times more orders than expected. What is the most likely reason?', options: ['The database is wrong', 'COUNT(*) was written after a JOIN, so each product of one order was counted separately', 'There is no ORDER BY', 'AI never makes mistakes'], explain: 'When orders and order_items are joined, an order is repeated once per product. You need COUNT(DISTINCT o.order_id).' },
+        { prompt: 'Which of these must not be sent to an external AI service?', options: ['The schema of the tables', 'Made-up sample rows', 'An export with customers\' names and phone numbers', 'The text of the question'], explain: 'Personal data must stay inside the company. The structure and an example are enough for AI.' },
+        { prompt: '<b>qazaq.</b> AI gave this query for "the number of delivered orders and their revenue in each city". But <code>orders_cnt</code> comes out far too large. Fix the mistake. Columns: <code>city</code>, <code>orders_cnt</code>, <code>revenue</code>, in descending order of revenue.', hints: ['The revenue is right. The mistake is in the number of orders: after the JOIN one order becomes several rows.', '<code>COUNT(DISTINCT o.order_id)</code>'] }
+      ]
+    },
+    'cap-10': {
+      title: 'Take-home project: Qazaq Market',
+      body: `
+<p>Most analyst vacancies in Kazakhstan give a <b>take-home task</b> before the interview: data, a business question of a sentence or two, and 2–3 days. This lesson is practice for such a task. There is no step-by-step guidance as in the earlier lessons: there is a question, there is data, and the rest is up to you.</p>
+<h3>The brief</h3>
+<div class="tip"><b>From:</b> the operations director of Qazaq Market<br>
+<b>Subject:</b> revenue in Q2<br>
+Hi! Revenue from delivered orders in Q2 2026 is roughly half of what it was in Q1. Marketing says "seasonality", sales says "cancellations went up". Please look at the data and write me half a page on what happened and what we should do. I need it for Friday's meeting.</div>
+<p><b>Data:</b> the <code>qazaq</code> database (<code>customers</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>). Period: 2026-01-01 to 2026-06-30. Revenue = the sum of <code>quantity * unit_price</code> for <code>delivered</code> orders. Q1: January–March, Q2: April–June.</p>
+<h3>Splitting your time (90 minutes)</h3>
+<table>
+<tr><th>Time</th><th>What you do</th></tr>
+<tr><td>10 min</td><td>Read the brief and write the question in your own words. Hypotheses: fewer orders, a smaller order value, or more losses?</td></tr>
+<tr><td>10 min</td><td>Check the data: is the period complete, which statuses are there, how many rows</td></tr>
+<tr><td>45 min</td><td>Four queries (the tasks below). Write a one-sentence observation after each</td></tr>
+<tr><td>25 min</td><td>Write the memo and check yourself</td></tr>
+</table>
+<h3>Decomposing revenue</h3>
+<p>Revenue = number of orders × average order value. So the first query should show those two separately. Then comes "where?": in which category, among which customers. Confirm or rule out each hypothesis from marketing and sales with its own number. "I checked, and it was not confirmed" is a result too.</p>
+<h3>What the employer assesses</h3>
+<ul>
+<li><b>Correctness</b>: do the numbers match when recomputed, did a JOIN multiply rows.</li>
+<li><b>Structured thinking</b>: decomposing the metric, checking hypotheses one by one.</li>
+<li><b>Conclusion</b>: are the answer and the recommendation in the first paragraph.</li>
+<li><b>Honesty</b>: are the assumptions and limitations written down.</li>
+<li><b>Tidiness</b>: the SQL is readable, the files are organised, there is a README.</li>
+</ul>
+<h3>Common mistakes</h3>
+<ul>
+<li>Spending time on what was not asked for: an ML model, 15 charts. Answer the question in the brief.</li>
+<li>Writing only "what happened" and forgetting "what to do".</li>
+<li>Clinging to one hypothesis: accepting "cancellations went up" without checking, or rejecting it without checking.</li>
+<li>Ignoring that the last month is incomplete: here the last order is on 24 June. Put it in the limitations.</li>
+<li>Submitting late. Half the work, on time and with honest limitations, is better.</li>
+</ul>
+<div class="tip">In a real take-home, put the queries in an <code>sql/</code> folder and the memo in <code>README.md</code>, and send a GitHub link. If you present this exercise the same way, you get a second project in your portfolio.</div>`,
+      ex: [
+        { prompt: `<b>Query 1: order count or order value?</b> For each month of 2026, over delivered orders: <code>month</code> ('YYYY-MM'), <code>orders</code> (number of orders), <code>revenue</code>, <code>aov</code> (average order value, <code>ROUND</code> to a whole number). Sort by month.`, hints: ['Average order value = revenue / number of orders. After the JOIN, count orders with <code>COUNT(DISTINCT o.order_id)</code>.'] },
+        { prompt: '<b>Query 2: in which category?</b> Over delivered orders, compare each category\'s revenue in Q1 (January–March 2026) and Q2 (April–June 2026): <code>category</code>, <code>q1_revenue</code>, <code>q2_revenue</code>, <code>change_pct</code> ((q2 − q1) / q1, %, 1 decimal place). In ascending order of <code>change_pct</code> (the steepest fall first).', hints: [`To get both quarters in one query, use a conditional sum: <code>SUM(CASE WHEN o.order_date &lt; '2026-04-01' THEN ... ELSE 0 END)</code>.`] },
+        { prompt: '<b>Query 3: did cancellations go up?</b> For each month of 2026, over orders of every status: <code>month</code>, <code>orders</code> (number of all orders), <code>lost_orders</code> (cancelled or returned), <code>lost_pct</code> (the share of the lost orders\' amount in the amount of all orders, %, 1 decimal place). Sort by month.', hints: ['First compute each order\'s total in a CTE so that the grain is "one order = one row". Then group by month.'] },
+        { prompt: '<b>Query 4: new or returning?</b> Split the customers who have a delivered order in 2026 into two segments: <code>new</code> (their first delivered order is in 2026) and <code>returning</code> (the first one is in 2025). Columns: <code>segment</code>, <code>customers</code>, <code>revenue</code> (revenue in 2026).', hints: ['Find the date of each customer\'s first delivered order over the <b>whole</b> period (not limited to 2026), then join it to the 2026 revenue.'] },
+        { prompt: 'Write a memo to the operations director (at least 80 words): why did revenue fall in Q2, and what should be done? Rely on the numbers from the four queries and answer each of the two hypotheses ("seasonality", "cancellations"). Then honestly assess your work through an employer\'s eyes. To pass, each criterion needs at least <b>3 / 4</b>.', done: 'Put the queries and the memo on GitHub and add the link to your résumé.', criteria: [
+            { name: 'Answer to the question', levels: ['No answer, or only the process is described', 'There is an answer, but in the last paragraph or vague', 'The first paragraph names the main cause', 'The first sentence has the cause, its size (a number) and a recommendation'] },
+            { name: 'Evidence and decomposition', levels: ['No numbers', 'Only total revenue is given', 'Revenue is decomposed into order count and average order value, and categories are compared', 'Decomposition, categories, share of losses and new/returning customers: every claim is backed by a number from my queries'] },
+            { name: 'Checking the hypotheses', levels: ['The hypotheses are not mentioned', 'Only one is examined', 'Both are examined, and it says whether the data confirmed them', 'Both are checked with numbers, and the limit of the data is stated (for example, seasonality needs a comparison with the same period last year)'] },
+            { name: 'Recommendation and limitations', levels: ['No recommendation', 'Generalities ("we need to increase sales")', 'A specific action and the limitations are named', 'A specific action, the responsible department, a way to measure the result; the limitations (incomplete June, unknown margin) are written down'] }
+          ] }
       ]
     }
   }

@@ -117,7 +117,7 @@ print(f"Average check: {8450.567:.2f}")   # 8450.57</code></pre>
 <tr><th>Method</th><th>Example</th><th>Result</th></tr>
 <tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
 <tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
-<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>2</code></td></tr>
 <tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
 </table>
 <p>String methods do not change the original string; they return a new one. So you need to save the result: <code>name = name.strip()</code>.</p>
@@ -191,7 +191,7 @@ print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
 items = ["Термос", "Блокнот", "Рюкзак"]
 items.sort()
 print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
-<p>Text is sorted alphabetically. <code>.sort()</code> changes the list itself, while <code>sorted()</code> returns a new list and leaves the old one as it was.</p>
+<p>Text is sorted by the code numbers of its characters: for the letters of the Russian alphabet this matches alphabetical order, while the letters specific to Kazakh (Ә, Қ, Ө, Ү…) may land somewhere else. <code>.sort()</code> changes the list itself, while <code>sorted()</code> returns a new list and leaves the old one as it was.</p>
 <h3>Compared with SQL</h3>
 <table>
 <tr><th>SQL</th><th>Python list</th></tr>
@@ -209,7 +209,7 @@ print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</cod
 </ul>`,
       ex: [
         { prompt: 'Weekly sales are given. Print the largest value, the smallest value and the average (rounded to 2 places) on one line: <code>print(max_v, min_v, avg)</code>.', hints: ['<code>round(sum(sales) / len(sales), 2)</code>'] },
-        { prompt: 'Add <code>"Ақтөбе"</code> to the <code>cities</code> list, sort the list alphabetically and print it.', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе should be in the list"\nassert cities == sorted(cities), "The list is not sorted"' }, hints: ['<code>.append()</code>, then <code>.sort()</code>.'] }
+        { prompt: 'Add <code>"Ақтөбе"</code> to the <code>cities</code> list, sort the list with <code>.sort()</code> and print it. Note that «Ақтөбе» comes after «Астана», because the code number of the letter <code>қ</code> is larger than those of <code>л</code> and <code>с</code>. This is the order of <code>.sort()</code>, not the order of the Kazakh alphabet.', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе should be in the list"\nassert cities == sorted(cities), "The list is not sorted"' }, hints: ['<code>.append()</code>, then <code>.sort()</code>.'] }
       ]
     },
     'py-7': {
@@ -345,7 +345,7 @@ print(customer.get("phone", "none"))   # the default when the key is missing</co
 counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
-print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
+print(counts)   # {'Алматы': 3, 'Астана': 1, 'Шымкент': 1}</code></pre>
 <p>Going over keys and values: <code>for key, value in counts.items():</code></p>
 <h3>A list of dictionaries: a data table</h3>
 <p>If one dictionary describes one record, a list of dictionaries describes a whole table. Each dictionary is a row, and the keys are the column names:</p>
@@ -431,7 +431,7 @@ print(sum(values))   # 355</code></pre>
     if visitors &lt; 0 or buyers &lt; 0:
         raise ValueError("сандар теріс болмауы керек")  # "numbers must not be negative"
     return buyers / visitors * 100 if visitors else 0</code></pre>
-<p><code>raise</code> stops execution right away and reports the reason. Whoever uses such a function sees their mistake immediately.</p>
+<p><code>raise</code> stops the function right away and reports the reason for the error. Whoever uses such a function sees their mistake immediately.</p>
 <div class="tip">Put only the line that may fail inside a <code>try</code> block. If you wrap all your code in <code>try</code>, it is hard to find where the error happened.</div>`,
       ex: [
         { prompt: 'From the <code>raw</code> list, collect only the values that turn into numbers, as <code>float</code>, into <code>values</code> (<code>try/except ValueError</code>). At the end, print their sum.', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)' }, hints: ['Inside <code>except ValueError:</code> you can write <code>pass</code>.'] },
@@ -466,6 +466,100 @@ def top_city(rows): ...</code></pre>
       ex: [
         { prompt: 'Write a function <code>total_revenue(rows)</code> that returns the sum of <code>qty × price</code> over all rows (as an int).', check: { tests: 'assert total_revenue(rows) == 188000, "Total revenue should be 188000, you have: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Return 0 for an empty list"' }, hints: ['Turn the text into a number: <code>int(r["qty"])</code>.'] },
         { prompt: 'The function <code>revenue_by_city(rows)</code> should return a city → revenue dictionary. Then <code>best_city(rows)</code> should return the name of the city with the most revenue.', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city should be Астана"' }, hints: ['Use the <code>.get(key, 0)</code> pattern from the lesson on counting with a dictionary.', 'The key with the largest value: <code>max(rev, key=rev.get)</code>.'] }
+      ]
+    },
+    'py-14': {
+      title: 'Tuples, sets, lambda and modules',
+      body: `
+<p>You know lists and dictionaries. Python has two more collections you meet every day when working with data: the <b>tuple</b> and the <b>set</b>. In this lesson you also learn the one-line function (<code>lambda</code>), ready-made modules and reading a file. You need all of this before moving on to pandas.</p>
+<h3>Tuples</h3>
+<p>A tuple is a list that cannot be changed. It is written in round brackets. It is handy for keeping several fields of one record together:</p>
+<pre><code>row = ("Алматы", 69000)
+print(row[0])        # Алматы
+print(len(row))      # 2
+row[1] = 70000       # TypeError: a tuple cannot be changed</code></pre>
+<p>The most useful part is <b>unpacking</b>: spreading the values of a tuple over several variables at once.</p>
+<pre><code>city, revenue = row
+print(city, revenue)             # Алматы 69000
+
+a, b = 5, 10
+a, b = b, a                      # swap the values
+
+for city, revenue in [("Алматы", 69000), ("Астана", 104000)]:
+    print(f"{city}: {revenue}")</code></pre>
+<p>You have seen tuples before: <code>d.items()</code> gives each key and value as a tuple, and when a function returns several values (<code>return total, count</code>), it returns a tuple too.</p>
+<h3>Sets</h3>
+<p>A set is a collection of values <b>without duplicates</b>. It does not keep their order. It is like <code>DISTINCT</code> in SQL:</p>
+<pre><code>cities = ["Алматы", "Астана", "Алматы", "Шымкент", "Алматы"]
+unique = set(cities)
+print(len(unique))               # 3  (COUNT(DISTINCT city))
+print("Астана" in unique)        # True: lookup in a set is very fast</code></pre>
+<p>With two sets you can do the set operations you know from SQL:</p>
+<table>
+<tr><th>Python</th><th>Meaning</th><th>SQL</th></tr>
+<tr><td><code>a | b</code></td><td>in at least one of them</td><td><code>UNION</code></td></tr>
+<tr><td><code>a &amp; b</code></td><td>in both</td><td><code>INTERSECT</code></td></tr>
+<tr><td><code>a - b</code></td><td>in a, not in b</td><td><code>EXCEPT</code></td></tr>
+</table>
+<pre><code>march = {1, 2, 3, 7}
+april = {2, 3, 8}
+print(march &amp; april)   # {2, 3}  bought in both months
+print(april - march)   # {8}     new customers in April</code></pre>
+<p>An empty set is written <code>set()</code>. <code>{}</code> is an empty dictionary.</p>
+<h3>lambda and sorted(key=...)</h3>
+<p>A <code>lambda</code> is a small one-line function without a name. <code>lambda x: x * 2</code> means "take x and return x * 2". It is mostly used to tell another function "what to sort by":</p>
+<pre><code>sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000)]
+
+ranked = sorted(sales, key=lambda row: row[1], reverse=True)
+print(ranked)
+# [('Астана', 104000), ('Алматы', 69000), ('Шымкент', 15000)]</code></pre>
+<p><code>key</code> is applied to each element, and sorting goes by its result. Here <code>row[1]</code> is the revenue. Without <code>key</code>, the tuples would be sorted by their first element (the city name). <code>max</code> and <code>min</code> accept <code>key</code> as well: <code>max(sales, key=lambda row: row[1])</code>.</p>
+<h3>Modules: import</h3>
+<p>Python comes with hundreds of ready-made modules (the standard library). You do not need to install them, you just write <code>import</code>:</p>
+<pre><code>import math
+print(math.sqrt(144))            # 12.0
+print(math.ceil(4.1))            # 5 (rounding up)
+
+import statistics
+checks = [2150, 2250, 2550, 48000]
+print(statistics.mean(checks))   # 13737.5
+print(statistics.median(checks)) # 2400.0
+
+from datetime import date
+d1 = date.fromisoformat("2024-03-05")
+d2 = date.fromisoformat("2024-04-09")
+print((d2 - d1).days)            # 35
+print(d1.year, d1.month)         # 2024 3
+print(d1.strftime("%Y-%m"))      # 2024-03</code></pre>
+<p><code>import math</code> brings in the whole module, and its function is called as <code>math.sqrt</code>. <code>from datetime import date</code> takes just one thing from the module, and you write it directly as <code>date</code>. <code>import pandas as pd</code> in the next module is the same thing, only with a short name.</p>
+<h3>Reading a file: with open</h3>
+<p>Until now the data was written inside the code. In real work it sits in a file. The working folder contains the file <code>orders.csv</code> (coffee shop orders):</p>
+<pre><code>with open("orders.csv", encoding="utf-8") as f:
+    lines = f.read().splitlines()
+
+print(lines[0])      # id,customer_id,order_date,amount,status
+print(len(lines))    # 151 (header + 150 orders)</code></pre>
+<p>When the <code>with</code> block ends, the file closes by itself, even if an error occurs. <code>encoding="utf-8"</code> is needed so that Kazakh text is read correctly. To turn the CSV into dictionaries we use <code>csv.DictReader</code> from the previous lesson, only now we give it the file itself:</p>
+<pre><code>import csv
+with open("orders.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
+
+print(rows[0]["amount"])   # '2150'  (text!)</code></pre>
+<div class="tip">Every value read from a file is text, and an empty cell is the empty string <code>""</code>. So before you write <code>int(r["amount"])</code>, check that the value is not empty: <code>if r["amount"]:</code>.</div>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>A one-element tuple.</b> <code>(5)</code> is just a number. A tuple needs a comma: <code>(5,)</code>.</li>
+<li><b>A count mismatch when unpacking.</b> <code>a, b = (1, 2, 3)</code> → <code>ValueError: too many values to unpack</code>.</li>
+<li><b>Indexing a set.</b> <code>unique[0]</code> is an error: a set has no order. If you need an order, write <code>sorted(unique)</code>.</li>
+<li><b>Reading outside the with block.</b> After the block ends the file is closed: <code>f.read()</code> raises an error. Save the data to a variable inside the block.</li>
+<li><b>A mistake in the file name.</b> If you get <code>FileNotFoundError</code>, check the name and the folder the file is in.</li>
+</ul>`,
+      ex: [
+        { prompt: '<code>sales</code> is a list of (city, revenue) tuples. Sort it by revenue in descending order and store it in <code>ranked</code> (<code>sorted</code> and <code>key=lambda</code>). Then unpack the tuple in first place into the variables <code>top_city</code> and <code>top_revenue</code>.', check: { tests: 'assert [r[1] for r in ranked] == [104000, 69000, 31000, 15000], "ranked should be in descending order of revenue: " + str(ranked)\nassert ranked[0] == ("Астана", 104000), "ranked should still hold (city, revenue) tuples"\nassert top_city == "Астана", "top_city is wrong: unpack ranked[0]"\nassert top_revenue == 104000, "top_revenue is wrong"' }, hints: ['<code>sorted(sales, key=lambda row: row[1], reverse=True)</code>', 'Unpacking: <code>top_city, top_revenue = ranked[0]</code>.'] },
+        { prompt: 'You are given lists of the ids of customers who bought in March and in April (with duplicates). Using sets, calculate: <code>both</code>, those who bought in both months; <code>new</code>, those who appeared only in April; <code>total</code>, the <b>number</b> of unique customers over the two months.', check: { tests: 'assert isinstance(both, (set, frozenset)), "both should be a set"\nassert both == {2, 3, 9}, "both: set(march) & set(april), you have: " + str(both)\nassert set(new) == {8, 12}, "new: set(april) - set(march), you have: " + str(new)\nassert total == 7, "total: the length of the union (|), you have: " + str(total)' }, hints: ['First turn the lists into sets: <code>set(march)</code>, <code>set(april)</code>.', '<code>&amp;</code> is intersection, <code>-</code> is difference, <code>|</code> is union.'] },
+        { prompt: 'A customer signed up on <code>signup</code> and placed their first order on <code>first_order</code>. Using the <code>datetime</code> module, store the number of days between them in <code>days</code>. Then, with the <code>statistics</code> module, store the median of the <code>checks</code> list in <code>med</code>.', check: { tests: 'assert days == 50, "days is wrong: (date.fromisoformat(first_order) - date.fromisoformat(signup)).days"\nassert isinstance(days, int), "days should be a whole number: use .days"\nassert med == 2250, "med is wrong: statistics.median(checks)"' }, hints: ['Turning text into a date: <code>date.fromisoformat(signup)</code>.', 'The number of days from the difference of two dates: <code>(d2 - d1).days</code>.', '<code>statistics.median(checks)</code>'] },
+        { prompt: 'Read the file <code>orders.csv</code> into the list <code>rows</code> using <code>with open</code> and <code>csv.DictReader</code>. Then calculate: <code>refunds</code>, the number of rows with status <code>refund</code>; <code>paid_total</code>, the total amount (int) of rows with status <code>paid</code> and a non-empty <code>amount</code>.', check: { tests: 'import csv as _csv\nwith open("orders.csv", encoding="utf-8") as _f:\n    _rows = list(_csv.DictReader(_f))\nassert len(rows) == len(_rows) == 150, "rows should have 150 rows: list(csv.DictReader(f))"\nassert rows[0]["status"] == "paid", "rows should be a list of dictionaries"\nassert refunds == sum(1 for r in _rows if r["status"] == "refund"), "refunds is wrong: count the rows where status == \'refund\'"\nassert paid_total == sum(int(r["amount"]) for r in _rows if r["status"] == "paid" and r["amount"]), "paid_total is wrong: only paid rows with a non-empty amount"' }, hints: ['Write the line <code>rows = list(csv.DictReader(f))</code> inside the <code>with</code> block.', 'Skipping an empty amount: <code>if r["status"] == "paid" and r["amount"]:</code>', 'Turn the text into a number: <code>int(r["amount"])</code>.'] },
+        { prompt: '<code>cities = ["Алматы", "Астана", "Алматы"]</code>. What does <code>len(set(cities))</code> equal, and why?', options: ['3: a set is a copy of the list', '2: a set keeps repeated values only once', '1: a set holds only one value', 'It raises an error: you cannot make a set from text'], explain: 'set() removes duplicates, so "Алматы" stays once. This is COUNT(DISTINCT city) in SQL.' }
       ]
     },
     'py-gate': {

@@ -117,7 +117,7 @@ print(f"Средний чек: {8450.567:.2f}")   # 8450.57</code></pre>
 <tr><th>Метод</th><th>Пример</th><th>Результат</th></tr>
 <tr><td><code>replace</code></td><td><code>"12 500".replace(" ", "")</code></td><td><code>"12500"</code></td></tr>
 <tr><td><code>startswith</code></td><td><code>"+7701".startswith("+7")</code></td><td><code>True</code></td></tr>
-<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>3</code></td></tr>
+<tr><td><code>count</code></td><td><code>"банан".count("а")</code></td><td><code>2</code></td></tr>
 <tr><td><code>join</code></td><td><code>", ".join(["a", "b"])</code></td><td><code>"a, b"</code></td></tr>
 </table>
 <p>Методы строк не меняют исходную строку, а возвращают новую. Поэтому результат нужно сохранить: <code>name = name.strip()</code>.</p>
@@ -191,7 +191,7 @@ print(sorted(sales, reverse=True))   # [140, 120, 110, 95, 80]
 items = ["Термос", "Блокнот", "Рюкзак"]
 items.sort()
 print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</code></pre>
-<p>Тексты сортируются по алфавиту. <code>.sort()</code> меняет сам список, а <code>sorted()</code> возвращает новый список, старый не меняется.</p>
+<p>Тексты сортируются по кодам символов: для букв русского алфавита это совпадает с алфавитным порядком, а специфические казахские буквы (Ә, Қ, Ө, Ү…) могут оказаться на другом месте. <code>.sort()</code> меняет сам список, а <code>sorted()</code> возвращает новый список, старый не меняется.</p>
 <h3>Сравнение с SQL</h3>
 <table>
 <tr><th>SQL</th><th>Python list</th></tr>
@@ -209,7 +209,7 @@ print(items)           # ['Блокнот', 'Рюкзак', 'Термос']</cod
 </ul>`,
       ex: [
         { prompt: 'Даны продажи за неделю. Выведите в одну строку максимум, минимум и среднее (округлив до 2 знаков): <code>print(max_v, min_v, avg)</code>.', hints: ['<code>round(sum(sales) / len(sales), 2)</code>'] },
-        { prompt: 'Добавьте в список <code>cities</code> город <code>"Ақтөбе"</code>, отсортируйте список по алфавиту и выведите его.', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе должен быть в списке"\nassert cities == sorted(cities), "Список не отсортирован"' }, hints: ['<code>.append()</code>, затем <code>.sort()</code>.'] }
+        { prompt: 'Добавьте в список <code>cities</code> город <code>"Ақтөбе"</code>, отсортируйте список через <code>.sort()</code> и выведите его. Обратите внимание: «Ақтөбе» окажется после «Астана», потому что код буквы <code>қ</code> больше, чем у <code>л</code> и <code>с</code>. Это не порядок казахского алфавита, а порядок <code>.sort()</code>.', check: { tests: 'assert "Ақтөбе" in cities, "Ақтөбе должен быть в списке"\nassert cities == sorted(cities), "Список не отсортирован"' }, hints: ['<code>.append()</code>, затем <code>.sort()</code>.'] }
       ]
     },
     'py-7': {
@@ -345,7 +345,7 @@ print(customer.get("phone", "нет"))   # значение по умолчан�
 counts = {}
 for c in cities:
     counts[c] = counts.get(c, 0) + 1
-print(counts)   # {'Алматы': 3, 'Астана': 2 ...}</code></pre>
+print(counts)   # {'Алматы': 3, 'Астана': 1, 'Шымкент': 1}</code></pre>
 <p>Перебор ключей и значений: <code>for key, value in counts.items():</code></p>
 <h3>Список словарей: таблица данных</h3>
 <p>Если один словарь описывает одну запись, то список словарей описывает целую таблицу. Каждый словарь — одна строка, ключи — названия столбцов:</p>
@@ -431,7 +431,7 @@ print(sum(values))   # 355</code></pre>
     if visitors &lt; 0 or buyers &lt; 0:
         raise ValueError("сандар теріс болмауы керек")  # «числа не должны быть отрицательными»
     return buyers / visitors * 100 if visitors else 0</code></pre>
-<p><code>raise</code> сразу останавливает выполнение и сообщает причину. Тот, кто использует такую функцию, сразу увидит свою ошибку.</p>
+<p><code>raise</code> сразу останавливает функцию и сообщает причину ошибки. Тот, кто использует такую функцию, сразу увидит свою ошибку.</p>
 <div class="tip">Оборачивайте в <code>try</code> только строку, где может возникнуть ошибка. Если обернуть в <code>try</code> весь код, будет трудно понять, где именно произошла ошибка.</div>`,
       ex: [
         { prompt: 'Соберите в <code>values</code> только те значения из списка <code>raw</code>, которые превращаются в число, в виде <code>float</code> (<code>try/except ValueError</code>). В конце выведите их сумму.', check: { tests: 'assert values == [12.5, 7.0, 30.5], "values: " + str(values)' }, hints: ['Внутри <code>except ValueError:</code> можно написать <code>pass</code>.'] },
@@ -466,6 +466,100 @@ def top_city(rows): ...</code></pre>
       ex: [
         { prompt: 'Напишите функцию <code>total_revenue(rows)</code>: пусть она возвращает сумму <code>qty × price</code> по всем строкам (int).', check: { tests: 'assert total_revenue(rows) == 188000, "Общая выручка должна быть 188000, у вас: " + str(total_revenue(rows))\nassert total_revenue([]) == 0, "Для пустого списка верните 0"' }, hints: ['Преобразуйте текст в число: <code>int(r["qty"])</code>.'] },
         { prompt: 'Функция <code>revenue_by_city(rows)</code> пусть возвращает словарь город → выручка. Затем <code>best_city(rows)</code> пусть возвращает название города с наибольшей выручкой.', check: { tests: 'r = revenue_by_city(rows)\nassert r == {"Алматы": 69000, "Астана": 104000, "Шымкент": 15000}, "revenue_by_city: " + str(r)\nassert best_city(rows) == "Астана", "best_city должна быть Астана"' }, hints: ['Используйте шаблон <code>.get(key, 0)</code> из урока про подсчёт через словарь.', 'Ключ с наибольшим значением: <code>max(rev, key=rev.get)</code>.'] }
+      ]
+    },
+    'py-14': {
+      title: 'Кортеж, множество, lambda и модули',
+      body: `
+<p>Список и словарь вы уже знаете. В Python есть ещё две коллекции, которые при работе с данными встречаются каждый день: <b>кортеж</b> (tuple) и <b>множество</b> (set). Кроме того, в этом уроке вы изучите однострочную функцию (<code>lambda</code>), готовые модули и чтение файла. Всё это нужно перед переходом к pandas.</p>
+<h3>Кортеж (tuple)</h3>
+<p>Кортеж — это неизменяемый список. Пишется в круглых скобках. В нём удобно держать вместе несколько полей одной записи:</p>
+<pre><code>row = ("Алматы", 69000)
+print(row[0])        # Алматы
+print(len(row))      # 2
+row[1] = 70000       # TypeError: кортеж нельзя изменить</code></pre>
+<p>Самое полезное — <b>распаковка</b> (unpacking): значения кортежа сразу раскладываются по нескольким переменным.</p>
+<pre><code>city, revenue = row
+print(city, revenue)             # Алматы 69000
+
+a, b = 5, 10
+a, b = b, a                      # обмен значениями
+
+for city, revenue in [("Алматы", 69000), ("Астана", 104000)]:
+    print(f"{city}: {revenue}")</code></pre>
+<p>Кортеж вы уже встречали: <code>d.items()</code> выдаёт ключ и значение в виде кортежа, и когда функция возвращает несколько значений (<code>return total, count</code>), тоже возвращается кортеж.</p>
+<h3>Множество (set)</h3>
+<p>Множество — это набор <b>неповторяющихся</b> значений. Порядок не сохраняется. Похоже на <code>DISTINCT</code> в SQL:</p>
+<pre><code>cities = ["Алматы", "Астана", "Алматы", "Шымкент", "Алматы"]
+unique = set(cities)
+print(len(unique))               # 3  (COUNT(DISTINCT city))
+print("Астана" in unique)        # True: поиск в множестве очень быстрый</code></pre>
+<p>С двумя множествами можно выполнять те же операции над множествами, что и в SQL:</p>
+<table>
+<tr><th>Python</th><th>Смысл</th><th>SQL</th></tr>
+<tr><td><code>a | b</code></td><td>есть хотя бы в одном</td><td><code>UNION</code></td></tr>
+<tr><td><code>a &amp; b</code></td><td>есть в обоих</td><td><code>INTERSECT</code></td></tr>
+<tr><td><code>a - b</code></td><td>есть в a, нет в b</td><td><code>EXCEPT</code></td></tr>
+</table>
+<pre><code>march = {1, 2, 3, 7}
+april = {2, 3, 8}
+print(march &amp; april)   # {2, 3}  покупали в оба месяца
+print(april - march)   # {8}     новые клиенты апреля</code></pre>
+<p>Пустое множество записывается как <code>set()</code>. <code>{}</code> — это пустой словарь.</p>
+<h3>lambda и sorted(key=...)</h3>
+<p><code>lambda</code> — маленькая безымянная функция в одну строку. <code>lambda x: x * 2</code> значит «возьми x и верни x * 2». Чаще всего её используют, чтобы сказать другой функции, «по чему сортировать»:</p>
+<pre><code>sales = [("Алматы", 69000), ("Шымкент", 15000), ("Астана", 104000)]
+
+ranked = sorted(sales, key=lambda row: row[1], reverse=True)
+print(ranked)
+# [('Астана', 104000), ('Алматы', 69000), ('Шымкент', 15000)]</code></pre>
+<p><code>key</code> применяется к каждому элементу, а сортировка идёт по его результату. Здесь <code>row[1]</code> — выручка. Без <code>key</code> кортежи сортировались бы по первому элементу (названию города). <code>max</code> и <code>min</code> тоже принимают <code>key</code>: <code>max(sales, key=lambda row: row[1])</code>.</p>
+<h3>Модули: import</h3>
+<p>Вместе с Python поставляются сотни готовых модулей (стандартная библиотека). Устанавливать их не нужно, достаточно написать <code>import</code>:</p>
+<pre><code>import math
+print(math.sqrt(144))            # 12.0
+print(math.ceil(4.1))            # 5 (округление вверх)
+
+import statistics
+checks = [2150, 2250, 2550, 48000]
+print(statistics.mean(checks))   # 13737.5
+print(statistics.median(checks)) # 2400.0
+
+from datetime import date
+d1 = date.fromisoformat("2024-03-05")
+d2 = date.fromisoformat("2024-04-09")
+print((d2 - d1).days)            # 35
+print(d1.year, d1.month)         # 2024 3
+print(d1.strftime("%Y-%m"))      # 2024-03</code></pre>
+<p><code>import math</code> подключает весь модуль, его функция вызывается как <code>math.sqrt</code>. <code>from datetime import date</code> берёт из модуля только одну вещь, и её пишут сразу как <code>date</code>. <code>import pandas as pd</code> из следующего модуля — то же самое, только с коротким именем.</p>
+<h3>Чтение файла: with open</h3>
+<p>До сих пор данные были записаны прямо в коде. В реальной работе они лежат в файле. В рабочей папке есть файл <code>orders.csv</code> (заказы кофейни):</p>
+<pre><code>with open("orders.csv", encoding="utf-8") as f:
+    lines = f.read().splitlines()
+
+print(lines[0])      # id,customer_id,order_date,amount,status
+print(len(lines))    # 151 (заголовок + 150 заказов)</code></pre>
+<p>Когда блок <code>with</code> заканчивается, файл закрывается сам, даже если возникла ошибка. <code>encoding="utf-8"</code> нужен, чтобы казахский текст читался правильно. Чтобы превратить CSV в словари, используем <code>csv.DictReader</code> из прошлого урока, только теперь передаём ему сам файл:</p>
+<pre><code>import csv
+with open("orders.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
+
+print(rows[0]["amount"])   # '2150'  (текст!)</code></pre>
+<div class="tip">Каждое значение, прочитанное из файла, — текст, а пустая ячейка — пустая строка <code>""</code>. Поэтому, прежде чем писать <code>int(r["amount"])</code>, проверьте, что значение не пустое: <code>if r["amount"]:</code>.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Кортеж из одного элемента.</b> <code>(5)</code> — просто число. Для кортежа нужна запятая: <code>(5,)</code>.</li>
+<li><b>Несовпадение количества при распаковке.</b> <code>a, b = (1, 2, 3)</code> → <code>ValueError: too many values to unpack</code>.</li>
+<li><b>Обращение к множеству по индексу.</b> <code>unique[0]</code> — ошибка: в множестве нет порядка. Если порядок нужен, напишите <code>sorted(unique)</code>.</li>
+<li><b>Чтение за пределами блока with.</b> После конца блока файл закрыт: <code>f.read()</code> выдаст ошибку. Сохраните данные в переменную внутри блока.</li>
+<li><b>Ошибка в имени файла.</b> Если появился <code>FileNotFoundError</code>, проверьте имя и папку, в которой лежит файл.</li>
+</ul>`,
+      ex: [
+        { prompt: '<code>sales</code> — список кортежей (город, выручка). Отсортируйте его по убыванию выручки и запишите в <code>ranked</code> (<code>sorted</code> и <code>key=lambda</code>). Затем распакуйте кортеж с первого места в переменные <code>top_city</code> и <code>top_revenue</code>.', check: { tests: 'assert [r[1] for r in ranked] == [104000, 69000, 31000, 15000], "ranked должен идти по убыванию выручки: " + str(ranked)\nassert ranked[0] == ("Астана", 104000), "В ranked должны остаться кортежи (город, выручка)"\nassert top_city == "Астана", "top_city неверен: распакуйте ranked[0]"\nassert top_revenue == 104000, "top_revenue неверен"' }, hints: ['<code>sorted(sales, key=lambda row: row[1], reverse=True)</code>', 'Распаковка: <code>top_city, top_revenue = ranked[0]</code>.'] },
+        { prompt: 'Даны списки id клиентов, покупавших в марте и в апреле (есть повторы). Посчитайте с помощью множеств: <code>both</code> — те, кто покупал в оба месяца, <code>new</code> — те, кто появился только в апреле, <code>total</code> — <b>число</b> уникальных клиентов за два месяца.', check: { tests: 'assert isinstance(both, (set, frozenset)), "both должен быть множеством (set)"\nassert both == {2, 3, 9}, "both: set(march) & set(april), у вас: " + str(both)\nassert set(new) == {8, 12}, "new: set(april) - set(march), у вас: " + str(new)\nassert total == 7, "total: длина объединения (|), у вас: " + str(total)' }, hints: ['Сначала превратите списки в множества: <code>set(march)</code>, <code>set(april)</code>.', '<code>&amp;</code> — пересечение, <code>-</code> — разность, <code>|</code> — объединение.'] },
+        { prompt: 'Клиент зарегистрировался в день <code>signup</code> и сделал первый заказ в день <code>first_order</code>. С помощью модуля <code>datetime</code> запишите в <code>days</code> число дней между ними. Затем с помощью модуля <code>statistics</code> запишите в <code>med</code> медиану списка <code>checks</code>.', check: { tests: 'assert days == 50, "days неверен: (date.fromisoformat(first_order) - date.fromisoformat(signup)).days"\nassert isinstance(days, int), "days должен быть целым числом: используйте .days"\nassert med == 2250, "med неверен: statistics.median(checks)"' }, hints: ['Превратить текст в дату: <code>date.fromisoformat(signup)</code>.', 'Число дней из разницы двух дат: <code>(d2 - d1).days</code>.', '<code>statistics.median(checks)</code>'] },
+        { prompt: 'Прочитайте файл <code>orders.csv</code> в список <code>rows</code> с помощью <code>with open</code> и <code>csv.DictReader</code>. Затем посчитайте: <code>refunds</code> — число строк со статусом <code>refund</code>, <code>paid_total</code> — сумму (int) по строкам со статусом <code>paid</code> и непустым <code>amount</code>.', check: { tests: 'import csv as _csv\nwith open("orders.csv", encoding="utf-8") as _f:\n    _rows = list(_csv.DictReader(_f))\nassert len(rows) == len(_rows) == 150, "В rows должно быть 150 строк: list(csv.DictReader(f))"\nassert rows[0]["status"] == "paid", "rows должен быть списком словарей"\nassert refunds == sum(1 for r in _rows if r["status"] == "refund"), "refunds неверен: посчитайте строки, где status == \'refund\'"\nassert paid_total == sum(int(r["amount"]) for r in _rows if r["status"] == "paid" and r["amount"]), "paid_total неверен: только строки paid с непустым amount"' }, hints: ['Напишите строку <code>rows = list(csv.DictReader(f))</code> внутри блока <code>with</code>.', 'Пропустить пустую сумму: <code>if r["status"] == "paid" and r["amount"]:</code>', 'Превратите текст в число: <code>int(r["amount"])</code>.'] },
+        { prompt: '<code>cities = ["Алматы", "Астана", "Алматы"]</code>. Чему равно <code>len(set(cities))</code> и почему?', options: ['3: множество — копия списка', '2: множество хранит повторяющиеся значения только один раз', '1: в множестве бывает только одно значение', 'Будет ошибка: из текста нельзя сделать множество'], explain: 'set() убирает повторы, поэтому «Алматы» остаётся один раз. Это COUNT(DISTINCT city) из SQL.' }
       ]
     },
     'py-gate': {

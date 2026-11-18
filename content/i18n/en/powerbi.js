@@ -146,7 +146,7 @@ dim_customer ── fact_orders ── dim_product
 Orders    = COUNTROWS(orders)
 Customers = DISTINCTCOUNT(orders[customer_id])
 AOV       = DIVIDE([Revenue], [Orders])</code></pre>
-<div class="tip"><code>DIVIDE(a, b)</code> does not throw an error on division by zero; it returns a blank. Always use it instead of <code>a / b</code>.</div>
+<div class="tip"><code>a / b</code> does not throw an error when dividing by zero or by a blank, but the visual shows <code>∞</code> (Infinity) or <code>NaN</code>. In that case <code>DIVIDE(a, b)</code> returns a blank (BLANK), so use it for division.</div>
 <p>Measures can refer to each other: <code>AOV</code> uses <code>[Revenue]</code> and <code>[Orders]</code>. This helps you avoid repeating code.</p>
 <h3>SQL equivalent</h3>
 <table>
@@ -160,7 +160,7 @@ AOV       = DIVIDE([Revenue], [Orders])</code></pre>
 <ul>
 <li>Making a sum a calculated column: it does not react to slicers and uses memory.</li>
 <li>Counting unique customers with <code>COUNT(orders[customer_id])</code>: that gives the number of orders, while <code>COUNTROWS(customers)</code> also includes people who have not bought anything yet.</li>
-<li>Dividing with <code>/</code>: an empty filter gives a division-by-zero error.</li>
+<li>Dividing with <code>/</code>: if the divisor is zero or blank, the table shows <code>∞</code> or <code>NaN</code>. In that case <code>DIVIDE</code> returns BLANK.</li>
 </ul>`,
       ex: [
         { prompt: 'How do you build an "Average check" that changes when a city is picked in a slicer?', options: ['Calculated column', 'Measure', 'A Power Query step', 'A new table'], explain: 'A measure is computed in the context of the visual and filters, so it changes with the selection.' },
@@ -198,7 +198,7 @@ Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
 <h3>Common mistakes</h3>
 <ul>
 <li>Putting a different column in <code>ALL</code>: the rows are by channel, but with <code>ALL(customers[city])</code> the channel filter stays and the share is 100% in every row.</li>
-<li>Dividing the share with <code>/</code>: errors on empty rows. Use <code>DIVIDE</code>.</li>
+<li>Dividing the share with <code>/</code>: rows where the divisor is blank or zero show <code>∞</code> or <code>NaN</code>. Use <code>DIVIDE</code>: it returns BLANK.</li>
 <li>Thinking CALCULATE "adds to" the outer filter: on the same column it <b>replaces</b> the outer filter.</li>
 </ul>
 <div class="tip">A common interview question: "What is the difference between row context and filter context?" Row context is the "current row" in a calculated column. Filter context is the filters set by visuals and slicers. CALCULATE turns row context into filter context (context transition).</div>`,
@@ -231,7 +231,7 @@ Revenue YTD = TOTALYTD([Revenue], 'Date'[Date])</code></pre>
 <tr><td>2024-03</td><td>45 000</td><td>60 000</td><td>−25%</td><td>155 000</td></tr>
 <tr><td>2024-04</td><td>54 000</td><td>45 000</td><td>20%</td><td>209 000</td></tr>
 </table>
-<p>February: (60 000 − 50 000) / 50 000 = 0.2 = 20%. March: (45 000 − 60 000) / 60 000 = −25%. January has no previous month, so Revenue PM is blank, and <code>DIVIDE</code> gives a blank, not an error. YTD is the running total since the start of the year: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> works exactly the same way, only it shifts back one year (YoY). Our data covers only 2024, so it will be blank.</p>
+<p>February: (60 000 − 50 000) / 50 000 = 0.2 = 20%. March: (45 000 − 60 000) / 60 000 = −25%. January has no previous month, so Revenue PM is blank, and <code>DIVIDE</code> gives a blank (BLANK), not ∞ or NaN. YTD is the running total since the start of the year: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> works exactly the same way, only it shifts back one year (YoY). Our data covers only 2024, so it will be blank.</p>
 <h3>SQL equivalent</h3>
 <p>In SQL, <code>LAG()</code> gives the previous month and <code>SUM() OVER (ORDER BY month)</code> gives the running total since the start of the year. First we compute monthly revenue in a CTE, then add the window functions.</p>
 <pre><code>SELECT month, revenue,
@@ -333,11 +333,80 @@ FROM monthly;</code></pre>
       ex: [
         { prompt: 'Where is the right place to fill in blank values and fix data types?', options: ['In a DAX measure', 'In Power Query', 'In the visual\'s format settings', 'In a slicer'], explain: 'Cleaning happens before the model, in Power Query.' },
         { prompt: 'In a star schema, the table that stores sales amounts and counts is:', options: ['Dimension', 'Fact', 'Date table', 'Bridge'], explain: 'The fact table stores events and numeric values.' },
-        { prompt: 'Why do we write <code>DIVIDE([Revenue], [Orders])</code> instead of <code>[Revenue] / [Orders]</code>?', options: ['It is faster to type', 'On division by zero it returns a blank instead of an error', 'It rounds the result', 'There is no difference'], explain: 'DIVIDE handles division by zero safely.' },
+        { prompt: 'Why do we write <code>DIVIDE([Revenue], [Orders])</code> instead of <code>[Revenue] / [Orders]</code>?', options: ['It is faster to type', 'On division by zero it returns a blank (BLANK) instead of ∞ or NaN', 'It rounds the result', 'There is no difference'], explain: 'DIVIDE handles division by zero safely: <code>/</code> shows ∞ or NaN in that case, while DIVIDE returns BLANK.' },
         { prompt: 'In a table by channel, what should the divisor be to show each channel\'s share of total revenue?', options: ['SUM(orders[amount])', 'CALCULATE([Revenue], ALL(customers[channel]))', 'COUNTROWS(customers)', '[Revenue]'], explain: 'ALL removes the channel filter and gives the total revenue of all channels.' },
         { prompt: 'An "Average check" that should be filtered by city was built as a calculated column. What happens?', options: ['Everything works correctly', 'The value is computed once at row level and does not respond correctly to the filter', 'Power BI throws an error', 'The report gets faster'], explain: 'Aggregates must be measures. A calculated column is computed row by row at load time.' },
         { prompt: 'Revenue in April is 66 000 ₸, in March 88 000 ₸. What is the MoM change in percent? (if negative, write it with a minus sign)', unit: '%', explain: '(66 000 − 88 000) / 88 000 = −0.25 = −25%.' },
         { prompt: 'Build the Power BI matrix in SQL. Over clean orders, for each city (<code>customers.city</code>) output <code>city</code>, <code>revenue</code>, <code>orders</code>, <code>aov</code> (to a whole number) and <code>share_pct</code> (share of total revenue, %, 1 decimal place). Sort by revenue, highest first.' }
+      ]
+    },
+    'pbi-9': {
+      title: 'DAX iterators: SUMX, RELATED, VAR, ALLSELECTED',
+      body: `
+<p><code>SUM</code>, <code>CALCULATE</code> and <code>ALL</code> cover most everyday reporting. But both interviews and real models ask for the next level: <b>iterators</b> that calculate row by row, fetching a value from a related table, variables, and a share that respects the slicer. The examples use the same coffee shop model as before: <code>orders</code> (fact) and <code>customers</code> (dimension). The numbers are for clean orders.</p>
+<h3>The difference between SUM and SUMX</h3>
+<p><code>SUM(orders[amount])</code> adds up one <b>column</b>. <code>SUMX(table, expression)</code> evaluates the expression for each row of the table and adds up the results. When the expression is more than a column (a multiplication, a condition, a value from another table), you need an iterator.</p>
+<pre><code>Revenue     = SUM(orders[amount])
+Net Revenue =
+SUMX(
+    orders,
+    orders[amount] *
+        SWITCH(RELATED(customers[channel]),
+               "referral", 0.90,     -- 10% cashback to the friend
+               "2gis",     0.95,     -- 2GIS takes a 5% commission
+               1)
+)</code></pre>
+<p>Inside an iterator there is a <b>row context</b>: <code>orders[amount]</code> means "the amount in the current row". <code>AVERAGEX</code>, <code>MINX</code>, <code>MAXX</code>, <code>COUNTX</code> and <code>RANKX</code> work the same way.</p>
+<h3>RELATED: fetching a value through a relationship</h3>
+<p><code>RELATED(customers[channel])</code> brings the channel of the customer that matches the current row of <code>orders</code>. It follows the model relationship from the "many" side to the "one" side (order → customer). The SQL equivalent is a <code>JOIN</code>. For the opposite direction (customer → their orders) you use <code>RELATEDTABLE</code>.</p>
+<p>The result of the measure above: instagram 124,050 × 1 + 2gis 133,900 × 0.95 + referral 76,900 × 0.90 = <b>320,465</b>.</p>
+<h3>Iterating over a virtual table</h3>
+<p>"Average revenue per customer" is not the average order value. You first compute each customer's revenue and then the average of those:</p>
+<pre><code>Avg Revenue per Customer =
+AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code></pre>
+<p><code>VALUES(orders[customer_id])</code> is a one-column table of the unique customers in the current filter. <code>AVERAGEX</code> walks it row by row and evaluates <code>[Revenue]</code> for each customer (a measure turns the row context into a filter context: context transition). The result: 334,850 / 39 customers ≈ <b>8,586</b>. The average order value <code>AVERAGE(orders[amount])</code> ≈ 2,409 answers a completely different question.</p>
+<h3>VAR and RETURN</h3>
+<pre><code>Big Customers =
+VAR Threshold = 8000
+VAR PerCustomer = VALUES(orders[customer_id])
+RETURN
+    COUNTROWS(FILTER(PerCustomer, [Revenue] &gt;= Threshold))</code></pre>
+<ul>
+<li>A variable is evaluated <b>once</b>, in the context of the place where it is written. Instead of writing the same expression twice, you name it and reuse it: the formula is easier to read and faster.</li>
+<li>A variable is a constant value. Even if you later put it inside <code>CALCULATE</code>, it is not re-evaluated.</li>
+<li>A complex measure is easy to check step by step: put another variable after <code>RETURN</code> for a moment and look at the intermediate result.</li>
+</ul>
+<p>Here the result is <b>20</b>: 20 of the 39 customers spent 8,000 ₸ or more.</p>
+<h3>ALL and ALLSELECTED</h3>
+<p><code>ALL</code> removes every filter on a column, the slicer included. <code>ALLSELECTED</code> removes only the filter from the visual's own rows and keeps the values the user <b>picked in the slicer</b>.</p>
+<pre><code>Share of All %      = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))
+Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code></pre>
+<p>Алматы and Астана are selected in the slicer (Шымкент is excluded):</p>
+<table>
+<tr><th>city</th><th>Revenue</th><th>Share of All %</th><th>Share of Selected %</th></tr>
+<tr><td>Алматы</td><td>154 400</td><td>46.1%</td><td>51.9%</td></tr>
+<tr><td>Астана</td><td>142 950</td><td>42.7%</td><td>48.1%</td></tr>
+<tr><td><b>Total</b></td><td>297 350</td><td>88.8%</td><td>100%</td></tr>
+</table>
+<p><code>ALL</code> puts the 334,850 ₸ of all three cities in the denominator, while <code>ALLSELECTED</code> puts the 297,350 ₸ of the two visible cities. Users usually expect "the share within what I can see", which is <code>ALLSELECTED</code>.</p>
+<h3>Checking with SQL</h3>
+<p>If you doubt a measure, compute the same number separately in SQL and compare. The translation: <code>SUMX(orders, ...)</code> → <code>SUM(...)</code>, <code>RELATED</code> → <code>JOIN</code>, <code>SWITCH</code> → <code>CASE</code>, <code>AVERAGEX(VALUES(...), [Revenue])</code> → first a subquery with <code>GROUP BY</code>, then <code>AVG</code>.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Writing <code>SUMX(orders, orders[amount])</code> for a plain sum: the result is right, but <code>SUM</code> is shorter and clearer. Use an iterator only where a row-level calculation is needed.</li>
+<li>Calling <code>RELATED</code> where there is no row context (inside a plain measure): you get an error. It works only inside an iterator or a calculated column.</li>
+<li>Mixing up the average order value and the average per customer: <code>AVERAGE(orders[amount])</code> and <code>AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code> answer two different questions.</li>
+<li>Using <code>ALL</code> in a share, so that the percentages no longer add up to 100% when something is selected in the slicer.</li>
+</ul>
+<div class="tip">In an interview, one sentence is enough for "what is the difference between SUM and SUMX?": "SUM adds up one column; SUMX walks the table row by row, evaluates an expression in each row and then adds the results".</div>`,
+      ex: [
+        { prompt: 'The <code>order_items</code> table has the columns <code>quantity</code> and <code>unit_price</code> and no ready amount column. Which measure computes revenue correctly?', options: ['SUM(order_items[quantity]) * SUM(order_items[unit_price])', 'SUMX(order_items, order_items[quantity] * order_items[unit_price])', 'SUM(order_items[quantity] * order_items[unit_price])', 'AVERAGE(order_items[unit_price])'], explain: 'The multiplication has to happen in each row separately, and then the results are added: that is SUMX. SUM accepts only one column, and multiplying the sums gives a completely different (far too large) number.' },
+        { prompt: `Reproduce the <code>Net Revenue</code> measure in SQL. Over the clean orders (<code>status = 'paid'</code>, <code>amount</code> not missing and below 20,000), add up each amount multiplied by its channel factor: referral × 0.90, 2gis × 0.95, everything else × 1. One row: <code>net_revenue</code> (<code>ROUND</code> to a whole number).`, hints: ['<code>RELATED(customers[channel])</code> → <code>JOIN customers c ON c.id = o.customer_id</code>', `<code>SWITCH</code> → <code>CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END</code>`, '<code>ROUND(SUM(o.amount * CASE ... END))</code>; the answer should match the 320,465 from the lesson.'] },
+        { prompt: 'Use SQL to compute what the <code>Avg Revenue per Customer</code> measure shows in a matrix by city. Over the clean orders: <code>city</code>, <code>customers</code> (the number of customers who bought), <code>avg_per_customer</code> (the average of the customers\' individual revenues, <code>ROUND</code> to a whole number).', starter: 'WITH per AS (\n  -- each customer\'s clean revenue\n  \n)\nSELECT ', hints: ['Step 1 (<code>VALUES</code> + <code>[Revenue]</code>): each customer\'s revenue, <code>GROUP BY c.id, c.city</code>.', 'Step 2 (<code>AVERAGEX</code>): <code>SELECT city, COUNT(*), ROUND(AVG(spent)) FROM per GROUP BY city</code>.'] },
+        { prompt: 'Clean revenue: Алматы 154,400, Астана 142,950, Шымкент 37,500. Алматы and Шымкент are selected in the slicer. What percentage does the <code>Share of Selected %</code> measure (ALLSELECTED) show in the Шымкент row? To one decimal place.', explain: 'ALLSELECTED puts only the selected cities in the denominator: 154,400 + 37,500 = 191,900. 37,500 / 191,900 ≈ 19.5%. With ALL it would be 37,500 / 334,850 ≈ 11.2%.' },
+        { prompt: `<pre><code>Test =
+VAR Total = [Revenue]
+RETURN CALCULATE(Total, customers[city] = "Астана")</code></pre>What does this measure show in the "Алматы" row?`, options: ['The revenue of Астана', 'The revenue of Алматы: the variable Total was evaluated once, before CALCULATE, in the Алматы context, and does not change afterwards', 'Total revenue', 'It raises an error'], explain: 'A VAR is a constant value. If you want to change the filter, write the measure itself, not the variable: <code>CALCULATE([Revenue], customers[city] = "Астана")</code>.' }
       ]
     }
   }

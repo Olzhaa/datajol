@@ -2157,5 +2157,322 @@ DJ.addPractice('m6-5', {
     "tests": "assert report is not None and list(report.columns) == ['user', 'queries', 'cost_usd'], 'Бағандар: user, queries, cost_usd'\nassert list(report['user']) == ['aigerim', 'daniyar', 'meruert'], f\"Рет: aigerim, daniyar, meruert. Сізде {list(report['user'])}\"\nassert [int(x) for x in report['queries']] == [3, 2, 2], 'Сұрау саны: 3, 2, 2'\nassert [round(float(x), 5) for x in report['cost_usd']] == [21.875, 12.5, 2.34375], 'Құн: $21.875, $12.5, $2.34375'\nassert top_share is not None and abs(float(top_share) - 0.596) < 1e-9, f'21.875 / 36.71875 ≈ 0.596, сізде {top_share}'"
    }
   }
+ ],
+ "deng-ch": [
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "uniqExact айлар бойынша",
+   "prompt": "<b>qazaq.</b> ClickHouse-та: <code>SELECT toStartOfMonth(order_date) AS month, uniqExact(customer_id) AS buyers ... GROUP BY month</code>. Осыны SQLite-та жазыңыз: 2026 жылғы <code>delivered</code> тапсырыстар бойынша <code>month</code>, <code>buyers</code>. Ай бойынша.",
+   "starter": "",
+   "solution": "SELECT date(order_date, 'start of month') AS month, COUNT(DISTINCT customer_id) AS buyers FROM orders WHERE status = 'delivered' AND order_date >= '2026-01-01' GROUP BY month ORDER BY month;",
+   "hints": [
+    "<code>toStartOfMonth(d)</code> → <code>date(d, 'start of month')</code>; <code>uniqExact(x)</code> → <code>COUNT(DISTINCT x)</code>."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "DISTINCT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "toYear",
+   "prompt": "<b>qazaq.</b> ClickHouse-тағы <code>toYear(order_date)</code> баламасымен барлық тапсырысты жыл бойынша санаңыз: <code>year</code> (<code>'2025'</code> түріндегі мәтін), <code>orders</code>. Жыл бойынша.",
+   "starter": "",
+   "solution": "SELECT strftime('%Y', order_date) AS year, COUNT(*) AS orders FROM orders GROUP BY year ORDER BY year;",
+   "hints": [
+    "<code>strftime('%Y', order_date)</code>"
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "strftime"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "avgIf",
+   "prompt": "<b>qazaq.</b> ClickHouse-та: <code>SELECT avg(price) AS avg_all, avgIf(price, category = 'Спорт') AS avg_sport FROM products</code>. SQLite-та бір сұраумен жазыңыз, екеуін де бүтінге дейін <code>ROUND</code>.",
+   "starter": "",
+   "solution": "SELECT ROUND(AVG(price)) AS avg_all, ROUND(AVG(CASE WHEN category = 'Спорт' THEN price END)) AS avg_sport FROM products;",
+   "hints": [
+    "<code>CASE</code>-те <code>ELSE</code> жазбаңыз: шарт орындалмаса NULL шығады, ал <code>AVG</code> NULL-ды есепке алмайды.",
+    "<code>ELSE 0</code> жазсаңыз, нөлдер орташаны төмендетеді."
+   ],
+   "check": {
+    "mustInclude": [
+     "CASE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "toMonday: апталық топтау",
+   "prompt": "<b>qazaq.</b> ClickHouse-тағы <code>toMonday(order_date)</code> аптаның дүйсенбісін береді. SQLite-та ол: <code>date(order_date, 'weekday 0', '-6 days')</code>. 2026 жылғы мамырдағы <code>delivered</code> тапсырыстарды апта бойынша санаңыз: <code>week_start</code>, <code>orders</code>. Апта бойынша.",
+   "starter": "",
+   "solution": "SELECT date(order_date, 'weekday 0', '-6 days') AS week_start, COUNT(*) AS orders FROM orders WHERE status = 'delivered' AND order_date >= '2026-05-01' AND order_date < '2026-06-01' GROUP BY week_start ORDER BY week_start;",
+   "hints": [
+    "Мамыр: <code>order_date &gt;= '2026-05-01' AND order_date &lt; '2026-06-01'</code>.",
+    "1 мамыр — жұма, сондықтан бірінші апта сәуірдің 27-сінен басталады. Тапсырысы жоқ апта нәтижеде болмайды."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "weekday"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "countIf кестесі",
+   "prompt": "<b>qazaq.</b> ClickHouse-та: <code>countIf(status = 'delivered')</code>, <code>countIf(status = 'cancelled')</code>, <code>countIf(status = 'returned')</code>. 2026 жылдың әр айы үшін SQLite-та бір сұраумен: <code>month</code> (айдың бірінші күні), <code>delivered</code>, <code>cancelled</code>, <code>returned</code>. Ай бойынша.",
+   "starter": "",
+   "solution": "SELECT date(order_date, 'start of month') AS month, SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END) AS returned FROM orders WHERE order_date >= '2026-01-01' GROUP BY month ORDER BY month;",
+   "hints": [
+    "<code>countIf(шарт)</code> → <code>SUM(CASE WHEN шарт THEN 1 ELSE 0 END)</code>; үш баған — үш осындай өрнек.",
+    "Мұнда <code>ELSE 0</code> керек: тапсырысы жоқ статус NULL емес, 0 болып көрінсін."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "CASE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "uniqIf",
+   "prompt": "<b>qazaq.</b> ClickHouse-та: <code>uniqExactIf(customer_id, status = 'delivered')</code> және <code>uniqExactIf(customer_id, status = 'returned')</code>. Әр қала үшін SQLite-та: <code>city</code>, <code>buyers</code> (жеткізілген тапсырысы бар бірегей клиенттер), <code>returners</code> (қайтарған бірегей клиенттер). Қала бойынша.",
+   "starter": "",
+   "solution": "SELECT c.city, COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.customer_id END) AS buyers, COUNT(DISTINCT CASE WHEN o.status = 'returned' THEN o.customer_id END) AS returners FROM orders o JOIN customers c ON c.customer_id = o.customer_id GROUP BY c.city ORDER BY c.city;",
+   "hints": [
+    "<code>COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.customer_id END)</code>: шарт орындалмаса NULL, ал оны <code>COUNT</code> санамайды.",
+    "Мұнда <code>ELSE 0</code> қате: 0 бір «клиент» ретінде саналып кетеді."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "DISTINCT",
+     "CASE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "argMax: қаланың үздік клиенті",
+   "prompt": "<b>qazaq.</b> ClickHouse-та <code>argMax(customer_id, revenue)</code> ең үлкен <code>revenue</code>-ге сәйкес келетін <code>customer_id</code>-ді береді. SQLite-та терезе функциясымен жазыңыз: әр қаладағы <code>delivered</code> тапсырыстар бойынша ең көп жұмсаған клиент: <code>city</code>, <code>top_customer</code>, <code>revenue</code> (тең болса <code>customer_id</code>-і кішісі). Қала бойынша.",
+   "starter": "",
+   "solution": "WITH r AS (SELECT c.city, o.customer_id, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN customers c ON c.customer_id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.city, o.customer_id), t AS (SELECT city, customer_id, revenue, ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id) AS rn FROM r) SELECT city, customer_id AS top_customer, revenue FROM t WHERE rn = 1 ORDER BY city;",
+   "hints": [
+    "1-CTE: «қала × клиент» табысы. 2-CTE: <code>ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id)</code>.",
+    "Соңында <code>WHERE rn = 1</code>."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "PARTITION BY"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "runningDifference → LAG",
+   "prompt": "<b>qazaq.</b> ClickHouse-тағы <code>runningDifference(revenue)</code> (немесе <code>revenue - lagInFrame(revenue)</code>) алдыңғы жолдан айырманы береді. SQLite-та <code>LAG</code>-пен: 2026 жылғы <code>delivered</code> тапсырыстардың айлық табысы және алдыңғы аймен айырмасы: <code>month</code> (<code>'YYYY-MM'</code>), <code>revenue</code>, <code>diff</code> (бірінші айда NULL). Ай бойынша.",
+   "starter": "",
+   "solution": "WITH m AS (SELECT strftime('%Y-%m', o.order_date) AS month, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-01-01' GROUP BY month) SELECT month, revenue, revenue - LAG(revenue) OVER (ORDER BY month) AS diff FROM m ORDER BY month;",
+   "hints": [
+    "Алдымен CTE-де айлық табыс, сосын <code>revenue - LAG(revenue) OVER (ORDER BY month)</code>."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LAG"
+    ]
+   }
+  }
+ ],
+ "deng-mart": [
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Watermark",
+   "prompt": "<b>qazaq.</b> Инкременттік жүктеуге дейін watermark-ты табыңыз: витрина <code>delivered</code> тапсырыстардан жиналады, ал watermark — солардың ең соңғы күні. Баған: <code>watermark</code>.",
+   "starter": "",
+   "solution": "SELECT MAX(order_date) AS watermark FROM orders WHERE status = 'delivered';",
+   "hints": [
+    "<code>MAX(order_date)</code> тек <code>delivered</code> жолдар бойынша."
+   ],
+   "check": {
+    "mustInclude": [
+     "MAX"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Қала витринасы",
+   "prompt": "<b>qazaq.</b> <code>CREATE TABLE mart_city AS SELECT ...</code> арқылы витрина құрыңыз. Түйіршік: бір жол — бір қала, тек <code>delivered</code> тапсырыстар. Бағандар осы ретпен: <code>city</code>, <code>orders</code> (бірегей тапсырыстар), <code>revenue</code> (quantity × unit_price сомасы).",
+   "starter": "CREATE TABLE mart_city AS\nSELECT\n  \n",
+   "solution": "CREATE TABLE mart_city AS SELECT c.city, COUNT(DISTINCT o.order_id) AS orders, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' GROUP BY c.city;",
+   "hints": [
+    "Үш кесте: <code>orders</code>, <code>customers</code>, <code>order_items</code>; <code>GROUP BY c.city</code>.",
+    "JOIN жолдарды көбейтеді: <code>COUNT(DISTINCT o.order_id)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "CREATE TABLE"
+    ],
+    "after": "SELECT city, orders, revenue FROM mart_city ORDER BY city",
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Түйіршік кілтінің тексерісі",
+   "prompt": "<b>qazaq.</b> «Ай × санат» витринасын сақтамас бұрын кілтті тексеріңіз. Дайын <code>m</code> CTE-інің нәтижесі бойынша бір жол: <code>rows_cnt</code> (жол саны) және <code>keys_cnt</code> (бірегей <code>(month, category)</code> жұптарының саны). Екеуі тең болса, кілт бірегей.",
+   "starter": "WITH m AS (\n  SELECT strftime('%Y-%m', o.order_date) AS month, p.category,\n    SUM(oi.quantity * oi.unit_price) AS revenue\n  FROM orders o\n  JOIN order_items oi ON oi.order_id = o.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  WHERE o.status = 'delivered'\n  GROUP BY month, p.category\n)\nSELECT ",
+   "solution": "WITH m AS (SELECT strftime('%Y-%m', o.order_date) AS month, p.category, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.status = 'delivered' GROUP BY month, p.category) SELECT COUNT(*) AS rows_cnt, COUNT(DISTINCT month || '|' || category) AS keys_cnt FROM m;",
+   "hints": [
+    "Екі бағанды бір кілтке біріктіріңіз: <code>month || '|' || category</code>.",
+    "<code>COUNT(*)</code> және <code>COUNT(DISTINCT month || '|' || category)</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "DISTINCT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "SCD 2 бойынша JOIN",
+   "prompt": "<b>qazaq.</b> 7-клиент 2025 жылғы желтоқсанда Қарағандыдан Астанаға көшті; бұл <code>dim_city</code> SCD 2 кестесінде жазылған (стартерде). Оның <code>delivered</code> тапсырыстарын <b>сол кездегі</b> қаласымен шығарыңыз: <code>order_id</code>, <code>order_date</code>, <code>city</code>. <code>order_date</code>, <code>order_id</code> бойынша.",
+   "starter": "CREATE TABLE dim_city (customer_id INTEGER, city TEXT, valid_from TEXT, valid_to TEXT);\nINSERT INTO dim_city VALUES\n  (7, 'Қарағанды', '2025-01-01', '2025-11-30'),\n  (7, 'Астана', '2025-12-01', '9999-12-31');\n\nSELECT ",
+   "solution": "CREATE TABLE dim_city (customer_id INTEGER, city TEXT, valid_from TEXT, valid_to TEXT); INSERT INTO dim_city VALUES (7, 'Қарағанды', '2025-01-01', '2025-11-30'), (7, 'Астана', '2025-12-01', '9999-12-31'); SELECT o.order_id, o.order_date, d.city FROM orders o JOIN dim_city d ON d.customer_id = o.customer_id AND o.order_date BETWEEN d.valid_from AND d.valid_to WHERE o.customer_id = 7 AND o.status = 'delivered' ORDER BY o.order_date, o.order_id;",
+   "hints": [
+    "Сабақтағы шарт: <code>ON d.customer_id = o.customer_id AND o.order_date BETWEEN d.valid_from AND d.valid_to</code>.",
+    "Күн аралығы шартын ұмытсаңыз, әр тапсырыс екі рет шығады."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "BETWEEN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бірегей сандар қосылмайды",
+   "prompt": "<b>qazaq.</b> Айлық витринада <code>customers</code> = бірегей сатып алушылар. 2025 жылы (тек <code>delivered</code>) бір жолмен көрсетіңіз: <code>sum_monthly</code> — айлық бірегей сатып алушылар санының қосындысы, <code>year_distinct</code> — бүкіл жылдағы бірегей сатып алушылар. Олардың айырмасы — айлық витринадан жылдық клиент санын алуға болмайтынының дәлелі.",
+   "starter": "",
+   "solution": "WITH m AS (SELECT strftime('%Y-%m', order_date) AS month, COUNT(DISTINCT customer_id) AS customers FROM orders WHERE status = 'delivered' AND order_date >= '2025-01-01' AND order_date < '2026-01-01' GROUP BY month) SELECT (SELECT SUM(customers) FROM m) AS sum_monthly, (SELECT COUNT(DISTINCT customer_id) FROM orders WHERE status = 'delivered' AND order_date >= '2025-01-01' AND order_date < '2026-01-01') AS year_distinct;",
+   "hints": [
+    "CTE: айлық <code>COUNT(DISTINCT customer_id)</code>, сосын оның <code>SUM</code>-ы.",
+    "Жылдық сан шикі <code>orders</code> кестесінен бөлек subquery-мен есептеледі."
+   ],
+   "check": {
+    "mustInclude": [
+     "DISTINCT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Кешіккен дерекке lookback",
+   "prompt": "<b>qazaq.</b> Күндік витринаның watermark-ы — <code>2026-05-31</code>. Кешігіп келген деректі ұстау үшін соңғы 7 күн қайта есептеледі: <code>order_date &gt; date('2026-05-31', '-7 days')</code>. Жүктеуге керек жолдарды дайындаңыз (тек <code>delivered</code>): <code>order_date</code>, <code>orders</code>, <code>revenue</code>. <code>order_date</code> бойынша.",
+   "starter": "",
+   "solution": "SELECT o.order_date, COUNT(DISTINCT o.order_id) AS orders, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date > date('2026-05-31', '-7 days') GROUP BY o.order_date ORDER BY o.order_date;",
+   "hints": [
+    "<code>date('2026-05-31', '-7 days')</code> = <code>'2026-05-24'</code>; одан кейінгі күндер, watermark-тан кейінгілер де кіреді.",
+    "<code>GROUP BY o.order_date</code>, <code>COUNT(DISTINCT o.order_id)</code>."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Idempotent қайта жүктеу",
+   "prompt": "<b>qazaq.</b> Стартердегі <code>mart_daily</code> витринасы (күн, <code>delivered</code>) мамырдан бері жүктелген, бірақ маусымды жүктеу екі рет іске қосылып, маусымның жолдары екі еселенді. Стартердің кодын қалдырып, астына idempotent түзету жазыңыз: маусымның (<code>order_date &gt;= '2026-06-01'</code>) жолдарын <code>DELETE</code>-пен өшіріп, сол кезеңді <code>INSERT</code>-пен бір рет қайта жүктеңіз. Тексеріс витринаның соңғы күйін қарайды.",
+   "starter": "CREATE TABLE mart_daily (order_date TEXT, orders INTEGER, revenue INTEGER);\nINSERT INTO mart_daily SELECT o.order_date, COUNT(DISTINCT o.order_id), SUM(oi.quantity * oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-05-01' GROUP BY o.order_date;\nINSERT INTO mart_daily SELECT o.order_date, COUNT(DISTINCT o.order_id), SUM(oi.quantity * oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-06-01' GROUP BY o.order_date;\n",
+   "solution": "CREATE TABLE mart_daily (order_date TEXT, orders INTEGER, revenue INTEGER);\nINSERT INTO mart_daily SELECT o.order_date, COUNT(DISTINCT o.order_id), SUM(oi.quantity * oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-05-01' GROUP BY o.order_date;\nINSERT INTO mart_daily SELECT o.order_date, COUNT(DISTINCT o.order_id), SUM(oi.quantity * oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-06-01' GROUP BY o.order_date;\nDELETE FROM mart_daily WHERE order_date >= '2026-06-01';\nINSERT INTO mart_daily SELECT o.order_date, COUNT(DISTINCT o.order_id), SUM(oi.quantity * oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' AND o.order_date >= '2026-06-01' GROUP BY o.order_date;",
+   "hints": [
+    "Стартердегі бірінші <code>INSERT</code> мамыр мен маусымды, екіншісі маусымды тағы бір рет қосады.",
+    "<code>DELETE FROM mart_daily WHERE order_date &gt;= '2026-06-01';</code>, сосын екінші <code>INSERT</code>-тің көшірмесі."
+   ],
+   "check": {
+    "mustInclude": [
+     "DELETE",
+     "INSERT"
+    ],
+    "after": "SELECT order_date, orders, revenue FROM mart_daily ORDER BY order_date, orders, revenue",
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Өзгерістер журналынан SCD 2",
+   "prompt": "<b>qazaq.</b> Стартердегі <code>city_changes</code> кестесі клиенттің қаласы қай күні өзгергенін сақтайды. Одан SCD 2 өлшемін құрыңыз: <code>customer_id</code>, <code>city</code>, <code>valid_from</code> (= <code>changed_at</code>), <code>valid_to</code> (келесі өзгерістің алдындағы күн; соңғы жолда <code>'9999-12-31'</code>), <code>is_current</code> (соңғы жол 1, қалғаны 0). <code>customer_id</code>, <code>valid_from</code> бойынша.",
+   "starter": "CREATE TABLE city_changes (customer_id INTEGER, city TEXT, changed_at TEXT);\nINSERT INTO city_changes VALUES\n  (19, 'Тараз', '2025-05-15'),\n  (19, 'Алматы', '2026-03-01'),\n  (33, 'Шымкент', '2025-02-10'),\n  (33, 'Тараз', '2025-09-01'),\n  (33, 'Астана', '2026-04-15'),\n  (40, 'Алматы', '2025-01-20');\n\nSELECT ",
+   "solution": "CREATE TABLE city_changes (customer_id INTEGER, city TEXT, changed_at TEXT);\nINSERT INTO city_changes VALUES\n  (19, 'Тараз', '2025-05-15'),\n  (19, 'Алматы', '2026-03-01'),\n  (33, 'Шымкент', '2025-02-10'),\n  (33, 'Тараз', '2025-09-01'),\n  (33, 'Астана', '2026-04-15'),\n  (40, 'Алматы', '2025-01-20');\nSELECT customer_id, city, changed_at AS valid_from, COALESCE(date(LEAD(changed_at) OVER (PARTITION BY customer_id ORDER BY changed_at), '-1 day'), '9999-12-31') AS valid_to, CASE WHEN LEAD(changed_at) OVER (PARTITION BY customer_id ORDER BY changed_at) IS NULL THEN 1 ELSE 0 END AS is_current FROM city_changes ORDER BY customer_id, valid_from;",
+   "hints": [
+    "Келесі өзгеріс: <code>LEAD(changed_at) OVER (PARTITION BY customer_id ORDER BY changed_at)</code>; соңғы жолда ол NULL.",
+    "<code>COALESCE(date(LEAD(...), '-1 day'), '9999-12-31')</code>; <code>is_current</code> — <code>LEAD(...) IS NULL</code> болса 1."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LEAD"
+    ]
+   }
+  }
  ]
 });

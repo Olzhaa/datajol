@@ -1003,5 +1003,458 @@ DJ.addPractice('m2-2', {
     "tests": "assert outliers.tolist() == [9800], 'outliers [9800] болуы керек'\nassert abs(clean_mean - 2000.0) < 0.05, 'clean_mean 2000.0 болуы керек'"
    }
   }
+ ],
+ "pd-9": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Ең көп арна",
+   "prompt": "<p><code>customers</code> кестесіндегі <code>channel</code> бағанының әр мәні неше рет кездесетінін <code>value_counts</code> арқылы <code>counts</code>-қа жазыңыз. Ең жиі кездесетін арнаның атауын <code>top_channel</code>-ға жазыңыз.</p>",
+   "starter": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\n",
+   "solution": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\ncounts = customers['channel'].value_counts()\ntop_channel = counts.index[0]\nprint(counts)\nprint(top_channel)",
+   "hints": [
+    "<code>customers['channel'].value_counts()</code>",
+    "Нәтиже кему ретімен сұрыпталған: бірінші мәннің атауы — <code>counts.index[0]</code>."
+   ],
+   "check": {
+    "tests": "assert int(counts['instagram']) == 17 and int(counts['2gis']) == 15 and int(counts['referral']) == 8, 'counts дұрыс емес: customers[\\'channel\\'].value_counts()'\nassert top_channel == 'instagram', 'top_channel — ең жиі арнаның атауы (мәтін)'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Алматының үлесі",
+   "prompt": "<p><code>city</code> бағанындағы әр қаланың <b>үлесін</b> <code>share</code>-ге жазыңыз (<code>normalize=True</code>). Алматы клиенттерінің үлесін пайызбен, бір ондық таңбаға дейін дөңгелектеп, <code>almaty_pct</code>-ке жазыңыз.</p>",
+   "starter": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\n",
+   "solution": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\nshare = customers['city'].value_counts(normalize=True)\nalmaty_pct = round(share['Алматы'] * 100, 1)\nprint(share)\nprint(almaty_pct)",
+   "hints": [
+    "<code>customers['city'].value_counts(normalize=True)</code>",
+    "<code>round(share['Алматы'] * 100, 1)</code>"
+   ],
+   "check": {
+    "tests": "assert abs(float(share.sum()) - 1) < 1e-9, 'share үлестер болуы керек: normalize=True'\nassert abs(float(share['Астана']) - 0.45) < 1e-9, 'Астананың үлесі 0.45 болуы керек'\nassert abs(float(almaty_pct) - 42.5) < 1e-9, 'almaty_pct 42.5 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Сызықша мен бос жол",
+   "prompt": "<p><code>s</code> — қолмен толтырылған сомалар. Оны <code>pd.to_numeric</code> арқылы санға айналдырыңыз: санға айналмайтындар NaN болсын. Нәтиже — <code>nums</code>. Сандардың қосындысын <code>total</code>-ға, NaN мәндер санын <code>n_bad</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\n\ns = pd.Series(['2150', '—', '1850', '', '2400', 'жоқ'])\n\n",
+   "solution": "import pandas as pd\n\ns = pd.Series(['2150', '—', '1850', '', '2400', 'жоқ'])\n\nnums = pd.to_numeric(s, errors='coerce')\ntotal = nums.sum()\nn_bad = nums.isna().sum()\nprint(nums)\nprint(total, n_bad)",
+   "hints": [
+    "<code>pd.to_numeric(s, errors='coerce')</code>",
+    "<code>nums.sum()</code> NaN-ды өткізіп жібереді. NaN саны: <code>nums.isna().sum()</code>."
+   ],
+   "check": {
+    "tests": "assert len(nums) == 6, 'nums ішінде 6 мән болуы керек'\nassert float(total) == 6400, 'total 6400 болуы керек'\nassert int(n_bad) == 3, 'n_bad 3 болуы керек: сызықша, бос жол және «жоқ»'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Жаңа тапсырыстарды қосу",
+   "prompt": "<p>Кешке тағы екі тапсырыс келді (<code>new</code>). Оларды <code>orders</code> кестесінің астына <code>pd.concat</code> арқылы қосып, <code>all_orders</code>-қа жазыңыз. Индекс 0-ден бастап қайталанбай нөмірленсін.</p>",
+   "starter": "import pandas as pd\norders = pd.read_csv('orders.csv')\nnew = pd.DataFrame({'id': [1151, 1152], 'customer_id': [5, 12], 'order_date': ['2024-06-29', '2024-06-30'],\n                    'amount': [2300, 1950], 'status': ['paid', 'paid']})\n\n",
+   "solution": "import pandas as pd\norders = pd.read_csv('orders.csv')\nnew = pd.DataFrame({'id': [1151, 1152], 'customer_id': [5, 12], 'order_date': ['2024-06-29', '2024-06-30'],\n                    'amount': [2300, 1950], 'status': ['paid', 'paid']})\n\nall_orders = pd.concat([orders, new], ignore_index=True)\nprint(all_orders.tail())",
+   "hints": [
+    "Кестелер тізім ішінде: <code>pd.concat([orders, new])</code>.",
+    "<code>ignore_index=True</code> қосыңыз."
+   ],
+   "check": {
+    "tests": "assert len(all_orders) == 152, 'all_orders ішінде 150 + 2 = 152 жол болуы керек'\nassert list(all_orders.columns) == list(orders.columns), 'Бағандар өзгермеуі керек'\nassert list(all_orders.index) == list(range(152)), 'Индекс 0-ден қайта нөмірленуі керек: ignore_index=True'\nassert all_orders['id'].iloc[-1] == 1152 and all_orders['id'].iloc[0] == 1001, 'Алдымен orders, сосын new'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Қала есебін сақтау",
+   "prompt": "<p>Әр қаладағы клиенттер санын <code>report</code> кестесіне жинаңыз: <code>city</code> және <code>n</code> бағандары (<code>groupby('city').size().reset_index(name='n')</code>). Оны <code>city_report.csv</code> файлына <b>индекссіз</b> сақтап, файлды <code>back</code>-ке қайта оқыңыз.</p>",
+   "starter": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\nreport = customers.groupby('city').size().reset_index(name='n')\n",
+   "solution": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\n\nreport = customers.groupby('city').size().reset_index(name='n')\nreport.to_csv('city_report.csv', index=False)\nback = pd.read_csv('city_report.csv')\nprint(back)",
+   "hints": [
+    "<code>report.to_csv('city_report.csv', index=False)</code>",
+    "<code>back = pd.read_csv('city_report.csv')</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "to_csv"
+    ],
+    "tests": "import os as _os, pandas as _pd\ntry:\n    assert _os.path.exists('city_report.csv'), 'city_report.csv файлы жоқ: to_csv қолданыңыз'\n    _f = _pd.read_csv('city_report.csv')\n    assert list(_f.columns) == ['city', 'n'], 'Файлда тек city және n бағандары болуы керек: index=False'\n    assert sorted(_f['n'].tolist()) == [5, 17, 18], 'Клиенттер саны дұрыс емес'\n    assert list(back.columns) == ['city', 'n'] and len(back) == 3, 'back — файлдан қайта оқылған кесте: pd.read_csv'\nfinally:\n    if _os.path.exists('city_report.csv'):\n        _os.remove('city_report.csv')"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бос жауаптарды да санау",
+   "prompt": "<p><code>answers</code> — сауалнама жауаптары, кейбірі бос (<code>None</code>). Бос жауаптарды да қосып санап, <code>counts</code>-қа жазыңыз (<code>value_counts</code>). Бос емес жауаптардың санын <code>n_answered</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\n\nanswers = pd.Series(['иә', 'жоқ', None, 'иә', None, 'иә', 'жоқ'])\n\n",
+   "solution": "import pandas as pd\n\nanswers = pd.Series(['иә', 'жоқ', None, 'иә', None, 'иә', 'жоқ'])\n\ncounts = answers.value_counts(dropna=False)\nn_answered = answers.notna().sum()\nprint(counts)\nprint(n_answered)",
+   "hints": [
+    "Бос мәндер әдепкіде саналмайды: <code>value_counts(dropna=False)</code>.",
+    "<code>answers.notna().sum()</code> немесе <code>answers.value_counts().sum()</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "dropna=False"
+    ],
+    "tests": "assert len(counts) == 3 and int(counts.sum()) == 7, 'counts ішінде 3 мән (иә, жоқ, бос) және жалпы 7 болуы керек: dropna=False'\nassert int(counts['иә']) == 3, 'иә 3 рет кездеседі'\nassert int(n_answered) == 5, 'n_answered 5 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Екі филиалдың кестесі",
+   "prompt": "<p>Екі филиал сатылымын бөлек жіберді, <code>amount</code> — мәтін (бос орын, бос жол, «жоқ» бар). Кестелерді <code>pd.concat</code> арқылы <code>both</code>-қа индексті қайта нөмірлеп қосыңыз. <code>amount_num</code> бағанын қосыңыз: бос орындары алынып, <code>errors='coerce'</code> арқылы санға айналған сома. Сосын әр филиалдың сомасын <code>by_branch</code>-қа (<code>groupby</code>), NaN мәндер санын <code>n_bad</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\n\na = pd.DataFrame({'branch': ['Алматы', 'Алматы', 'Алматы'], 'amount': ['2 150', '1 850', 'жоқ']})\nb = pd.DataFrame({'branch': ['Астана', 'Астана', 'Астана'], 'amount': ['2400', '3 100', '']})\n\n",
+   "solution": "import pandas as pd\n\na = pd.DataFrame({'branch': ['Алматы', 'Алматы', 'Алматы'], 'amount': ['2 150', '1 850', 'жоқ']})\nb = pd.DataFrame({'branch': ['Астана', 'Астана', 'Астана'], 'amount': ['2400', '3 100', '']})\n\nboth = pd.concat([a, b], ignore_index=True)\nboth['amount_num'] = pd.to_numeric(both['amount'].str.replace(' ', ''), errors='coerce')\nby_branch = both.groupby('branch')['amount_num'].sum()\nn_bad = both['amount_num'].isna().sum()\nprint(both)\nprint(by_branch)\nprint(n_bad)",
+   "hints": [
+    "<code>pd.concat([a, b], ignore_index=True)</code>",
+    "<code>pd.to_numeric(both['amount'].str.replace(' ', ''), errors='coerce')</code>",
+    "<code>both.groupby('branch')['amount_num'].sum()</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "concat",
+     "to_numeric"
+    ],
+    "tests": "assert len(both) == 6 and list(both.index) == list(range(6)), 'both ішінде 6 жол, индекс 0-ден 5-ке дейін болуы керек'\nassert 'amount_num' in both.columns and str(both['amount_num'].dtype).startswith('float'), 'amount_num — сандық (float) баған болуы керек'\nassert float(by_branch['Алматы']) == 4000 and float(by_branch['Астана']) == 5500, 'by_branch дұрыс емес: бос орындарды алып тастадыңыз ба?'\nassert int(n_bad) == 2, 'n_bad 2 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Excel-ге арналған файл",
+   "prompt": "<p>Статусы <code>paid</code> және сомасы 3000 немесе одан көп тапсырыстарды <code>big</code> кестесіне сүзіңіз. Оны Excel-де дұрыс ашылатындай <code>big.csv</code> файлына сақтаңыз: индекссіз, бөлгіш — нүктелі үтір (<code>sep=';'</code>), кодтау — <code>utf-8-sig</code>. Сосын файлды дәл сол бөлгішпен <code>check</code>-ке қайта оқыңыз.</p>",
+   "starter": "import pandas as pd\norders = pd.read_csv('orders.csv')\n\n",
+   "solution": "import pandas as pd\norders = pd.read_csv('orders.csv')\n\nbig = orders[(orders['status'] == 'paid') & (orders['amount'] >= 3000)]\nbig.to_csv('big.csv', index=False, sep=';', encoding='utf-8-sig')\ncheck = pd.read_csv('big.csv', sep=';', encoding='utf-8-sig')\nprint(check.head())",
+   "hints": [
+    "Сүзгі: <code>(orders['status'] == 'paid') &amp; (orders['amount'] &gt;= 3000)</code>.",
+    "<code>big.to_csv('big.csv', index=False, sep=';', encoding='utf-8-sig')</code>",
+    "Оқығанда да бөлгішті көрсетіңіз: <code>pd.read_csv('big.csv', sep=';', encoding='utf-8-sig')</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "to_csv"
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nimport os as _os\ntry:\n    assert _os.path.exists('big.csv'), 'big.csv файлы жоқ: to_csv қолданыңыз'\n    _raw = open('big.csv', 'rb').read()\n    assert _raw[:3] == b'\\xef\\xbb\\xbf', 'Файл utf-8-sig кодтауымен сақталуы керек: encoding=\\'utf-8-sig\\''\n    assert _raw[3:].decode('utf-8').split('\\n')[0].strip() == 'id;customer_id;order_date;amount;status', 'Тақырып жолы id;customer_id;order_date;amount;status болуы керек: sep=\\';\\' және index=False'\n    _b = _o[(_o['status'] == 'paid') & (_o['amount'] >= 3000)]\n    assert len(big) == len(_b) == 26, 'big ішінде 26 жол болуы керек'\n    assert list(check.columns) == list(_o.columns) and len(check) == 26, 'check — файлдан sep=\\';\\' арқылы қайта оқылған кесте'\nfinally:\n    if _os.path.exists('big.csv'):\n        _os.remove('big.csv')"
+   }
+  }
+ ],
+ "pd-10": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Айдың қай күні",
+   "prompt": "<p><code>orders</code> кестесіне <code>dd</code> бағанын қосыңыз: <code>order_date</code>-ті <code>-</code> бойынша бөліп (<code>.str.split</code>), үшінші бөлігін (күнді, мәтін) алыңыз. Айдың бірінші күні (<code>'01'</code>) жасалған тапсырыстар санын <code>n_first</code>-ке жазыңыз.</p>",
+   "starter": "import pandas as pd\norders = pd.read_csv('orders.csv')\n\n",
+   "solution": "import pandas as pd\norders = pd.read_csv('orders.csv')\n\norders['dd'] = orders['order_date'].str.split('-').str[2]\nn_first = (orders['dd'] == '01').sum()\nprint(orders[['order_date', 'dd']].head())\nprint(n_first)",
+   "hints": [
+    "<code>orders['order_date'].str.split('-').str[2]</code>",
+    "<code>(orders['dd'] == '01').sum()</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "split"
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'dd' in orders.columns, 'dd бағаны жоқ'\nassert orders['dd'].tolist() == [d[8:10] for d in _o['order_date']], 'dd — күннің үшінші бөлігі: str.split(\\'-\\').str[2]'\nassert int(n_first) == 4, 'n_first 4 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Арна топтары",
+   "prompt": "<p><code>customers</code> кестесіне <code>source</code> бағанын қосыңыз: арна атауын <code>groups</code> сөздігі бойынша <code>map</code> арқылы топқа ауыстырыңыз. <code>карта</code> тобындағы клиенттер санын <code>n_map</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\ngroups = {'instagram': 'әлеуметтік желі', '2gis': 'карта', 'referral': 'ұсыныс'}\n\n",
+   "solution": "import pandas as pd\n\ncustomers = pd.read_csv('customers.csv')\ngroups = {'instagram': 'әлеуметтік желі', '2gis': 'карта', 'referral': 'ұсыныс'}\n\ncustomers['source'] = customers['channel'].map(groups)\nn_map = (customers['source'] == 'карта').sum()\nprint(customers['source'].value_counts())\nprint(n_map)",
+   "hints": [
+    "<code>customers['channel'].map(groups)</code>",
+    "<code>(customers['source'] == 'карта').sum()</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "map("
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'source' in customers.columns, 'source бағаны жоқ'\nassert customers['source'].tolist() == _c['channel'].map(groups).tolist(), 'source = channel бағанының groups бойынша map-ы'\nassert int(n_map) == 15, 'n_map 15 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жоғары және төмен күндер",
+   "prompt": "<p><code>daily</code> кестесіне <code>level</code> бағанын қосыңыз: табыс (<code>revenue</code>) 130 немесе одан көп болса <code>'жоғары'</code>, әйтпесе <code>'төмен'</code> (<code>np.where</code>). <code>жоғары</code> күндер санын <code>n_high</code>-қа жазыңыз.</p>",
+   "starter": "import numpy as np\nimport pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\n",
+   "solution": "import numpy as np\nimport pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\ndaily['level'] = np.where(daily['revenue'] >= 130, 'жоғары', 'төмен')\nn_high = (daily['level'] == 'жоғары').sum()\nprint(daily.head())\nprint(n_high)",
+   "hints": [
+    "<code>np.where(daily['revenue'] &gt;= 130, 'жоғары', 'төмен')</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "np.where"
+    ],
+    "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv')\nassert 'level' in daily.columns, 'level бағаны жоқ'\nassert list(daily['level']) == ['жоғары' if r >= 130 else 'төмен' for r in _d['revenue']], 'level: revenue >= 130 болса жоғары, әйтпесе төмен'\nassert int(n_high) == 11, 'n_high 11 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Табыс топтары",
+   "prompt": "<p><code>daily</code> кестесіне <code>band</code> бағанын қосыңыз: <code>pd.cut</code> арқылы табысты шекаралары <code>[0, 100, 150, 200]</code>, белгілері <code>low</code>, <code>mid</code>, <code>high</code> болатын аралықтарға бөліңіз. Әр белгідегі күндер санын <code>counts</code>-қа жазыңыз (<code>value_counts</code>).</p>",
+   "starter": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\n",
+   "solution": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\ndaily['band'] = pd.cut(daily['revenue'], bins=[0, 100, 150, 200], labels=['low', 'mid', 'high'])\ncounts = daily['band'].value_counts()\nprint(counts)",
+   "hints": [
+    "<code>pd.cut(daily['revenue'], bins=[0, 100, 150, 200], labels=['low', 'mid', 'high'])</code>",
+    "Оң жақ шекара аралыққа кіреді: 100 → <code>low</code>, 150 → <code>mid</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "pd.cut"
+    ],
+    "tests": "assert 'band' in daily.columns, 'band бағаны жоқ'\nassert [str(v) for v in daily['band']] == [('low' if r <= 100 else 'mid' if r <= 150 else 'high') for r in daily['revenue']], 'band: шекаралар [0, 100, 150, 200], белгілер low, mid, high'\nassert int(counts['low']) == 3 and int(counts['mid']) == 12 and int(counts['high']) == 5, 'counts = daily[\\'band\\'].value_counts()'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Табыс түскен күндер",
+   "prompt": "<p><code>ast</code> — Астананың күндік табысы, күн бойынша сұрыпталған. <code>diff</code> бағанын қосыңыз: бүгінгі табыс минус алдыңғы күннің табысы (<code>shift</code>). Табыс алдыңғы күнмен салыстырғанда түскен күндер санын <code>n_drop</code>-қа жазыңыз.</p>",
+   "starter": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\nast = daily[daily['region'] == 'Астана'].sort_values('day').copy()\n\n",
+   "solution": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\nast = daily[daily['region'] == 'Астана'].sort_values('day').copy()\n\nast['diff'] = ast['revenue'] - ast['revenue'].shift(1)\nn_drop = (ast['diff'] < 0).sum()\nprint(ast)\nprint(n_drop)",
+   "hints": [
+    "<code>ast['revenue'] - ast['revenue'].shift(1)</code>",
+    "Түскен күн — <code>diff</code> теріс: <code>(ast['diff'] &lt; 0).sum()</code>. Бірінші күннің NaN мәні саналмайды."
+   ],
+   "check": {
+    "mustInclude": [
+     "shift"
+    ],
+    "tests": "assert 'diff' in ast.columns and len(ast) == 10, 'ast ішінде 10 күн және diff бағаны болуы керек'\nassert ast['diff'].isna().sum() == 1 and ast['diff'].iloc[1:].tolist() == [5, 10, -20, 35, 10, -5, -15, 30, 10], 'diff = revenue - revenue.shift(1)'\nassert int(n_drop) == 3, 'n_drop 3 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Аймақ ішіндегі өсім",
+   "prompt": "<p><code>daily</code> кестесінде екі аймақ бар. Оны аймақ, сосын күн бойынша сұрыптаңыз. <code>growth</code> бағанын қосыңыз: алдыңғы күнге қатысты өзгеріс пайызбен (<code>pct_change() * 100</code>), бірақ әр аймақ ішінде бөлек (<code>groupby('region')</code>). Астананың бірінші күні Алматының соңғы күнімен салыстырылмауы керек.</p>",
+   "starter": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\n",
+   "solution": "import pandas as pd\n\ndaily = pd.read_csv('daily_sales.csv')\n\ndaily = daily.sort_values(['region', 'day'])\ndaily['growth'] = daily.groupby('region')['revenue'].pct_change() * 100\nprint(daily)",
+   "hints": [
+    "<code>daily.sort_values(['region', 'day'])</code>",
+    "<code>daily.groupby('region')['revenue'].pct_change() * 100</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "pct_change"
+    ],
+    "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv').sort_values(['region', 'day'])\n_g = _d.groupby('region')['revenue'].pct_change() * 100\nassert 'growth' in daily.columns, 'growth бағаны жоқ'\nassert daily['growth'].isna().sum() == 2, 'Әр аймақтың бірінші күні NaN болуы керек (барлығы 2): groupby(\\'region\\')'\nassert daily['region'].tolist() == _d['region'].tolist() and daily['day'].tolist() == _d['day'].tolist(), 'Кестені аймақ, сосын күн бойынша сұрыптаңыз'\nassert [round(float(v), 4) for v in daily['growth'].dropna()] == [round(float(v), 4) for v in _g.dropna()], 'growth = pct_change() * 100, әр аймақ ішінде'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Апталық тапсырыстар",
+   "prompt": "<p>Таза тапсырыстар (<code>clean</code>) берілген. <code>order_date</code>-ті күн типіне айналдырып, индекске қойыңыз да, <code>resample('W')</code> арқылы әр аптадағы тапсырыстар <b>санын</b> <code>weekly</code> Series-іне жазыңыз. Тапсырысы ең көп аптаның күнін (индекс мәні) <code>best_week</code>-ке, тапсырыссыз апталар санын <code>n_empty</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\norders = pd.read_csv('orders.csv')\nclean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\n\n",
+   "solution": "import pandas as pd\norders = pd.read_csv('orders.csv')\nclean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\n\nclean['order_date'] = pd.to_datetime(clean['order_date'])\nweekly = clean.set_index('order_date').resample('W')['id'].count()\nbest_week = weekly.idxmax()\nn_empty = (weekly == 0).sum()\nprint(weekly)\nprint(best_week, n_empty)",
+   "hints": [
+    "<code>clean.set_index('order_date').resample('W')['id'].count()</code>",
+    "<code>weekly.idxmax()</code> ең үлкен мәннің индексін береді.",
+    "resample бос апталарды 0-мен көрсетеді: <code>(weekly == 0).sum()</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "resample"
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_w = _clean.assign(order_date=_pd.to_datetime(_clean['order_date'])).set_index('order_date').resample('W')['id'].count()\nassert len(weekly) == len(_w), 'weekly ішіндегі апталар саны дұрыс емес: resample(\\'W\\')'\nassert [int(v) for v in weekly.values] == [int(v) for v in _w.values], 'Апталық сандар дұрыс емес: count() қолданыңыз'\nassert str(best_week)[:10] == str(_w.idxmax())[:10], 'best_week = weekly.idxmax()'\nassert int(n_empty) == int((_w == 0).sum()), 'n_empty: мәні 0 апталар саны'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Клиенттің «өмір» ұзақтығы",
+   "prompt": "<p>Таза тапсырыстар бойынша әр клиенттің бірінші және соңғы тапсырыс күнін табыңыз (<code>groupby('customer_id')['order_date'].agg(['min', 'max'])</code>, сосын <code>reset_index()</code>) және <code>life</code> кестесіне жазыңыз. Оған <code>days</code> бағанын қосыңыз: соңғы мен бірінші тапсырыс арасындағы күндер. Сосын <code>customers</code>-пен біріктіріп, әр қаланың орташа <code>days</code> мәнін бір ондық таңбаға дейін дөңгелектеп, <code>by_city</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv')\nclean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\n\n",
+   "solution": "import pandas as pd\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv')\nclean = orders[(orders['status'] == 'paid') & orders['amount'].notna() & (orders['amount'] < 20000)].copy()\n\nlife = clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()\nlife['days'] = (pd.to_datetime(life['max']) - pd.to_datetime(life['min'])).dt.days\ndf = life.merge(customers, left_on='customer_id', right_on='id')\nby_city = df.groupby('city')['days'].mean().round(1)\nprint(life.head())\nprint(by_city)",
+   "hints": [
+    "<code>clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()</code>",
+    "Мәтінді азайтуға болмайды: <code>(pd.to_datetime(life['max']) - pd.to_datetime(life['min'])).dt.days</code>.",
+    "<code>life.merge(customers, left_on='customer_id', right_on='id')</code>, сосын <code>groupby('city')['days'].mean().round(1)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     ".dt.days"
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_l = _clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()\n_l['days'] = (_pd.to_datetime(_l['max']) - _pd.to_datetime(_l['min'])).dt.days\nassert len(life) == 39 and 'days' in life.columns, 'life — бір клиентке бір жол (39 жол) және days бағаны'\nassert sorted(int(v) for v in life['days']) == sorted(int(v) for v in _l['days']), 'days = (max - min).dt.days; алдымен pd.to_datetime'\nassert {k: float(v) for k, v in by_city.items()} == {'Алматы': 36.8, 'Астана': 48.2, 'Шымкент': 48.8}, 'by_city дұрыс емес, сізде: ' + str(dict(by_city))"
+   }
+  }
+ ],
+ "pd-11": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "1-ден 12-ге дейінгі матрица",
+   "prompt": "<p><code>np.arange</code> арқылы 1-ден 12-ге дейінгі сандарды жасап, оларды 3 жол × 4 баған болатын <code>m</code> массивіне келтіріңіз (<code>reshape</code>). Оң жақ төменгі бұрыштағы элементті <code>corner</code>-ге, екінші бағанды (индексі 1) <code>col</code>-ға жазыңыз.</p>",
+   "starter": "import numpy as np\n\n",
+   "solution": "import numpy as np\n\nm = np.arange(1, 13).reshape(3, 4)\ncorner = m[2, 3]\ncol = m[:, 1]\nprint(m)\nprint(corner, col)",
+   "hints": [
+    "<code>np.arange(1, 13)</code>: соңғы шекара кірмейді.",
+    "<code>m[2, 3]</code> және <code>m[:, 1]</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "arange",
+     "reshape"
+    ],
+    "tests": "assert m.shape == (3, 4) and m.tolist()[0] == [1, 2, 3, 4], 'm: np.arange(1, 13).reshape(3, 4)'\nassert int(corner) == 12, 'corner = m[2, 3], 12 болуы керек'\nassert list(col) == [2, 6, 10], 'col = m[:, 1]'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Тең қадамды бағалар",
+   "prompt": "<p>Жаңа сусынның бағасын 1000-нан 2000 теңгеге дейін 5 нұсқада тексеру керек. <code>np.linspace</code> арқылы тең бөлінген 5 бағаны <code>prices</code>-ке жазыңыз (екі шеті де кірсін). Көрші екі бағаның айырмасын <code>step</code>-ке жазыңыз.</p>",
+   "starter": "import numpy as np\n\n",
+   "solution": "import numpy as np\n\nprices = np.linspace(1000, 2000, 5)\nstep = prices[1] - prices[0]\nprint(prices, step)",
+   "hints": [
+    "<code>np.linspace(1000, 2000, 5)</code>: үшінші аргумент — нүктелер саны.",
+    "<code>prices[1] - prices[0]</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "linspace"
+    ],
+    "tests": "assert len(prices) == 5 and list(prices) == [1000, 1250, 1500, 1750, 2000], 'prices: np.linspace(1000, 2000, 5)'\nassert float(step) == 250, 'step 250 болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Пән және оқушы бойынша орташа",
+   "prompt": "<p><code>scores</code> — үш оқушының (жолдар) үш пәннен (бағандар) алған ұпайы. Әр пәннің орташасын <code>by_subject</code>-ке, әр оқушының орташасын <code>by_student</code>-ке жазыңыз (<code>mean</code> және <code>axis</code>).</p>",
+   "starter": "import numpy as np\n\nscores = np.array([[80, 90, 70], [60, 75, 85], [100, 95, 90]])\n\n",
+   "solution": "import numpy as np\n\nscores = np.array([[80, 90, 70], [60, 75, 85], [100, 95, 90]])\n\nby_subject = scores.mean(axis=0)\nby_student = scores.mean(axis=1)\nprint(by_subject.round(1), by_student.round(1))",
+   "hints": [
+    "Пән — баған: <code>scores.mean(axis=0)</code>.",
+    "Оқушы — жол: <code>scores.mean(axis=1)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "axis=0",
+     "axis=1"
+    ],
+    "tests": "import numpy as _np\nassert _np.allclose(by_subject, [80, 260 / 3, 245 / 3]), 'by_subject: әр бағанның орташасы, axis=0'\nassert _np.allclose(by_student, [80, 220 / 3, 95]), 'by_student: әр жолдың орташасы, axis=1'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сан × баға",
+   "prompt": "<p><code>qty</code> — үш күнде (жолдар) төрт сусынның (бағандар) сатылған саны, <code>price</code> — төрт сусынның бағасы. Циклсіз, broadcasting арқылы әр ұяшықтың табысын <code>revenue</code> массивіне (пішіні 3 × 4) жазыңыз. Әр күннің жалпы табысын <code>by_day</code>-ге жазыңыз.</p>",
+   "starter": "import numpy as np\n\nqty = np.array([[12, 30, 8, 15], [10, 25, 6, 20], [14, 35, 9, 18]])\nprice = np.array([1450, 1100, 1700, 1350])\n\n",
+   "solution": "import numpy as np\n\nqty = np.array([[12, 30, 8, 15], [10, 25, 6, 20], [14, 35, 9, 18]])\nprice = np.array([1450, 1100, 1700, 1350])\n\nrevenue = qty * price\nby_day = revenue.sum(axis=1)\nprint(revenue)\nprint(by_day)",
+   "hints": [
+    "<code>(3, 4) * (4,)</code> — соңғы өлшемдері бірдей, сондықтан <code>qty * price</code> жұмыс істейді.",
+    "Күн — жол: <code>revenue.sum(axis=1)</code>."
+   ],
+   "check": {
+    "tests": "assert revenue.shape == (3, 4), 'revenue пішіні (3, 4) болуы керек'\nassert revenue[0].tolist() == [17400, 33000, 13600, 20250], 'revenue = qty * price: бірінші жол дұрыс емес'\nassert by_day.tolist() == [84250, 79200, 98400], 'by_day: әр жолдың қосындысы, axis=1, сізде: ' + str(by_day.tolist())"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Қайталанатын кездейсоқтық",
+   "prompt": "<p>Seed-і 7 болатын генератормен (<code>np.random.default_rng(7)</code>) орташасы 2500, шашырауы 300 болатын 500 чек сомасын жасап, <code>checks</code>-ке жазыңыз (<code>rng.normal</code>). 3000-нан жоғары чектер санын <code>n_big</code>-ке жазыңыз.</p>",
+   "starter": "import numpy as np\n\n",
+   "solution": "import numpy as np\n\nrng = np.random.default_rng(7)\nchecks = rng.normal(2500, 300, size=500)\nn_big = (checks > 3000).sum()\nprint(checks[:5].round())\nprint(checks.mean().round(1), n_big)",
+   "hints": [
+    "<code>rng = np.random.default_rng(7)</code>",
+    "<code>rng.normal(2500, 300, size=500)</code>, сосын <code>(checks &gt; 3000).sum()</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "default_rng(7)"
+    ],
+    "tests": "import numpy as _np\n_x = _np.random.default_rng(7).normal(2500, 300, size=500)\nassert len(checks) == 500, 'checks ішінде 500 сан болуы керек: size=500'\nassert _np.allclose(checks, _x), 'checks: seed 7 генераторының бірінші шақыруы rng.normal(2500, 300, size=500)'\nassert int(n_big) == int((_x > 3000).sum()), 'n_big = (checks > 3000).sum()'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бағандардың ауытқуы",
+   "prompt": "<p><code>m</code> — бес күндегі (жолдар) үш кофехананың (бағандар) табысы. Әр кофехананың стандартты ауытқуын іріктеме ретінде (<code>ddof=1</code>) <code>std_np</code>-ге жазыңыз (NumPy, <code>axis=0</code>). Сосын дәл осыны pandas-пен есептеңіз: <code>pd.DataFrame(m).std()</code> нәтижесін <code>std_pd</code>-ге жазыңыз. Екеуі тең болуы керек.</p>",
+   "starter": "import numpy as np\nimport pandas as pd\n\nm = np.array([[120, 90, 60], [135, 95, 70], [110, 105, 65], [160, 85, 80], [150, 120, 75]])\n\n",
+   "solution": "import numpy as np\nimport pandas as pd\n\nm = np.array([[120, 90, 60], [135, 95, 70], [110, 105, 65], [160, 85, 80], [150, 120, 75]])\n\nstd_np = m.std(axis=0, ddof=1)\nstd_pd = pd.DataFrame(m).std()\nprint(std_np.round(2))\nprint(std_pd.round(2))",
+   "hints": [
+    "<code>m.std(axis=0, ddof=1)</code>",
+    "pandas әдепкіде <code>ddof=1</code> қолданады."
+   ],
+   "check": {
+    "mustInclude": [
+     "ddof=1"
+    ],
+    "tests": "import numpy as _np\n_m = _np.array([[120, 90, 60], [135, 95, 70], [110, 105, 65], [160, 85, 80], [150, 120, 75]])\nassert len(std_np) == 3, 'std_np ішінде 3 мән болуы керек: axis=0'\nassert _np.allclose(std_np, _m.std(axis=0, ddof=1)), 'std_np = m.std(axis=0, ddof=1)'\nassert _np.allclose(_np.array(std_pd, dtype=float), std_np), 'std_pd = pd.DataFrame(m).std(), ол std_np-ге тең болуы керек'"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Өз орташасынан ауытқу",
+   "prompt": "<p><code>m</code> — үш қаланың (жолдар) төрт апталық (бағандар) сатылымы. Әр мәннен <b>өз жолының</b> орташасын азайтып, <code>centered</code> массивін жасаңыз (пішіні 3 × 4, әр жолдың қосындысы 0). Сосын әр қалада өз орташасынан жоғары болған апталар санын <code>above</code>-ке жазыңыз (пішіні (3,)).</p>",
+   "starter": "import numpy as np\n\nm = np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\n\n",
+   "solution": "import numpy as np\n\nm = np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\n\ncentered = m - m.mean(axis=1, keepdims=True)\nabove = (centered > 0).sum(axis=1)\nprint(centered)\nprint(above)",
+   "hints": [
+    "Жол орташаларының пішіні (3,): оны (3, 1) ету керек. <code>m.mean(axis=1, keepdims=True)</code>",
+    "<code>(centered &gt; 0)</code> — True/False массиві, оны жол бойынша қосыңыз: <code>.sum(axis=1)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "keepdims"
+    ],
+    "tests": "import numpy as _np\n_m = _np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\nassert centered.shape == (3, 4), 'centered пішіні (3, 4) болуы керек'\nassert _np.allclose(centered, _m - _m.mean(axis=1, keepdims=True)), 'centered: әр жолдан сол жолдың орташасын азайтыңыз (keepdims=True)'\nassert list(above) == [2, 2, 2], 'above: әр жолдағы оң мәндер саны, axis=1, сізде: ' + str(list(above))"
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Бағандар бойынша z-ұпай",
+   "prompt": "<p><code>X</code> — алты тапсырыс (жолдар) және екі белгі (бағандар): сома және тауар саны. Әр бағанды стандарттаңыз: <code>z = (X - бағанның орташасы) / бағанның стандартты ауытқуы</code>, ауытқу іріктеме бойынша (<code>ddof=1</code>). Нәтиже — <code>z</code> (пішіні 6 × 2). Модулі 1.5-тен үлкен (<code>(z &gt; 1.5) | (z &lt; -1.5)</code>) мәндер санын <code>n_extreme</code>-ке жазыңыз.</p>",
+   "starter": "import numpy as np\n\nX = np.array([[2150, 2], [2250, 3], [2550, 3], [2050, 1], [3100, 5], [1850, 2]])\n\n",
+   "solution": "import numpy as np\n\nX = np.array([[2150, 2], [2250, 3], [2550, 3], [2050, 1], [3100, 5], [1850, 2]])\n\nz = (X - X.mean(axis=0)) / X.std(axis=0, ddof=1)\nn_extreme = ((z > 1.5) | (z < -1.5)).sum()\nprint(z.round(2))\nprint(n_extreme)",
+   "hints": [
+    "Бағанның орташасы мен ауытқуы: <code>X.mean(axis=0)</code>, <code>X.std(axis=0, ddof=1)</code>. Екеуінің де пішіні (2,), сондықтан (6, 2)-ге бірден созылады.",
+    "<code>((z &gt; 1.5) | (z &lt; -1.5)).sum()</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "ddof=1"
+    ],
+    "tests": "import numpy as _np\n_X = _np.array([[2150, 2], [2250, 3], [2550, 3], [2050, 1], [3100, 5], [1850, 2]])\n_z = (_X - _X.mean(axis=0)) / _X.std(axis=0, ddof=1)\nassert z.shape == (6, 2), 'z пішіні (6, 2) болуы керек'\nassert _np.allclose(z.mean(axis=0), 0), 'Әр бағанның орташасы 0 болуы керек: X.mean(axis=0)-ны азайтыңыз'\nassert _np.allclose(z, _z), 'z дұрыс емес: ауытқу ddof=1 және axis=0 бойынша'\nassert int(n_extreme) == int(((_z > 1.5) | (_z < -1.5)).sum()), 'n_extreme дұрыс емес'"
+   }
+  }
  ]
 });

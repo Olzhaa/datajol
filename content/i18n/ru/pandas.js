@@ -38,11 +38,11 @@ orders.describe()   # статистика числовых столбцов</co
 <li><code>df.info()</code>: у каждого столбца правильный тип? Если сумма имеет тип <code>object</code> (текст), значит, в ней есть нечисловые символы.</li>
 <li><code>df.describe()</code>: правдоподобны ли минимальные и максимальные значения?</li>
 </ol>
-<p>Это pandas-версия профилирования (profiling) из уроков SQL. Двухминутная проверка потом избавляет от часов поиска ошибок.</p>
+<p>Такой первый просмотр данных называют <b>profiling</b> (профилирование); подробно вы изучите его позже, в модуле «Cleaning &amp; EDA». Двухминутная проверка потом избавляет от часов поиска ошибок.</p>
 <h3>Частые ошибки</h3>
 <ul>
 <li><b>Другой разделитель</b>: европейские файлы Excel используют не запятую, а точку с запятой. Тогда пишите <code>pd.read_csv('file.csv', sep=';')</code>.</li>
-<li><b>Кодировка</b>: если кириллица превратилась в «кракозябры», попробуйте <code>encoding='utf-8'</code> или <code>encoding='cp1251'</code>.</li>
+<li><b>Кодировка</b>: если кириллица превратилась в непонятные символы, попробуйте <code>encoding='utf-8'</code> или <code>encoding='cp1251'</code>.</li>
 <li><b>Даты остались текстом</b>: <code>pd.read_csv(..., parse_dates=['order_date'])</code> сразу превращает их в тип даты.</li>
 </ul>`,
         ex: [
@@ -88,6 +88,7 @@ orders['is_big'] = orders['amount'] &gt; 3000</code></pre>
 <pre><code>orders['amount_k'] = orders['amount'] / 1000
 orders['month'] = orders['order_date'].str[:7]        # '2024-03-05' → '2024-03'
 orders['size'] = orders['amount'].apply(lambda x: 'big' if x &gt; 3000 else 'small')</code></pre>
+<p><code>lambda x: ...</code> в третьей строке — безымянная функция в одну строку: «возьми <code>x</code> и верни значение выражения после двоеточия». <code>.apply</code> по очереди применяет её к каждому значению столбца. Здесь для каждой суммы получается <code>'big'</code> или <code>'small'</code>.</p>
 <p><code>.str[:7]</code> берёт первые 7 символов текста (как срез в Python). <code>order_date</code> читается из CSV как текст, поэтому это работает.</p>
 <h3>Пример: вход → код → результат</h3>
 <table>
@@ -198,7 +199,8 @@ orders.groupby('customer_id').agg(
 orders.dropna(subset=['amount'])     # убрать строки с пустым amount
 orders['amount'].fillna(0)           # заполнить пропуски нулём (осторожно!)
 orders.drop_duplicates()             # повторяющиеся строки
-orders['amount'].astype(int)         # сменить тип</code></pre>
+orders['amount'].astype(int)         # сменить тип (при пустом значении выдаст ошибку)</code></pre>
+<p>Применяйте <code>astype(int)</code> только <b>после</b> <code>dropna</code> или <code>fillna</code>. Пустое значение (<code>NaN</code>) не превращается в целое число: даже если в столбце остался всего один NaN, pandas выдаст ошибку <code>IntCastingNaNError</code>. По этой причине числовой столбец с пустыми значениями по умолчанию читается как <code>float</code>.</p>
 <h3>Выбросы (outliers)</h3>
 <pre><code>q1, q3 = orders['amount'].quantile([0.25, 0.75])
 iqr = q3 - q1
@@ -335,7 +337,7 @@ a.mean(), np.median(a), a.std()
 a * 1.12                         # сразу к каждому элементу (векторизация)
 a[a &lt; 20000]                     # фильтрация через маску
 np.where(a &gt; 3000, 'big', 'small')</code></pre>
-<p>Медиана не чувствительна к выбросу (48000), а среднее чувствительно. Это вы знаете из модуля статистики.</p>
+<p>Медиана не чувствительна к выбросу (48000), а среднее чувствительно. Это вы знаете из урока «Среднее, медиана, мода» модуля M0.2.</p>
 <div class="tip">Цикл Python на миллионе строк работает медленно. Операции NumPy/pandas выполняются на языке C, поэтому они в сотни раз быстрее.</div>
 <h3>Пример векторизации</h3>
 <p>Чтобы прибавить НДС к списку Python, нужен цикл:</p>
@@ -357,13 +359,221 @@ with_vat = [p * 1.12 for p in prices]</code></pre>
           { prompt: 'Что возвращает <code>np.where(a &gt; 3000, \'big\', \'small\')</code>?', options: ['Индексы элементов больше 3000', 'Массив из строк \'big\' или \'small\' для каждого элемента', 'Массив True/False', 'Одну строку'], explain: 'np.where с тремя аргументами — векторизованный IF: если условие истинно, берётся первое значение, иначе второе.' }
         ]
       },
+      'pd-9': {
+        title: 'value_counts, concat и файлы',
+        body: `
+<p>В этом уроке вы изучите четыре небольших, но очень частых действия повседневной работы: подсчёт значений, соединение таблиц по вертикали, сохранение результата в файл и превращение «грязного» текста в число.</p>
+<h3>value_counts: подсчёт значений</h3>
+<p>Самый быстрый способ познакомиться с категориальным столбцом — посчитать, сколько раз встречается каждое значение. Это <code>GROUP BY status</code> + <code>COUNT(*)</code> + <code>ORDER BY ... DESC</code> из SQL, только одним методом:</p>
+<pre><code>orders['status'].value_counts()
+# paid      146
+# refund      4
+
+orders['status'].value_counts(normalize=True)
+# paid      0.973333
+# refund    0.026667</code></pre>
+<p><code>normalize=True</code> вместо количества даёт <b>долю</b> (в сумме 1). Для процентов умножьте на 100: <code>(... * 100).round(1)</code>. Результат — Series: в индексе значения, внутри числа. Получить конкретное значение: <code>counts['refund']</code>.</p>
+<p>По умолчанию пустые значения не считаются. Чтобы увидеть и их, напишите <code>value_counts(dropna=False)</code>.</p>
+<h3>pd.concat: соединение таблиц по вертикали</h3>
+<p>Данные часто приходят в отдельных файлах: по файлу на каждый месяц. Поставить таблицы с одинаковыми столбцами одну под другой позволяет <code>pd.concat</code> (в SQL это <code>UNION ALL</code>):</p>
+<pre><code>jan = pd.DataFrame({'id': [1, 2], 'amount': [2400, 2750]})
+feb = pd.DataFrame({'id': [3], 'amount': [2600]})
+
+both = pd.concat([jan, feb], ignore_index=True)
+#    id  amount
+# 0   1    2400
+# 1   2    2750
+# 2   3    2600</code></pre>
+<p><code>ignore_index=True</code> заново нумерует индекс с 0. Без него индекс повторялся бы: <code>0, 1, 0</code>. Таблицы передаются списком: <code>pd.concat([a, b, c])</code>.</p>
+<table>
+<tr><th>Действие</th><th>Что делает</th><th>SQL</th></tr>
+<tr><td><code>pd.concat([a, b])</code></td><td>добавляет строки снизу</td><td><code>UNION ALL</code></td></tr>
+<tr><td><code>a.merge(b, on=...)</code></td><td>присоединяет столбцы по ключу</td><td><code>JOIN</code></td></tr>
+</table>
+<p>Если названия столбцов не совпадают (<code>amount</code> и <code>Amount</code>), concat создаст два отдельных столбца и заполнит пустые места значениями NaN. Перед соединением сравните <code>df.columns</code>.</p>
+<h3>Сохранение результата: to_csv</h3>
+<pre><code>paid.to_csv('paid.csv', index=False)</code></pre>
+<p><code>index=False</code> важен: без него pandas запишет индекс отдельным столбцом, и при повторном чтении файла появится лишний столбец <code>Unnamed: 0</code>. Для файла, который будут открывать в Excel: <code>to_csv('paid.csv', index=False, sep=';', encoding='utf-8-sig')</code>. Тогда столбцы разделятся правильно, а казахские буквы не испортятся.</p>
+<h3>Файлы Excel: read_excel</h3>
+<p>Коллеги чаще всего присылают данные в виде <code>.xlsx</code>. Читается он почти как CSV:</p>
+<pre><code>df = pd.read_excel('report.xlsx', sheet_name='Сатылым')   # один лист
+df = pd.read_excel('report.xlsx', sheet_name=0, skiprows=2)  # первый лист, пропустить 2 верхние строки
+df.to_excel('result.xlsx', index=False)</code></pre>
+<p><code>sheet_name</code> — название листа или его номер (с 0). В отчётных таблицах над заголовком бывают пустые строки и название, их пропускает <code>skiprows</code>. На своём компьютере для этого нужен пакет <code>openpyxl</code> (<code>pip install openpyxl</code>). В этой браузерной среде его нет, поэтому здесь задания выполняются с CSV.</p>
+<h3>Превращение текста в число: to_numeric</h3>
+<p>Если столбец суммы прочитался как <code>object</code> (текст), в нём есть нечисловые символы: пробел, «тг», «жоқ» («нет»).</p>
+<pre><code>raw = pd.Series(['12 500', '8000', 'abc', None])
+
+pd.to_numeric(raw)                          # ValueError: '12 500' не превращается в число
+clean = raw.str.replace(' ', '')            # '12500', '8000', 'abc', None
+pd.to_numeric(clean, errors='coerce')       # 12500.0, 8000.0, NaN, NaN</code></pre>
+<p><code>errors='coerce'</code> заменяет значение, которое не превращается в число, на <code>NaN</code>, не выдавая ошибку. После этого обязательно посмотрите через <code>.isna().sum()</code>, сколько значений потерялось: если много, правило очистки нужно улучшить.</p>
+<div class="tip">Для дат есть точно такой же метод: <code>pd.to_datetime(s, errors='coerce')</code> превращает непонятную дату в <code>NaT</code>.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Написать <code>pd.concat(a, b)</code>.</b> Таблицы нужно передавать в списке: <code>pd.concat([a, b])</code>.</li>
+<li><b>Забыть <code>ignore_index</code>.</b> Индекс повторяется, и <code>.loc[0]</code> возвращает несколько строк.</li>
+<li><b>Написать <code>to_csv</code> без <code>index=False</code>.</b> В файле появляется лишний столбец.</li>
+<li><b>Не посчитать NaN после <code>errors='coerce'</code>.</b> Ошибочные значения молча теряются, а сумма уменьшается.</li>
+<li><b>Применить value_counts к DataFrame и ждать один столбец.</b> Сначала выберите столбец: <code>df['status'].value_counts()</code>.</li>
+</ul>`,
+        ex: [
+          { prompt: 'Запишите <b>долю</b> каждого значения столбца <code>status</code> в Series <code>share</code> (<code>value_counts</code> и <code>normalize=True</code>). Затем запишите в <code>refund_pct</code> долю возвращённых заказов в процентах, округлив до одного знака после запятой.', check: { tests: REF + "_s = _o['status'].value_counts(normalize=True)\nassert abs(float(share.sum()) - 1) < 1e-9, 'share должен содержать доли: вы добавили normalize=True?'\nassert abs(float(share['paid']) - float(_s['paid'])) < 1e-9, 'Доля paid неверна'\nassert abs(float(refund_pct) - round(float(_s['refund']) * 100, 1)) < 1e-9, 'refund_pct = share[\\'refund\\'] * 100, с округлением до одного знака после запятой'" }, hints: ["<code>orders['status'].value_counts(normalize=True)</code>", "<code>round(share['refund'] * 100, 1)</code>"] },
+          { prompt: 'Заказы января и февраля лежат в двух отдельных таблицах (<code>jan</code>, <code>feb</code>). Соедините их через <code>pd.concat</code> в одну таблицу <code>both</code>. Индекс должен быть пронумерован с 0 без повторов.', check: { tests: "assert len(both) == len(jan) + len(feb), 'В both должны быть все строки обеих таблиц'\nassert list(both.columns) == list(orders.columns), 'Столбцы не должны меняться'\nassert list(both.index) == list(range(len(both))), 'Индекс должен быть заново пронумерован с 0: ignore_index=True'\nassert set(both['order_date'].str[:7]) == {'2024-01', '2024-02'}, 'Должны быть только январь и февраль'" }, hints: ['Передайте таблицы в списке: <code>pd.concat([jan, feb])</code>.', 'Добавьте <code>ignore_index=True</code>.'] },
+          { prompt: '<code>raw</code> — суммы, которые пришли в виде текста. Уберите пробелы и превратите их в числа через <code>pd.to_numeric</code>: результат — <code>nums</code>. Значения, которые не превращаются в число, должны стать NaN. Запишите в <code>bad</code>, сколько значений стало NaN.', check: { tests: "assert len(nums) == 7, 'В nums должно быть 7 значений (не удаляйте строки)'\nassert str(nums.dtype).startswith('float'), 'nums должен быть числовым (float): pd.to_numeric'\nassert float(nums.sum()) == 37200.0, 'Сумма чисел должна быть 37200: вы убрали пробелы?'\nassert int(bad) == 3, 'bad = nums.isna().sum(), должно быть 3'" }, hints: ["Убрать пробел: <code>raw.str.replace(' ', '')</code>.", "<code>pd.to_numeric(..., errors='coerce')</code>", '<code>nums.isna().sum()</code>'] },
+          { prompt: 'Отфильтруйте заказы со статусом <code>refund</code> в таблицу <code>refunds</code> и сохраните её в файл <code>refunds.csv</code> <b>без индекса</b>. Затем прочитайте этот файл обратно в переменную <code>check</code>.', check: { tests: REF + "import os as _os\ntry:\n    assert _os.path.exists('refunds.csv'), 'Файла refunds.csv нет: используйте to_csv'\n    _f = _pd.read_csv('refunds.csv')\n    assert list(_f.columns) == list(_o.columns), 'В файле лишний столбец: добавьте index=False'\n    assert len(_f) == int((_o['status'] == 'refund').sum()), 'В файле должны быть только заказы refund'\n    assert set(_f['status']) == {'refund'}, 'В файле должны быть только заказы refund'\n    assert list(check.columns) == list(_o.columns) and len(check) == len(_f), 'check — таблица, заново прочитанная из файла: pd.read_csv'\nfinally:\n    if _os.path.exists('refunds.csv'):\n        _os.remove('refunds.csv')" }, hints: ["<code>refunds.to_csv('refunds.csv', index=False)</code>", "<code>check = pd.read_csv('refunds.csv')</code>"] },
+          { prompt: 'Коллега прислал файл <code>report.xlsx</code>: данные на листе «Сатылым», а над названиями столбцов стоят 2 строки с пустым местом и заголовком. Как вы его прочитаете?', options: ["pd.read_csv('report.xlsx')", "pd.read_excel('report.xlsx', sheet_name='Сатылым', skiprows=2)", "pd.read_excel('report.xlsx', index=False)", "pd.concat('report.xlsx')"], explain: 'read_excel выбирает лист через sheet_name, а skiprows пропускает лишние верхние строки. read_csv не может прочитать файл Excel: xlsx — это не текст, а архив.' }
+        ]
+      },
+      'pd-10': {
+        title: 'Текст, условные столбцы и временной ряд',
+        body: `
+<p>Большая часть анализа — это создание <b>нового столбца</b> из существующих: извлечь признак из текста, разбить числа на группы, сравнить с предыдущим днём. В этом уроке собраны основные инструменты для этого.</p>
+<h3>Текст: методы .str</h3>
+<pre><code>customers['channel'].str.contains('gram')        # True/False: есть ли внутри 'gram'
+customers['city'].str.replace('Астана', 'Astana')  # замена
+orders['order_date'].str.split('-')              # ['2024', '03', '05']
+orders['order_date'].str.split('-').str[1]       # '03' (месяц)
+orders['order_date'].str.split('-', expand=True) # три отдельных столбца</code></pre>
+<p><code>.str.contains</code> возвращает маску True/False, поэтому её можно сразу подставить в фильтр: <code>customers[customers['channel'].str.contains('gram')]</code>. В SQL это <code>LIKE '%gram%'</code>. Если в столбце есть пустые значения, добавьте <code>na=False</code>, иначе в маске появится NaN и фильтр выдаст ошибку.</p>
+<h3>map: замена значений по словарю</h3>
+<pre><code>regions = {'Алматы': 'Оңтүстік', 'Шымкент': 'Оңтүстік', 'Астана': 'Солтүстік'}   # 'Оңтүстік' = юг, 'Солтүстік' = север
+customers['region'] = customers['city'].map(regions)</code></pre>
+<p>Каждый город получает из словаря свой регион. Значение, которого нет в словаре, становится <code>NaN</code>: после map проверьте <code>.isna().sum()</code>. Это простой вариант XLOOKUP из Excel или JOIN с небольшой таблицей-справочником.</p>
+<h3>np.where: условие с двумя вариантами</h3>
+<pre><code>import numpy as np
+orders['size'] = np.where(orders['amount'] &gt;= 3000, 'big', 'small')</code></pre>
+<p><code>np.where(условие, если истина, если ложь)</code> — векторизованный IF, в SQL это <code>CASE WHEN ... THEN ... ELSE ... END</code>. Он короче и намного быстрее, чем <code>.apply(lambda ...)</code>. Осторожно: для пустой суммы условие ложно, поэтому она попадёт в <code>'small'</code>. Сначала уберите пустые значения.</p>
+<h3>pd.cut: разбиение чисел на интервалы</h3>
+<p>Когда нужно больше двух групп, удобен <code>pd.cut</code>:</p>
+<pre><code>clean['bucket'] = pd.cut(clean['amount'],
+                         bins=[0, 2000, 3000, 20000],
+                         labels=['low', 'mid', 'high'])</code></pre>
+<table>
+<tr><th>Интервал</th><th>Метка</th><th>Пример</th></tr>
+<tr><td>0 &lt; amount ≤ 2000</td><td>low</td><td>1850, 2000</td></tr>
+<tr><td>2000 &lt; amount ≤ 3000</td><td>mid</td><td>2150, 3000</td></tr>
+<tr><td>3000 &lt; amount ≤ 20000</td><td>high</td><td>3100</td></tr>
+</table>
+<p>4 границы дают 3 интервала, поэтому меток на одну меньше, чем границ. По умолчанию правая граница <b>входит</b> в интервал (2000 → low). Значение за пределами границ становится NaN.</p>
+<h3>shift и pct_change: сравнение с предыдущей строкой</h3>
+<p>Чтобы ответить на вопрос «на сколько выросло по сравнению со вчера?», рядом с каждой строкой нужно поставить значение предыдущей строки. <code>shift(1)</code> сдвигает столбец на одну строку вниз:</p>
+<pre><code>alm['prev'] = alm['revenue'].shift(1)
+alm['diff'] = alm['revenue'] - alm['prev']
+alm['growth'] = alm['revenue'].pct_change() * 100</code></pre>
+<table>
+<tr><th>day</th><th>revenue</th><th>prev</th><th>diff</th><th>growth</th></tr>
+<tr><td>2024-09-01</td><td>120</td><td>NaN</td><td>NaN</td><td>NaN</td></tr>
+<tr><td>2024-09-02</td><td>135</td><td>120</td><td>15</td><td>12.5</td></tr>
+<tr><td>2024-09-03</td><td>110</td><td>135</td><td>−25</td><td>−18.5</td></tr>
+</table>
+<p><code>pct_change()</code> — готовая форма формулы <code>(новое − старое) / старое</code>. В первой строке предыдущего значения нет, поэтому там NaN. Два правила: сначала <b>отсортируйте</b> по дате и, если в одной таблице несколько регионов, не смешивайте их: <code>daily.groupby('region')['revenue'].pct_change()</code>.</p>
+<h3>resample: группировка по времени</h3>
+<p>Если дата имеет настоящий тип даты, её можно поставить в индекс и свернуть до любого периода:</p>
+<pre><code>clean['order_date'] = pd.to_datetime(clean['order_date'])
+monthly = clean.set_index('order_date').resample('MS')['amount'].sum()
+# 2024-01-01    31950
+# 2024-02-01    ...</code></pre>
+<p><code>'MS'</code> — месяц (метка — первый день месяца), <code>'W'</code> — неделя, <code>'D'</code> — день. Отличие от groupby по <code>.str[:7]</code>: resample показывает и период без заказов (с нулём), то есть во временном ряду не остаётся «дыр».</p>
+<h3>Разница дат</h3>
+<pre><code>df['days'] = (df['order_date'] - df['signup_date']).dt.days</code></pre>
+<p>Если вычесть один столбец дат из другого, получится интервал времени (Timedelta), а <code>.dt.days</code> берёт из него число дней. Оба столбца сначала должны пройти через <code>pd.to_datetime</code>: текст вычитать нельзя.</p>
+<div class="tip">Каждый раз, создав новый столбец, проверяйте его через <code>value_counts()</code> или <code>describe()</code>: разумно ли число групп, нет ли неожиданных NaN?</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Делать shift без сортировки.</b> «Предыдущей строкой» окажется случайный день.</li>
+<li><b>Смешивать несколько групп.</b> Первый день Астаны сравнивается с последним днём Алматы. Используйте <code>groupby</code>.</li>
+<li><b>Неверное число меток в pd.cut.</b> Меток должно быть на одну меньше, чем границ, иначе <code>ValueError</code>.</li>
+<li><b>resample по текстовому столбцу.</b> Сначала <code>pd.to_datetime</code>, потом <code>set_index</code>.</li>
+<li><b>Не заметить NaN после map.</b> Города, которых нет в словаре, молча остаются пустыми.</li>
+</ul>`,
+        ex: [
+          { prompt: 'Добавьте в таблицу <code>customers</code> два столбца: <code>region</code> — регион города (по словарю <code>regions</code>, через <code>map</code>) и <code>is_social</code> — <code>True</code>, если в названии канала есть <code>gram</code> (<code>.str.contains</code>).', check: { tests: REF + "assert 'region' in customers.columns, 'Нет столбца region'\nassert customers['region'].tolist() == _c['city'].map(regions).tolist(), 'region = map столбца city по словарю regions'\nassert 'is_social' in customers.columns, 'Нет столбца is_social'\nassert [bool(v) for v in customers['is_social']] == [v == 'instagram' for v in _c['channel']], 'is_social: строки, где в channel есть gram, должны быть True'" }, hints: ["<code>customers['city'].map(regions)</code>", "<code>customers['channel'].str.contains('gram')</code>"] },
+          { prompt: 'Даны чистые заказы (<code>clean</code>). Добавьте два столбца: <code>size</code> — <code>\'big\'</code>, если сумма 3000 или больше, иначе <code>\'small\'</code> (<code>np.where</code>); <code>bucket</code> — через <code>pd.cut</code> с границами <code>[0, 2000, 3000, 20000]</code> и метками <code>low</code>, <code>mid</code>, <code>high</code>.', check: { tests: REF + "assert 'size' in clean.columns and 'bucket' in clean.columns, 'Нужны столбцы size и bucket'\nassert len(clean) == len(_clean), 'Не меняйте строки таблицы clean'\nassert list(clean['size']) == ['big' if a >= 3000 else 'small' for a in _clean['amount']], 'size: big, если сумма >= 3000, иначе small'\n_b = _pd.cut(_clean['amount'], bins=[0, 2000, 3000, 20000], labels=['low', 'mid', 'high'])\nassert [str(v) for v in clean['bucket']] == [str(v) for v in _b], 'bucket: границы [0, 2000, 3000, 20000], метки low, mid, high'" }, hints: ["<code>np.where(clean['amount'] &gt;= 3000, 'big', 'small')</code>", "<code>pd.cut(clean['amount'], bins=[0, 2000, 3000, 20000], labels=['low', 'mid', 'high'])</code>"] },
+          { prompt: '<code>alm</code> — дневная выручка Алматы, отсортированная по дате. Добавьте два столбца: <code>prev</code> — выручка предыдущего дня (<code>shift</code>) и <code>growth</code> — изменение относительно предыдущего дня <b>в процентах</b> (<code>pct_change</code>). Запишите в <code>best_day</code> день (текст), когда рост был наибольшим.', check: { tests: "import pandas as _pd\n_a = _pd.read_csv('daily_sales.csv')\n_a = _a[_a['region'] == 'Алматы'].sort_values('day')\n_g = _a['revenue'].pct_change() * 100\nassert 'prev' in alm.columns and 'growth' in alm.columns, 'Нужны столбцы prev и growth'\nassert len(alm) == 10, 'В alm должно быть 10 дней'\nassert alm['prev'].isna().sum() == 1 and alm['prev'].iloc[1:].tolist() == _a['revenue'].iloc[:-1].tolist(), 'prev = revenue.shift(1)'\nassert alm['growth'].isna().sum() == 1, 'growth первого дня должен быть NaN'\nassert [round(float(v), 4) for v in alm['growth'].iloc[1:]] == [round(float(v), 4) for v in _g.iloc[1:]], 'growth = pct_change() * 100 (в процентах)'\nassert str(best_day)[:10] == str(_a.loc[_g.idxmax(), 'day']), 'best_day: значение day в строке с наибольшим growth (idxmax)'" }, hints: ["<code>alm['revenue'].shift(1)</code>", "<code>alm['revenue'].pct_change() * 100</code>", "<code>alm.loc[alm['growth'].idxmax(), 'day']</code>"] },
+          { prompt: 'Посчитайте месячную выручку по чистым заказам через <code>resample</code> и запишите её в Series <code>monthly</code>. Сначала приведите <code>order_date</code> к типу даты и поставьте в индекс.', check: { tests: REF + "_m = _clean.groupby(_clean['order_date'].str[:7])['amount'].sum()\nassert len(monthly) == len(_m), 'В monthly должно быть 6 месяцев'\nassert [round(float(v)) for v in monthly.values] == [round(float(v)) for v in _m.values], 'Месячные суммы неверны: sum() по столбцу amount'\nassert str(monthly.index[0])[:7] == '2024-01', 'Индекс должен иметь тип даты: pd.to_datetime, затем set_index'" }, hints: ["<code>clean['order_date'] = pd.to_datetime(clean['order_date'])</code>", "<code>clean.set_index('order_date').resample('MS')['amount'].sum()</code>"] },
+          { prompt: '<code>df</code> — чистые заказы, объединённые с данными клиентов. Добавьте столбец <code>days</code>: число дней от регистрации клиента (<code>signup_date</code>) до заказа (<code>order_date</code>). Затем запишите в <code>same_day</code> число заказов, сделанных прямо в день регистрации (0 дней).', check: { tests: REF + "_d = _clean.merge(_c, left_on='customer_id', right_on='id')\n_days = (_pd.to_datetime(_d['order_date']) - _pd.to_datetime(_d['signup_date'])).dt.days\nassert 'days' in df.columns, 'Нет столбца days'\nassert [int(v) for v in df['days']] == [int(v) for v in _days], 'days = (order_date - signup_date).dt.days; сначала pd.to_datetime'\nassert int(same_day) == int((_days == 0).sum()), 'same_day: число строк, где days == 0'" }, hints: ["Превратите оба столбца в даты: <code>pd.to_datetime(df['order_date'])</code>.", "<code>(d2 - d1).dt.days</code>", "<code>(df['days'] == 0).sum()</code>"] }
+        ]
+      },
+      'pd-11': {
+        title: 'NumPy: 2D-массив, axis и broadcasting',
+        body: `
+<p>В уроке pd-8 вы познакомились с одномерным массивом. Реальные данные чаще всего <b>двумерные</b>: строки и столбцы. Внутри DataFrame лежит именно такой 2D-массив, и библиотеки машинного обучения (scikit-learn) принимают данные в этом виде. Поэтому понимать <code>shape</code>, <code>axis</code> и broadcasting обязательно.</p>
+<h3>shape и reshape</h3>
+<p>Продажи трёх городов за четыре недели даны одним рядом:</p>
+<pre><code>import numpy as np
+
+sales = np.array([120, 135, 110, 160,    # Алматы
+                   90,  95, 105,  85,    # Астана
+                   60,  70,  65,  80])   # Шымкент
+print(sales.shape)        # (12,)  — одно измерение, 12 элементов
+
+m = sales.reshape(3, 4)   # 3 строки (города), 4 столбца (недели)
+print(m.shape)            # (3, 4)
+print(m[0, 1])            # 135: строка 0, столбец 1
+print(m[1])               # [ 90  95 105  85]: строка Астаны
+print(m[:, 0])            # [120  90  60]: столбец первой недели</code></pre>
+<p><code>shape</code> — это <code>(строки, столбцы)</code>. <code>reshape</code> не меняет элементы, а только переставляет их, поэтому число элементов должно совпадать: 3 × 4 = 12. Если одно измерение записать как <code>-1</code>, NumPy вычислит его сам: <code>sales.reshape(3, -1)</code>.</p>
+<h3>axis: в каком направлении считаем?</h3>
+<table>
+<tr><th>Запись</th><th>Что делает</th><th>Результат</th></tr>
+<tr><td><code>m.sum()</code></td><td>складывает всё</td><td>1175</td></tr>
+<tr><td><code>m.sum(axis=0)</code></td><td>идёт вниз вдоль строк и складывает каждый <b>столбец</b></td><td><code>[270 300 280 325]</code> — сумма каждой недели</td></tr>
+<tr><td><code>m.sum(axis=1)</code></td><td>идёт вправо вдоль столбцов и складывает каждую <b>строку</b></td><td><code>[525 375 275]</code> — сумма каждого города</td></tr>
+</table>
+<p>Как запомнить: <code>axis</code> — это измерение, которое <b>исчезает</b>. Если применить <code>axis=0</code> к массиву <code>(3, 4)</code>, исчезает 3 и остаётся 4 значения. При <code>axis=1</code> исчезает 4 и остаётся 3 значения. <code>mean</code>, <code>max</code>, <code>min</code>, <code>std</code> работают так же. И в pandas то же самое: <code>df.sum(axis=1)</code> даёт сумму каждой строки.</p>
+<h3>Broadcasting</h3>
+<p>При операциях с массивами разной формы NumPy «растягивает» меньший до большего. Это называют broadcasting.</p>
+<pre><code>m * 1.12                      # каждый элемент × 1.12 (число растягивается на весь массив)
+
+week_total = m.sum(axis=0)    # shape (4,)
+share = m / week_total        # (3, 4) / (4,) → каждая строка делится на 4 значения
+print(share[:, 0])            # [0.444 0.333 0.222]: доли городов на 1-й неделе</code></pre>
+<p>Правило: формы сравниваются <b>справа</b>. Если измерения равны или одно из них равно 1, операция выполняется. <code>(3, 4)</code> и <code>(4,)</code> совместимы: последние измерения одинаковы. А <code>(3, 4)</code> и <code>(3,)</code> несовместимы: 4 ≠ 3.</p>
+<pre><code>city_total = m.sum(axis=1)                    # shape (3,)
+m / city_total                                # ValueError: формы несовместимы
+m / city_total.reshape(3, 1)                  # (3, 4) / (3, 1) → работает
+m / m.sum(axis=1, keepdims=True)              # то же самое, короткая запись</code></pre>
+<h3>Создание массива: arange, linspace, random</h3>
+<pre><code>np.arange(0, 10, 2)        # [0 2 4 6 8]            с шагом, конец не входит
+np.linspace(0, 1, 5)       # [0. 0.25 0.5 0.75 1.]  5 равноотстоящих точек, конец входит
+np.zeros((2, 3))           # массив 2 × 3 из нулей
+
+rng = np.random.default_rng(42)
+rng.integers(1, 7, size=5)       # 5 целых чисел от 1 до 6
+rng.normal(2500, 400, size=3)    # 3 числа со средним 2500 и разбросом 400</code></pre>
+<p><code>42</code> — это <b>seed</b> (начальное значение). При одинаковом seed «случайные» числа получаются одинаковыми при каждом запуске. Это нужно для воспроизводимости результата (reproducibility): коллега запустит ваш код и получит те же самые числа. Без seed результат каждый раз другой.</p>
+<h3>Стандартное отклонение: NumPy и pandas</h3>
+<p>На одних и тех же данных две библиотеки дают два разных числа:</p>
+<pre><code>a = np.array([2150, 2250, 2550, 2050, 3100])
+a.std()                 # 378.9  (делит на n,   ddof=0)
+a.std(ddof=1)           # 423.7  (делит на n−1, ddof=1)
+pd.Series(a).std()      # 423.7  (в pandas по умолчанию ddof=1)</code></pre>
+<p><code>ddof=0</code> считает, что в данных <b>вся генеральная совокупность</b>. <code>ddof=1</code> считает, что данные — <b>выборка</b> из большей совокупности, и уменьшает делитель на единицу. У аналитика данные обычно являются выборкой, поэтому чаще используют <code>ddof=1</code>. Главное — знать, какой вариант вы взяли: если числа в двух отчётах не сходятся, это первый подозреваемый.</p>
+<div class="tip">Если возникла ошибка, первый шаг — <code>print(a.shape)</code>. Большинство ошибок NumPy возникает из-за того, что форма не такая, как вы ожидали.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Понимать axis наоборот.</b> <code>axis=0</code> не «складывает строки», а идёт вдоль строк и даёт одно значение на каждый столбец.</li>
+<li><b>Число элементов в reshape не совпадает.</b> 12 элементов нельзя привести к <code>(5, 2)</code>.</li>
+<li><b>Делить <code>(3, 4)</code> на <code>(3,)</code>.</b> Для деления по строкам нужен <code>keepdims=True</code> или <code>reshape(3, 1)</code>.</li>
+<li><b>Путать arange и linspace.</b> В arange третий аргумент — шаг, в linspace — число точек.</li>
+<li><b>Не задать seed.</b> Завтра вы не сможете повторить результат.</li>
+</ul>`,
+        ex: [
+          { prompt: '<code>sales</code> — продажи трёх городов (Алматы, Астана, Шымкент) за четыре недели одним рядом. Приведите его к массиву <code>m</code> из 3 строк × 4 столбцов. Затем запишите общую сумму каждого города в <code>by_city</code>, а общую сумму каждой недели — в <code>by_week</code>.', check: { tests: "assert m.shape == (3, 4), 'Форма m должна быть (3, 4): sales.reshape(3, 4)'\nassert m[1].tolist() == [90, 95, 105, 85], 'Вторая строка m должна быть продажами Астаны'\nassert list(by_city) == [525, 375, 275], 'by_city: сумма каждой строки, axis=1'\nassert list(by_week) == [270, 300, 280, 325], 'by_week: сумма каждого столбца, axis=0'" }, hints: ['<code>sales.reshape(3, 4)</code>', 'Каждый город — одна строка: <code>m.sum(axis=1)</code>. Каждая неделя — один столбец: <code>m.sum(axis=0)</code>.'] },
+          { prompt: 'Дан массив <code>m</code> (строки — города, столбцы — недели). С помощью broadcasting посчитайте массив <code>share</code>: долю каждого города в общих продажах <b>той же недели</b> (сумма каждого столбца должна быть 1). Затем запишите в <code>row_share</code> доли недель в общих продажах <b>своего</b> города (сумма каждой строки равна 1).', check: { tests: "import numpy as _np\n_m = _np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\nassert share.shape == (3, 4), 'Форма share должна быть (3, 4)'\nassert _np.allclose(share, _m / _m.sum(axis=0)), 'share = m / m.sum(axis=0): сумма каждого столбца равна 1'\nassert row_share.shape == (3, 4), 'Форма row_share должна быть (3, 4)'\nassert _np.allclose(row_share, _m / _m.sum(axis=1, keepdims=True)), 'row_share: разделите m на суммы строк (keepdims=True или reshape(3, 1))'" }, hints: ['Суммы недель: <code>m.sum(axis=0)</code>, форма (4,). <code>m / m.sum(axis=0)</code> работает сразу.', 'Форма сумм по строкам — (3,): её нужно сделать (3, 1). <code>m.sum(axis=1, keepdims=True)</code>'] },
+          { prompt: '<code>a</code> — суммы пяти чеков. Посчитайте стандартное отклонение двумя способами: <code>std_pop</code> — для генеральной совокупности (по умолчанию в NumPy, <code>ddof=0</code>), <code>std_sample</code> — для выборки (<code>ddof=1</code>). Затем запишите в <code>std_pd</code> значение <code>.std()</code>, которое pandas даёт по умолчанию.', check: { tests: "assert abs(float(std_pop) - 378.946) < 0.01, 'std_pop = a.std() (ddof=0)'\nassert abs(float(std_sample) - 423.674) < 0.01, 'std_sample = a.std(ddof=1)'\nassert abs(float(std_pd) - float(std_sample)) < 1e-6, 'std_pd = pd.Series(a).std(): он должен быть равен std_sample'" }, hints: ['<code>a.std()</code> и <code>a.std(ddof=1)</code>', '<code>pd.Series(a).std()</code>'] },
+          { prompt: 'Создайте три массива: <code>ids</code> — целые числа от 1001 до 1010 (<code>np.arange</code>); <code>grid</code> — 5 равноотстоящих точек от 0 до 1 (<code>np.linspace</code>); <code>dice</code> — 1000 случайных целых чисел от 1 до 6 из генератора с seed 42 (<code>rng.integers</code>).', check: { tests: "import numpy as _np\nassert list(ids) == list(range(1001, 1011)), 'ids: np.arange(1001, 1011) — последняя граница не входит'\nassert _np.allclose(grid, [0, 0.25, 0.5, 0.75, 1]), 'grid: np.linspace(0, 1, 5)'\nassert len(dice) == 1000, 'В dice должно быть 1000 чисел: size=1000'\nassert dice.min() >= 1 and dice.max() <= 6, 'Значения dice должны быть от 1 до 6: rng.integers(1, 7, ...)'\nassert (dice == _np.random.default_rng(42).integers(1, 7, size=1000)).all(), 'dice: создайте rng с seed 42 и первым же вызовом напишите rng.integers(1, 7, size=1000)'" }, hints: ['<code>np.arange(1001, 1011)</code>: чтобы 1010 вошло, граница — 1011.', '<code>np.linspace(0, 1, 5)</code>', '<code>rng.integers(1, 7, size=1000)</code>: верхняя граница не входит.'] },
+          { prompt: 'Форма массива <code>X</code> — <code>(150, 5)</code>: 150 заказов, 5 числовых столбцов. Какую форму имеет результат <code>X.mean(axis=0)</code> и что он означает?', options: ['(150,): среднее каждого заказа', '(5,): среднее каждого столбца', '(150, 5): не меняется', '(): одно число'], explain: 'axis=0 — измерение, которое исчезает: идём вдоль 150 строк, и на каждый столбец остаётся одно значение. Результат — (5,). При axis=1 получилось бы (150,).' }
+        ]
+      },
       'pd-gate': {
         title: 'Экзамен модуля: pandas',
         body: `<p>Итоговые задания: фильтрация, очистка, объединение и группировка в одном анализе.</p>`,
         ex: [
           { prompt: 'Как в pandas записать SQL-выражение <code>COUNT(DISTINCT customer_id)</code>?', explain: 'nunique() даёт число уникальных значений, а count() считает все непустые значения.' },
           { prompt: 'Почему <code>df[df[\'a\'] &gt; 1 and df[\'b\'] &lt; 5]</code> выдаёт ошибку?', options: ['Нет таких столбцов', 'Для Series нужен не and, а &amp;, и условия должны быть в скобках', 'and работает только с числами', 'Ошибки не будет'], explain: 'Правильно: df[(df[\'a\'] &gt; 1) &amp; (df[\'b\'] &lt; 5)].' },
-          { prompt: 'По каждому городу (<code>city</code>) посчитайте на чистых заказах <code>customers</code> (уникальные клиенты), <code>revenue</code> и <code>aov</code> (revenue / число заказов, округлённое до целого) и создайте DataFrame <code>report</code>. <code>city</code> должен быть обычным столбцом, сортировка — по выручке по убыванию.', check: { tests: REF + "_d = _clean.merge(_c, left_on='customer_id', right_on='id')\n_r = _d.groupby('city').agg(customers=('customer_id', 'nunique'), revenue=('amount', 'sum'), n=('amount', 'count')).reset_index().sort_values('revenue', ascending=False)\nassert 'city' in report.columns, 'city должен быть обычным столбцом'\nassert {'customers', 'revenue', 'aov'} <= set(report.columns), 'Нужны столбцы customers, revenue, aov'\nassert report['city'].tolist() == _r['city'].tolist(), 'Неверный порядок городов'\nassert report['customers'].tolist() == _r['customers'].tolist(), 'customers: используйте nunique'\nassert report['revenue'].round().tolist() == _r['revenue'].round().tolist(), 'revenue неверно: вы взяли чистые заказы?'\nassert [round(float(a)) for a in report['aov']] == [round(r / n) for r, n in zip(_r['revenue'], _r['n'])], 'aov = revenue / число заказов'" } }
+          { prompt: 'Правило чистого заказа (как в уроке pd-5): <code>status == \'paid\'</code>, <code>amount</code> не пустой и меньше 20 000. По каждому городу (<code>city</code>) посчитайте на чистых заказах <code>customers</code> (уникальные клиенты), <code>revenue</code> и <code>aov</code> (revenue / число заказов, округлённое до целого) и создайте DataFrame <code>report</code>. <code>city</code> должен быть обычным столбцом, сортировка — по выручке по убыванию.', check: { tests: REF + "_d = _clean.merge(_c, left_on='customer_id', right_on='id')\n_r = _d.groupby('city').agg(customers=('customer_id', 'nunique'), revenue=('amount', 'sum'), n=('amount', 'count')).reset_index().sort_values('revenue', ascending=False)\nassert 'city' in report.columns, 'city должен быть обычным столбцом'\nassert {'customers', 'revenue', 'aov'} <= set(report.columns), 'Нужны столбцы customers, revenue, aov'\nassert report['city'].tolist() == _r['city'].tolist(), 'Неверный порядок городов'\nassert report['customers'].tolist() == _r['customers'].tolist(), 'customers: используйте nunique'\nassert report['revenue'].round().tolist() == _r['revenue'].round().tolist(), 'revenue неверно: вы взяли чистые заказы?'\nassert [round(float(a)) for a in report['aov']] == [round(r / n) for r, n in zip(_r['revenue'], _r['n'])], 'aov = revenue / число заказов'" } }
         ]
       }
     }

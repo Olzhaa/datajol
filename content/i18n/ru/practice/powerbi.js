@@ -248,5 +248,73 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "pbi-9": {
+  "pr": [
+   {
+    "title": "SUM и AVERAGE",
+    "prompt": "Повторите в SQL меры <code>Revenue = SUM(orders[amount])</code> и <code>Avg Check = AVERAGE(orders[amount])</code>. По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000) одна строка: <code>revenue</code>, <code>avg_check</code> (<code>ROUND</code> до целого).",
+    "hints": [
+     "<code>SUM(o.amount)</code> и <code>ROUND(AVG(o.amount))</code>. Ответ: 334 850 и 2 409."
+    ]
+   },
+   {
+    "title": "COUNTROWS(FILTER(...))",
+    "prompt": "Посчитайте в SQL меру <code>Big Orders = COUNTROWS(FILTER(orders, orders[amount] &gt;= 3000))</code>: по чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000) — число заказов на сумму от 3 000. Столбец: <code>big_orders</code>.",
+    "hints": [
+     "<code>FILTER</code> → <code>WHERE</code>, <code>COUNTROWS</code> → <code>COUNT(*)</code>.",
+     "Добавьте к условию очистки <code>AND o.amount &gt;= 3000</code>."
+    ]
+   },
+   {
+    "title": "MAXX и MINX по каналам",
+    "prompt": "Что покажут <code>MAXX(orders, orders[amount])</code> и <code>MINX(orders, orders[amount])</code> в строках матрицы по каналу (<code>customers[channel]</code>)? По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000): <code>channel</code>, <code>max_amount</code>, <code>min_amount</code>.",
+    "hints": [
+     "Канал хранится в <code>customers</code>, поэтому нужен <code>JOIN</code> (как <code>RELATED</code>).",
+     "<code>MAX(o.amount)</code>, <code>MIN(o.amount)</code>, <code>GROUP BY c.channel</code>."
+    ]
+   },
+   {
+    "title": "Net Revenue по каналам",
+    "prompt": "Какие числа покажет мера <code>Net Revenue</code> из урока (referral × 0.90, 2gis × 0.95, остальные × 1) в матрице по каналам? По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000): <code>channel</code>, <code>revenue</code>, <code>net_revenue</code> (<code>ROUND</code> до целого).",
+    "hints": [
+     "<code>SWITCH</code> → <code>CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END</code>",
+     "Строка матрицы = <code>GROUP BY c.channel</code>. Сумма <code>net_revenue</code> по трём строкам должна быть 320 465."
+    ]
+   },
+   {
+    "title": "Крупные клиенты по городам",
+    "prompt": "<pre><code>Big Customers =\nVAR Threshold = 10000\nRETURN COUNTROWS(FILTER(VALUES(orders[customer_id]), [Revenue] &gt;= Threshold))</code></pre>Что покажет эта мера в матрице по городам? По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000): <code>city</code>, <code>big_customers</code> (число клиентов с чистой выручкой от 10 000 ₸).",
+    "hints": [
+     "<code>VALUES(orders[customer_id])</code> + <code>[Revenue]</code> → в CTE <code>GROUP BY c.id, c.city</code>.",
+     "<code>COUNTROWS(FILTER(...))</code> → <code>SUM(CASE WHEN spent &gt;= 10000 THEN 1 ELSE 0 END)</code>, <code>GROUP BY city</code>."
+    ],
+    "starter": "WITH per AS (\n  -- [Revenue] для каждого клиента\n  \n)\nSELECT "
+   },
+   {
+    "title": "Share of All %",
+    "prompt": "Посчитайте меру <code>Share of All % = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))</code> для матрицы по городам без slicer. По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000): <code>city</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 знак).",
+    "hints": [
+     "Знаменатель <code>ALL</code> — выручка всех городов: <code>SUM(SUM(o.amount)) OVER ()</code> или подзапрос.",
+     "<code>ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1)</code>"
+    ]
+   },
+   {
+    "title": "ALLSELECTED: два города в slicer",
+    "prompt": "В slicer выбраны Астана и Шымкент. Что покажет <code>Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code> в матрице? По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000), только выбранные города: <code>city</code>, <code>revenue</code>, <code>share_selected</code> (%, 1 знак).",
+    "hints": [
+     "Slicer — это <code>WHERE c.city IN ('Астана', 'Шымкент')</code>: он влияет и на знаменатель.",
+     "После фильтра <code>SUM(SUM(o.amount)) OVER ()</code> складывает только два видимых города. Сумма процентов должна быть 100."
+    ]
+   },
+   {
+    "title": "Среднее за месяц: AVERAGEX(VALUES(month))",
+    "prompt": "<pre><code>Avg Monthly Revenue =\nAVERAGEX(VALUES('Date'[Month]), [Revenue])</code></pre>Что покажет эта мера в матрице по городам? По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000): <code>city</code>, <code>months</code> (число месяцев с продажами), <code>avg_monthly</code> (среднее месячных выручек, <code>ROUND</code> до целого). Месяц: <code>substr(order_date, 1, 7)</code>.",
+    "hints": [
+     "Шаг 1 (<code>VALUES</code> + <code>[Revenue]</code>): выручка каждой пары «город × месяц», <code>GROUP BY c.city, month</code>.",
+     "Шаг 2 (<code>AVERAGEX</code>): <code>SELECT city, COUNT(*), ROUND(AVG(revenue)) FROM m GROUP BY city</code>."
+    ]
+   }
+  ]
  }
 } });

@@ -1039,5 +1039,140 @@ DJ.addPractice('m3-2', {
     "tests": "_m = {\"алматы\": \"Алматы\", \"almaty\": \"Алматы\", \"астана\": \"Астана\", \"astana\": \"Астана\"}\n_t = \"name,city,amount\\nА,алматы,1\\nБ,Алматы,2\\nВ, Nur-Sultan ,3\\nГ,Алмата,4\\nД,ASTANA,5\\nЕ,Nur-Sultan,6\"\n_r = unknown_cities(_t, _m)\nassert _r == sorted([\"Nur-Sultan\", \"Алмата\"]), f\"Жаңа нұсқалар: Nur-Sultan, Алмата; сізде {_r}\""
    }
   }
+ ],
+ "cl-9": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бос мәндердің үлесі",
+   "prompt": "<p><code>missing_pct(df)</code> функциясы бос мәні бар бағандар үшін ғана <code>{баған: бос_мәндер_пайызы}</code> сөздігін қайтарсын (пайыз 1 таңбаға дейін <code>round</code>). <code>orders.csv</code> үшін нәтиже <code>{'amount': 4.0}</code>.</p>",
+   "starter": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef missing_pct(df):\n    pass\n\nprint(missing_pct(df))\n",
+   "solution": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef missing_pct(df):\n    na = df.isna().sum()\n    return {c: round(float(n) * 100 / len(df), 1) for c, n in na.items() if n > 0}\n\nprint(missing_pct(df))\n",
+   "hints": [
+    "<code>df.isna().sum()</code> әр бағандағы бос мәндер санын береді, оны <code>len(df)</code>-ке бөліңіз.",
+    "<code>.items()</code> арқылы айналып, нөлден үлкендерін ғана қалдырыңыз."
+   ],
+   "check": {
+    "tests": "import pandas as _pd\nassert missing_pct(_pd.read_csv('orders.csv')) == {'amount': 4.0}, f\"orders.csv: {'amount': 4.0} болуы керек, сізде {missing_pct(_pd.read_csv('orders.csv'))}\"\n_d = _pd.DataFrame({'a': [1, None, None, 4], 'b': [1, 2, 3, 4], 'c': ['x', None, 'y', 'z']})\nassert missing_pct(_d) == {'a': 50.0, 'c': 25.0}, \"Бос мәні жоқ баған сөздікке кірмейді: {'a': 50.0, 'c': 25.0} күтілді\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Ең жиі мән",
+   "prompt": "<p><code>top_value(df, col)</code> функциясы бағандағы ең жиі кездесетін мәнді және оның санын <code>(мән, сан)</code> жұбымен қайтарсын. <code>orders.csv</code>-тің <code>status</code> бағаны үшін: <code>('paid', 146)</code>.</p>",
+   "starter": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef top_value(df, col):\n    pass\n\nprint(top_value(df, 'status'))\n",
+   "solution": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef top_value(df, col):\n    vc = df[col].value_counts()\n    return vc.index[0], int(vc.iloc[0])\n\nprint(top_value(df, 'status'))\n",
+   "hints": [
+    "<code>value_counts()</code> жиілікті кемуімен сұрыптайды: бірінші жол — ең жиі мән.",
+    "<code>vc.index[0]</code> және <code>int(vc.iloc[0])</code>"
+   ],
+   "check": {
+    "tests": "import pandas as _pd\nassert tuple(top_value(_pd.read_csv('orders.csv'), 'status')) == ('paid', 146), \"orders.csv, status: ('paid', 146) болуы керек\"\nassert tuple(top_value(_pd.read_csv('customers.csv'), 'channel')) == ('instagram', 17), \"customers.csv, channel: ('instagram', 17) болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Кілт бола ала ма",
+   "prompt": "<p><code>is_key(df, col)</code> функциясы баған кілт бола алатын болса <code>True</code> қайтарсын: мәндері бірегей және бірде-бір бос мән жоқ. <code>orders.csv</code>-те <code>id</code> — кілт, <code>customer_id</code> — кілт емес.</p>",
+   "starter": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef is_key(df, col):\n    pass\n\nprint(is_key(df, 'id'), is_key(df, 'customer_id'))\n",
+   "solution": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef is_key(df, col):\n    return bool(df[col].is_unique and df[col].notna().all())\n\nprint(is_key(df, 'id'), is_key(df, 'customer_id'))\n",
+   "hints": [
+    "<code>df[col].is_unique</code> және <code>df[col].notna().all()</code>"
+   ],
+   "check": {
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\nassert is_key(_o, 'id') is True, \"orders.csv-те id — кілт: True күтілді\"\nassert is_key(_o, 'customer_id') is False, \"customer_id қайталанады: False күтілді\"\nassert is_key(_pd.DataFrame({'k': [1, 2, None]}), 'k') is False, \"Бос мәні бар баған кілт бола алмайды\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Дерек қай күнге дейін",
+   "prompt": "<p>Өзектілік тексерісі: <code>freshness(df, col)</code> функциясы <code>{'first': ..., 'last': ..., 'days': ...}</code> сөздігін қайтарсын. <code>first</code> мен <code>last</code> — ең ерте және ең кеш күн, <code>'YYYY-MM-DD'</code> мәтіні; <code>days</code> — олардың арасындағы күн саны (<code>last − first</code>). Бағанды <code>pd.to_datetime</code>-пен түрлендіріңіз.</p>",
+   "starter": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef freshness(df, col):\n    pass\n\nprint(freshness(df, 'order_date'))\n",
+   "solution": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef freshness(df, col):\n    d = pd.to_datetime(df[col])\n    return {'first': d.min().strftime('%Y-%m-%d'), 'last': d.max().strftime('%Y-%m-%d'), 'days': int((d.max() - d.min()).days)}\n\nprint(freshness(df, 'order_date'))\n",
+   "hints": [
+    "<code>d = pd.to_datetime(df[col])</code>, сосын <code>d.min()</code>, <code>d.max()</code>.",
+    "Мәтінге: <code>.strftime('%Y-%m-%d')</code>. Айырма: <code>(d.max() - d.min()).days</code>."
+   ],
+   "check": {
+    "tests": "import pandas as _pd\n_r = freshness(_pd.read_csv('orders.csv'), 'order_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}, f\"orders.csv: {{'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}} күтілді, сізде {_r}\"\n_r = freshness(_pd.read_csv('customers.csv'), 'signup_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-05-23', 'days': 143}, f\"customers.csv, signup_date: 2024-01-01 … 2024-05-23, 143 күн; сізде {_r}\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сома бағанының тексерісі",
+   "prompt": "<p>Жарамдылық тексерісі: <code>amount_checks(df)</code> функциясы <code>amount</code> бағаны бойынша сөздік қайтарсын: <code>missing</code> (бос мәндер), <code>non_positive</code> (≤ 0), <code>outliers</code> (медианадан 10 еседен көп мәндер), <code>refunds</code> (<code>status</code> = <code>'refund'</code> жолдары). Барлық мән <code>int</code>.</p>",
+   "starter": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef amount_checks(df):\n    pass\n\nprint(amount_checks(df))\n",
+   "solution": "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\ndef amount_checks(df):\n    a = df['amount']\n    return {\n        'missing': int(a.isna().sum()),\n        'non_positive': int((a <= 0).sum()),\n        'outliers': int((a > 10 * a.median()).sum()),\n        'refunds': int((df['status'] == 'refund').sum()),\n    }\n\nprint(amount_checks(df))\n",
+   "hints": [
+    "Шарттың нәтижесі True/False Series; <code>.sum()</code> True-ларды санайды: <code>(a &lt;= 0).sum()</code>.",
+    "<code>a.median()</code> бос мәндерді өзі өткізіп жібереді. Әр санды <code>int(...)</code>-ке ораңыз."
+   ],
+   "check": {
+    "tests": "import pandas as _pd\n_r = amount_checks(_pd.read_csv('orders.csv'))\nassert _r == {'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}, f\"orders.csv: {{'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}} күтілді, сізде {_r}\"\n_d = _pd.DataFrame({'amount': [100.0, -5.0, 0.0, None, 100.0, 5000.0], 'status': ['paid', 'paid', 'refund', 'paid', 'refund', 'paid']})\nassert amount_checks(_d) == {'missing': 1, 'non_positive': 2, 'outliers': 1, 'refunds': 2}, \"Шағын кестеде: missing 1, non_positive 2, outliers 1, refunds 2\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Тапсырыссыз клиенттер",
+   "prompt": "<p>Сәйкестікті кері бағытта тексеріңіз: <code>customers</code>-қа <code>orders</code>-тың бірегей <code>customer_id</code>-лерін left join жасап, <code>indicator=True</code> қосыңыз (нәтиже — <code>check</code>). Бірде-бір тапсырысы жоқ клиенттердің <code>customer_id</code>-ін өспелі ретпен <code>no_orders</code> тізіміне жазыңыз.</p>",
+   "starter": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nnew = pd.DataFrame({'customer_id': [41, 42], 'city': ['Алматы', 'Астана'], 'channel': ['2gis', 'instagram'], 'signup_date': ['2024-06-28', '2024-06-29']})\ncustomers = pd.concat([customers, new], ignore_index=True)\n\n# check = ...\n# no_orders = ...\n",
+   "solution": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nnew = pd.DataFrame({'customer_id': [41, 42], 'city': ['Алматы', 'Астана'], 'channel': ['2gis', 'instagram'], 'signup_date': ['2024-06-28', '2024-06-29']})\ncustomers = pd.concat([customers, new], ignore_index=True)\n\nbuyers = orders[['customer_id']].drop_duplicates()\ncheck = customers.merge(buyers, on='customer_id', how='left', indicator=True)\nno_orders = sorted(check.loc[check['_merge'] == 'left_only', 'customer_id'].tolist())\nprint(no_orders)\n",
+   "hints": [
+    "Алдымен бірегей кілттер: <code>orders[['customer_id']].drop_duplicates()</code>, әйтпесе жол саны көбейеді.",
+    "<code>customers.merge(buyers, on='customer_id', how='left', indicator=True)</code>, сосын <code>_merge == 'left_only'</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "indicator"
+    ],
+    "tests": "assert 'check' in globals() and '_merge' in check.columns, \"check кестесін indicator=True арқылы жасаңыз\"\nassert len(check) == 42, f\"Left join клиенттер санын сақтауы керек: 42 жол, сізде {len(check)}\"\nassert 'no_orders' in globals() and [int(x) for x in no_orders] == [41, 42], \"no_orders = [41, 42] болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Қадам-қадам салыстыру",
+   "prompt": "<p><code>reconcile(orders, customers)</code> функциясы әр қадамнан кейінгі <code>(қадам, жол_саны, amount_қосындысы)</code> үштіктерінің тізімін қайтарсын: <code>'raw'</code> — бастапқы кесте; <code>'merged'</code> — <code>customer_id</code> бойынша left join-нан кейін; <code>'paid'</code> — <code>status == 'paid'</code> және <code>amount</code> бос емес; <code>'clean'</code> — оған қоса <code>amount &lt; 20000</code>. Қосынды — <code>float</code>.</p>",
+   "starter": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef reconcile(orders, customers):\n    pass\n\nfor row in reconcile(orders, customers) or []:\n    print(row)\n",
+   "solution": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef reconcile(orders, customers):\n    log = [('raw', len(orders), float(orders['amount'].sum()))]\n    m = orders.merge(customers, on='customer_id', how='left')\n    log.append(('merged', len(m), float(m['amount'].sum())))\n    paid = m[(m['status'] == 'paid') & m['amount'].notna()]\n    log.append(('paid', len(paid), float(paid['amount'].sum())))\n    clean = paid[paid['amount'] < 20000]\n    log.append(('clean', len(clean), float(clean['amount'].sum())))\n    return log\n\nfor row in reconcile(orders, customers) or []:\n    print(row)\n",
+   "hints": [
+    "Әр қадамнан кейін <code>log.append((атау, len(df), float(df['amount'].sum())))</code>.",
+    "<code>sum()</code> бос мәндерді өткізіп жібереді, сондықтан <code>'raw'</code> қосындысы 394 950 болады. Соңғы қадамда сабақтағы 334 850 шығуы керек."
+   ],
+   "check": {
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n_r = reconcile(_o, _c)\nassert isinstance(_r, list) and len(_r) == 4, \"Төрт қадамнан тұратын тізім қайтарыңыз\"\nassert [s for s, _, _ in _r] == ['raw', 'merged', 'paid', 'clean'], \"Қадамдардың атауы мен реті: raw, merged, paid, clean\"\nassert [int(n) for _, n, _ in _r] == [150, 150, 140, 139], f\"Жол сандары 150, 150, 140, 139 болуы керек, сізде {[n for _, n, _ in _r]}\"\nassert [round(float(s)) for _, _, s in _r] == [394950, 394950, 382850, 334850], f\"Қосындылар 394950, 394950, 382850, 334850 болуы керек, сізде {[s for _, _, s in _r]}\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "JOIN алдындағы тексеріс",
+   "prompt": "<p><code>join_check(left, right, key)</code> функциясы сөздік қайтарсын: <code>ok</code> — <code>validate='many_to_one'</code> бар left join қатесіз өтсе <code>True</code>, <code>MergeError</code> шықса <code>False</code>; <code>orphans</code> — оң жақта жұбы жоқ сол жақ жолдар саны; <code>extra_rows</code> — validate-сіз left join-нан кейін неше жол артық пайда болды (<code>len(m) - len(left)</code>).</p>",
+   "starter": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef join_check(left, right, key):\n    pass\n\nprint(join_check(orders, customers, 'customer_id'))\n",
+   "solution": "import pandas as pd\n\norders = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n\ndef join_check(left, right, key):\n    try:\n        left.merge(right, on=key, how='left', validate='many_to_one')\n        ok = True\n    except pd.errors.MergeError:\n        ok = False\n    m = left.merge(right, on=key, how='left', indicator=True)\n    return {'ok': ok, 'orphans': int((m['_merge'] == 'left_only').sum()), 'extra_rows': len(m) - len(left)}\n\nprint(join_check(orders, customers, 'customer_id'))\n",
+   "hints": [
+    "<code>try: left.merge(..., validate='many_to_one')</code>, <code>except pd.errors.MergeError: ok = False</code>.",
+    "Санау үшін екінші рет validate-сіз, бірақ <code>indicator=True</code>-мен біріктіріңіз."
+   ],
+   "check": {
+    "mustInclude": [
+     "validate"
+    ],
+    "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nassert join_check(_o, _c, 'customer_id') == {'ok': True, 'orphans': 0, 'extra_rows': 0}, \"Таза кестелерде: ok True, orphans 0, extra_rows 0\"\n_r = join_check(_o, _pd.concat([_c, _c.head(2)], ignore_index=True), 'customer_id')\nassert _r == {'ok': False, 'orphans': 0, 'extra_rows': 8}, f\"1 және 2-клиент қайталанса: ok False, extra_rows 8 (олардың тапсырыстары екі еселенеді); сізде {_r}\"\n_x = _pd.concat([_o, _pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})], ignore_index=True)\nassert join_check(_x, _c, 'customer_id') == {'ok': True, 'orphans': 2, 'extra_rows': 0}, \"Екі «жетім» тапсырыс: ok True, orphans 2, extra_rows 0\""
+   }
+  }
  ]
 });

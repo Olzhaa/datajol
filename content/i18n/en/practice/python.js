@@ -1025,6 +1025,100 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "py-14": {
+   "pr": [
+    {
+     "title": "Unpacking a record",
+     "prompt": "<p><code>record</code> is one client's record: (name, city, number of orders, total amount).</p><p>Unpack the tuple in one line into the variables <code>name</code>, <code>city</code>, <code>n_orders</code>, <code>total</code>. Then store the average check in <code>avg</code>: <code>total / n_orders</code>.</p>",
+     "hints": [
+      "<code>name, city, n_orders, total = record</code>"
+     ],
+     "check": {
+      "tests": "assert name == 'Айгерім' and city == 'Алматы', 'name and city are wrong: unpack the tuple'\nassert n_orders == 3 and total == 7350, 'n_orders and total are the 3rd and 4th items of the tuple'\nassert avg == 2450, 'avg = total / n_orders, it must be 2450'"
+     }
+    },
+    {
+     "title": "Unique cities",
+     "prompt": "<p><code>visits</code> lists the cities a courier visited (with repeats).</p><p>Using a set, store the unique cities in <code>unique</code> and their number in <code>n</code>. Store whether Ақтөбе is in the list (<code>True</code>/<code>False</code>) in <code>has_aktobe</code>, using <code>in</code>.</p>",
+     "hints": [
+      "<code>set(visits)</code>, then <code>len(unique)</code>.",
+      "<code>\"Ақтөбе\" in unique</code> gives True or False."
+     ],
+     "check": {
+      "tests": "assert isinstance(unique, set), 'unique must be a set: set(visits)'\nassert unique == {'Алматы', 'Тараз', 'Шымкент', 'Астана'}, 'unique must hold 4 cities'\nassert n == 4, 'n = len(unique), it must be 4'\nassert has_aktobe is False, 'has_aktobe must be False: Ақтөбе is not in the list'"
+     }
+    },
+    {
+     "title": "Boxes and the average",
+     "prompt": "<p>A coffee shop needs 47 cups delivered, and one box holds 12 cups. Using the <code>math</code> module, store the number of boxes needed in <code>boxes</code> (a partly filled box still counts as a box). Then, with the <code>statistics</code> module, store the mean of the <code>checks</code> list in <code>avg</code>.</p>",
+     "hints": [
+      "Rounding up: <code>math.ceil(cups / per_box)</code>.",
+      "<code>statistics.mean(checks)</code>"
+     ],
+     "check": {
+      "tests": "assert boxes == 4, 'boxes must be 4: math.ceil(47 / 12)'\nassert avg == 2300, 'avg = statistics.mean(checks), it must be 2300'"
+     }
+    },
+    {
+     "title": "Cheapest first",
+     "prompt": "<p><code>menu</code> holds tuples (drink, price, units sold).</p><p>Store the drink <b>names</b> in ascending order of price in the list <code>by_price</code> (<code>sorted</code> and <code>key=lambda</code>). Store the name of the best-selling drink in <code>best</code>, using <code>max</code> and <code>key=lambda</code>.</p>",
+     "hints": [
+      "<code>sorted(menu, key=lambda row: row[1])</code> returns tuples; the name is <code>row[0]</code>.",
+      "<code>max(menu, key=lambda row: row[2])</code> returns the whole tuple."
+     ],
+     "check": {
+      "tests": "assert by_price == ['Американо', 'Капучино', 'Латте', 'Раф'], 'by_price: the names in ascending order of price, yours: ' + str(by_price)\nassert best == 'Капучино', 'best is the name of the drink with the most units sold (text)'"
+     }
+    },
+    {
+     "title": "Days between orders",
+     "prompt": "<p><code>dates</code> holds one client's order dates (text, in ascending order).</p><p>Using <code>datetime</code>, store the number of days between every two neighbouring orders in the list <code>gaps</code>. Then, with <code>statistics</code>, take their mean, round it to one decimal place and store it in <code>avg_gap</code>.</p>",
+     "hints": [
+      "First turn the texts into dates: <code>[date.fromisoformat(d) for d in dates]</code>.",
+      "<code>(days[i + 1] - days[i]).days</code>, where <code>i</code> goes from 0 to <code>len(days) - 2</code>."
+     ],
+     "check": {
+      "tests": "assert gaps == [20, 15, 21], 'gaps must be [20, 15, 21], yours: ' + str(gaps)\nassert avg_gap == 18.7, 'avg_gap = round(statistics.mean(gaps), 1)'"
+     }
+    },
+    {
+     "title": "Regional revenue from a file",
+     "prompt": "<p>The file <code>daily_sales.csv</code> holds the daily revenue of two regions: <code>day</code>, <code>region</code>, <code>revenue</code>.</p><p>Read the file with <code>with open</code> and <code>csv.DictReader</code>, and collect a dictionary region → total revenue (int) in <code>totals</code>. Store the region with the highest revenue in <code>best_region</code>.</p>",
+     "hints": [
+      "The line <code>rows = list(csv.DictReader(f))</code> goes inside the <code>with</code> block.",
+      "Turn the text into a number: <code>int(r[\"revenue\"])</code>.",
+      "<code>max(totals, key=totals.get)</code>"
+     ],
+     "check": {
+      "tests": "assert totals == {'Алматы': 1505, 'Астана': 1150}, 'totals is wrong, yours: ' + str(totals)\nassert best_region == 'Алматы', 'best_region is the region with the highest revenue'"
+     }
+    },
+    {
+     "title": "Both in March and in April",
+     "prompt": "<p>Read the file <code>orders.csv</code> with <code>with open</code> and <code>csv.DictReader</code>.</p><p>Collect the <code>customer_id</code> values (int) of the clients who ordered in March (<code>2024-03</code>) into the set <code>march</code>, and those who ordered in April (<code>2024-04</code>) into the set <code>april</code>. Then: <code>loyal</code> are those who ordered in both months, <code>lost</code> are those who ordered in March but not in April.</p>",
+     "hints": [
+      "You can start from an empty set and call <code>march.add(int(r[\"customer_id\"]))</code> in a loop.",
+      "The month: <code>r[\"order_date\"][:7] == \"2024-03\"</code>.",
+      "<code>&amp;</code> is the intersection, <code>-</code> is the difference."
+     ],
+     "check": {
+      "tests": "import csv as _csv\nwith open('orders.csv', encoding='utf-8') as _f:\n    _rows = list(_csv.DictReader(_f))\n_m = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-03'}\n_a = {int(r['customer_id']) for r in _rows if r['order_date'][:7] == '2024-04'}\nassert march == _m and april == _a, 'The sets march and april are wrong: did you turn customer_id into int?'\nassert set(loyal) == _m & _a, 'loyal = march & april'\nassert set(lost) == _m - _a, 'lost = march - april'"
+     }
+    },
+    {
+     "title": "Top three clients",
+     "prompt": "<p>Read the file <code>orders.csv</code> with <code>with open</code> and, over the orders with the status <code>paid</code> and a non-empty <code>amount</code>, collect each client's total in the dictionary <code>totals</code> (key: the int <code>customer_id</code>, value: the int total).</p><p>Sort the dictionary's <code>items()</code> by total in descending order (<code>key=lambda</code>) and store the first three tuples in <code>top3</code>. Unpack the first tuple into the variables <code>top_id</code> and <code>top_total</code>.</p>",
+     "hints": [
+      "Skip an empty amount: <code>if r[\"status\"] == \"paid\" and r[\"amount\"]:</code>",
+      "<code>sorted(totals.items(), key=lambda kv: kv[1], reverse=True)[:3]</code>",
+      "Unpacking: <code>top_id, top_total = top3[0]</code>."
+     ],
+     "check": {
+      "tests": "assert totals.get(3) == 55950 and len(totals) == 39, 'totals is wrong: only paid rows with a non-empty amount, int keys'\nassert top3 == [(3, 55950), (29, 16400), (26, 14900)], 'top3 is a list of (id, total) tuples in descending order of total, yours: ' + str(top3)\nassert top_id == 3 and top_total == 55950, 'Unpack top3[0] into top_id and top_total'"
+     }
+    }
+   ]
   }
  }
 });

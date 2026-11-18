@@ -377,10 +377,82 @@ print(round(w, 3), round(b, 3))    # 2.0 1.0</code></pre>
         { prompt: 'A and B are both 3 × 3 NumPy arrays. Which one gives matrix multiplication as in maths?', options: ['A * B', 'A @ B', 'A + B', 'A.T * B'], explain: 'A @ B is matrix multiplication (row · column). A * B multiplies each element separately.' }
       ]
     },
+    'mm-log': {
+      title: 'Logarithm, exponential, sigmoid and the chain rule',
+      body: `
+<p>A linear model can predict any number. In classification, though, we need a <b>probability</b>: a number between 0 and 1. That takes three tools: the exponential, the logarithm, and the sigmoid that combines them. And to train the model we need the chain rule, which finds the derivative of a composite function. Logistic regression, neural networks, gradient boosting — all of them rest on these four.</p>
+<h3>1. The exponential and the logarithm: inverse operations</h3>
+<p>The <b>exponential</b> e^x (e ≈ 2.718) is "multiplicative growth, x times over". The <b>natural logarithm</b> ln(y) answers the reverse question: "to what power must e be raised to get y?"</p>
+<pre><code>e^0 = 1          ln(1) = 0
+e^1 ≈ 2.718      ln(2.718) ≈ 1
+ln(e^x) = x      e^(ln y) = y        # ln is defined only for y &gt; 0</code></pre>
+<table>
+<tr><th>Rule</th><th>Meaning</th><th>Example</th></tr>
+<tr><td>ln(a × b) = ln a + ln b</td><td>multiplication → addition</td><td>ln(6) = ln(2) + ln(3) ≈ 0.693 + 1.099</td></tr>
+<tr><td>ln(a / b) = ln a − ln b</td><td>division → subtraction</td><td>ln(0.5) = ln(1) − ln(2) ≈ −0.693</td></tr>
+<tr><td>ln(a^k) = k × ln a</td><td>power → multiplier</td><td>ln(8) = 3 × ln(2) ≈ 2.079</td></tr>
+<tr><td>e^(a + b) = e^a × e^b</td><td>addition → multiplication</td><td>e^3 = e^1 × e^2</td></tr>
+</table>
+<p>In Python: <code>math.exp(x)</code>, <code>math.log(x)</code> (natural), <code>math.log10(x)</code>, <code>math.log2(x)</code>; in NumPy, <code>np.exp</code> and <code>np.log</code>.</p>
+<h3>2. Why a log scale?</h3>
+<ul>
+<li><b>It straightens out skewed data.</b> Salaries: 200 thousand, 300 thousand, 500 thousand, 5 mln ₸. The last value distorts both the chart and the mean. Take ln: 12.2, 12.6, 13.1, 15.4 — the values move closer together. In models, features such as income, price and view counts often get <code>np.log1p(x)</code> (= ln(1 + x), which also works for zero).</li>
+<li><b>It turns multiplicative growth into a straight line.</b> Growth of 10% every month is a straight line on a log scale. A difference of logs ≈ the relative change: ln(110) − ln(100) ≈ 0.095.</li>
+<li><b>It turns a product into a sum.</b> Multiply 1,000 probabilities (each 0.5) and you get 0.5^1000 ≈ 10^(−301); a few hundred more factors and the computer stores it as exactly 0 (underflow). Add the logarithms instead and you get 1000 × ln(0.5) ≈ −693 — an ordinary number. That is why ML uses the <b>log-likelihood</b> rather than the likelihood.</li>
+</ul>
+<h3>3. The sigmoid: turning any number into a probability</h3>
+<pre><code>σ(z) = 1 / (1 + e^(−z))</code></pre>
+<table>
+<tr><th>z</th><td>−4</td><td>−2</td><td>0</td><td>2</td><td>4</td></tr>
+<tr><th>σ(z)</th><td>0.018</td><td>0.119</td><td>0.5</td><td>0.881</td><td>0.982</td></tr>
+</table>
+<ul>
+<li>If z is large and positive, σ → 1; if large and negative, σ → 0; σ(0) = 0.5.</li>
+<li>Symmetry: σ(−z) = 1 − σ(z).</li>
+<li>Logistic regression: z = w · x + b (the linear model, mm-5), p = σ(z).</li>
+<li>The reverse direction: z = ln(p / (1 − p)) — the <b>log-odds</b> (logit). So a logistic regression coefficient means "how much the log-odds change when the feature goes up by 1".</li>
+</ul>
+<h3>4. Log-loss: a confident mistake is expensive</h3>
+<p>A model that predicts probabilities is scored with <b>log-loss</b> (binary cross-entropy), not MSE. For one example:</p>
+<pre><code>loss = −[ y × ln(p) + (1 − y) × ln(1 − p) ]</code></pre>
+<p>If y = 1, loss = −ln(p); if y = 0, loss = −ln(1 − p). In other words, "minus the logarithm of the probability given to the correct answer".</p>
+<p><b>Step-by-step example.</b> Three customers: true answers y = [1, 0, 1], model predictions p = [0.9, 0.2, 0.6].</p>
+<ol>
+<li>Customer 1 (y = 1, p = 0.9): −ln(0.9) = 0.105. Confident and right — a small penalty.</li>
+<li>Customer 2 (y = 0, p = 0.2): −ln(1 − 0.2) = −ln(0.8) = 0.223.</li>
+<li>Customer 3 (y = 1, p = 0.6): −ln(0.6) = 0.511. On the right side, but not confident.</li>
+<li>Log-loss = (0.105 + 0.223 + 0.511) / 3 ≈ <b>0.280</b>.</li>
+</ol>
+<p>If we give customer 1 p = 0.1 (confident and wrong): −ln(0.1) = 2.303 — a penalty 22 times larger. As p → 0 the penalty goes to infinity. A model that always answers p = 0.5 has a log-loss of ln(2) ≈ 0.693: that is the "knows nothing" level.</p>
+<h3>5. The chain rule</h3>
+<p>When functions are nested inside one another, their derivatives <b>multiply</b>:</p>
+<pre><code>y = f(g(x))     →     dy/dx = f′(g(x)) × g′(x)</code></pre>
+<p><b>Intuition.</b> When x goes up by 1, g changes 3 times as fast; when g goes up by 1, f changes 4 times as fast. So the effect of x on f is 3 × 4 = 12 times. Like gears.</p>
+<p><b>Step-by-step example.</b> y = (3x + 1)², the derivative at x = 1.</p>
+<ol>
+<li>Inner function: g = 3x + 1, g′ = 3. At x = 1, g = 4.</li>
+<li>Outer function: f = g², f′ = 2g = 8.</li>
+<li>dy/dx = 8 × 3 = <b>24</b>.</li>
+<li>Check: (3 × 1.001 + 1)² − 16 = 0.024009, divide by 0.001 → ≈ 24.</li>
+</ol>
+<p><b>The gradient of logistic regression.</b> For one example, three functions are chained: z = w × x → p = σ(z) → loss(p). The chain rule:</p>
+<pre><code>dloss/dw = dloss/dp × dp/dz × dz/dw
+         = (p − y) / (p(1 − p))  ×  p(1 − p)  ×  x
+         = (p − y) × x</code></pre>
+<p>This uses σ′(z) = σ(z)(1 − σ(z)). The result is surprisingly simple: <b>the error (p − y) × the feature x</b>. It has the same shape as the MSE gradient (mm-9). Backpropagation in neural networks is this rule repeated across many layers.</p>
+<div class="tip"><b>Common mistakes:</b> (1) <code>math.log(0)</code> raises an error: when computing log-loss, clip p to the range [1e-15, 1 − 1e-15]. (2) Writing ln(a + b) = ln a + ln b: the rule works only for a product. (3) Forgetting the derivative of the inner function (g′) in the chain rule. (4) Passing class labels (0/1) to log-loss instead of probabilities: you need <code>predict_proba</code>, not <code>predict</code>. (5) Assuming <code>math.log</code> is the base-10 logarithm: it is the natural one.</div>`,
+      ex: [
+        { prompt: 'You know that ln(a) = 2.0 and ln(b) = 1.5. What is ln(a² / b)?', explain: 'ln(a² / b) = 2 × ln(a) − ln(b) = 2 × 2.0 − 1.5 = 2.5.' },
+        { prompt: 'y = (2x + 1)³. Use the chain rule to find dy/dx at x = 1.', explain: 'Inner g = 2x + 1, g′ = 2, and g = 3 at x = 1. Outer f = g³, f′ = 3g² = 27. dy/dx = 27 × 2 = 54.' },
+        { prompt: 'Write the functions <code>sigmoid(z)</code> and <code>log_loss(y, p)</code>. <code>log_loss</code> takes two lists (true 0/1 labels and predicted probabilities) and returns the <b>mean</b> log-loss over all examples.', check: { tests: 'import math as _m\nassert sigmoid(0) is not None, "sigmoid should return a value"\nassert abs(sigmoid(0) - 0.5) < 1e-12, "sigmoid(0) = 0.5"\nassert abs(sigmoid(2) - 0.8807970779778823) < 1e-9, "sigmoid(2) ≈ 0.881: 1 / (1 + e^(−z))"\nassert abs(sigmoid(-3) + sigmoid(3) - 1) < 1e-12, "sigmoid(−z) = 1 − sigmoid(z)"\n_l = log_loss([1, 0, 1], [0.9, 0.2, 0.6])\nassert _l is not None, "log_loss should return a value"\nassert abs(_l - 0.2797765635793423) < 1e-9, f"log_loss([1, 0, 1], [0.9, 0.2, 0.6]) should be ≈ 0.280, you have {_l:.4f}. Check that you take the mean and use ln(1 − p) for y = 0"\nassert abs(log_loss([1], [0.1]) - _m.log(10)) < 1e-9, "A confident mistake: log_loss([1], [0.1]) = −ln(0.1) ≈ 2.303"\nassert abs(log_loss([0, 1], [0.5, 0.5]) - _m.log(2)) < 1e-9, "With p = 0.5, log-loss = ln(2) ≈ 0.693"' }, hints: ['<code>1 / (1 + math.exp(-z))</code>', 'One example: <code>-(yi * math.log(pi) + (1 - yi) * math.log(1 - pi))</code>', 'Divide the sum by <code>len(y)</code>.'] },
+        { prompt: 'One example, one weight: z = w × x, p = sigmoid(z), loss = −[y ln p + (1 − y) ln(1 − p)]. Write the function <code>grad(w, x, y)</code> using the formula from the chain rule: dloss/dw = (p − y) × x. Then take one gradient descent step for <code>w = 0.5, x = 2, y = 1</code>: <code>w_new = w − lr × grad</code>, <code>lr = 0.1</code>.', check: { tests: 'import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\n_ls = lambda w, x, y: -(y * _m.log(_sg(w * x)) + (1 - y) * _m.log(1 - _sg(w * x)))\nassert grad(0.5, 2, 1) is not None, "grad should return a value"\nfor _w, _x, _y in [(0.5, 2, 1), (-1.0, 3, 0), (0.2, -1.5, 1), (2.0, 0.5, 0)]:\n    _num = (_ls(_w + 1e-6, _x, _y) - _ls(_w - 1e-6, _x, _y)) / 2e-6\n    assert abs(grad(_w, _x, _y) - _num) < 1e-5, f"grad({_w}, {_x}, {_y}) should be ≈ {_num:.4f} (the numerical derivative), you have {grad(_w, _x, _y):.4f}. Formula: (p − y) × x"\n_g = (_sg(1.0) - 1) * 2\nassert abs(w_new - (0.5 - 0.1 * _g)) < 1e-9, f"w_new should be 0.5 − 0.1 × ({_g:.4f}) ≈ {0.5 - 0.1 * _g:.4f}"\nassert _ls(w_new, 2, 1) < _ls(0.5, 2, 1), "The loss should go down after the step"' }, hints: ['<code>p = sigmoid(w * x)</code>, then <code>(p - y) * x</code>', '<code>w_new = w - lr * grad(w, x, y)</code>'] },
+        { prompt: 'A model has to compute the likelihood of 2,000 independent observations (each with a probability of about 0.3). Why add the logarithms instead of multiplying the probabilities?', options: ['The logarithm makes probabilities larger', 'The product becomes so small that the computer rounds it to 0; the sum of logarithms is stable and the maximum stays at the same point', 'Addition is always more precise than multiplication', 'The logarithm fixes negative probabilities'], explain: '0.3^2000 is far below the smallest float value (underflow). ln is an increasing function, so the likelihood and the log-likelihood reach their maximum at the same point. A sum is also easier to differentiate.' }
+      ]
+    },
     'mm-gate': {
       title: 'Module exam: Math for ML',
       body: `
-<p>The final check. The Python tasks use only the standard library and lists (no NumPy).</p>`,
+<p>The final check. You solve the exam tasks with the standard library and lists (no NumPy): write the formulas yourself.</p>`,
       ex: [
         { prompt: 'Write the function <code>knn_predict(points, labels, q, k)</code>: it should return the mean of the <code>labels</code> of the <code>k</code> points closest to <code>q</code> by Euclidean distance.', check: { tests: '_pts = [[0, 0], [1, 0], [5, 5], [6, 5], [10, 10]]\n_lab = [10, 20, 50, 70, 100]\nassert abs(knn_predict(_pts, _lab, [0.2, 0], 1) - 10) < 1e-9, "k=1: the closest is [0, 0], result 10"\nassert abs(knn_predict(_pts, _lab, [0.4, 0], 2) - 15) < 1e-9, "k=2: [0, 0] and [1, 0], mean 15"\nassert abs(knn_predict(_pts, _lab, [5.4, 5], 2) - 60) < 1e-9, "k=2: [5, 5] and [6, 5], mean 60"\nassert abs(knn_predict(_pts, _lab, [9, 9], 3) - (50 + 70 + 100) / 3) < 1e-9, "k=3: [10, 10], [6, 5], [5, 5]"' }, hints: [] },
         { prompt: 'A two-feature model ŷ = X · w (X has an intercept column). Write the function <code>gd_matrix(X, y, lr, epochs)</code> with lists: w starts as zeros, and at each step ∂MSE/∂wⱼ = (2/n) Σᵢ eᵢ · X[i][j], where eᵢ = ŷᵢ − yᵢ. It should return the final list w.', check: { tests: '_X = [[1, 0, 1], [1, 1, 0], [1, 1, 1], [1, 2, 1], [1, 0, 2]]\n_y = [1 + 2 * r[1] + 3 * r[2] for r in _X]\n_w = gd_matrix(_X, _y, 0.05, 5000)\nassert isinstance(_w, list) and len(_w) == 3, "Return a list of length 3"\nfor _a, _e in zip(_w, [1, 2, 3]):\n    assert abs(_a - _e) < 0.01, f"Expected w ≈ [1, 2, 3], got {[round(v, 3) for v in _w]}"\n_w1 = gd_matrix([[1, 1], [1, 2]], [3, 5], 0.1, 1)\nassert abs(_w1[0] - 0.8) < 1e-9 and abs(_w1[1] - 1.3) < 1e-9, "After 1 step w should be [0.8, 1.3]"' }, hints: [] },

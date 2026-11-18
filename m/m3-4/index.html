@@ -1006,7 +1006,7 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <main class="wrap static-page">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 3: Дерек аналитигі / M3.4</nav>
 <article class="reading">
-<p class="eyebrow">M3.4 · 15–20 сағат · 9 сабақ</p>
+<p class="eyebrow">M3.4 · 15–20 сағат · 11 сабақ</p>
 <h1>M3.4 Visualization &amp; Storytelling: Деректі визуализациялау</h1>
 <p class="prose">Дұрыс график бір қарағанда түсінікті болады, қате график адастырады. Бұл модульде график түрін таңдау, тазалау, түспен ерекшелеу, алдамшы графиктерді тану және деректен оқиға (story) құруды үйренесіз. Графикке арналған деректі SQL мен Python-да дайындайсыз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m3-4">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-4">Барлық тапсырмалар</a></p>
@@ -1142,7 +1142,7 @@ ORDER BY day;</code></pre>
 <table>
 <tr><th>Түрі</th><th>Қашан</th><th>Мысал</th></tr>
 <tr><td>Санаттық</td><td>Реті жоқ топтар</td><td>Қалалар, арналар: әртүрлі түстер</td></tr>
-<tr><td>Реттік (sequential)</td><td>Азнан көпке дейін</td><td>Табыс картасы: ақшылдан қоюға</td></tr>
+<tr><td>Реттік (sequential)</td><td>Аздан көпке дейін</td><td>Табыс картасы: ақшылдан қоюға</td></tr>
 <tr><td>Екі жақты (diverging)</td><td>Ортаңғы нүктеден екі жаққа</td><td>Жоспардан ауытқу: қызыл ← сұр → көк</td></tr>
 </table>
 <h3>Нені алып тастаймыз?</h3>
@@ -1229,11 +1229,120 @@ ORDER BY day;</code></pre>
 <div class="tip">Дашбордтың жаңартылған уақытын көрінетін жерге жазыңыз. Ескі дерекпен шешім қабылдау — жиі кездесетін қате.</div></div>
 <p><a href="../../#lesson/m3-4/7">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="viz-9">
+<h2>9. BI құралдары: Superset, DataLens, Tableau, Looker Studio, Qlik</h2>
+<div class="prose">
+<p>Қазақстандағы аналитик вакансияларында Power BI ең жиі аталады, бірақ жалғыз емес: банктер мен телеком <b>Qlik Sense</b> пен <b>Tableau</b>-ды, IT-компаниялар ашық кодты <b>Apache Superset</b>-ті, ТМД нарығындағы стартаптар <b>Yandex DataLens</b>-ті, маркетинг командалары <b>Looker Studio</b>-ны қолданады. Жақсы жаңалық: бәрінің логикасы бір. Біреуін түсінсеңіз, екіншісіне бір аптада көшесіз.</p>
+<h3>Барлық BI құралындағы бір жол</h3>
+<pre><code>Дереккөз (connection) → Dataset → Chart → Dashboard → Сүзгілер</code></pre>
+<ol>
+<li><b>Дереккөзге қосылу</b>: PostgreSQL, ClickHouse, Google Sheets, CSV.</li>
+<li><b>Dataset</b>: диаграмма салынатын кесте. Бұл дайын кесте, view немесе сіз жазған SQL сұрауы болуы мүмкін.</li>
+<li><b>Chart</b>: өлшем (dimension: қала, ай) мен көрсеткішті (measure: SUM, COUNT) таңдайсыз, құрал агрегатты өзі есептейді.</li>
+<li><b>Dashboard</b>: бірнеше диаграмма бір бетте.</li>
+<li><b>Сүзгілер</b>: күн аралығы, қала. Бір сүзгі барлық диаграммаға әсер етеді.</li>
+</ol>
+<h3>Терминдер картасы</h3>
+<table>
+<tr><th>Ұғым</th><th>Power BI</th><th>Superset</th><th>DataLens</th><th>Tableau</th><th>Looker Studio</th></tr>
+<tr><td>Дерек кестесі</td><td>Semantic model (dataset)</td><td>Dataset</td><td>Датасет</td><td>Data source</td><td>Data source</td></tr>
+<tr><td>Есептелетін көрсеткіш</td><td>Measure (DAX)</td><td>Metric (SQL өрнегі)</td><td>Есептелетін өріс</td><td>Calculated field</td><td>Calculated field</td></tr>
+<tr><td>Бір диаграмма</td><td>Visual</td><td>Chart</td><td>Чарт</td><td>Worksheet</td><td>Chart</td></tr>
+<tr><td>Диаграммалар беті</td><td>Report</td><td>Dashboard</td><td>Дашборд</td><td>Dashboard</td><td>Report</td></tr>
+<tr><td>Сүзгі элементі</td><td>Slicer</td><td>Native filter</td><td>Селектор</td><td>Filter, parameter</td><td>Control</td></tr>
+<tr><td>SQL жазатын жер</td><td>Power Query (native query)</td><td>SQL Lab</td><td>QL-чарт</td><td>Custom SQL</td><td>Custom query</td></tr>
+</table>
+<p>Qlik Sense-тің ерекшелігі — <b>ассоциативті модель</b>: бір мәнді бассаңыз, барлық кестедегі байланысты мәндер бірден белгіленеді; формулалары <code>Sum({&lt;Year={2026}&gt;} Sales)</code> түріндегі set analysis тілінде жазылады.</p>
+<h3>Superset: SQL білетін аналитиктің құралы</h3>
+<p><b>SQL Lab</b> — браузердегі SQL редакторы. Сұрауды жазып, нәтижесін көресіз, сосын «Create chart» батырмасымен сол сұрауды dataset етіп сақтайсыз. Осы курстағы SQL дағдыңыз мұнда тікелей қолданылады. DataLens пен Looker Studio да дәл осылай SQL-ден бастауға мүмкіндік береді.</p>
+<h3>Диаграммаға дайын dataset қалай жасалады</h3>
+<ul>
+<li><b>Түйіршігін (grain) анықтаңыз</b>: бір жол нені білдіреді? «Бір тапсырыс» немесе «ай × санат». Бір жолда екі деңгейді араластырмаңыз.</li>
+<li><b>Ұзын формат</b>: санаттар баған атауында емес, жолдарда тұрсын: <code>month, category, revenue</code>. Сонда жаңа санат қосылса, dataset өзгермейді, ал BI құралы оны түске, сүзгіге оңай айналдырады.</li>
+<li><b>Қатынасты емес, құрамдас бөліктерін сақтаңыз</b>: орташа чектің орнына <code>revenue</code> мен <code>orders</code>. Орташа чекті BI <code>SUM(revenue) / SUM(orders)</code> деп кез келген сүзгіде дұрыс есептейді. Дайын орташаларды қайта орташалау қате нәтиже береді.</li>
+<li><b>Күн нақты күн болсын</b>: <code>'2026-03'</code> мәтіні емес, <code>2026-03-01</code>. Сонда уақыт осі мен «соңғы 90 күн» сүзгісі жұмыс істейді.</li>
+<li><b>Сүзгіге керек өлшемдерді қосыңыз</b>: қала, статус, арна. Dataset-те жоқ баған бойынша сүзе алмайсыз.</li>
+</ul>
+<h3>Қай құралды қашан</h3>
+<table>
+<tr><th>Жағдай</th><th>Құрал</th></tr>
+<tr><td>Корпоративтік есеп, Microsoft ортасы, Excel-ге жақын пайдаланушылар</td><td>Power BI</td></tr>
+<tr><td>Дерек ClickHouse/PostgreSQL-де, команда SQL біледі, лицензияға бюджет жоқ</td><td>Superset</td></tr>
+<tr><td>Жылдам, тегін бұлттық дашборд, ClickHouse-пен жақсы жұмыс</td><td>DataLens</td></tr>
+<tr><td>Маркетинг: Google Analytics, Google Ads, Sheets</td><td>Looker Studio</td></tr>
+<tr><td>Күрделі интерактивті визуализация, зерттеу</td><td>Tableau</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Dataset-ке алдын ала есептелген пайыз бен орташаны салу, сосын BI-да оларды қосу немесе орташалау.</li>
+<li>Әр диаграммаға бөлек SQL жазу: сандар бір-біріне сәйкес келмей қалады. Бір тақырыпқа бір dataset жасап, барлық диаграмманы содан салыңыз.</li>
+<li>Миллион жолдық шикі кестені тікелей қосу: дашборд баяу ашылады. Күн немесе ай деңгейіне дейін агрегаттаңыз.</li>
+</ul>
+<div class="tip">Резюмеде құрал атауын ғана емес, не істегеніңізді жазыңыз: «Superset-те ClickHouse дерегінен сатылым дашбордын құрдым: 1 dataset, 6 диаграмма, 3 сүзгі». Superset пен DataLens-ті тегін орнатып, портфолио жобасын жасауға болады.</div></div>
+<p><a href="../../#lesson/m3-4/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
+<section id="viz-10">
+<h2>10. Python-да диаграмма: matplotlib және seaborn</h2>
+<div class="prose">
+<p>Вакансияларда «matplotlib/seaborn» жиі кездеседі: Python-да талдау жасап отырып, диаграмманы сол жерде салу ыңғайлы. Бұл сайттың браузеріндегі Python-да matplotlib жоқ, сондықтан бұл сабақта кодты <b>оқуды</b> және диаграммаға <b>деректі дайындауды</b> үйренесіз. Диаграмма салудың 80%-ы — дәл осы дайындық. Кодты өз компьютеріңізде немесе Google Colab-та іске қосып көріңіз.</p>
+<h3>Стандартты үлгі</h3>
+<pre><code>import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('orders.csv')
+clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]
+monthly = clean.groupby(clean['order_date'].str[:7])['amount'].sum()   # 1. дерек
+
+fig, ax = plt.subplots(figsize=(8, 4))            # 2. сурет пен ось
+ax.plot(monthly.index, monthly.values, marker='o')  # 3. сызық
+ax.set_title('Айлық табыс, 2024')                 # 4. тақырып пен осьтер
+ax.set_ylabel('Табыс, ₸')
+ax.set_ylim(0)
+ax.spines[['top', 'right']].set_visible(False)    # артық жиектерді алу
+plt.tight_layout()
+plt.savefig('revenue.png', dpi=150)               # 5. сақтау
+plt.show()</code></pre>
+<p>Әр диаграмма осы бес қадамнан тұрады: дерек → <code>fig, ax</code> → салу → безендіру → сақтау. <code>fig</code> — бүкіл сурет, <code>ax</code> — оның ішіндегі бір диаграмма (осьтерімен).</p>
+<h3>Диаграмма түрлері</h3>
+<table>
+<tr><th>Мақсат</th><th>matplotlib</th><th>Дерек қандай болуы керек</th></tr>
+<tr><td>Уақыт бойынша тренд</td><td><code>ax.plot(x, y)</code></td><td>Уақыт ретімен сұрыпталған Series</td></tr>
+<tr><td>Санаттарды салыстыру</td><td><code>ax.barh(атаулар, мәндер)</code></td><td>Мәні бойынша сұрыпталған Series</td></tr>
+<tr><td>Таралу</td><td><code>ax.hist(x, bins=20)</code></td><td>Шикі мәндер (агрегатсыз)</td></tr>
+<tr><td>Екі айнымалының байланысы</td><td><code>ax.scatter(x, y)</code></td><td>Екі сандық баған</td></tr>
+</table>
+<h3>seaborn: DataFrame-мен тікелей жұмыс</h3>
+<p><b>seaborn</b> matplotlib-тің үстіне құрылған. Оған ұзын форматтағы DataFrame мен баған атауларын бересіз:</p>
+<pre><code>import seaborn as sns
+
+sns.barplot(data=m, x='channel', y='amount', estimator='sum', errorbar=None)
+sns.histplot(data=clean, x='amount', bins=20)
+sns.lineplot(data=long_df, x='month', y='revenue', hue='channel')
+sns.heatmap(pivot, annot=True, fmt='.0f', cmap='Blues')</code></pre>
+<ul>
+<li><code>hue='channel'</code> әр арнаны бөлек түспен салады.</li>
+<li><code>sns.barplot</code> әдепкіде <b>орташаны</b> және сенімділік интервалының сызығын көрсетеді. Қосынды керек болса, <code>estimator='sum'</code> деп жазасыз.</li>
+<li><code>sns.heatmap</code> кең форматтағы кестені (pivot) күтеді: жолдар бір өлшем, бағандар екіншісі.</li>
+</ul>
+<h3>Ұзын және кең формат</h3>
+<p><code>lineplot</code> пен <code>barplot</code>-қа ұзын формат (<code>month, channel, revenue</code>) керек, <code>heatmap</code>-қа кең формат. Бірінен біріне <code>pivot_table</code> өткізеді:</p>
+<pre><code>pivot = m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code></pre>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>plt.savefig</code>-ті <code>plt.show()</code>-дан кейін шақыру: скриптте <code>show</code> суретті жабады, файл бос сақталады. Алдымен сақтаңыз.</li>
+<li>Bar chart-та осьті нөлден бастамау (<code>set_ylim</code>-ге нөлден өзге төменгі шек беру): айырма жасанды үлкейеді.</li>
+<li>Сұрыпталмаған bar chart: <code>sort_values()</code> диаграмманы оқуды бірден жеңілдетеді.</li>
+<li>Күнді мәтін күйінде қалдыру: осьте айлар әліпби ретімен тұрып қалуы мүмкін. <code>pd.to_datetime</code> қолданыңыз немесе <code>YYYY-MM</code> форматын ұстаңыз.</li>
+<li>Тақырыпсыз, өлшем бірліксіз диаграмма. Тақырыпқа қорытындыны жазыңыз: «Наурызда табыс ең жоғары болды».</li>
+</ul>
+<div class="tip">Диаграмма күткендей шықпаса, алдымен <code>print(monthly)</code> деп деректің өзін қараңыз. Қате әдетте сызбада емес, groupby мен сүзгіде болады.</div></div>
+<p><a href="../../#lesson/m3-4/9">Сабақты интерактивті түрде ашу →</a></p>
+</section>
 <section id="viz-gate">
-<h2>9. Модуль емтиханы: Visualization &amp; Storytelling</h2>
+<h2>11. Модуль емтиханы: Visualization &amp; Storytelling</h2>
 <div class="prose">
 <p>Қорытынды тексеріс: график таңдау, дерек дайындау, алдамшы графиктер және оқиға құру.</p></div>
-<p><a href="../../#lesson/m3-4/8">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m3-4/10">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m3-4">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m3-4">Барлық тапсырмалар</a></p>
 </article>

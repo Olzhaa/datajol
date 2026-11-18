@@ -8,25 +8,33 @@ A free, Kazakh-language site for learning data analytics and data science from z
 
 ## Мазмұн
 
-32 модуль, 333 сабақ, 1 082 тапсырма, барлығы 19 145 XP (620-ы SQL, Python, Java, C++ немесе формула ретінде браузерде тексеріледі).
+Сайтта көрінетіні (Data Analyst + Data Scientist): 24 модуль, 272 сабақ, сабақ ішінде 896 тапсырма, барлығы 16 165 XP, оған қоса әр код сабағынан кейінгі практика есептері. Жасырылған 12 модульмен бірге репода 423 сабақ бар.
 
 | Бағыт | Кезеңдер | Модульдер |
 | --- | --- | --- |
 | Data Analyst | 0–3 | Дерек әлемі, Math refresher, Spreadsheets, SQL Core, Python, pandas & NumPy, Git & GitHub, Statistics, Cleaning & EDA, Advanced SQL, Visualization, Power BI, Business Analytics, DA Capstone |
-| Data Scientist | 4–5 | Probability, Inference & A/B Testing, Math for ML, ML Foundations және ML in Practice (scikit-learn браузерде), DS Capstone |
-| ML Engineer | 6 | Software Engineering, Deployment & Docker, MLOps, Deep Learning, Data Engineering, GenAI, MLE Capstone |
-| Тілдер мен CS | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++ |
+| Data Scientist | 4–5 | Probability, Inference & A/B Testing, Math for ML, ML Foundations және ML in Practice (scikit-learn браузерде), DS Capstone, Deep Learning Intro (қосымша) |
+| ML Engineer (жасырылған) | 6 | Software Engineering, Deployment & Docker, MLOps, GenAI, AI Engineering, MLE Capstone |
+| Тілдер мен CS (жасырылған) | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++, Python Backend |
 | Мансап | 7 | Портфолио, резюме, LinkedIn, сұхбатқа дайындық |
 
-## Data Analyst бағытына фокус (2026 жылғы қараша)
+## Data Analyst / Data Scientist фокусы (2026 жылғы қараша)
 
-Сайт қазір **Data Analyst және Data Scientist** бағыттарын ғана көрсетеді.
+Сайт қазір тек **Data Analyst және Data Scientist** бағыттарын көрсетеді. Мазмұн hh.kz-тегі 54 вакансияның (29 DA/BI, 25 DS/ML) талаптарымен салыстырылып толықтырылды.
 
-- **Жасырылған модульдер:** ML Engineering (m6-1, m6-2, m6-3, m6-4, m6-6, GenAI, AI Engineering), Intermediate Python, Java, C++, DSA (2 модуль), Python Backend. Олардың сабақтары `content/` ішінде қалады, оқушылардың прогресі өшпейді. Модульді қайта ашу үшін `content/curriculum.js` ішіндегі `DJ.hiddenModules` тізімінен алып тастап, `python3 build.py` іске қосыңыз.
-- **M6.5 Cloud & Data Eng Basics** Data Analyst кезеңіне (3-кезең) көшірілді. Себебі ETL/DWH Алматыдағы DA вакансияларының 6/20-сында сұралады.
-- **Жаңа модуль M3.8 «SQL практикум: Qazaq Market»:** 8 сабақ, 38 SQL тапсырмасы, жаңа `qazaq` дерекқорында (80 клиент, 308 тапсырыс, 530 тауар жолы).
-- **Жаңа сабақтар:** `deng-ch` ClickHouse (M6.5), `cap-ai` «AI көмекшімен талдау: сұрау жазғызу және тексеру» (M3.7).
-- Жаңа тапсырмалар қосылғандықтан, Supabase-те `supabase/xp_catalog.sql` файлын қайта іске қосыңыз.
+- **Жасырылған модульдер:** m6-1, m6-2, m6-3, m6-6, GenAI, AI Engineering, Intermediate Python, Java, C++, DSA (2 модуль), Python Backend. Сабақтары `content/` ішінде қалады, оқушылардың прогресі өшпейді. Қайта ашу үшін `content/curriculum.js` ішіндегі `DJ.hiddenModules` тізімінен алып тастап, `python3 build.py` іске қосыңыз.
+- **Көшірілген модульдер:** M6.5 Cloud & Data Eng Basics 3-кезеңге (ETL/DWH DA вакансияларының жартысында сұралады), M6.4 Deep Learning Intro 5-кезеңге қосымша модуль ретінде.
+- **Жаңа модуль M3.8 «SQL практикум: Qazaq Market»:** 10 сабақ (емтиханымен), жаңа `qazaq` дерекқорында.
+- **Жаңа сабақтар (барлығы ~55):**
+  - Негіз: талдау циклі және файлдар (m01-4), салмақталған орташа және кері пайыз (m02-4), күндер және IFERROR (ss-8), UNION (sql-15), күн/мәтін функциялары (sql-16), self join және fan-out тұзағы (sql-17), кортеж/жиын/lambda (py-14), value_counts/concat (pd-9), мәтін және уақыт қатары (pd-10), NumPy 2D (pd-11), GitHub token/SSH және конфликт (git-7).
+  - Data Analyst: pandas EDA (cl-9), date spine және gaps-and-islands (adv-10), UNION/self-join/NTILE (adv-11), сессиялар және воронка (adv-12), BI құралдары (viz-9), Python-да диаграмма (viz-10), DAX итераторлары (pbi-9), A/B тестті оқу (ba-ab), RFM/ABC (ba-9), DAU/MAU (ba-10), AI көмекшімен талдау (cap-ai), take-home (cap-10), ClickHouse (deng-ch), дерек витриналары және SCD (deng-mart), SQL диалектілері (qm-9).
+  - Data Science: экспоненциал таралу және ковариация (pr-11), хи-квадрат және scipy (ab-chi), bootstrap (ab-boot), CUPED/DiD (ab-cuped), логарифм және сигмоид (mm-log), регуляризация (ml-reg), ROC/PR, Gini/KS (ml-curves), уақыт қатары (mp-ts), бустинг (mp-gbm), PCA (mp-pca), TF-IDF (mp-text), PSI дрейфі және MLflow (mp-ops), антифрод (mp-anom), ұсыныс жүйелері (mp-rec), екінші өз бетінше жоба (dc-11), DS сұхбаты (cr-ds).
+- **Жаңа дерек:** `qazaq` дерекқоры (оның ішінде `events_ts`), `metrics.daily_active`; `mldata.js`-те `sales_daily.csv`, `reviews.csv`, `loans.csv`, `transactions.csv`, `purchases.csv`.
+- **Аудармалар:** барлық жаңа сабақтар және түзетілген үзінділер орыс және ағылшын тілдеріне аударылды.
+- **Тексеріс:** `tests/verify-exercises.js` барлық көрінетін модульде өтті (kk, ru, en).
+- **Supabase:** жаңа тапсырмалар қосылды, сондықтан `supabase/xp_catalog.sql` файлын қайта іске қосыңыз.
+- **Практика:** жаңа код сабақтарының әрқайсысына 8 есептен (барлығы 280), орыс және ағылшын аудармасымен.
+- **Бет салмағы:** Qazaq Market SQL-і мен жаңа ML файлдары `content/lazy/` ішінде, тапсырма іске қосылғанда ғана жүктеледі (бастапқы скрипттер 200 KB gzip бюджетінен төмен).
 
 ## Практика және есептер
 

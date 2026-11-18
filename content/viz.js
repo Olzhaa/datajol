@@ -166,7 +166,7 @@ ${bars(cities, { highlight: 'Шымкент', label: 'Шымкент ерекш�
 <table>
 <tr><th>Түрі</th><th>Қашан</th><th>Мысал</th></tr>
 <tr><td>Санаттық</td><td>Реті жоқ топтар</td><td>Қалалар, арналар: әртүрлі түстер</td></tr>
-<tr><td>Реттік (sequential)</td><td>Азнан көпке дейін</td><td>Табыс картасы: ақшылдан қоюға</td></tr>
+<tr><td>Реттік (sequential)</td><td>Аздан көпке дейін</td><td>Табыс картасы: ақшылдан қоюға</td></tr>
 <tr><td>Екі жақты (diverging)</td><td>Ортаңғы нүктеден екі жаққа</td><td>Жоспардан ауытқу: қызыл ← сұр → көк</td></tr>
 </table>
 <h3>Нені алып тастаймыз?</h3>
@@ -263,6 +263,127 @@ ${bars([['Өткен жыл', 95], ['Биыл', 100]], { label: 'Нөлден б
         exercises: [
           { type: 'quiz', xp: 10, prompt: 'Дашбордтың сол жақ жоғарғы бұрышына не қоямыз?', options: ['Компания логотипін', 'Ең маңызды KPI-ды', 'Сүзгілер тізімін', 'Ең егжей-тегжейлі кестені'], answer: 1, explain: 'Көз ең алдымен сол жерге түседі.' },
           { type: 'quiz', xp: 10, prompt: 'Басшылық дашбордында 24 график бар. Ең дұрыс қадам?', options: ['Тағы график қосу', 'Әр графиктің қандай шешімге көмектесетінін сұрап, қалғанын алып тастау немесе бөлек бетке шығару', 'Шрифтті кішірейту', 'Барлығын pie chart-қа ауыстыру'], answer: 1, explain: 'Аз, бірақ мақсатты графиктер дашбордты пайдалы етеді.' }
+        ]
+      },
+      {
+        id: 'viz-9', title: 'BI құралдары: Superset, DataLens, Tableau, Looker Studio, Qlik', minutes: 15,
+        body: `
+<p>Қазақстандағы аналитик вакансияларында Power BI ең жиі аталады, бірақ жалғыз емес: банктер мен телеком <b>Qlik Sense</b> пен <b>Tableau</b>-ды, IT-компаниялар ашық кодты <b>Apache Superset</b>-ті, ТМД нарығындағы стартаптар <b>Yandex DataLens</b>-ті, маркетинг командалары <b>Looker Studio</b>-ны қолданады. Жақсы жаңалық: бәрінің логикасы бір. Біреуін түсінсеңіз, екіншісіне бір аптада көшесіз.</p>
+<h3>Барлық BI құралындағы бір жол</h3>
+<pre><code>Дереккөз (connection) → Dataset → Chart → Dashboard → Сүзгілер</code></pre>
+<ol>
+<li><b>Дереккөзге қосылу</b>: PostgreSQL, ClickHouse, Google Sheets, CSV.</li>
+<li><b>Dataset</b>: диаграмма салынатын кесте. Бұл дайын кесте, view немесе сіз жазған SQL сұрауы болуы мүмкін.</li>
+<li><b>Chart</b>: өлшем (dimension: қала, ай) мен көрсеткішті (measure: SUM, COUNT) таңдайсыз, құрал агрегатты өзі есептейді.</li>
+<li><b>Dashboard</b>: бірнеше диаграмма бір бетте.</li>
+<li><b>Сүзгілер</b>: күн аралығы, қала. Бір сүзгі барлық диаграммаға әсер етеді.</li>
+</ol>
+<h3>Терминдер картасы</h3>
+<table>
+<tr><th>Ұғым</th><th>Power BI</th><th>Superset</th><th>DataLens</th><th>Tableau</th><th>Looker Studio</th></tr>
+<tr><td>Дерек кестесі</td><td>Semantic model (dataset)</td><td>Dataset</td><td>Датасет</td><td>Data source</td><td>Data source</td></tr>
+<tr><td>Есептелетін көрсеткіш</td><td>Measure (DAX)</td><td>Metric (SQL өрнегі)</td><td>Есептелетін өріс</td><td>Calculated field</td><td>Calculated field</td></tr>
+<tr><td>Бір диаграмма</td><td>Visual</td><td>Chart</td><td>Чарт</td><td>Worksheet</td><td>Chart</td></tr>
+<tr><td>Диаграммалар беті</td><td>Report</td><td>Dashboard</td><td>Дашборд</td><td>Dashboard</td><td>Report</td></tr>
+<tr><td>Сүзгі элементі</td><td>Slicer</td><td>Native filter</td><td>Селектор</td><td>Filter, parameter</td><td>Control</td></tr>
+<tr><td>SQL жазатын жер</td><td>Power Query (native query)</td><td>SQL Lab</td><td>QL-чарт</td><td>Custom SQL</td><td>Custom query</td></tr>
+</table>
+<p>Qlik Sense-тің ерекшелігі — <b>ассоциативті модель</b>: бір мәнді бассаңыз, барлық кестедегі байланысты мәндер бірден белгіленеді; формулалары <code>Sum({&lt;Year={2026}&gt;} Sales)</code> түріндегі set analysis тілінде жазылады.</p>
+<h3>Superset: SQL білетін аналитиктің құралы</h3>
+<p><b>SQL Lab</b> — браузердегі SQL редакторы. Сұрауды жазып, нәтижесін көресіз, сосын «Create chart» батырмасымен сол сұрауды dataset етіп сақтайсыз. Осы курстағы SQL дағдыңыз мұнда тікелей қолданылады. DataLens пен Looker Studio да дәл осылай SQL-ден бастауға мүмкіндік береді.</p>
+<h3>Диаграммаға дайын dataset қалай жасалады</h3>
+<ul>
+<li><b>Түйіршігін (grain) анықтаңыз</b>: бір жол нені білдіреді? «Бір тапсырыс» немесе «ай × санат». Бір жолда екі деңгейді араластырмаңыз.</li>
+<li><b>Ұзын формат</b>: санаттар баған атауында емес, жолдарда тұрсын: <code>month, category, revenue</code>. Сонда жаңа санат қосылса, dataset өзгермейді, ал BI құралы оны түске, сүзгіге оңай айналдырады.</li>
+<li><b>Қатынасты емес, құрамдас бөліктерін сақтаңыз</b>: орташа чектің орнына <code>revenue</code> мен <code>orders</code>. Орташа чекті BI <code>SUM(revenue) / SUM(orders)</code> деп кез келген сүзгіде дұрыс есептейді. Дайын орташаларды қайта орташалау қате нәтиже береді.</li>
+<li><b>Күн нақты күн болсын</b>: <code>'2026-03'</code> мәтіні емес, <code>2026-03-01</code>. Сонда уақыт осі мен «соңғы 90 күн» сүзгісі жұмыс істейді.</li>
+<li><b>Сүзгіге керек өлшемдерді қосыңыз</b>: қала, статус, арна. Dataset-те жоқ баған бойынша сүзе алмайсыз.</li>
+</ul>
+<h3>Қай құралды қашан</h3>
+<table>
+<tr><th>Жағдай</th><th>Құрал</th></tr>
+<tr><td>Корпоративтік есеп, Microsoft ортасы, Excel-ге жақын пайдаланушылар</td><td>Power BI</td></tr>
+<tr><td>Дерек ClickHouse/PostgreSQL-де, команда SQL біледі, лицензияға бюджет жоқ</td><td>Superset</td></tr>
+<tr><td>Жылдам, тегін бұлттық дашборд, ClickHouse-пен жақсы жұмыс</td><td>DataLens</td></tr>
+<tr><td>Маркетинг: Google Analytics, Google Ads, Sheets</td><td>Looker Studio</td></tr>
+<tr><td>Күрделі интерактивті визуализация, зерттеу</td><td>Tableau</td></tr>
+</table>
+<h3>Жиі қателер</h3>
+<ul>
+<li>Dataset-ке алдын ала есептелген пайыз бен орташаны салу, сосын BI-да оларды қосу немесе орташалау.</li>
+<li>Әр диаграммаға бөлек SQL жазу: сандар бір-біріне сәйкес келмей қалады. Бір тақырыпқа бір dataset жасап, барлық диаграмманы содан салыңыз.</li>
+<li>Миллион жолдық шикі кестені тікелей қосу: дашборд баяу ашылады. Күн немесе ай деңгейіне дейін агрегаттаңыз.</li>
+</ul>
+<div class="tip">Резюмеде құрал атауын ғана емес, не істегеніңізді жазыңыз: «Superset-те ClickHouse дерегінен сатылым дашбордын құрдым: 1 dataset, 6 диаграмма, 3 сүзгі». Superset пен DataLens-ті тегін орнатып, портфолио жобасын жасауға болады.</div>`,
+        exercises: [
+          { type: 'quiz', xp: 10, prompt: 'Superset-тегі «dataset» ұғымы нені білдіреді?', options: ['Дайын диаграмма', 'Диаграммалар салынатын кесте, view немесе сақталған SQL сұрауы', 'Дашбордтың PDF көшірмесі', 'Пайдаланушылар тізімі'], answer: 1, explain: 'Dataset — диаграмманың дереккөзі. Оны SQL Lab-та жазған сұраудан да жасауға болады. Power BI-дағы модель кестесіне, Tableau-дағы data source-қа сәйкес келеді.' },
+          { type: 'sql', dataset: 'qazaq', xp: 25, prompt: "<b>qazaq.</b> «Санаттар бойынша айлық түсім» диаграммасына ұзын форматтағы dataset дайындаңыз: 2026 жылғы жеткізілген тапсырыстар бойынша <code>month</code> (айдың бірінші күні, <code>date(order_date, 'start of month')</code>), <code>category</code>, <code>revenue</code>. <code>month</code>, <code>category</code> бойынша сұрыптаңыз.", starter: '', solution: "SELECT date(o.order_date, 'start of month') AS month, p.category, SUM(oi.quantity * oi.unit_price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.status = 'delivered' AND o.order_date >= '2026-01-01' GROUP BY month, p.category ORDER BY month, p.category;", check: { ordered: true }, hints: ['Үш кесте: <code>orders</code>, <code>order_items</code>, <code>products</code>.', "<code>WHERE o.status = 'delivered' AND o.order_date &gt;= '2026-01-01'</code>, <code>GROUP BY month, p.category</code>."] },
+          { type: 'sql', dataset: 'qazaq', xp: 30, prompt: '<b>qazaq.</b> Дашбордтың негізгі dataset-ін жасаңыз, түйіршігі — бір тапсырыс: <code>order_id</code>, <code>order_date</code>, <code>city</code> (клиенттің қаласы), <code>status</code>, <code>items</code> (тапсырыстағы тауар жолдарының саны), <code>order_total</code> (quantity × unit_price сомасы). Барлық статус кіреді. <code>order_id</code> бойынша сұрыптаңыз.', starter: '', solution: 'SELECT o.order_id, o.order_date, c.city, o.status, COUNT(*) AS items, SUM(oi.quantity * oi.unit_price) AS order_total FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id, o.order_date, c.city, o.status ORDER BY o.order_id;', check: { ordered: true }, hints: ['<code>orders</code>-ты <code>customers</code> және <code>order_items</code>-пен біріктіріңіз.', 'Түйіршік — тапсырыс: <code>GROUP BY o.order_id, o.order_date, c.city, o.status</code>. Нәтижеде 308 жол болуы керек.'] },
+          { type: 'quiz', xp: 10, prompt: 'Dataset-те әр қала мен ай үшін дайын <code>avg_check</code> бағаны бар. Дашбордта «Барлық қала» карточкасы оны <code>AVG(avg_check)</code> деп көрсетеді. Не дұрыс емес?', options: ['Ештеңе, бұл дұрыс орташа чек', 'Бұл орташалардың орташасы: 5 тапсырысы бар қала мен 500 тапсырысы бар қала бірдей салмақ алады. Dataset-ке revenue мен orders-ті салып, SUM(revenue) / SUM(orders) деп есептеу керек', 'AVG орнына MAX қолдану керек', 'Карточкада орташа чекті көрсетуге болмайды'], answer: 1, explain: 'Қатынастарды алдын ала есептемей, алым мен бөлімді бөлек сақтаңыз. Сонда BI кез келген сүзгіде дұрыс қатынасты өзі есептейді.' },
+          { type: 'quiz', xp: 10, prompt: 'Компанияның дерегі ClickHouse-та, аналитиктер SQL біледі, лицензияға бюджет жоқ. Қай құрал ең қисынды?', options: ['Tableau', 'Apache Superset', 'Qlik Sense', 'Excel'], answer: 1, explain: 'Superset ашық кодты және тегін, ClickHouse-қа қосылады, SQL Lab арқылы сұраудан бірден диаграмма жасауға болады. DataLens те осы жағдайға лайық балама.' }
+        ]
+      },
+      {
+        id: 'viz-10', title: 'Python-да диаграмма: matplotlib және seaborn', minutes: 16,
+        body: `
+<p>Вакансияларда «matplotlib/seaborn» жиі кездеседі: Python-да талдау жасап отырып, диаграмманы сол жерде салу ыңғайлы. Бұл сайттың браузеріндегі Python-да matplotlib жоқ, сондықтан бұл сабақта кодты <b>оқуды</b> және диаграммаға <b>деректі дайындауды</b> үйренесіз. Диаграмма салудың 80%-ы — дәл осы дайындық. Кодты өз компьютеріңізде немесе Google Colab-та іске қосып көріңіз.</p>
+<h3>Стандартты үлгі</h3>
+<pre><code>import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('orders.csv')
+clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]
+monthly = clean.groupby(clean['order_date'].str[:7])['amount'].sum()   # 1. дерек
+
+fig, ax = plt.subplots(figsize=(8, 4))            # 2. сурет пен ось
+ax.plot(monthly.index, monthly.values, marker='o')  # 3. сызық
+ax.set_title('Айлық табыс, 2024')                 # 4. тақырып пен осьтер
+ax.set_ylabel('Табыс, ₸')
+ax.set_ylim(0)
+ax.spines[['top', 'right']].set_visible(False)    # артық жиектерді алу
+plt.tight_layout()
+plt.savefig('revenue.png', dpi=150)               # 5. сақтау
+plt.show()</code></pre>
+<p>Әр диаграмма осы бес қадамнан тұрады: дерек → <code>fig, ax</code> → салу → безендіру → сақтау. <code>fig</code> — бүкіл сурет, <code>ax</code> — оның ішіндегі бір диаграмма (осьтерімен).</p>
+<h3>Диаграмма түрлері</h3>
+<table>
+<tr><th>Мақсат</th><th>matplotlib</th><th>Дерек қандай болуы керек</th></tr>
+<tr><td>Уақыт бойынша тренд</td><td><code>ax.plot(x, y)</code></td><td>Уақыт ретімен сұрыпталған Series</td></tr>
+<tr><td>Санаттарды салыстыру</td><td><code>ax.barh(атаулар, мәндер)</code></td><td>Мәні бойынша сұрыпталған Series</td></tr>
+<tr><td>Таралу</td><td><code>ax.hist(x, bins=20)</code></td><td>Шикі мәндер (агрегатсыз)</td></tr>
+<tr><td>Екі айнымалының байланысы</td><td><code>ax.scatter(x, y)</code></td><td>Екі сандық баған</td></tr>
+</table>
+<h3>seaborn: DataFrame-мен тікелей жұмыс</h3>
+<p><b>seaborn</b> matplotlib-тің үстіне құрылған. Оған ұзын форматтағы DataFrame мен баған атауларын бересіз:</p>
+<pre><code>import seaborn as sns
+
+sns.barplot(data=m, x='channel', y='amount', estimator='sum', errorbar=None)
+sns.histplot(data=clean, x='amount', bins=20)
+sns.lineplot(data=long_df, x='month', y='revenue', hue='channel')
+sns.heatmap(pivot, annot=True, fmt='.0f', cmap='Blues')</code></pre>
+<ul>
+<li><code>hue='channel'</code> әр арнаны бөлек түспен салады.</li>
+<li><code>sns.barplot</code> әдепкіде <b>орташаны</b> және сенімділік интервалының сызығын көрсетеді. Қосынды керек болса, <code>estimator='sum'</code> деп жазасыз.</li>
+<li><code>sns.heatmap</code> кең форматтағы кестені (pivot) күтеді: жолдар бір өлшем, бағандар екіншісі.</li>
+</ul>
+<h3>Ұзын және кең формат</h3>
+<p><code>lineplot</code> пен <code>barplot</code>-қа ұзын формат (<code>month, channel, revenue</code>) керек, <code>heatmap</code>-қа кең формат. Бірінен біріне <code>pivot_table</code> өткізеді:</p>
+<pre><code>pivot = m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code></pre>
+<h3>Жиі қателер</h3>
+<ul>
+<li><code>plt.savefig</code>-ті <code>plt.show()</code>-дан кейін шақыру: скриптте <code>show</code> суретті жабады, файл бос сақталады. Алдымен сақтаңыз.</li>
+<li>Bar chart-та осьті нөлден бастамау (<code>set_ylim</code>-ге нөлден өзге төменгі шек беру): айырма жасанды үлкейеді.</li>
+<li>Сұрыпталмаған bar chart: <code>sort_values()</code> диаграмманы оқуды бірден жеңілдетеді.</li>
+<li>Күнді мәтін күйінде қалдыру: осьте айлар әліпби ретімен тұрып қалуы мүмкін. <code>pd.to_datetime</code> қолданыңыз немесе <code>YYYY-MM</code> форматын ұстаңыз.</li>
+<li>Тақырыпсыз, өлшем бірліксіз диаграмма. Тақырыпқа қорытындыны жазыңыз: «Наурызда табыс ең жоғары болды».</li>
+</ul>
+<div class="tip">Диаграмма күткендей шықпаса, алдымен <code>print(monthly)</code> деп деректің өзін қараңыз. Қате әдетте сызбада емес, groupby мен сүзгіде болады.</div>`,
+        exercises: [
+          { type: 'python', xp: 25, prompt: "Сабақтағы line chart-қа дерек дайындаңыз. Таза тапсырыстардан (<code>status</code> = paid, <code>amount</code> бос емес және 20 000-нан кіші) айлық табысты есептеп, <code>monthly</code> Series-іне жазыңыз: индексі <code>'YYYY-MM'</code> түріндегі ай (өсу ретімен), мәні — <code>amount</code> қосындысы.", starter: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\n\n# clean = ...\n# monthly = ...\n", solution: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\nclean = df[(df['status'] == 'paid') & df['amount'].notna() & (df['amount'] < 20000)]\nmonthly = clean.groupby(clean['order_date'].str[:7])['amount'].sum()\nprint(monthly)\n", check: { tests: "assert 'monthly' in globals(), 'monthly айнымалысын жасаңыз'\nassert hasattr(monthly, 'index') and getattr(monthly, 'ndim', 0) == 1, 'monthly pandas Series болуы керек'\nassert [str(i) for i in monthly.index] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], f'Индекс 2024-01 … 2024-06 айлары болуы керек, сізде {list(monthly.index)}'\nassert [float(v) for v in monthly.values] == [31950.0, 66650.0, 89650.0, 66000.0, 48700.0, 31900.0], f'Айлық табыс дұрыс емес: тазалау ережелерін тексеріңіз. Сізде {list(monthly.values)}'" }, hints: ["<code>clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]</code>", "Ай: <code>clean['order_date'].str[:7]</code>", "<code>clean.groupby(clean['order_date'].str[:7])['amount'].sum()</code>"] },
+          { type: 'python', xp: 25, prompt: 'Горизонталь bar chart-қа (<code>ax.barh</code>) дерек дайындаңыз: таза тапсырыстардан әр қаланың табысын есептеп, <b>өсу ретімен</b> сұрыпталған <code>by_city</code> Series-іне жазыңыз (индексі — қала). <code>barh</code> бірінші мәнді төменге салады, сондықтан ең үлкені жоғарыда көрінеді.', starter: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nclean = df[(df['status'] == 'paid') & df['amount'].notna() & (df['amount'] < 20000)]\n\n# by_city = ...\n", solution: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nclean = df[(df['status'] == 'paid') & df['amount'].notna() & (df['amount'] < 20000)]\nm = clean.merge(customers, on='customer_id')\nby_city = m.groupby('city')['amount'].sum().sort_values()\nprint(by_city)\n", check: { tests: "assert 'by_city' in globals(), 'by_city айнымалысын жасаңыз'\nassert getattr(by_city, 'ndim', 0) == 1, 'by_city pandas Series болуы керек'\nassert list(by_city.index) == ['Шымкент', 'Астана', 'Алматы'], f'Қалалар табысы бойынша өсу ретімен тұруы керек, сізде {list(by_city.index)}'\nassert [float(v) for v in by_city.values] == [37500.0, 142950.0, 154400.0], f'Қала табысы дұрыс емес, сізде {list(by_city.values)}'" }, hints: ["Қала <code>customers</code> кестесінде: <code>clean.merge(customers, on='customer_id')</code>", "<code>m.groupby('city')['amount'].sum().sort_values()</code>"] },
+          { type: 'python', xp: 30, prompt: "<code>sns.heatmap</code>-қа кең форматтағы кесте дайындаңыз: <code>pivot</code> DataFrame-інің жолдары — арна (<code>channel</code>), бағандары — ай (<code>'YYYY-MM'</code>), мәндері — таза табыс қосындысы.", starter: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nclean = df[(df['status'] == 'paid') & df['amount'].notna() & (df['amount'] < 20000)]\nm = clean.merge(customers, on='customer_id')\nm['month'] = m['order_date'].str[:7]\n\n# pivot = ...\n", solution: "import pandas as pd\n\ndf = pd.read_csv('orders.csv')\ncustomers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nclean = df[(df['status'] == 'paid') & df['amount'].notna() & (df['amount'] < 20000)]\nm = clean.merge(customers, on='customer_id')\nm['month'] = m['order_date'].str[:7]\npivot = m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')\nprint(pivot)\n", check: { tests: "assert 'pivot' in globals(), 'pivot айнымалысын жасаңыз'\nassert getattr(pivot, 'ndim', 0) == 2, 'pivot DataFrame болуы керек'\nassert pivot.shape == (3, 6), f'pivot өлшемі 3 арна × 6 ай болуы керек, сізде {pivot.shape}'\nassert sorted(pivot.index) == ['2gis', 'instagram', 'referral'], 'Жолдар арналар болуы керек: index=\"channel\"'\nassert [str(c) for c in pivot.columns] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], 'Бағандар айлар болуы керек: columns=\"month\"'\nassert float(pivot.loc['instagram', '2024-03']) == 47750.0 and float(pivot.loc['referral', '2024-05']) == 20200.0, 'Мәндер amount қосындысы болуы керек: aggfunc=\"sum\"'" }, hints: ["<code>m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code>", '<code>aggfunc</code> жазылмаса, pandas қосындыны емес, орташаны есептейді.'] },
+          { type: 'quiz', xp: 10, prompt: "Код: <code>sns.barplot(data=m, x='channel', y='amount')</code>. Бағандардың биіктігі нені көрсетеді?", options: ['Әр арнаның жалпы табысын', 'Әр арнадағы тапсырыс сомасының орташасын (үстінде сенімділік интервалының сызығымен)', 'Әр арнадағы тапсырыс санын', 'Ең үлкен тапсырысты'], answer: 1, explain: "seaborn-ның barplot-ы әдепкіде орташаны салады. Жалпы табыс керек болса: <code>estimator='sum'</code>, сызықты алу үшін <code>errorbar=None</code>." },
+          { type: 'quiz', xp: 10, prompt: "Скрипттің соңы: <code>plt.show()</code>, одан кейінгі жолда <code>plt.savefig('chart.png')</code>. Файлда не сақталады?", options: ['Дайын диаграмма', 'Бос сурет: show диаграмманы көрсеткен соң суретті жабады, сондықтан savefig-ті show-дан бұрын шақыру керек', 'Қате шығады', 'Екі диаграмма'], answer: 1, explain: 'Рет маңызды: алдымен <code>savefig</code>, сосын <code>show</code>. Немесе <code>fig.savefig(...)</code> деп нақты сурет объектісін сақтаңыз.' }
         ]
       },
       {

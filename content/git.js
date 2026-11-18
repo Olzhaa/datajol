@@ -172,11 +172,16 @@ git pull                                     # басқалардың өзгер
       body: `
 <h3>.gitignore</h3>
 <p>Git-ке не <b>сақтамау</b> керектігін айтатын файл:</p>
-<pre><code># .gitignore
-.env                 # құпия кілттер мен парольдер
-data/raw/*.csv       # үлкен немесе жеке деректер
+<pre><code># құпия кілттер мен парольдер
+.env
+
+# үлкен немесе жеке деректер
+data/raw/*.csv
+
+# Python мен Jupyter-дің уақытша файлдары
 __pycache__/
 .ipynb_checkpoints/</code></pre>
+<p>Түсініктеме <code>#</code> белгісінен басталады және әрқашан <b>бөлек жолда</b> жазылады. Үлгімен бір жолға жазылған <code>.env  # құпия</code> түсініктеме болып саналмайды: Git бүкіл жолды файл атауы деп оқиды да, <code>.env</code> еленбей қалады.</p>
 <div class="tip">Парольді немесе API кілтін бір рет commit жасасаңыз, ол тарихта қалады, тіпті кейін жойсаңыз да. Кілтті бірден ауыстырыңыз.</div>
 <h3>Аналитиктің портфолио репозиторийі</h3>
 <pre><code>cafe-analysis/
@@ -207,6 +212,106 @@ sql/ папкасындағы файлдарды ретімен орындаңы
       exercises: [
         { type: 'quiz', xp: 10, prompt: 'Қай файлды репозиторийге ешқашан commit жасамау керек?', options: ['README.md', 'cleaning.sql', '.env (парольдер мен API кілттері)', '.gitignore'], answer: 2, explain: '.env-ті .gitignore-ға қосыңыз.' },
         { type: 'quiz', xp: 10, prompt: 'Портфолио README-інде ең бірінші не тұруы керек?', options: ['Кодтың толық тізімі', 'Бизнес сұрақ және негізгі нәтиже', 'Лицензия', 'Python нұсқасы'], answer: 1, explain: 'Оқырман 30 секундта «не шешілді және не табылды» дегенді түсінуі керек.' }
+      ]
+    },
+    {
+      id: 'git-7', title: 'GitHub-қа кіру (token/SSH) және конфликтті шешу', minutes: 15,
+      body: `
+<p>Алғашқы <code>git push</code> кезінде жаңа бастаушылардың көбі екі кедергіге тап болады: GitHub парольді қабылдамайды, ал кейін бірінші merge конфликті шығады. Екеуі де қалыпты жағдай және екеуінің де нақты шешімі бар.</p>
+<h3>Неге пароль жұмыс істемейді?</h3>
+<pre><code>$ git push
+Username: aigerim
+Password: ********
+remote: Support for password authentication was removed.
+fatal: Authentication failed</code></pre>
+<p>GitHub 2021 жылдан бері Git командалары үшін аккаунт паролін қабылдамайды: пароль ұрланса, бүкіл аккаунт кетеді. Оның орнына үш тәсілдің бірін қолданасыз.</p>
+<table>
+<tr><th>Тәсіл</th><th>Қалай жұмыс істейді</th><th>Кімге лайық</th></tr>
+<tr><td><b>GitHub CLI</b></td><td><code>gh auth login</code> браузерді ашып, кіруді өзі баптайды</td><td>Ең оңайы, бастаушыға</td></tr>
+<tr><td><b>Personal access token</b></td><td>Парольдің орнына енгізілетін ұзын кілт, HTTPS адресімен</td><td>Бағдарлама орнатуға болмайтын жерде</td></tr>
+<tr><td><b>SSH кілті</b></td><td>Компьютерде кілттер жұбы жасалады, ашық бөлігі GitHub-қа қосылады</td><td>Күнде жұмыс істейтін компьютерге</td></tr>
+</table>
+<h3>1-тәсіл: gh auth login</h3>
+<pre><code>gh auth login</code></pre>
+<p>Сұрақтарға жауап бересіз (GitHub.com → HTTPS → браузер арқылы кіру), браузерде кодты растайсыз. Содан кейін <code>git push</code> пароль сұрамайды. <code>gh</code> — GitHub-тың ресми командалық құралы, оны cli.github.com сайтынан орнатасыз.</p>
+<h3>2-тәсіл: personal access token (PAT)</h3>
+<ol>
+<li>GitHub → <b>Settings → Developer settings → Personal access tokens</b> → жаңа token жасаңыз.</li>
+<li>Мерзімін (мысалы 90 күн) және рұқсатын таңдаңыз: тек керек репозиторий, <b>Contents: Read and write</b>.</li>
+<li>Token бір рет қана көрсетіледі: бірден көшіріп алыңыз.</li>
+<li><code>git push</code> пароль сұрағанда парольдің орнына token-ды қойыңыз.</li>
+</ol>
+<p>Token — парольмен бірдей құпия. Оны кодқа, README-ге немесе чатқа жазбаңыз. Ашылып қалса, GitHub-та бірден жойып (revoke), жаңасын жасаңыз.</p>
+<h3>3-тәсіл: SSH кілті</h3>
+<pre><code>ssh-keygen -t ed25519 -C "aigerim@mail.kz"   # кілттер жұбын жасау
+cat ~/.ssh/id_ed25519.pub                    # АШЫҚ кілтті көрсету</code></pre>
+<p>Шыққан жолды көшіріп, GitHub → <b>Settings → SSH and GPG keys → New SSH key</b> ішіне қойыңыз. Тексеру және репозиторий адресін SSH түріне ауыстыру:</p>
+<pre><code>ssh -T git@github.com
+git remote set-url origin git@github.com:aigerim/cafe-analysis.git</code></pre>
+<p>Екі файл жасалады: <code>id_ed25519</code> — <b>жабық</b> кілт (ешкімге бермейсіз), <code>id_ed25519.pub</code> — <b>ашық</b> кілт (GitHub-қа қосасыз). Адрестің түріне қараңыз: <code>https://github.com/...</code> token сұрайды, <code>git@github.com:...</code> SSH кілтін қолданады. Қазіргі адресті <code>git remote -v</code> көрсетеді.</p>
+<h3>fetch және pull</h3>
+<table>
+<tr><th>Команда</th><th>Не істейді</th></tr>
+<tr><td><code>git fetch</code></td><td>GitHub-тағы жаңа commit-терді жүктейді, бірақ сіздің файлдарыңызға <b>тимейді</b></td></tr>
+<tr><td><code>git pull</code></td><td><code>fetch</code> + <code>merge</code>: жүктейді және бірден тармағыңызға қосады</td></tr>
+</table>
+<p><code>git fetch</code>-тен кейін не келгенін қарап алуға болады: <code>git log main..origin/main</code> (сізде жоқ commit-тер) немесе <code>git diff main origin/main</code>. Сенімді болсаңыз, <code>git pull</code> жасайсыз.</p>
+<h3>stash: аяқталмаған жұмысты уақытша алып қою</h3>
+<p>Жұмыстың ортасында <code>git pull</code> немесе басқа тармаққа өту керек болды, ал өзгерістер commit-ке әлі дайын емес. Git «өзгерістеріңіз жоғалады» деп жібермейді. <code>stash</code> оларды уақытша сөреге қояды:</p>
+<pre><code>git stash          # өзгерістерді жасырып, жұмыс қалтасын тазалау
+git pull           # немесе git switch main
+git stash pop      # өзгерістерді қайтару
+git stash list     # сөреде не жатқанын көру</code></pre>
+<h3>Commit болып кеткен .env файлын алып тастау</h3>
+<p><code>.env</code>-ті <code>.gitignore</code>-ға кейін қоссаңыз, ештеңе өзгермейді: Git бақылап тұрған файлды елемеуді қоймайды. Алдымен оны бақылаудан шығару керек:</p>
+<pre><code>git rm --cached .env                 # Git-тен алады, дискідегі файл қалады
+echo ".env" &gt;&gt; .gitignore            # енді қайта қосылмайды
+git add .gitignore
+git commit -m ".env файлын бақылаудан алып тастадым"</code></pre>
+<p><code>--cached</code> болмаса, <code>git rm</code> файлды дискіден де жояды. Есіңізде болсын: файл <b>ескі commit-терде қалады</b>. Сондықтан ішіндегі парольдер мен кілттерді бірден ауыстырыңыз (rotate): оларды ашылған деп есептеңіз.</p>
+<h3>Merge конфликті</h3>
+<p>Екі адам бір файлдың <b>бір жолын</b> әртүрлі өзгертсе, Git қайсысын қалдыру керегін өзі шеше алмайды:</p>
+<pre><code>$ git pull
+CONFLICT (content): Merge conflict in report.sql
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+<p>Git файлдың ішіне белгілер қояды:</p>
+<pre><code>SELECT city, SUM(amount) AS revenue
+FROM orders
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+WHERE status = 'paid'
+=======
+WHERE status = 'paid' AND amount &lt; 20000
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+GROUP BY city;</code></pre>
+<table>
+<tr><th>Бөлік</th><th>Мағынасы</th></tr>
+<tr><td><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> мен <code>=======</code> арасы</td><td>сіздің нұсқаңыз</td></tr>
+<tr><td><code>=======</code> мен <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> арасы</td><td>келген нұсқа (әріптестікі)</td></tr>
+</table>
+<p>Шешу қадамдары:</p>
+<ol>
+<li><code>git status</code> — қай файлдарда конфликт бар екенін көрсетеді (<code>both modified</code>).</li>
+<li>Файлды ашып, дұрыс нұсқаны қалдырыңыз: өзіңіздікін, әріптестікін немесе екеуінің қосындысын. Қайсысы дұрыс екенін білмесеңіз, әріптестен сұраңыз.</li>
+<li>Үш белгі жолын да (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) өшіріңіз.</li>
+<li><code>git add report.sql</code> — «бұл файл шешілді» деген белгі.</li>
+<li><code>git commit</code> — merge-ті аяқтайды.</li>
+</ol>
+<p>Бәрі шатасып кетсе, <code>git merge --abort</code> merge-ке дейінгі күйге қайтарады. Ештеңе жоғалмайды.</p>
+<div class="tip">Конфликтті азайту жолы: жұмысты бастар алдында <code>git pull</code> жасаңыз, шағын commit-тер жасап, жиі push етіңіз. Тармақ main-нен неғұрлым ұзақ бөлек тұрса, конфликт соғұрлым көп болады.</div>
+<h3>Жиі қателер</h3>
+<ul>
+<li><b>Аккаунт паролін қайта-қайта енгізу.</b> Ол жұмыс істемейді: token, SSH немесе <code>gh auth login</code> керек.</li>
+<li><b>Жабық кілтті бөлісу.</b> GitHub-қа тек <code>.pub</code> файлының мазмұны қойылады. <code>.pub</code>-сыз файл — жабық кілт, оны ешкімге жібермеңіз.</li>
+<li><b>Конфликт белгілерін өшірмей commit жасау.</b> Файлда <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> қалып, SQL немесе Python код бұзылады.</li>
+<li><b><code>git rm .env</code> деп <code>--cached</code>-сыз жазу.</b> Файл дискіден де жойылады.</li>
+<li><b><code>git stash</code>-тен кейін <code>pop</code>-ты ұмыту.</b> Жұмыс сөреде қалып, «жоғалды» деп ойлайсыз. <code>git stash list</code> тексеріңіз.</li>
+</ul>`,
+      exercises: [
+        { type: 'quiz', xp: 10, prompt: '<code>git push</code> логин мен GitHub паролін сұрады. Парольді дұрыс енгіздіңіз, бірақ <code>Authentication failed</code> шықты. Себебі не?', options: ['Интернет жоқ', 'GitHub Git командалары үшін аккаунт паролін қабылдамайды: token, SSH кілті немесе gh auth login керек', 'Репозиторий жойылған', 'Алдымен git pull жасау керек еді'], answer: 1, explain: 'Пароль арқылы кіру 2021 жылы өшірілген. HTTPS адресінде парольдің орнына personal access token енгізіледі, немесе SSH кілті бапталады.' },
+        { type: 'cmd', xp: 15, prompt: 'Талдауды аяқтамадыңыз, commit жасауға әлі ерте, ал <code>git pull</code> жасау керек. Өзгерістерді уақытша сөреге алып қойыңыз.', solution: 'git stash', accept: ['git stash( push)?( (-u|--include-untracked))?', 'git stash( push)?( (-u|--include-untracked))? (-m|--message) ("[^"]+"|\'[^\']+\')', 'git stash save( ("[^"]+"|\'[^\']+\'))?'], hints: ['Команда <code>git stash</code> деп басталады.'], explain: 'Жұмыс қалтасы тазарды. pull-дан кейін өзгерістерді <code>git stash pop</code> қайтарады.' },
+        { type: 'cmd', xp: 15, prompt: '<code>.env</code> файлы байқаусызда commit болып кеткен. Оны Git бақылауынан алып тастаңыз, бірақ дискідегі файл <b>қалсын</b>.', solution: 'git rm --cached .env', accept: ['git rm --cached (--)?\\s?(\\./)?\\.env', 'git rm (\\./)?\\.env --cached'], hints: ['<code>git rm</code> командасына файлды дискіде қалдыратын жалауша қосыңыз.', '<code>git rm --cached .env</code>'], explain: 'Енді .env-ті .gitignore-ға қосып, commit жасаңыз. Файл ескі commit-терде қалады, сондықтан ішіндегі кілттерді ауыстырыңыз.' },
+        { type: 'cmd', xp: 15, prompt: '<code>git pull</code> кезінде <code>report.sql</code> файлында конфликт шықты. Сіз файлды ашып, дұрыс нұсқаны қалдырдыңыз және белгілерді өшірдіңіз. Енді Git-ке осы файлдың шешілгенін хабарлаңыз.', solution: 'git add report.sql', accept: ['git add (\\./)?report\\.sql', 'git add (\\.|-A|--all)'], hints: ['Шешілген файл staging-ке қосылады.', '<code>git add report.sql</code>'], explain: 'Файл шешілді деп белгіленді. Соңғы қадам — <code>git commit</code>: ол merge-ті аяқтайды.' },
+        { type: 'quiz', xp: 10, prompt: 'Әріптестердің GitHub-қа не жібергенін көргіңіз келеді, бірақ өз файлдарыңыз әзірше өзгермесін. Қай команда?', options: ['git pull', 'git fetch', 'git push', 'git stash pop'], answer: 1, explain: 'fetch тек жүктейді: жаңа commit-тер origin/main-де пайда болады, ал жұмыс қалтаңыз өзгермейді. pull — fetch + merge, ол файлдарды бірден өзгертеді.' }
       ]
     },
     {

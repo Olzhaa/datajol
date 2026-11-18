@@ -565,5 +565,204 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "adv-10": {
+  "pr": [
+   {
+    "title": "Days of the week",
+    "prompt": "Using a recursive CTE, list the days from 1 to 14 September 2024: <code>day</code> and <code>dow</code>, the day-of-week number (<code>strftime('%w', day)</code>, 0 is Sunday). In date order.",
+    "hints": [
+     "Stop condition: <code>WHERE day &lt; '2024-09-14'</code>.",
+     "<code>SELECT day, strftime('%w', day) AS dow FROM cal ORDER BY day</code>"
+    ]
+   },
+   {
+    "title": "Empty days",
+    "prompt": "On which days of September did nobody open the app? <code>LEFT JOIN</code> the calendar to <code>daily_active</code> and return the days that found no match. Column: <code>day</code>.",
+    "hints": [
+     "<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>",
+     "In a row without a match the right-hand columns are NULL: <code>WHERE a.user_id IS NULL</code>."
+    ]
+   },
+   {
+    "title": "One user's last week",
+    "prompt": "For each day from 2024-09-25 to 2024-09-30, show whether user 9 was active: <code>day</code>, <code>active</code> (1 if active, 0 if not). All 6 days must appear, in date order.",
+    "hints": [
+     "Put the user condition inside <code>ON</code>, not in <code>WHERE</code>: <code>ON a.day = c.day AND a.user_id = 9</code>.",
+     "<code>COUNT(a.user_id)</code> gives 0 on an empty day."
+    ]
+   },
+   {
+    "title": "Zero-filled average",
+    "prompt": "Zero-fill the daily DAU for September and return one row: <code>days</code> (days in the calendar), <code>zero_days</code> (days with DAU = 0), <code>avg_dau</code> (average DAU over the 30 days, 2 decimals).",
+    "hints": [
+     "First compute each day's <code>dau</code> in a second CTE (<code>LEFT JOIN</code>, <code>COUNT(a.user_id)</code>).",
+     "<code>SUM(CASE WHEN dau = 0 THEN 1 ELSE 0 END)</code> and <code>ROUND(AVG(dau), 2)</code>. The answer should be 3.27, not 3.38."
+    ]
+   },
+   {
+    "title": "Find the gaps",
+    "prompt": "List the periods when user 1 was not active (the gaps): <code>gap_start</code> (first day of the gap), <code>gap_end</code> (last day), <code>missing</code> (number of days in the gap). Get the previous active day with <code>LAG</code>. Sort by <code>gap_start</code>.",
+    "hints": [
+     "If two active days are more than 1 day apart, there is a gap between them: <code>WHERE julianday(day) - julianday(prev) &gt; 1</code>.",
+     "<code>date(prev, '+1 day')</code>, <code>date(day, '-1 day')</code>, <code>CAST(julianday(day) - julianday(prev) - 1 AS INTEGER)</code>"
+    ]
+   },
+   {
+    "title": "Number of streaks",
+    "prompt": "Count how many unbroken streaks (islands) each user had in September: <code>user_id</code>, <code>streaks</code>. Sort by <code>user_id</code>.",
+    "hints": [
+     "Every day of one island has the same <code>date(day, '-' || rn || ' day')</code>.",
+     "Number of islands = number of distinct group labels: <code>COUNT(DISTINCT ...)</code>."
+    ]
+   },
+   {
+    "title": "Long streaks",
+    "prompt": "List every streak that lasted at least 5 days: <code>user_id</code>, <code>start_day</code>, <code>end_day</code>, <code>days</code>. Sort by <code>user_id</code>, <code>start_day</code>.",
+    "hints": [
+     "<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>, then <code>GROUP BY user_id, date(day, '-' || rn || ' day')</code>.",
+     "Compute the streak length in a CTE and filter with <code>WHERE days &gt;= 5</code> outside (or <code>HAVING COUNT(*) &gt;= 5</code>)."
+    ]
+   },
+   {
+    "title": "A true 7-day average",
+    "prompt": "For each day of September: <code>day</code>, <code>dau</code> (0 on an empty day) and <code>avg7</code>, the average DAU over the last 7 days including the current one (<code>ROWS BETWEEN 6 PRECEDING AND CURRENT ROW</code>, 2 decimals). In the first days of the month, average whatever days the window has. 30 rows, in date order.",
+    "hints": [
+     "First the zero-filled daily DAU (calendar + <code>LEFT JOIN</code>), then the window: that way 7 rows = 7 days.",
+     "<code>ROUND(AVG(dau) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2)</code>"
+    ]
+   }
+  ]
+ },
+ "adv-11": {
+  "pr": [
+   {
+    "title": "One combined list",
+    "prompt": "<b>shop.</b> Use <code>UNION ALL</code> to put customer names and product names into one list: <code>name</code>, <code>kind</code> (<code>'customer'</code> for a customer, <code>'product'</code> for a product).",
+    "hints": [
+     "Both queries need the same number of columns: <code>SELECT name, 'customer' AS kind FROM customers</code>.",
+     "The second one: <code>UNION ALL SELECT name, 'product' FROM products</code>."
+    ]
+   },
+   {
+    "title": "Managers with INTERSECT",
+    "prompt": "<b>staff.</b> Use <code>INTERSECT</code> to list the <code>id</code> of employees who have at least one direct report: values that appear both in the <code>id</code> column and in the <code>manager_id</code> column.",
+    "hints": [
+     "<code>SELECT id FROM employees INTERSECT SELECT manager_id FROM employees</code>"
+    ]
+   },
+   {
+    "title": "Salary position",
+    "prompt": "<b>staff.</b> Show where each employee's salary sits between 0 and 1: <code>name</code>, <code>salary</code>, <code>pr</code> = <code>PERCENT_RANK()</code> by ascending salary, <code>ROUND</code> to 2 decimals.",
+    "hints": [
+     "<code>PERCENT_RANK() OVER (ORDER BY salary)</code>: the lowest salary is 0, the highest is 1."
+    ]
+   },
+   {
+    "title": "Share of the manager's salary",
+    "prompt": "<b>staff.</b> For every employee who has a manager: <code>name</code>, <code>manager</code> (the manager's name), <code>pct</code>, the employee's salary as a percentage of the manager's salary (1 decimal).",
+    "hints": [
+     "Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>. The director must not appear, so a plain <code>JOIN</code> is enough.",
+     "<code>ROUND(100.0 * e.salary / m.salary, 1)</code>"
+    ]
+   },
+   {
+    "title": "Lowest salary in a department",
+    "prompt": "<b>staff.</b> Use <code>LAST_VALUE</code> to find the lowest-paid person in each department: <code>department</code>, <code>lowest</code>. Order the window by salary descending. One row per department.",
+    "hints": [
+     "The starter code gives each row its own name: the default frame ends at the current row.",
+     "Add <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code>; <code>DISTINCT</code> then leaves one row per department."
+    ]
+   },
+   {
+    "title": "A totals row",
+    "prompt": "<b>staff.</b> Build a report: each department's payroll (<code>department</code>, <code>total</code>) and, underneath via <code>UNION ALL</code>, a company-wide totals row with <code>'TOTAL'</code> in place of <code>department</code>.",
+    "hints": [
+     "First query: <code>GROUP BY department</code>. The second has no grouping: <code>SELECT 'TOTAL', SUM(salary) FROM employees</code>."
+    ]
+   },
+   {
+    "title": "The manager's manager",
+    "prompt": "<b>staff.</b> For each employee: <code>name</code>, <code>manager</code> (direct manager) and <code>skip_manager</code> (the manager's manager). All 12 employees must appear; a missing value is NULL.",
+    "hints": [
+     "Take the table three times: <code>e</code> (employee), <code>m</code> (manager), <code>g</code> (the manager's manager).",
+     "<code>LEFT JOIN employees g ON g.id = m.manager_id</code>. Both joins must be <code>LEFT</code>, or the top levels disappear."
+    ]
+   },
+   {
+    "title": "Three customer tiers",
+    "prompt": "<b>shop.</b> Split the customers who placed orders into three tiers with <code>NTILE(3)</code> by total spend (<code>quantity × price</code>, all statuses): 1 is the biggest spenders; order the window by spend descending, then <code>customer_id</code>. For each tier: <code>tier</code>, <code>customers</code>, <code>revenue</code>. Sort by <code>tier</code>.",
+    "hints": [
+     "CTE 1: each customer's total. CTE 2: <code>NTILE(3) OVER (ORDER BY total DESC, customer_id) AS tier</code>.",
+     "Finally: <code>GROUP BY tier</code>, <code>COUNT(*)</code>, <code>SUM(total)</code>."
+    ]
+   }
+  ]
+ },
+ "adv-12": {
+  "pr": [
+   {
+    "title": "The previous event",
+    "prompt": "List user 7's events in time order: <code>ts</code>, <code>event</code>, <code>prev_event</code> (this user's previous event; NULL for the first one).",
+    "hints": [
+     "<code>LAG(event) OVER (ORDER BY ts)</code>"
+    ]
+   },
+   {
+    "title": "The unordered funnel",
+    "prompt": "For comparison, first compute the unordered funnel: for each event type, <code>event</code>, <code>users</code> (distinct users with that event), <code>events</code> (number of events). Sort by <code>events</code> descending.",
+    "hints": [
+     "<code>COUNT(DISTINCT user_id)</code> and <code>COUNT(*)</code>, <code>GROUP BY event</code>."
+    ]
+   },
+   {
+    "title": "Start of a session",
+    "prompt": "For user 15's events, return <code>ts</code>, <code>event</code> and <code>is_new</code>: 1 if the event is the user's first or more than 30 minutes passed since the previous one, otherwise 0. In time order.",
+    "hints": [
+     "<code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END</code>",
+     "<code>LAG</code> returns NULL for the first event; count it as a session start too."
+    ]
+   },
+   {
+    "title": "Sessions per user",
+    "prompt": "Return the number of sessions per user (rule: the first event or a break of more than 30 minutes starts a new session): <code>user_id</code>, <code>sessions</code>. Sort by <code>sessions</code> descending, then <code>user_id</code>.",
+    "hints": [
+     "A user's session count = the number of their events that start a session.",
+     "<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id</code>."
+    ]
+   },
+   {
+    "title": "The average session",
+    "prompt": "Return one row across all sessions: <code>sessions</code> (count), <code>avg_events</code> (average events per session, 2 decimals), <code>avg_minutes</code> (average minutes between the first and last event, 1 decimal).",
+    "hints": [
+     "A third CTE: <code>GROUP BY user_id, session_no</code> with <code>COUNT(*)</code> and <code>(julianday(MAX(ts)) - julianday(MIN(ts))) * 1440</code>.",
+     "Then <code>COUNT(*)</code> and <code>AVG</code> over it. There should be 128 sessions."
+    ]
+   },
+   {
+    "title": "Sessions with a purchase",
+    "prompt": "How many sessions contain at least one <code>purchase</code>? One row: <code>sessions</code>, <code>with_purchase</code>, <code>pct</code> (%, 1 decimal).",
+    "hints": [
+     "A flag per session: <code>MAX(CASE WHEN event = 'purchase' THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id, session_no</code>.",
+     "<code>ROUND(100.0 * SUM(bought) / COUNT(*), 1)</code>"
+    ]
+   },
+   {
+    "title": "Cart without a view",
+    "prompt": "Find the push-notification users from the lesson: those who did a <code>cart</code> but no <code>view</code> before their first cart (including those who never viewed). Columns: <code>user_id</code>, <code>first_cart</code>, <code>first_view</code> (NULL if none). Sort by <code>user_id</code>.",
+    "hints": [
+     "Two CTEs: each user's first <code>cart</code> time and first <code>view</code> time.",
+     "<code>c LEFT JOIN v</code> with <code>v.first_view IS NULL OR v.first_view &gt; c.first_cart</code>. You should get three users."
+    ]
+   },
+   {
+    "title": "Bought within an hour",
+    "prompt": "Of the users who bought after their first view, how many made their first purchase within 60 minutes of it? One row: <code>buyers</code>, <code>within_hour</code>, <code>pct</code> (%, 1 decimal). Easier to read than a median.",
+    "hints": [
+     "CTE <code>p</code>: <code>events_ts e JOIN v</code>, <code>e.event = 'purchase' AND e.ts &gt; v.view_ts</code>, <code>MIN(e.ts)</code> per user.",
+     "Minutes: <code>(julianday(MIN(e.ts)) - julianday(v.view_ts)) * 1440</code>; then <code>SUM(CASE WHEN minutes &lt;= 60 THEN 1 ELSE 0 END)</code>."
+    ]
+   }
+  ]
  }
 } });

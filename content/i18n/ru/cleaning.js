@@ -177,7 +177,7 @@ WHERE REPLACE(amount, ' ', '') GLOB '*[^0-9-]*';</code></pre>
 <p>Есть два распространённых способа:</p>
 <ul>
 <li><b>Бизнес-порог</b>: правило вида «один заказ не превышает 200 000 ₸». Понятно, но порог нужно согласовать с бизнесом.</li>
-<li><b>Статистический порог (IQR)</b>: находим квартили Q1 и Q3 и помечаем как подозрительные значения больше <code>Q3 + 1.5 × (Q3 − Q1)</code>. Подробнее этот способ разберём в модуле статистики.</li>
+<li><b>Статистический порог (IQR)</b>: находим квартили Q1 и Q3 и помечаем как подозрительные значения больше <code>Q3 + 1.5 × (Q3 − Q1)</code>. Подробнее этот способ мы разобрали в модуле статистики.</li>
 </ul>
 <h3>Шаблон разметки в SQL</h3>
 <pre><code>CASE
@@ -274,6 +274,108 @@ def clean_city(s):
         { prompt: 'Выведите одним значением <code>total</code> общую сумму корректных заказов (сумма больше 0 и не превышает 500 000).' },
         { prompt: 'Напишите функцию <code>profile(rows)</code>: она принимает список словарей и возвращает словарь с количеством пропусков (<code>None</code> или пустой текст <code>""</code>) для каждого ключа. Ключи берутся из первой строки.', check: { tests: '_rows = [{"a": 1, "b": None, "c": "x"}, {"a": None, "b": "", "c": "y"}, {"a": 3, "b": "z", "c": ""}]\nassert profile(_rows) == {"a": 1, "b": 2, "c": 1}, f"Ожидалось {{\'a\': 1, \'b\': 2, \'c\': 1}}, у вас {profile(_rows)}"' } },
         { prompt: 'Какой шаг очистки <b>обязательно</b> нужно документировать?', options: ['Удаление пробелов', 'Решения об удалении строк или заполнении значений', 'Изменение порядка столбцов', 'Никакой'], explain: 'Удаление строк или заполнение меняет результат: позже кто-нибудь спросит «почему число другое?».' }
+      ]
+    },
+    'cl-9': {
+      title: 'EDA в pandas и проверка качества данных',
+      body: `
+<p>В предыдущих уроках вы чистили данные вручную, на чистом Python: так понятно, что именно происходит. На работе те же шаги <b>pandas</b> выполняет в несколько строк. В этом уроке проверяем файлы кофейни <code>orders.csv</code> (150 заказов) и <code>customers.csv</code> (40 клиентов).</p>
+<h3>Профилирование в пять строк</h3>
+<pre><code>import pandas as pd
+df = pd.read_csv('orders.csv')
+
+df.info()                      # столбцы, типы, число непустых значений
+df.describe()                  # числовые столбцы: min, квартили, max
+df.isna().sum()                # пропуски в каждом столбце
+df['status'].value_counts()    # частота категорий
+df.duplicated().sum()          # полностью повторяющиеся строки</code></pre>
+<p>На этом файле команды показывают следующее:</p>
+<table>
+<tr><th>Команда</th><th>Что увидели</th><th>Вывод</th></tr>
+<tr><td><code>info()</code></td><td><code>amount</code>: 144 непустых из 150; <code>order_date</code> — текст</td><td>Нет 6 сумм; дату нужно преобразовать через <code>pd.to_datetime</code></td></tr>
+<tr><td><code>describe()</code></td><td>медиана 2 450, max 48 000</td><td>Один заказ в 20 раз больше медианы: подозрительное значение</td></tr>
+<tr><td><code>value_counts()</code></td><td>paid 146, refund 4</td><td>При подсчёте выручки refund исключаем</td></tr>
+<tr><td><code>duplicated()</code></td><td>0</td><td>Полных дубликатов нет. Проверьте и по ключу: <code>df['id'].is_unique</code></td></tr>
+</table>
+<p><code>value_counts(dropna=False)</code> показывает и пропуски отдельной строкой. <code>nunique()</code> возвращает число различных значений в столбце.</p>
+<h3>merge: проверяем ключи</h3>
+<p>Соединение двух таблиц — место, где данные портятся чаще всего. В pandas есть два предохранителя.</p>
+<p><b>1. <code>indicator=True</code></b> добавляет столбец <code>_merge</code>, который показывает, откуда пришла каждая строка:</p>
+<pre><code>m = orders.merge(customers, on='customer_id', how='left', indicator=True)
+m['_merge'].value_counts()
+# both         — клиент найден
+# left_only    — заказ есть, клиента нет («осиротевший» ключ)</code></pre>
+<p>«Осиротевшие» строки молча пропадают при INNER JOIN, а при LEFT JOIN столбцы города и канала становятся NaN. В обоих случаях сумма получится неверной, поэтому сначала их нужно найти.</p>
+<p><b>2. <code>validate</code></b> проверяет тип связи. Если ожидание не выполняется, pandas выдаёт ошибку <code>MergeError</code>:</p>
+<pre><code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code></pre>
+<p><code>many_to_one</code>: слева ключ может повторяться, справа обязан быть уникальным. Если бы в таблице клиентов один <code>customer_id</code> встретился дважды, каждый его заказ удвоился бы и выручка оказалась бы завышенной. <code>validate</code> ловит это сразу.</p>
+<h3>Сверка числа строк (reconciliation)</h3>
+<p>После каждого шага записывайте число строк и контрольную сумму:</p>
+<pre><code>print(len(orders))               # 150
+m = orders.merge(customers, on='customer_id', how='left')
+assert len(m) == len(orders)     # left join не должен добавлять строки
+clean = m[(m['status'] == 'paid') &amp; m['amount'].notna()]
+print(len(clean), clean['amount'].sum())</code></pre>
+<p>Если ваши числа не сходятся с числом из SQL или с дашборда, эти записи помогут найти, на каком шаге появилась разница.</p>
+<h3>Чек-лист качества данных</h3>
+<table>
+<tr><th>Измерение</th><th>Вопрос</th><th>pandas</th></tr>
+<tr><td>Полнота</td><td>Где пропуски и сколько их?</td><td><code>df.isna().sum()</code></td></tr>
+<tr><td>Уникальность</td><td>Повторяется ли ключ?</td><td><code>df['id'].is_unique</code>, <code>df.duplicated(subset=['id'])</code></td></tr>
+<tr><td>Валидность</td><td>Лежат ли значения в допустимом диапазоне?</td><td><code>describe()</code>, <code>(df['amount'] &lt;= 0).sum()</code>, <code>value_counts()</code></td></tr>
+<tr><td>Согласованность</td><td>Находятся ли внешние ключи?</td><td><code>merge(..., indicator=True)</code></td></tr>
+<tr><td>Актуальность</td><td>По какую дату есть данные?</td><td><code>df['order_date'].min()</code>, <code>.max()</code></td></tr>
+<tr><td>Сверка</td><td>Совпадают ли число строк и сумма с источником?</td><td><code>len(df)</code>, <code>df['amount'].sum()</code></td></tr>
+</table>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Считать среднее, не посмотрев <code>describe()</code>: один заказ на 48 000 ₸ сильно сдвигает среднее.</li>
+<li>Не проверять число строк после merge. Если строк стало больше, правый ключ не уникален; если меньше, INNER JOIN выбросил «осиротевшие» строки.</li>
+<li>Заполнять пропуски через <code>fillna(0)</code>, не зная причины: «сумма неизвестна» и «сумма равна нулю» — разные вещи.</li>
+<li><code>duplicated()</code> находит только полностью одинаковые строки. Если один заказ записан дважды с разным временем, его поймает только проверка по ключу.</li>
+</ul>
+<div class="tip">Оформите чек-лист функцией и запускайте её первой на каждом новом файле. В тестовом задании (take-home) раздел «как я проверял данные» — первое, на что смотрит работодатель.</div>`,
+      ex: [
+        { prompt: 'Напишите функцию <code>profile(df)</code>. Она должна возвращать словарь: <code>rows</code> (число строк), <code>cols</code> (число столбцов), <code>missing</code> (только столбцы с пропусками: <code>{столбец: количество}</code>), <code>duplicates</code> (число полностью повторяющихся строк).', check: { tests: `import pandas as _pd
+_d = _pd.read_csv('orders.csv')
+_r = profile(_d)
+assert isinstance(_r, dict), 'profile должна возвращать словарь'
+assert _r.get('rows') == 150 and _r.get('cols') == 5, f"orders.csv: должно быть rows = 150, cols = 5, у вас {_r.get('rows')}, {_r.get('cols')}"
+assert dict(_r.get('missing') or {}) == {'amount': 6}, f"Должно быть missing = {{'amount': 6}}, у вас {_r.get('missing')}"
+assert _r.get('duplicates') == 0, 'В orders.csv нет полных дубликатов: duplicates = 0'
+_r2 = profile(_pd.concat([_d, _d.head(3)], ignore_index=True))
+assert _r2.get('rows') == 153 and _r2.get('duplicates') == 3, 'В таблице с тремя повторёнными строками должно быть duplicates = 3'` }, hints: ['<code>df.isna().sum()</code> даёт число пропусков в каждом столбце; пройдите по нему через <code>.items()</code> и оставьте значения больше нуля.', '<code>df.duplicated().sum()</code> — полностью повторяющиеся строки. Оберните в <code>int(...)</code>.', '<code>df.shape[1]</code> — число столбцов.'] },
+        { prompt: 'Присоедините к <code>orders</code> таблицу <code>customers</code> по <code>customer_id</code> через left join и добавьте <code>indicator=True</code>: результат назовите <code>merged</code>. Затем запишите в список <code>orphans</code> значения <code>customer_id</code> заказов, для которых клиент не найден, без повторов и по возрастанию.', starter: `import pandas as pd
+
+orders = pd.read_csv('orders.csv')
+customers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})
+# Два заказа, ошибочно загруженные из другой системы: таких клиентов нет
+extra = pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})
+orders = pd.concat([orders, extra], ignore_index=True)
+
+# merged = ...
+# orphans = ...
+`, check: { tests: `assert 'merged' in globals(), 'Создайте переменную merged'
+assert '_merge' in merged.columns, 'Добавьте indicator=True в merge'
+assert len(merged) == 152, f'Left join не должен менять число строк: 152 строки, у вас {len(merged)}'
+assert 'orphans' in globals(), 'Создайте список orphans'
+assert [int(x) for x in orphans] == [98, 99], f'Должно быть orphans = [98, 99], у вас {list(orphans)}'` }, hints: [`<code>orders.merge(customers, on='customer_id', how='left', indicator=True)</code>`, `«Осиротевшие» строки: <code>merged['_merge'] == 'left_only'</code>`, `<code>sorted(merged.loc[условие, 'customer_id'].unique().tolist())</code>`] },
+        { prompt: `Напишите функцию <code>safe_join(orders, customers)</code>: она делает left join по <code>customer_id</code>, через <code>validate='many_to_one'</code> проверяет, что ключ клиентов уникален, ставит <code>assert</code> на то, что число строк не изменилось, и возвращает объединённую таблицу. Если в таблице клиентов ключ повторяется, должна возникать ошибка.`, check: { tests: `import pandas as _pd
+_o = _pd.read_csv('orders.csv')
+_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})
+_m = safe_join(_o, _c)
+assert _m is not None, 'safe_join должна возвращать объединённую таблицу'
+assert len(_m) == len(_o), f'Число строк должно остаться 150, у вас {len(_m)}'
+assert 'city' in _m.columns and 'channel' in _m.columns, 'В результате должны быть столбцы клиента city и channel'
+_bad = _pd.concat([_c, _c.head(1)], ignore_index=True)
+try:
+    safe_join(_o, _bad)
+    _raised = False
+except Exception:
+    _raised = True
+assert _raised, 'Если в таблице клиентов ключ повторяется, safe_join должна выдавать ошибку'` }, hints: [`<code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code>`, '<code>assert len(out) == len(orders)</code>, затем <code>return out</code>.'] },
+        { prompt: 'После left join таблицы заказов из 150 строк с таблицей клиентов получилось 163 строки. Самая вероятная причина?', options: ['Для 13 заказов клиент не найден', 'В таблице клиентов некоторые <code>customer_id</code> повторяются, поэтому их заказы размножились', 'pandas добавляет строки случайно', 'В таблице заказов есть пропуски'], explain: `При left join строка без найденного клиента не пропадает и не размножается. Число строк растёт, только когда ключ справа не уникален. <code>validate='many_to_one'</code> ловит это сразу.` },
+        { prompt: 'В вашем расчёте на pandas выручка кофейни равна 382 850 ₸, а в SQL-запросе коллеги — 334 850 ₸. Что вы сделаете в первую очередь?', options: ['Возьму среднее двух чисел', 'Пошагово сравню фильтры и число строк в обоих расчётах: статус, пустые суммы, выбросы', 'Объявлю своё число правильным', 'Загружу данные заново'], explain: 'Разница ровно 48 000 ₸: один корпоративный заказ есть в одном расчёте и исключён в другом. Сверка (reconciliation) показывает, на каком шаге появилась разница.' }
       ]
     }
   }

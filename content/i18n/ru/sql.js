@@ -285,11 +285,12 @@ HAVING COUNT(*) &gt;= 3;</code></pre>
 FROM products
 GROUP BY category
 HAVING AVG(price) &gt; 10000;</code></pre>
-<p>Полный порядок: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Порядок записи</b> (в таком порядке вы пишете запрос): <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Порядок выполнения</b> (в таком порядке база данных считает на самом деле, его называют логическим порядком): <code>FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code>. То есть база данных сначала берёт таблицу (JOIN, который вы изучите позже, тоже выполняется на этом шаге), фильтрует строки, группирует, фильтрует группы и только потом вычисляет столбцы из SELECT. Отсюда и запрет на агрегаты в WHERE: когда он выполняется, группы ещё не построены.</p>
 <h3>Частые ошибки</h3>
 <ul>
 <li><b>Агрегат в WHERE:</b> <code>WHERE COUNT(*) &gt; 1</code> даёт ошибку. На этапе WHERE групп ещё нет — используйте HAVING.</li>
-<li><b>Забыть GROUP BY.</b> <code>SELECT city, COUNT(*) FROM customers</code> вернёт одну строку на всю таблицу, а не по строке на город.</li>
+<li><b>Забыть GROUP BY.</b> <code>SELECT city, COUNT(*) FROM customers</code> в нашем SQLite в браузере не выдаёт ошибку: он возвращает одну строку на всю таблицу и подставляет в <code>city</code> один случайный город. Это особенность SQLite. Строгие базы данных вроде PostgreSQL на такой запрос сразу выдают ошибку («столбец city должен быть в GROUP BY»).</li>
 <li><b>Не заметить группу NULL.</b> Строки с пустым <code>city</code> собираются в отдельную группу <code>NULL</code>. Если она не нужна, добавьте <code>WHERE city IS NOT NULL</code>.</li>
 </ul>`,
       ex: [
@@ -614,15 +615,263 @@ REVOKE DELETE ON orders FROM analyst;</code></pre>
         { prompt: 'Аналитику нужно дать право только на чтение таблицы <code>sales</code>. Какая команда?', options: ['REVOKE SELECT ON sales FROM analyst;', 'GRANT SELECT ON sales TO analyst;', 'GRANT ALL ON sales TO analyst;', 'COMMIT sales;'], explain: 'GRANT SELECT даёт только право на чтение. GRANT ALL — слишком много прав.' }
       ]
     },
+    'sql-15': {
+      title: 'UNION, UNION ALL и множества',
+      body: `
+<p><code>JOIN</code> соединяет таблицы <b>по горизонтали</b>: к строке добавляются новые столбцы. Но иногда два результата нужно соединить <b>по вертикали</b>: поставить один список под другим. Например, собрать клиентов августа и ноября в один список или добавить в конец таблицы строку «Итого». Для этого есть операторы над множествами.</p>
+<table>
+<tr><th>Оператор</th><th>Что возвращает</th><th>Дубликаты</th></tr>
+<tr><td><code>UNION</code></td><td>объединение двух результатов</td><td>удаляются</td></tr>
+<tr><td><code>UNION ALL</code></td><td>объединение двух результатов</td><td>остаются</td></tr>
+<tr><td><code>INTERSECT</code></td><td>строки, которые есть в обоих</td><td>удаляются</td></tr>
+<tr><td><code>EXCEPT</code></td><td>строки, которые есть в первом, но не во втором</td><td>удаляются</td></tr>
+</table>
+<h3>Пример: UNION и UNION ALL</h3>
+<p>Клиенты, сделавшие заказ в августе: 1, 2, 1 (Айгерім дважды). В октябре: 2, 9, 5, 1.</p>
+<pre><code>SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+UNION
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';</code></pre>
+<p>Результат — 4 строки: <code>1, 2, 5, 9</code>. <code>UNION</code> убрал дубликаты: и между двумя списками, и внутри одного списка. Если написать тот же запрос с <code>UNION ALL</code>, получится 7 строк: <code>1, 2, 1, 2, 9, 5, 1</code>. Ничего не удаляется, строки просто ставятся друг под другом.</p>
+<div class="tip">Если вы знаете, что дубликатов не будет, или они нужны, пишите <code>UNION ALL</code>. Чтобы найти дубликаты, <code>UNION</code> сравнивает весь результат, поэтому на большой таблице он медленный. В отчёте, где складывается выручка, <code>UNION</code> опасен: два разных заказа с одинаковой суммой превратятся в одну строку, и выручка уменьшится.</div>
+<h3>Правило: столбцы должны соответствовать</h3>
+<ul>
+<li>В обоих SELECT должно быть <b>одинаковое число</b> столбцов.</li>
+<li>Типы соответствующих столбцов должны быть <b>совместимы</b>: число под числом, текст под текстом. SQLite это не проверяет, а PostgreSQL выдаёт ошибку.</li>
+<li>Названия столбцов берутся из <b>первого</b> SELECT.</li>
+<li><code>ORDER BY</code> пишется один раз в самом конце и применяется ко всему объединённому результату.</li>
+</ul>
+<h3>Пример: строка «Итого»</h3>
+<pre><code>SELECT status, COUNT(*) AS orders FROM orders GROUP BY status
+UNION ALL
+SELECT 'Барлығы', COUNT(*) FROM orders;   -- 'Барлығы' = «всего»</code></pre>
+<table>
+<tr><th>status</th><th>orders</th></tr>
+<tr><td>cancelled</td><td>2</td></tr>
+<tr><td>delivered</td><td>10</td></tr>
+<tr><td>shipped</td><td>3</td></tr>
+<tr><td>Барлығы</td><td>15</td></tr>
+</table>
+<p>Во втором SELECT <code>'Барлығы'</code> — обычный текст (константа). Он попадает под столбец <code>status</code>.</p>
+<h3>INTERSECT и EXCEPT</h3>
+<pre><code>-- заказывали и в августе, и в октябре
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+INTERSECT
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';   -- 1, 2
+
+-- клиенты, которые ни разу не заказывали
+SELECT id FROM customers
+EXCEPT
+SELECT customer_id FROM orders;                                     -- 8</code></pre>
+<p>В <code>EXCEPT</code> порядок важен: «есть в A, нет в B». Если поменять их местами, получится совсем другой вопрос. <code>EXCEPT</code> и <code>NOT EXISTS</code> могут отвечать на один и тот же вопрос; разница в том, что <code>EXCEPT</code> сравнивает строки целиком и удаляет дубликаты.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Разное число столбцов:</b> <code>SELECT id, name ... UNION SELECT id ...</code> выдаст ошибку.</li>
+<li><b>Перепутан порядок столбцов:</b> <code>SELECT name, city ... UNION SELECT city, name ...</code> ошибку не выдаст, но города и имена перемешаются в одном столбце. SQL сопоставляет столбцы не по названию, а <b>по позиции</b>.</li>
+<li><b>UNION вместо UNION ALL:</b> нужные дубликаты молча удаляются, числа уменьшаются.</li>
+<li><b>Отдельный ORDER BY у каждого SELECT:</b> сортировка пишется только в конце.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Выведите без повторов список <code>customer_id</code> клиентов, которые делали заказ в августе (<code>2024-08</code>) <b>или</b> в ноябре (<code>2024-11</code>). Объедините два SELECT через <code>UNION</code>.', hints: ['Второй SELECT точно такой же, только месяц другой.', "<code>... LIKE '2024-08%' UNION SELECT customer_id FROM orders WHERE order_date LIKE '2024-11%'</code>"] },
+        { prompt: 'Выведите число товаров в каждой категории (<code>category</code>), а в конец через <code>UNION ALL</code> добавьте строку <code>Барлығы</code> («всего»): в ней должно быть число всех товаров. Два столбца: категория и число.', hints: ["Во втором SELECT вместо категории напишите текст: <code>SELECT 'Барлығы', COUNT(*) FROM products</code>.", 'В обоих SELECT должно быть по два столбца.'] },
+        { prompt: 'С помощью <code>EXCEPT</code> найдите <code>id</code> клиентов, у которых <b>нет</b> ни одного заказа со статусом <code>delivered</code>.', hints: ['Первое множество — <code>id</code> всех клиентов.', "Второе множество — <code>customer_id</code> заказов <code>delivered</code>. Поставьте между ними <code>EXCEPT</code>."] },
+        { prompt: 'С помощью <code>INTERSECT</code> найдите <code>customer_id</code> клиентов, которые делали заказ и в августе (<code>2024-08</code>), и в октябре (<code>2024-10</code>).', hints: ['Посмотрите пример с INTERSECT в уроке.'] },
+        { prompt: 'Вы собираетесь объединить таблицы продаж двух филиалов и посчитать общую выручку. Какой оператор вы выберете и почему?', options: ['UNION: он удаляет дубликаты, поэтому результат чистый', 'UNION ALL: сохраняются все строки; UNION превратил бы две разные продажи с одинаковыми суммой и датой в одну строку и занизил бы выручку', 'INTERSECT: он даёт строки, которые есть в обеих таблицах', 'EXCEPT: он убирает лишние строки'], explain: 'Когда строки складывают, а потом считают агрегат, всегда нужен UNION ALL. UNION используют только тогда, когда нужен «список без повторов».' }
+      ]
+    },
+    'sql-16': {
+      title: 'Функции для дат и текста',
+      body: `
+<p>Большинство реальных отчётов привязано ко времени: месячная выручка, число дней от регистрации до первого заказа. А реальные данные часто грязные: лишние пробелы, разный регистр, числа, сохранённые как текст. В этом уроке вы изучите функции, которые нужны в обоих случаях.</p>
+<div class="tip">Функции для дат и текста в разных базах данных называются по-разному. Здесь вы пишете вариант для <b>SQLite</b> в браузере, а в конце урока есть таблица аналогов в <b>PostgreSQL</b>: на работе чаще встречаются именно они.</div>
+<h3>Части даты: strftime</h3>
+<p>В наших таблицах дата — это текст вида <code>'2024-08-19'</code> (формат ISO: год-месяц-день). <code>strftime(формат, дата)</code> берёт из неё нужную часть:</p>
+<table>
+<tr><th>Выражение</th><th>Результат</th><th>Значение</th></tr>
+<tr><td><code>strftime('%Y', '2024-08-19')</code></td><td>2024</td><td>год</td></tr>
+<tr><td><code>strftime('%m', '2024-08-19')</code></td><td>08</td><td>месяц</td></tr>
+<tr><td><code>strftime('%d', '2024-08-19')</code></td><td>19</td><td>день</td></tr>
+<tr><td><code>strftime('%Y-%m', '2024-08-19')</code></td><td>2024-08</td><td>ключ месяца</td></tr>
+<tr><td><code>strftime('%w', '2024-08-19')</code></td><td>1</td><td>день недели (0 — воскресенье)</td></tr>
+</table>
+<p>Результат — текст. Если нужно число, преобразуйте: <code>CAST(strftime('%m', order_date) AS INTEGER)</code> → 8.</p>
+<h3>«Обрезка» до месяца</h3>
+<p>Для месячного отчёта каждую дату приводим к её месяцу. Есть два способа:</p>
+<pre><code>SELECT strftime('%Y-%m', order_date) AS month, COUNT(*) AS orders
+FROM orders
+GROUP BY month
+ORDER BY month;</code></pre>
+<table>
+<tr><th>month</th><th>orders</th></tr>
+<tr><td>2024-08</td><td>3</td></tr>
+<tr><td>2024-09</td><td>4</td></tr>
+<tr><td>2024-10</td><td>4</td></tr>
+<tr><td>…</td><td>…</td></tr>
+</table>
+<p>Второй способ — первый день месяца: <code>date(order_date, 'start of month')</code> → <code>2024-08-01</code>. Это называют «month truncation». Не забывайте про год: если группировать только по <code>'%m'</code>, август разных лет попадёт в одну группу.</p>
+<h3>Сдвиг дат и разница</h3>
+<pre><code>date('2024-08-19', '+7 days')         -- 2024-08-26
+date('2024-08-19', '-1 month')        -- 2024-07-19
+date('now')                           -- сегодняшняя дата
+
+julianday('2024-08-19') - julianday('2024-08-02')   -- 17.0</code></pre>
+<p><code>julianday</code> превращает дату в одно число, поэтому одну дату можно вычесть из другой. Разница — это число дней. Если вычитать даты прямо в виде текста (<code>'2024-08-19' - '2024-08-02'</code>), SQLite вычтет только годы и вернёт 0.</p>
+<pre><code>SELECT o.id,
+       CAST(julianday(o.order_date) - julianday(c.signup_date) AS INTEGER) AS days
+FROM orders o
+JOIN customers c ON c.id = o.customer_id;</code></pre>
+<p>Заказ 101: Айгерім зарегистрировалась 2024-01-15 и сделала заказ 2024-08-02 → 200 дней.</p>
+<h3>Текстовые функции</h3>
+<table>
+<tr><th>Функция</th><th>Пример</th><th>Результат</th></tr>
+<tr><td><code>LENGTH</code></td><td><code>LENGTH('Алматы')</code></td><td>6</td></tr>
+<tr><td><code>SUBSTR(текст, начало, длина)</code></td><td><code>SUBSTR('2024-08-19', 1, 7)</code></td><td>2024-08</td></tr>
+<tr><td><code>REPLACE</code></td><td><code>REPLACE('12 500', ' ', '')</code></td><td>12500</td></tr>
+<tr><td><code>TRIM</code></td><td><code>TRIM('  Айгерім ')</code></td><td>Айгерім</td></tr>
+<tr><td><code>UPPER</code>, <code>LOWER</code></td><td><code>LOWER('NURLAN@mail.kz')</code></td><td>nurlan@mail.kz</td></tr>
+<tr><td><code>||</code></td><td><code>name || ' (' || city || ')'</code></td><td>Айгерім (Алматы)</td></tr>
+</table>
+<p>В <code>SUBSTR</code> счёт начинается <b>с 1</b> (а не с 0, как в Python). Если дата записана в формате ISO, <code>SUBSTR(order_date, 1, 7)</code> тоже даёт ключ месяца.</p>
+<div class="tip">В SQLite <code>UPPER</code> и <code>LOWER</code> меняют только латинские буквы: <code>LOWER('АЛМАТЫ')</code> останется без изменений. Для email этого достаточно. PostgreSQL правильно меняет и кириллицу.</div>
+<h3>Преобразование типа: CAST</h3>
+<p>В базе «Грязные данные» сумма сохранена как текст: <code>'12 500'</code>, <code>'8000'</code>. Текст нельзя складывать и сравнивать. Сначала убираем пробел, потом превращаем в число:</p>
+<pre><code>SELECT id, CAST(REPLACE(amount, ' ', '') AS INTEGER) AS amount_num
+FROM raw_orders;</code></pre>
+<p><code>CAST(значение AS тип)</code>: <code>INTEGER</code> — целое число, <code>REAL</code> — дробное число, <code>TEXT</code> — текст. Осторожно: текст, который не превращается в число (<code>'abc'</code>), SQLite без ошибки превращает в <b>0</b>. PostgreSQL в таком случае выдаёт ошибку.</p>
+<p>CAST нужен и при делении целых чисел: <code>7 / 2</code> = 3, а <code>CAST(7 AS REAL) / 2</code> или <code>7 * 1.0 / 2</code> = 3.5.</p>
+<h3>Работа с NULL: COALESCE и NULLIF</h3>
+<ul>
+<li><code>COALESCE(a, b, c)</code> возвращает первое значение, не равное NULL: <code>COALESCE(city, 'белгісіз')</code>.</li>
+<li><code>NULLIF(a, b)</code> — NULL, если <code>a = b</code>, иначе <code>a</code>. Чаще всего так защищаются от деления на ноль: <code>revenue / NULLIF(orders, 0)</code>. Если заказов 0, делитель становится NULL, и результат — не ошибка, а NULL.</li>
+<li>Превратить пустой текст в NULL: <code>NULLIF(TRIM(phone), '')</code>.</li>
+</ul>
+<h3>Аналоги в PostgreSQL</h3>
+<table>
+<tr><th>Что нужно</th><th>SQLite</th><th>PostgreSQL</th></tr>
+<tr><td>Обрезать до начала месяца</td><td><code>date(d, 'start of month')</code></td><td><code>DATE_TRUNC('month', d)</code></td></tr>
+<tr><td>Ключ месяца как текст</td><td><code>strftime('%Y-%m', d)</code></td><td><code>TO_CHAR(d, 'YYYY-MM')</code></td></tr>
+<tr><td>Номер месяца</td><td><code>CAST(strftime('%m', d) AS INTEGER)</code></td><td><code>EXTRACT(MONTH FROM d)</code></td></tr>
+<tr><td>Прибавить 7 дней</td><td><code>date(d, '+7 days')</code></td><td><code>d + INTERVAL '7 days'</code></td></tr>
+<tr><td>Разница двух дат</td><td><code>julianday(d2) - julianday(d1)</code></td><td><code>d2 - d1</code> (если обе имеют тип <code>date</code>)</td></tr>
+<tr><td>Сегодня</td><td><code>date('now')</code></td><td><code>CURRENT_DATE</code></td></tr>
+<tr><td>Преобразовать тип</td><td><code>CAST(x AS INTEGER)</code></td><td><code>CAST(x AS INTEGER)</code> или <code>x::int</code></td></tr>
+</table>
+<p><code>SUBSTR</code>, <code>LENGTH</code>, <code>REPLACE</code>, <code>TRIM</code>, <code>UPPER</code>, <code>LOWER</code>, <code>COALESCE</code>, <code>NULLIF</code> в обеих базах пишутся одинаково.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Группировка по месяцу без года.</b> <code>GROUP BY strftime('%m', order_date)</code> смешивает разные годы. Пишите <code>'%Y-%m'</code>.</li>
+<li><b>Вычитание дат в виде текста.</b> Для разницы нужен <code>julianday</code>.</li>
+<li><b>Формат не ISO.</b> Дату вида <code>'15.02.2024'</code> функция <code>strftime</code> не понимает (возвращает NULL), а при сортировке она попадает не на своё место. Сначала её нужно привести к виду <code>ГГГГ-ММ-ДД</code> с помощью <code>SUBSTR</code>.</li>
+<li><b>Не проверять CAST.</b> <code>'abc'</code> молча превращается в 0. После преобразования просмотрите значения 0 и NULL.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Выведите число заказов за каждый месяц: ключ месяца (<code>YYYY-MM</code>, через <code>strftime</code>) и число. Месяцы по возрастанию.', hints: ["Формат: <code>'%Y-%m'</code>.", 'Добавьте <code>GROUP BY month ORDER BY month</code>.'] },
+        { prompt: 'Для каждого заказа посчитайте, сколько дней прошло от регистрации клиента (<code>signup_date</code>) до заказа (<code>order_date</code>). Два столбца: <code>id</code> заказа и число дней.', hints: ['Разница: <code>julianday(o.order_date) - julianday(c.signup_date)</code>.', 'Чтобы получить целое число, оберните её в <code>CAST(... AS INTEGER)</code>.'] },
+        { prompt: 'Очистите таблицу <code>raw_customers</code>. Выведите три столбца: <code>id</code>, <code>name</code> без пробелов по краям и <code>email</code>, приведённый к нижнему регистру.', hints: ['<code>TRIM(name)</code> и <code>LOWER(email)</code>.'] },
+        { prompt: 'В таблице <code>raw_orders</code> столбец <code>amount</code> — текст (<code>\'12 500\'</code>). Выведите два столбца: <code>id</code> и сумму без пробелов, преобразованную в целое число.', hints: ["Сначала уберите пробел: <code>REPLACE(amount, ' ', '')</code>.", 'Потом: <code>CAST(... AS INTEGER)</code>.'] },
+        { prompt: 'На работе используется PostgreSQL. Дату каждого заказа нужно привести к первому дню месяца (в SQLite это <code>date(order_date, \'start of month\')</code>). Как вы это запишете?', options: ["DATE_TRUNC('month', order_date)", "strftime('%Y-%m', order_date)", 'EXTRACT(MONTH FROM order_date)', "order_date + INTERVAL '1 month'"], explain: "DATE_TRUNC('month', ...) обрезает дату до начала месяца. EXTRACT даёт только номер месяца (без года), INTERVAL сдвигает дату, а strftime в PostgreSQL нет." }
+      ]
+    },
+    'sql-17': {
+      title: 'Self join, ловушка fan-out и порядок выполнения',
+      body: `
+<p>JOIN вы уже знаете. В этом уроке разберём три важные его стороны: соединение таблицы с самой собой, молчаливое размножение чисел после JOIN и то, в каком порядке запрос выполняется на самом деле. Но сначала разберёмся, почему таблицы хранятся отдельно.</p>
+<h3>Ключи и нормализация</h3>
+<ul>
+<li><b>Primary key (PK)</b> — столбец, который однозначно определяет строку: <code>customers.id</code>. Он не повторяется и не бывает пустым.</li>
+<li><b>Foreign key (FK)</b> — столбец, который ссылается на PK другой таблицы: <code>orders.customer_id</code> → <code>customers.id</code>.</li>
+</ul>
+<table>
+<tr><th>Связь</th><th>Смысл</th><th>Пример</th></tr>
+<tr><td><b>1:N</b> (один ко многим)</td><td>у одного клиента много заказов, у каждого заказа один клиент</td><td><code>customers</code> → <code>orders</code></td></tr>
+<tr><td><b>M:N</b> (многие ко многим)</td><td>в одном заказе много товаров, один товар во многих заказах</td><td><code>orders</code> ↔ <code>products</code>, между ними <code>order_items</code></td></tr>
+</table>
+<p>Связь M:N напрямую не хранится: между таблицами ставят <b>связующую таблицу</b>. <code>order_items</code> именно такая: в ней два FK (<code>order_id</code>, <code>product_id</code>).</p>
+<p>Почему не записать всё в одну большую таблицу? Тогда город клиента повторялся бы в каждом его заказе. Если клиент переедет, придётся менять все строки, а забудете одну — данные начнут противоречить друг другу. Хранить каждый факт <b>в одном месте</b> и связывать таблицы ключами — это и есть <b>нормализация</b>. Её цена — JOIN, который приходится писать при анализе.</p>
+<h3>Self join: соединение таблицы с самой собой</h3>
+<p>В таблице <code>employees</code> столбец <code>manager_id</code> ссылается на <code>id</code> в этой же таблице: руководитель — тоже сотрудник.</p>
+<table>
+<tr><th>id</th><th>name</th><th>manager_id</th></tr>
+<tr><td>1</td><td>Серік</td><td>NULL</td></tr>
+<tr><td>2</td><td>Гүлнар</td><td>1</td></tr>
+<tr><td>3</td><td>Ақжол</td><td>2</td></tr>
+</table>
+<p>Чтобы вывести рядом с сотрудником имя его руководителя, соединяем таблицу с самой собой. Одной таблице даём два разных alias: <code>e</code> — сотрудник, <code>m</code> — руководитель.</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+JOIN employees m ON m.id = e.manager_id;</code></pre>
+<table>
+<tr><th>name</th><th>manager</th></tr>
+<tr><td>Гүлнар</td><td>Серік</td></tr>
+<tr><td>Ақжол</td><td>Гүлнар</td></tr>
+</table>
+<p>Серік в результат не попал: его <code>manager_id</code> равен NULL, подходящая строка не нашлась. Чтобы оставить и его, напишите <code>LEFT JOIN</code>: тогда его столбец <code>manager</code> будет NULL.</p>
+<h3>CROSS JOIN</h3>
+<p><code>CROSS JOIN</code> соединяет без условия: каждая строка первой таблицы образует пару с каждой строкой второй. 3 города × 4 месяца = 12 строк. Он нужен, чтобы построить «каркас» отчёта: вы составляете список всех городов и месяцев, а потом присоединяете к нему фактические продажи через LEFT JOIN. Тогда видны и месяцы без продаж (с нулём).</p>
+<pre><code>SELECT c.city, m.month
+FROM (SELECT DISTINCT city FROM customers) c
+CROSS JOIN (SELECT DISTINCT strftime('%Y-%m', order_date) AS month FROM orders) m;</code></pre>
+<p>Здесь внутри <code>FROM</code> стоит запрос в скобках. Его называют <b>производной таблицей</b> (derived table): база данных сначала выполняет внутренний запрос и использует его результат как временную таблицу. Alias для неё обязателен.</p>
+<h3>Fan-out: JOIN размножает строки</h3>
+<p>При JOIN по связи 1:N строка со стороны «один» повторяется для каждого совпадения на стороне «много». Это называют <b>fan-out</b>. У Айгерім (id 1) три заказа: 101, 103, 111. В заказе 101 два товара.</p>
+<pre><code>SELECT c.name, COUNT(*) AS orders
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id
+WHERE c.id = 1;          -- получится 4, а заказов 3</code></pre>
+<p>После присоединения <code>order_items</code> одна строка — уже не заказ, а товар в заказе. <code>COUNT(*)</code> посчитал строки товаров. Сообщения об ошибке нет, число просто больше. Это самая дорогая ошибка аналитика.</p>
+<h3>Соединение сразу двух таблиц «много»</h3>
+<p>В базе «Продуктовые метрики» от <code>users</code> идут две связи 1:N: <code>activity</code> (активные месяцы) и <code>payments</code> (платежи). У пользователя 1 есть 3 активных месяца и 3 платежа по 5 000.</p>
+<pre><code>SELECT u.id, COUNT(a.month) AS months, SUM(p.amount) AS total
+FROM users u
+JOIN activity a ON a.user_id = u.id
+JOIN payments p ON p.user_id = u.id
+GROUP BY u.id;           -- пользователь 1: months = 9, total = 45000</code></pre>
+<p>Каждая строка активности образовала пару с каждой строкой платежа: 3 × 3 = 9 строк. Правильный ответ — 3 месяца и 15 000.</p>
+<h3>Решение: сначала агрегат, потом JOIN</h3>
+<p>Каждую таблицу «много» отдельно сворачиваем в производной таблице так, чтобы получилась <b>одна строка на пользователя</b>, и только потом соединяем:</p>
+<pre><code>SELECT u.id, a.months, p.total
+FROM users u
+JOIN (SELECT user_id, COUNT(*) AS months
+      FROM activity GROUP BY user_id) a ON a.user_id = u.id
+JOIN (SELECT user_id, SUM(amount) AS total
+      FROM payments GROUP BY user_id) p ON p.user_id = u.id;</code></pre>
+<p>Теперь JOIN стал 1:1, ничего не размножается. Если нужно только посчитать количество, поможет и <code>COUNT(DISTINCT o.id)</code>, но для <code>SUM</code> <code>DISTINCT</code> не годится: два платежа с одинаковой суммой будут сложены только один раз.</p>
+<div class="tip">После каждого JOIN спрашивайте себя: «одна строка сейчас — это что?». Если сомневаетесь, сравните <code>COUNT(*)</code> до и после JOIN. Если число строк выросло, есть fan-out.</div>
+<h3>Порядок выполнения</h3>
+<p>Запрос вы пишете начиная с <code>SELECT</code>, но база данных выполняет его в другом порядке:</p>
+<pre><code>FROM / JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code></pre>
+<table>
+<tr><th>Следствие</th><th>Причина</th></tr>
+<tr><td>В <code>WHERE</code> нельзя писать агрегат</td><td>Когда выполняется WHERE, групп ещё нет</td></tr>
+<tr><td>alias из <code>SELECT</code> нельзя использовать в <code>WHERE</code></td><td>WHERE выполняется раньше SELECT, alias ещё не создан</td></tr>
+<tr><td>alias можно использовать в <code>ORDER BY</code></td><td>ORDER BY выполняется после SELECT</td></tr>
+<tr><td>fan-out портит агрегат</td><td>JOIN выполняется самым первым: GROUP BY видит уже размноженные строки</td></tr>
+</table>
+<p>Примечание: SQLite принимает alias и в <code>WHERE</code>, и в <code>GROUP BY</code> (как <code>GROUP BY month</code> в этом курсе). PostgreSQL на alias в <code>WHERE</code> и <code>HAVING</code> выдаёт ошибку: там выражение нужно написать заново.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Забыть alias в self join.</b> Одна таблица стоит дважды, поэтому перед каждым столбцом обязательно писать <code>e.</code> или <code>m.</code>.</li>
+<li><b>Перепутать направление в ON.</b> <code>m.id = e.manager_id</code> значит «m — руководитель e». Если написать наоборот, вместо руководителя получатся подчинённые.</li>
+<li><b>Доверять <code>COUNT(*)</code> после JOIN.</b> Сначала определите, что такое одна строка.</li>
+<li><b>Соединить две таблицы 1:N в одном запросе и взять агрегаты из обеих.</b> Сначала сверните каждую отдельно.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Выведите имя каждого сотрудника и имя его руководителя. Серік, у которого нет руководителя, тоже должен остаться в списке (его руководитель — <code>NULL</code>). Всего 12 строк.', hints: ['Соедините таблицу с самой собой: <code>LEFT JOIN employees m ON m.id = e.manager_id</code>.', 'Если написать просто <code>JOIN</code>, Серік выпадет: получится 11 строк.'] },
+        { prompt: 'Сколько сотрудников в подчинении у каждого руководителя? Два столбца: имя руководителя и число сотрудников. Те, у кого нет подчинённых, не нужны.', hints: ['Напишите self join из предыдущего задания через <code>JOIN</code>.', 'Сгруппируйте по руководителю: <code>GROUP BY m.id, m.name</code>.'] },
+        { prompt: 'Этот запрос из-за fan-out выдаёт неверные числа (у пользователя 1 получается 9 месяцев и 45 000). Исправьте его: сначала сверните <code>activity</code> и <code>payments</code> в отдельных производных таблицах, а потом соедините. Три столбца: <code>id</code>, число активных месяцев, сумма платежей.', hints: ['<code>JOIN (SELECT user_id, COUNT(*) AS months FROM activity GROUP BY user_id) a ON a.user_id = u.id</code>', 'Для <code>payments</code> напишите точно такую же производную таблицу: <code>SUM(amount) AS total</code>. Во внешнем запросе GROUP BY не нужен.'] },
+        { prompt: 'Почему в PostgreSQL запрос <code>SELECT price * 1.12 AS with_vat FROM products WHERE with_vat &gt; 10000</code> выдаёт ошибку?', options: ['AS написан неправильно', 'WHERE выполняется раньше SELECT, поэтому alias with_vat ещё не существует', 'В WHERE нельзя умножать', '1.12 — не целое число'], explain: 'Порядок выполнения: FROM → WHERE → ... → SELECT. В условии выражение нужно написать заново: WHERE price * 1.12 > 10000.' },
+        { prompt: 'Один студент записывается на много курсов, на одном курсе учится много студентов. Как правильно хранить это в базе данных?', options: ['Добавить в таблицу students столбцы course1, course2, course3', 'Три таблицы: students, courses и связующая таблица (enrollments), которая хранит id обоих', 'Записывать в таблицу courses имена студентов через запятую', 'Записать всё в одну таблицу и повторять данные студента для каждого курса'], explain: 'Это связь M:N. Её всегда хранят через связующую таблицу с двумя foreign key, как наша order_items.' }
+      ]
+    },
     'sql-gate': {
       title: 'Экзамен модуля: SQL Core',
       body: `
-<p>Это итоговая проверка модуля. Задания вперемешку из всех уроков, подсказок нет. Выполните все — модуль будет пройден, и вы приблизитесь к уровню <b>L2 SQL Practitioner</b>.</p>
+<p>Это итоговая проверка модуля. Задания вперемешку из всех уроков, пошаговых подсказок (hint) нет. Выполните все — модуль будет пройден, и вы приблизитесь к уровню <b>L2 SQL Practitioner</b>.</p>
 <p>База та же: <code>customers</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>.</p>
 <div class="tip">Не торопитесь: сначала посмотрите промежуточный результат через «Запустить», потом проверяйте.</div>`,
       ex: [
         { prompt: 'Только по заказам <code>delivered</code> выведите имена 3 клиентов, потративших больше всех, и их общую сумму, по убыванию.' },
-        { prompt: 'Для каждого месяца (в формате <code>YYYY-MM</code>) выведите число уникальных клиентов, сделавших заказ, по возрастанию месяцев. Подсказка: <code>substr(order_date, 1, 7)</code>.' },
+        { prompt: 'Для каждого месяца (в формате <code>YYYY-MM</code>) выведите число уникальных клиентов, сделавших заказ, по возрастанию месяцев.' },
         { prompt: 'Выведите названия товаров, которых всего продано не меньше 3 штук, и общее проданное количество.' },
         { prompt: 'Попадут ли клиенты без заказов в результат запроса <code>customers c LEFT JOIN orders o ... WHERE o.status = \'delivered\'</code>?', options: ['Да, со значением NULL', 'Нет: условие WHERE убирает NULL-строки, поэтому запрос работает как INNER JOIN', 'Только один раз', 'Будет ошибка'], explain: 'NULL = \'delivered\' не истинно. Только если перенести условие в ON, LEFT JOIN сохранит всех клиентов.' }
       ]

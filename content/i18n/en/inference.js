@@ -405,10 +405,208 @@ GROUP BY a.variant;</code></pre>
         ] }
       ]
     },
+    'ab-chi': {
+      title: 'Chi-square and scipy.stats',
+      body: `
+<p>So far we have written tests by hand with <code>NormalDist</code>: that was needed to understand the formulas. At work you use a ready-made library: <code>scipy.stats</code>. In this lesson we learn its four main tests and pin down which one to choose when.</p>
+<table>
+<tr><th>Question</th><th>Data type</th><th>Test</th></tr>
+<tr><td>Are the proportions the same across groups? (2 or more groups)</td><td>A table of categories</td><td><code>chi2_contingency</code></td></tr>
+<tr><td>Are the means of two groups the same?</td><td>Numbers, independent groups</td><td><code>ttest_ind(..., equal_var=False)</code></td></tr>
+<tr><td>Does one group give "larger" values than the other? (skewed data, outliers)</td><td>Numbers or ranks</td><td><code>mannwhitneyu</code></td></tr>
+<tr><td>Did the "before" and "after" measurements of the same people change?</td><td>Paired numbers</td><td><code>ttest_rel</code></td></tr>
+</table>
+<h3>1. Chi-square (χ²): is the table far from chance?</h3>
+<p><b>The idea:</b> if the variant does not affect conversion (H0), the share of buyers in each group would equal the overall share. We compute that "expected" table and compare it with the actual one. If the gap is large, we do not believe H0.</p>
+<pre><code>Expected cell E = row total × column total / grand total
+χ² = Σ (O − E)² / E            # O is the observed count
+df = (rows − 1) × (columns − 1)</code></pre>
+<p><b>Step-by-step example.</b> Three variants with 1,000 users each:</p>
+<table>
+<tr><th>Variant</th><th>Bought</th><th>Did not buy</th><th>Total</th></tr>
+<tr><td>A</td><td>100</td><td>900</td><td>1,000</td></tr>
+<tr><td>B</td><td>120</td><td>880</td><td>1,000</td></tr>
+<tr><td>C</td><td>150</td><td>850</td><td>1,000</td></tr>
+<tr><td>Total</td><td>370</td><td>2,630</td><td>3,000</td></tr>
+</table>
+<ol>
+<li>Overall conversion: 370 / 3,000 = 12.33%.</li>
+<li>Under H0 the expected buyers in each group: 1,000 × 370 / 3,000 = 123.33; non-buyers: 876.67.</li>
+<li>The "Bought" column: (100 − 123.33)² + (120 − 123.33)² + (150 − 123.33)² = 544.4 + 11.1 + 711.1 = 1,266.7; divide by 123.33 → 10.27.</li>
+<li>The "Did not buy" column: the same 1,266.7 / 876.67 → 1.44.</li>
+<li>χ² = 10.27 + 1.44 = 11.72, df = (3 − 1) × (2 − 1) = 2, p ≈ 0.003. The variants do not have the same conversion.</li>
+</ol>
+<pre><code>from scipy import stats
+table = [[100, 900], [120, 880], [150, 850]]
+chi2, p, dof, expected = stats.chi2_contingency(table)
+print(round(chi2, 2), round(p, 4), dof)     # 11.72 0.0029 2</code></pre>
+<p>With two groups and two outcomes (a 2 × 2 table) the χ² test gives the same answer as the two-proportion z-test from lesson ab-5: χ² = z². But for a 2 × 2 table scipy applies the Yates correction by default (<code>correction=True</code>), so p comes out slightly larger. If you need an exact match with the z-test, write <code>correction=False</code>.</p>
+<p>The χ² test says "there is a difference somewhere" but not <b>in which group</b>. After it you run pairwise comparisons and adjust α with the Bonferroni correction (α / number of comparisons).</p>
+<h3>2. The exact Welch t-test</h3>
+<p>In lesson ab-6 we approximated the p-value with the normal distribution. scipy computes the t-distribution exactly:</p>
+<pre><code>a = [5, 7, 6, 8, 4]
+b = [9, 7, 8, 10, 6]
+res = stats.ttest_ind(b, a, equal_var=False)       # Welch
+print(res.statistic, res.pvalue)                   # 2.0  0.0805</code></pre>
+<p>The approximation gave p ≈ 0.046; the exact answer is 0.08. In a small sample that difference changes the decision. Do not forget <code>equal_var=False</code>: the default assumes equal variances.</p>
+<h3>3. Mann–Whitney U: ranks, not means</h3>
+<p>In skewed data such as revenue, order value or session length, a single "whale" customer drags the mean. Mann–Whitney compares the <b>ranks</b> of the values rather than the values themselves: "is the probability that a random person from group B has a higher value than one from group A different from 50%?" It is robust to outliers.</p>
+<pre><code>res = stats.mannwhitneyu(b, a, alternative='two-sided')
+print(res.pvalue)                                  # 0.114</code></pre>
+<p>Remember: this test does <b>not</b> compare <b>means</b>. If the business question is "did revenue per user go up?", the answer lies in the mean: use Welch or the bootstrap (next lesson).</p>
+<h3>4. One-sided and two-sided tests</h3>
+<p>A two-sided test asks "is there a difference?" (in either direction). A one-sided test asks "is B <b>larger</b>?". If the difference is in the expected direction, the one-sided p is half the two-sided one:</p>
+<pre><code>stats.ttest_ind(b, a, equal_var=False, alternative='greater').pvalue   # 0.040</code></pre>
+<p>That is exactly why you must choose the direction <b>before you see the data</b>. Looking at the result and saying "let's switch to one-sided" is p-hacking. In A/B tests the default is two-sided: it also matters to us if B got worse.</p>
+<h3>5. The paired test</h3>
+<p>If we measure the same people twice (before and after a promotion), the observations are not independent. Here we compute each person's <b>difference</b> and test whether its mean differs from 0. The large spread between people drops out, so the test is more sensitive.</p>
+<pre><code>after  = [12, 15, 11, 14, 13, 16]
+before = [10, 14, 11, 12, 12, 13]
+stats.ttest_rel(after, before).pvalue                    # 0.017
+stats.ttest_ind(after, before, equal_var=False).pvalue   # 0.151: if we ignore the pairing</code></pre>
+<div class="tip"><b>Common mistakes:</b> (1) Passing percentages or shares to <code>chi2_contingency</code>: it needs <b>counts</b> (numbers of people) only. (2) Putting only the "bought" column in the table: the "did not buy" column is required too. (3) If an expected cell is below 5, χ² is unreliable: merge categories. (4) Switching to a one-sided test after seeing the result. (5) Using an independent-groups test on paired data. (6) Reading a Mann–Whitney result as "the mean went up".</div>`,
+      ex: [
+        { prompt: '<code>table</code> holds the numbers of buyers and non-buyers by device (rows: mobile, desktop, tablet). Use <code>stats.chi2_contingency</code> to get <code>chi2</code>, <code>p</code>, <code>dof</code>, <code>expected</code>. <code>significant</code> is <code>True</code> if conversion depends on the device at α = 0.05.', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nfrom scipy import stats as _st\n_c, _p, _d, _e = _st.chi2_contingency([[90, 1410], [95, 905], [30, 470]])\nassert abs(float(chi2) - _c) < 1e-6, f"chi2 should be ≈ {_c:.2f}, you have {float(chi2):.2f}. Pass the whole table, unchanged"\nassert abs(float(p) - _p) < 1e-9, f"p should be ≈ {_p:.4f}"\nassert int(dof) == 2, "dof = (3 − 1) × (2 − 1) = 2"\nassert abs(float(expected[0][0]) - 107.5) < 1e-6, "Expected buyers on mobile: 1500 × 215 / 3000 = 107.5"\nassert bool(significant) is True, "p ≈ 0.002 < 0.05: significant = True"' }, hints: ['The function returns four values: <code>chi2, p, dof, expected = stats.chi2_contingency(table)</code>', '<code>significant = p &lt; 0.05</code>'] },
+        { prompt: '<code>a</code> and <code>b</code> are the order values of two groups (strongly right-skewed). Compute: <code>t_p</code> — the two-sided p-value of the Welch t-test; <code>u_p</code> — the two-sided Mann–Whitney p-value; <code>t_p_one</code> — the one-sided Welch p-value for "the mean of B is <b>greater</b> than that of A". In every call pass <code>b</code> first, then <code>a</code>.', starter: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(6)\na = rng.lognormal(8.0, 1.0, 500)   # group A, ₸\nb = rng.lognormal(8.2, 1.0, 500)   # group B, ₸\n', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nfrom scipy import stats as _st\n_t = _st.ttest_ind(b, a, equal_var=False).pvalue\n_s = _st.ttest_ind(b, a).pvalue\n_u = _st.mannwhitneyu(b, a, alternative="two-sided").pvalue\n_o = _st.ttest_ind(b, a, equal_var=False, alternative="greater").pvalue\nassert abs(float(t_p) - _t) < 1e-9 or abs(float(t_p) - _s) > 1e-12, "t_p: you need the Welch version, add equal_var=False"\nassert abs(float(t_p) - _t) < 1e-9, f"t_p should be ≈ {_t:.4f}, you have {float(t_p):.4f}: stats.ttest_ind(b, a, equal_var=False).pvalue"\nassert abs(float(u_p) - _u) < 1e-9, f"u_p should be ≈ {_u:.4f}, you have {float(u_p):.4f}: alternative=\'two-sided\'"\nassert abs(float(t_p_one) - _o) < 1e-9, f"t_p_one should be ≈ {_o:.4f}, you have {float(t_p_one):.4f}: alternative=\'greater\', b first, then a"' }, hints: ['<code>stats.ttest_ind(b, a, equal_var=False).pvalue</code>', '<code>stats.mannwhitneyu(b, a, alternative=\'two-sided\').pvalue</code>', 'One-sided: <code>alternative=\'greater\'</code> is the hypothesis that the mean of the first argument is larger. Compare the p-values of the two tests: on skewed data they can lead to different conclusions.'] },
+        { prompt: 'A table: mobile — 1,000 users, 60 of them bought; desktop — 500 users, 40 bought. Under H0 (conversion does not depend on the device), how many buyers are <b>expected</b> on mobile? (to 1 decimal place)', explain: 'E = row total × column total / grand total = 1,000 × 100 / 1,500 = 66.67. Overall conversion is 100 / 1,500 = 6.67%, and we apply it to the 1,000 mobile users.' },
+        { prompt: 'The average delivery time of 40 couriers was measured <b>before</b> and <b>after</b> a new routing algorithm (the same 40 couriers). Which test fits best?', options: ['<code>stats.ttest_ind(after, before, equal_var=False)</code>: two independent groups', '<code>stats.ttest_rel(after, before)</code>: a paired test that analyses each courier\'s difference', '<code>stats.chi2_contingency</code>: a table of categories', 'No test is needed, comparing the means is enough'], explain: 'The same people were measured twice, so the observations are dependent. A paired test looks at the difference for each courier and removes the spread between couriers, which makes it more sensitive.' }
+      ]
+    },
+    'ab-boot': {
+      title: 'Bootstrap and the permutation test',
+      body: `
+<p>We know the standard error formulas for a mean and a proportion. But what about a confidence interval for the <b>median</b>? For the 90th percentile? For revenue per user (RPU) when 95% of users spent 0 ₸? In such cases there is no convenient formula, or its assumptions do not hold. The solution is to tell the computer "try it many times". These are <b>resampling</b> methods.</p>
+<h3>1. Bootstrap: sampling from the sample</h3>
+<p><b>The idea.</b> A CI measures "how much would the statistic change if we repeated the study?". We cannot repeat the study, but the sample we have is the best copy of the population. So we draw new samples of the same size from it <b>with replacement</b>.</p>
+<ol>
+<li>From the n observations, draw n observations with replacement (some appear two or three times, some not at all).</li>
+<li>Compute the statistic (median, mean, anything).</li>
+<li>Repeat steps 1–2 between 2,000 and 10,000 times.</li>
+<li>The 2.5th and 97.5th percentiles of the resulting values are the 95% CI (the percentile method).</li>
+</ol>
+<p><b>Example by hand.</b> Order values (thousand ₸): [2, 4, 4, 10], median 4.</p>
+<table>
+<tr><th>Repeat</th><th>New sample</th><th>Median</th></tr>
+<tr><td>1</td><td>[4, 2, 4, 4]</td><td>4</td></tr>
+<tr><td>2</td><td>[10, 10, 2, 4]</td><td>7</td></tr>
+<tr><td>3</td><td>[2, 2, 4, 2]</td><td>2</td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+</table>
+<p>After thousands of repeats we have a distribution of medians: its width is our uncertainty.</p>
+<pre><code>import numpy as np
+
+def boot_ci(x, stat, n_boot=2000, level=0.95, seed=0):
+    rng = np.random.default_rng(seed)        # so the result is reproducible
+    x = np.asarray(x)
+    vals = [stat(rng.choice(x, size=len(x), replace=True)) for _ in range(n_boot)]
+    a = (1 - level) / 2
+    return np.quantile(vals, a), np.quantile(vals, 1 - a)
+
+boot_ci(checks, np.median)      # 95% CI of the median</code></pre>
+<p><b>The difference between two groups.</b> In an A/B test we resample each group separately and compute the difference: <code>stat(b*) − stat(a*)</code>. If the CI of the difference does not contain 0, the result is significant at α = 0.05.</p>
+<p><b>Revenue per user (RPU).</b> The data: one number per user (mostly 0). RPU is the mean of those numbers. Because the distribution is very skewed, a bootstrap CI is a good alternative to the t-interval. The important part: the resampling unit is the <b>user</b> (whatever the experiment randomized), not an order or click row.</p>
+<h3>2. The permutation test: shuffling the labels</h3>
+<p><b>The idea.</b> If H0 is true (the variant changes nothing), the labels "A" and "B" are meaningless: shuffle them at random and the difference would come out about the same. Let us check.</p>
+<ol>
+<li>Compute the actual difference: obs = mean(B) − mean(A).</li>
+<li>Pool the two groups and shuffle; call the first n_A values "A" and the rest "B".</li>
+<li>Compute the difference for this fake split.</li>
+<li>Repeat steps 2–3 thousands of times.</li>
+<li>p-value = the share of cases where |fake difference| ≥ |obs| (two-sided).</li>
+</ol>
+<p><b>Example by hand.</b> A = [1, 2, 3], B = [4, 5, 9]. obs = 6 − 2 = 4. There are 20 ways to split six numbers into two triples. Splits with a difference of at least 4: only the actual split itself and its mirror image (A = [4, 5, 9]). The exact p = 2 / 20 = 0.10. With only 6 numbers in the data, a smaller p is impossible.</p>
+<pre><code>def perm_test(a, b, n_perm=5000, seed=0):
+    rng = np.random.default_rng(seed)
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    obs = b.mean() - a.mean()
+    pooled = np.concatenate([a, b])
+    count = 0
+    for _ in range(n_perm):
+        s = rng.permutation(pooled)
+        d = s[len(a):].mean() - s[:len(a)].mean()
+        if abs(d) &gt;= abs(obs):
+            count += 1
+    return obs, count / n_perm</code></pre>
+<p>This is the definition of the p-value itself: "the probability of a result this extreme or more extreme when H0 is true". No assumption of a normal distribution is needed.</p>
+<table>
+<tr><th></th><th>Bootstrap</th><th>Permutation</th></tr>
+<tr><td>What it gives</td><td>A confidence interval</td><td>A p-value</td></tr>
+<tr><td>How it samples</td><td>With replacement, within each group</td><td>Without replacement, mixing the groups</td></tr>
+<tr><td>Question</td><td>What range is the effect in?</td><td>Is the effect down to chance?</td></tr>
+</table>
+<div class="tip"><b>Common mistakes:</b> (1) Leaving <code>replace=False</code> in the bootstrap: every "new" sample equals the original and the interval width is 0. (2) Using a resample size other than n. (3) Too few repeats (100): the percentiles jump around, take at least 2,000. (4) Resampling rows (orders) when the experiment randomized users. (5) Not setting a <code>seed</code>: nobody can reproduce the calculation. (6) Thinking the bootstrap "fixes" a small sample: 15 observations will not give a reliable interval.</div>`,
+      ex: [
+        { prompt: 'Write the function <code>boot_ci(x, stat, n_boot=2000, level=0.95, seed=0)</code>: it should draw <code>n_boot</code> samples of size <code>len(x)</code> from <code>x</code> with replacement, compute the function <code>stat</code> on each, and return <code>(low, high)</code> by the percentile method.', check: { tests: 'import numpy as _np\n_x = _np.random.default_rng(5).lognormal(8, 1, 300)\ndef _ref(x, stat, n_boot, level, seed):\n    r = _np.random.default_rng(seed)\n    v = [stat(r.choice(x, size=len(x), replace=True)) for _ in range(n_boot)]\n    a = (1 - level) / 2\n    return float(_np.quantile(v, a)), float(_np.quantile(v, 1 - a))\n_r = boot_ci(_x, _np.mean)\nassert _r is not None and len(_r) == 2, "Return a tuple (low, high)"\n_lo, _hi = float(_r[0]), float(_r[1])\n_e = _ref(_x, _np.mean, 2000, 0.95, 0)\n_w = _e[1] - _e[0]\nassert _hi - _lo > 1e-9, "The interval width is 0: sample with replacement (replace=True)"\nassert _lo < _x.mean() < _hi, "The CI of the mean should contain the sample mean"\nassert abs(_lo - _e[0]) < 0.25 * _w and abs(_hi - _e[1]) < 0.25 * _w, f"The 95% CI of the mean should be about ({_e[0]:.0f}, {_e[1]:.0f}), you have ({_lo:.0f}, {_hi:.0f}). Each sample has size len(x), and the bounds are the (1 − level) / 2 and 1 − (1 − level) / 2 quantiles"\nassert abs((_hi - _lo) - _w) < 0.2 * _w, f"The interval width should be about {_w:.0f}, you have {_hi - _lo:.0f}: each new sample must have size exactly len(x)"\n_r8 = boot_ci(_x, _np.mean, level=0.8)\nassert float(_r8[1]) - float(_r8[0]) < 0.85 * (_hi - _lo), "The 80% interval should be narrower than the 95% one: use the level parameter"\n_m = boot_ci(_x, _np.median)\nassert float(_m[0]) <= float(_np.median(_x)) <= float(_m[1]), "When np.median is passed as stat, the result should be the CI of the median"' }, hints: ['One repeat: <code>stat(rng.choice(x, size=len(x), replace=True))</code>', 'Collect the values in a list: <code>vals = [... for _ in range(n_boot)]</code>', '<code>a = (1 - level) / 2</code>; <code>np.quantile(vals, a)</code> and <code>np.quantile(vals, 1 - a)</code>'] },
+        { prompt: 'Write the function <code>perm_test(a, b, n_perm=5000, seed=0)</code>: it should return <code>(obs, p)</code>. <code>obs</code> = mean(b) − mean(a). <code>p</code> is the share of cases, over <code>n_perm</code> shuffles of the pooled data, where |fake difference| ≥ |obs| (two-sided).', check: { tests: 'import numpy as _np\n_g = _np.random.default_rng(3)\n_a = _g.normal(100, 10, 60)\n_b = _g.normal(108, 10, 60)\n_r = perm_test(_a, _b, n_perm=2000)\nassert _r is not None and len(_r) == 2, "Return a tuple (obs, p)"\nassert abs(float(_r[0]) - (_b.mean() - _a.mean())) < 1e-9, "obs = mean(b) − mean(a)"\nassert 0 <= float(_r[1]) < 0.01, f"With a clear difference p should be < 0.01, you have {float(_r[1]):.4f}"\n_c = _np.arange(40.0)\n_r0 = perm_test(_c, _c[::-1].copy(), n_perm=500)\nassert float(_r0[1]) > 0.9, f"If the groups are the same p should be ≈ 1, you have {float(_r0[1]):.3f}"\n_u = _g.normal(50, 12, 50)\n_v = _u[::-1].copy() + _np.linspace(-9, 15, 50)\ndef _ref(a, b, n, seed):\n    r = _np.random.default_rng(seed); obs = b.mean() - a.mean(); pool = _np.concatenate([a, b]); c = 0\n    for _ in range(n):\n        s = r.permutation(pool)\n        c += abs(s[len(a):].mean() - s[:len(a)].mean()) >= abs(obs)\n    return c / n\n_e = _ref(_u, _v, 3000, 1)\n_p = float(perm_test(_u, _v, n_perm=3000)[1])\nassert abs(_p - _e) < 0.05, f"On this data p should be ≈ {_e:.2f}, you have {_p:.2f}. Two-sided test: abs(d) >= abs(obs); the denominator is n_perm"' }, hints: ['<code>pooled = np.concatenate([a, b])</code>, and in each repeat <code>s = rng.permutation(pooled)</code>', 'The fake groups: <code>s[:len(a)]</code> and <code>s[len(a):]</code>', 'The counter: <code>if abs(d) &gt;= abs(obs): count += 1</code>; at the end <code>count / n_perm</code>'] },
+        { prompt: 'In an online store A/B test, users were split into two groups. To get a CI for the "average order value" metric, the analyst bootstrapped the rows of the <b>orders</b> table. One user can have several orders. What is wrong?', options: ['Nothing: the more rows, the more precise the interval', 'The resampling unit must match the randomization unit (the user): one person\'s orders are dependent, so the interval comes out falsely narrow', 'The bootstrap only works for the median', 'The sampling should have been without replacement'], explain: 'The experiment randomized users, so the independent unit is the user. Treating orders as independent artificially inflates n and understates the uncertainty. You should resample users and take all of each user\'s orders together.' }
+      ]
+    },
+    'ab-cuped': {
+      title: 'Variance reduction (CUPED), ratio metrics and quasi-experiments',
+      body: `
+<p>Four topics a little above junior level that are often named in product analyst and Data Scientist vacancies in Kazakhstan: CUPED, ratio metrics, the A/A test, and methods for when randomization is impossible (DiD, PSM, uplift). The goal is to understand the idea behind each and be able to explain it in two or three sentences at an interview.</p>
+<h3>1. CUPED: removing the noise</h3>
+<p><b>The problem.</b> A test's sensitivity depends on the variance of the metric (ab-7): with more noise you need more users to see the same effect. But a large part of that noise is <b>known in advance</b>: a customer who spent a lot last month will spend a lot this month too. That difference has nothing to do with the test.</p>
+<p><b>The idea.</b> From each user's metric we subtract the part explained by their behaviour <b>before</b> the experiment:</p>
+<pre><code>Y_cuped = Y − θ × (X − mean(X))
+θ = Cov(X, Y) / Var(X)</code></pre>
+<p>Y is the metric during the experiment, X is the same user's metric before the experiment (the covariate). θ is the slope of the regression of Y on X.</p>
+<ul>
+<li><b>The mean does not change:</b> X − mean(X) has mean 0, so the estimate of the difference between groups is not biased.</li>
+<li><b>The variance goes down:</b> Var(Y_cuped) = Var(Y) × (1 − ρ²), where ρ is the correlation between X and Y.</li>
+</ul>
+<p><b>In numbers.</b> With ρ = 0.7, 1 − 0.49 = 0.51: the variance is almost halved. Sample size is proportional to variance, so the same power takes half as many users or a test half as long. With ρ = 0.3 the gain is only 9%.</p>
+<pre><code>import numpy as np
+x = np.concatenate([x_a, x_b]); y = np.concatenate([y_a, y_b])
+theta = np.cov(x, y)[0, 1] / x.var(ddof=1)     # both groups together
+c_a = y_a - theta * (x_a - x.mean())
+c_b = y_b - theta * (x_b - x.mean())
+# then the usual Welch t-test: c_b vs c_a</code></pre>
+<p><b>Why is it fair?</b> X was measured before the experiment started, so the variant cannot affect it, and randomization balances X across the two groups. If you take a quantity <b>from the experiment period</b> as the covariate (say, the number of sessions), you subtract part of the effect yourself.</p>
+<h3>2. Ratio metrics</h3>
+<p>CTR = clicks / impressions, average order value = revenue / orders. Here the denominator is not the number of users but a <b>random variable</b>. One user's 50 impressions depend on each other, while randomization was done by user. If we treat impressions as independent observations and run a plain z- or t-test on them, the SE is understated and false "significant" results multiply.</p>
+<p>The right ways:</p>
+<ul>
+<li><b>The delta method:</b> a formula that approximates the variance of a ratio from the variances of the numerator and the denominator and their covariance.</li>
+<li><b>Bootstrap by user:</b> resample users and compute Σ clicks / Σ impressions each time (previous lesson).</li>
+<li><b>Change the metric:</b> "the mean of each user's own CTR" is a plain mean, but it answers a different question.</li>
+</ul>
+<p>You do not have to recite the formula at an interview. It is enough to say: "This is a ratio metric, the unit of observation does not match the unit of randomization, so we need the delta method or the bootstrap."</p>
+<h3>3. The A/A test</h3>
+<p>We show <b>the same</b> variant to both groups. There should be no difference. What we check: is the splitting system working (no SRM), is the metric computed correctly, is our test honest. Across many A/A simulations the p-value should be uniformly distributed, and at α = 0.05 about 5% of the runs should come out "significant". If you get 15% instead of 5%, the SE is understated (usually because of a ratio metric or dependent observations).</p>
+<h3>4. When there is no randomization: Difference-in-Differences (DiD)</h3>
+<p>Sometimes an A/B test is impossible: a new tariff was switched on for a whole city at once. You cannot simply compare "before and after": season, advertising and holidays all play a part. DiD subtracts the change over the same period in a <b>control group</b> where nothing changed.</p>
+<pre><code>DiD = (treat_after − treat_before) − (control_after − control_before)</code></pre>
+<p><b>Step-by-step example.</b> Free delivery was switched on in Taraz but not in Shymkent. Average orders per day:</p>
+<table>
+<tr><th></th><th>Before</th><th>After</th><th>Change</th></tr>
+<tr><td>Taraz (treatment)</td><td>100</td><td>130</td><td>+30</td></tr>
+<tr><td>Shymkent (control)</td><td>90</td><td>105</td><td>+15</td></tr>
+</table>
+<ol>
+<li>Growth in Taraz: +30. But not all of it comes from free delivery.</li>
+<li>Shymkent grew by +15 even though nothing changed there: that is the general trend (season).</li>
+<li>DiD = 30 − 15 = <b>+15</b> orders: the estimated effect of free delivery.</li>
+</ol>
+<p><b>The key assumption is parallel trends:</b> without the change, the two cities would have moved at the same pace. You check this on a chart of the several weeks before the change. If the cities were already moving differently, DiD cannot be trusted.</p>
+<h3>5. PSM and uplift: knowing the names is enough</h3>
+<ul>
+<li><b>Propensity Score Matching (PSM).</b> People ended up in a group by their own choice (for example, those who installed the app). They differ from the non-installers from the start. For each person we estimate the "probability of getting the treatment" (the propensity score) with logistic regression, and pair each treatment person with a control person who has a similar score. It balances only the <b>measured</b> features; hidden differences remain.</li>
+<li><b>Uplift modelling.</b> The question is not "who will buy?" but "who will buy <b>because of the promotion</b>?". Uplift = P(purchase | promotion) − P(purchase | no promotion). Sending a promotion to people who would buy anyway is money thrown away; the target is the "persuadable" segment. The data comes from an A/B test.</li>
+</ul>
+<div class="tip"><b>Common mistakes:</b> (1) Taking the CUPED covariate from the experiment period. (2) Computing θ separately for each group and centring each group on its own mean: that distorts the difference between groups; use one θ and one shared mean(X). (3) Comparing a ratio metric with a row-level t-test. (4) Panicking over one "significant" A/A result: one test in 20 comes out that way by chance. (5) Not checking parallel trends in DiD. (6) Treating a PSM result as equal to a randomized test.</div>`,
+      ex: [
+        { prompt: '<code>x</code> is the users\' spend <b>before</b> the experiment, <code>y</code> is their spend during the experiment. Compute: <code>theta</code> = Cov(x, y) / Var(x); <code>y_cuped</code> = y − theta × (x − mean(x)); <code>var_ratio</code> = Var(y_cuped) / Var(y).', starter: 'import numpy as np\nrng = np.random.default_rng(42)\nn = 4000\nx = rng.gamma(2.0, 3000, n)               # the previous 4 weeks, ₸\ny = 0.8 * x + rng.normal(0, 3000, n)      # the experiment period, ₸\n', check: { tests: 'import numpy as _np\n_th = _np.cov(x, y)[0, 1] / x.var(ddof=1)\n_rho = _np.corrcoef(x, y)[0, 1]\nassert abs(float(theta) - _th) < 1e-3 * abs(_th), f"theta should be ≈ {_th:.3f}, you have {float(theta):.3f}: np.cov(x, y)[0, 1] / x.var(ddof=1)"\nassert len(y_cuped) == len(y), "y_cuped is an array of the same length as y"\nassert abs(float(_np.mean(y_cuped)) - float(y.mean())) < 1e-6, "CUPED must not change the mean: subtract mean(x) from x"\nassert abs(float(var_ratio) - (1 - _rho ** 2)) < 2e-3, f"var_ratio should be ≈ 1 − ρ² = {1 - _rho ** 2:.3f}, you have {float(var_ratio):.3f}"' }, hints: ['<code>theta = np.cov(x, y)[0, 1] / x.var(ddof=1)</code>', '<code>y_cuped = y - theta * (x - x.mean())</code>', '<code>var_ratio = y_cuped.var() / y.var()</code>'] },
+        { prompt: 'An A/B test: a real effect was added to group B, but there is a lot of noise. Compute: <code>p_raw</code> — the Welch t-test p-value for <code>y_b</code> vs <code>y_a</code>; <code>theta</code> — Cov(x, y) / Var(x) computed on the two groups pooled; <code>c_a</code>, <code>c_b</code> — the CUPED-adjusted metrics (one θ, one shared mean(x)); <code>p_cuped</code> — the Welch p-value for <code>c_b</code> vs <code>c_a</code>.', starter: 'import numpy as np\nfrom scipy import stats\nrng = np.random.default_rng(3)\nn = 3000\nx_a = rng.gamma(2.0, 3000, n)\nx_b = rng.gamma(2.0, 3000, n)\ny_a = 0.8 * x_a + rng.normal(0, 3000, n)\ny_b = 0.8 * x_b + rng.normal(0, 3000, n) + 200    # the real effect: +200 ₸\n', check: { tests: '# sklearn: scipy scikit-learn бумасымен бірге жүктеледі, алғашқы іске қосу ұзағырақ\nimport numpy as _np\nfrom scipy import stats as _st\n_x = _np.concatenate([x_a, x_b]); _y = _np.concatenate([y_a, y_b])\n_th = _np.cov(_x, _y)[0, 1] / _x.var(ddof=1)\n_ca = y_a - _th * (x_a - _x.mean()); _cb = y_b - _th * (x_b - _x.mean())\n_pr = _st.ttest_ind(y_b, y_a, equal_var=False).pvalue\n_pc = _st.ttest_ind(_cb, _ca, equal_var=False).pvalue\nassert abs(float(p_raw) - _pr) < 1e-9, f"p_raw should be ≈ {_pr:.4f}: stats.ttest_ind(y_b, y_a, equal_var=False).pvalue"\nassert abs(float(theta) - _th) < 1e-3 * abs(_th), f"theta should be ≈ {_th:.3f}: compute it on the two groups pooled with np.concatenate"\nassert abs(float(_np.mean(c_b) - _np.mean(c_a)) - float(_cb.mean() - _ca.mean())) < 1.0, "Use one theta and one shared mean(x) for c_a and c_b (not each group\'s own mean)"\nassert abs(_np.log(float(p_cuped)) - _np.log(_pc)) < 0.05, f"p_cuped should be ≈ {_pc:.4f}, you have {float(p_cuped):.4f}"\nassert float(p_cuped) < float(p_raw), "The p-value should be smaller after CUPED"' }, hints: ['<code>x = np.concatenate([x_a, x_b])</code>, <code>y = np.concatenate([y_a, y_b])</code>', '<code>c_a = y_a - theta * (x_a - x.mean())</code>, and <code>c_b</code> in the same way.', '<code>p_cuped = stats.ttest_ind(c_b, c_a, equal_var=False).pvalue</code>'] },
+        { prompt: 'A new bonus programme was launched in the Astana stores but not in Almaty. Average weekly sales (mln ₸): Astana 40 → 52, Almaty 60 → 66. By Difference-in-Differences, what is the effect of the programme in mln ₸?', unit: 'mln ₸', explain: 'Astana: 52 − 40 = +12. Almaty (the general trend): 66 − 60 = +6. DiD = 12 − 6 = 6 mln ₸.' },
+        { prompt: 'The metric is CTR = all clicks / all impressions. Randomisation is by user. The analyst took every impression as a separate observation and ran a two-proportion z-test. What is the problem?', options: ['No problem: there are many impressions and the CLT applies', 'One user\'s impressions are dependent, so the SE is understated; you need the delta method or a bootstrap by user', 'Only chi-square works for CTR', 'A one-sided t-test should be used instead of the z-test'], explain: 'The unit of observation (the impression) does not match the unit of randomization (the user). Treating dependent observations as independent makes the SE too small and produces many false positives. In an A/A test this shows up as "significant" results far more often than 5% of the time.' },
+        { prompt: 'Marketing asks who should get a 10% discount coupon. From an uplift point of view, which segment pays off most?', options: ['Customers with the highest probability of buying', 'Customers who would not buy without the coupon but would buy with it', 'Customers who spent the most last month', 'All customers: the wider the reach, the better'], explain: 'Uplift = P(purchase | coupon) − P(purchase | no coupon). Giving a coupon to people who would buy anyway cuts the margin, and it does nothing for people who would never buy. The profit comes only from the "persuadable" segment.' }
+      ]
+    },
     'ab-gate': {
       title: 'Module exam: Inference & A/B Testing',
       body: `
-<p>The final check. In the Python exercises only the standard library is available (<code>math</code>, <code>statistics</code>, including <code>NormalDist</code>). There are no hints: rely on the formulas from the module.</p>`,
+<p>The final check. The exam tasks can be solved with the standard library (<code>math</code>, <code>statistics</code>, including <code>NormalDist</code>): write the formulas yourself. There are no hints: rely on the formulas from the module.</p>`,
       ex: [
         { prompt: 'Write the function <code>ab_decision(x_a, n_a, x_b, n_b, alpha=0.05)</code>. It runs a pooled two-proportion z-test and returns a dictionary: <code>"lift"</code> (p_B − p_A), <code>"z"</code>, <code>"p"</code> (two-sided) and <code>"decision"</code>: <code>"ship B"</code> if p &lt; alpha and lift &gt; 0, <code>"keep A"</code> if p &lt; alpha and lift &lt; 0, otherwise <code>"inconclusive"</code>.', check: { tests: '_d = ab_decision(200, 2000, 250, 2000)\nassert isinstance(_d, dict), "Return a dictionary"\nfor _k in ("lift", "z", "p", "decision"):\n    assert _k in _d, f"The key {_k} is missing"\nassert abs(_d["lift"] - 0.025) < 1e-9, "lift = p_b - p_a should be 0.025"\nassert abs(_d["z"] - 2.50196) < 1e-3, "z should be ≈ 2.502 (pooled SE)"\nassert abs(_d["p"] - 0.01235) < 1e-4, "p should be ≈ 0.0124"\nassert _d["decision"] == "ship B", "200/2000 vs 250/2000: ship B"\nassert ab_decision(250, 2000, 200, 2000)["decision"] == "keep A", "B is worse and it is significant: keep A"\nassert ab_decision(480, 10000, 540, 10000)["decision"] == "inconclusive", "p ≈ 0.054 > 0.05: inconclusive"\nassert ab_decision(480, 10000, 540, 10000, alpha=0.1)["decision"] == "ship B", "At alpha = 0.1, p ≈ 0.054 is significant: use the alpha parameter"' } },
         { prompt: 'Baseline 5%, MDE = 1 pp (absolute), α = 0.05, power = 0.8. Using the module\'s formula, compute the number needed per group, <code>n_per_group</code>, and, with 2 000 new users a day (split equally between the two groups), the number of full days the test needs, <code>days</code> (<code>math.ceil</code>).', check: { tests: 'assert n_per_group == 8155, f"n_per_group should be 8155, you have {n_per_group}"\nassert days == 9, f"days should be 9: 2 × 8155 / 2000 = 8.16 → 9, you have {days}"' } },

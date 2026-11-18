@@ -285,11 +285,12 @@ HAVING COUNT(*) &gt;= 3;</code></pre>
 FROM products
 GROUP BY category
 HAVING AVG(price) &gt; 10000;</code></pre>
-<p>The full order: <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Writing order</b> (you write the query in this order): <code>SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+<p><b>Execution order</b> (the database actually computes in this order, called the logical order): <code>FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code>. So the database first takes the table (JOIN, which you learn later, also happens at this step), filters the rows, groups them, filters the groups, and only then computes the columns in SELECT. This is why you cannot write an aggregate in WHERE: when it runs, the groups have not been built yet.</p>
 <h3>Common mistakes</h3>
 <ul>
 <li><b>Putting an aggregate in WHERE:</b> <code>WHERE COUNT(*) &gt; 1</code> is an error. At the WHERE stage there are no groups yet: use HAVING.</li>
-<li><b>Forgetting GROUP BY.</b> <code>SELECT city, COUNT(*) FROM customers</code> returns one row for the whole table, not one per city.</li>
+<li><b>Forgetting GROUP BY.</b> <code>SELECT city, COUNT(*) FROM customers</code> does not raise an error in our in-browser SQLite: it returns one row for the whole table and puts one arbitrary city in <code>city</code>. This is a quirk of SQLite. Strict databases such as PostgreSQL reject such a query at once ("column city must appear in the GROUP BY clause").</li>
 <li><b>Missing the NULL group.</b> Rows with an empty <code>city</code> collect in a separate <code>NULL</code> group. If you do not need it, add <code>WHERE city IS NOT NULL</code>.</li>
 </ul>`,
       ex: [
@@ -614,15 +615,263 @@ REVOKE DELETE ON orders FROM analyst;</code></pre>
         { prompt: 'An analyst should only be allowed to read the <code>sales</code> table. Which command does that?', options: ['REVOKE SELECT ON sales FROM analyst;', 'GRANT SELECT ON sales TO analyst;', 'GRANT ALL ON sales TO analyst;', 'COMMIT sales;'], explain: 'GRANT SELECT gives read-only access. GRANT ALL gives far too much.' }
       ]
     },
+    'sql-15': {
+      title: 'UNION, UNION ALL and sets',
+      body: `
+<p><code>JOIN</code> combines tables <b>horizontally</b>: new columns are attached to a row. But sometimes you need to combine two results <b>vertically</b>: put one list under another. For example, gather the customers of August and November into one list, or add a "Total" row at the end of a table. Set operators do this.</p>
+<table>
+<tr><th>Operator</th><th>What it returns</th><th>Duplicates</th></tr>
+<tr><td><code>UNION</code></td><td>the union of two results</td><td>removed</td></tr>
+<tr><td><code>UNION ALL</code></td><td>the union of two results</td><td>kept</td></tr>
+<tr><td><code>INTERSECT</code></td><td>rows present in both</td><td>removed</td></tr>
+<tr><td><code>EXCEPT</code></td><td>rows present in the first but not in the second</td><td>removed</td></tr>
+</table>
+<h3>Example: UNION and UNION ALL</h3>
+<p>Customers who ordered in August: 1, 2, 1 (Айгерім twice). In October: 2, 9, 5, 1.</p>
+<pre><code>SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+UNION
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';</code></pre>
+<p>The result has 4 rows: <code>1, 2, 5, 9</code>. <code>UNION</code> removed the duplicates: both between the two lists and inside a single list. If we write the same query with <code>UNION ALL</code>, we get 7 rows: <code>1, 2, 1, 2, 9, 5, 1</code>. Nothing is removed, the rows are simply stacked one under another.</p>
+<div class="tip">If you know there will be no duplicates, or you need them, write <code>UNION ALL</code>. To find duplicates, <code>UNION</code> compares the whole result, so it is slow on a large table. In a report that adds up revenue, <code>UNION</code> is dangerous: two separate orders with the same amount collapse into one row, and revenue comes out too low.</div>
+<h3>The rule: the columns must match</h3>
+<ul>
+<li>Both SELECTs must have <b>the same number</b> of columns.</li>
+<li>The types of matching columns must be <b>compatible</b>: a number under a number, text under text. SQLite does not check this, but PostgreSQL raises an error.</li>
+<li>The column names are taken from the <b>first</b> SELECT.</li>
+<li><code>ORDER BY</code> is written once at the very end and applies to the whole combined result.</li>
+</ul>
+<h3>Example: a "Total" row</h3>
+<pre><code>SELECT status, COUNT(*) AS orders FROM orders GROUP BY status
+UNION ALL
+SELECT 'Барлығы', COUNT(*) FROM orders;   -- 'Барлығы' = "total"</code></pre>
+<table>
+<tr><th>status</th><th>orders</th></tr>
+<tr><td>cancelled</td><td>2</td></tr>
+<tr><td>delivered</td><td>10</td></tr>
+<tr><td>shipped</td><td>3</td></tr>
+<tr><td>Барлығы</td><td>15</td></tr>
+</table>
+<p>In the second SELECT, <code>'Барлығы'</code> is plain text (a constant). It lands under the <code>status</code> column.</p>
+<h3>INTERSECT and EXCEPT</h3>
+<pre><code>-- customers who ordered both in August and in October
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-08%'
+INTERSECT
+SELECT customer_id FROM orders WHERE order_date LIKE '2024-10%';   -- 1, 2
+
+-- customers who have never ordered
+SELECT id FROM customers
+EXCEPT
+SELECT customer_id FROM orders;                                     -- 8</code></pre>
+<p>In <code>EXCEPT</code> the order matters: "in A, not in B". Swap them and you get a completely different question. <code>EXCEPT</code> and <code>NOT EXISTS</code> can answer the same question; the difference is that <code>EXCEPT</code> compares whole rows and removes duplicates.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>A different number of columns:</b> <code>SELECT id, name ... UNION SELECT id ...</code> raises an error.</li>
+<li><b>Columns in the wrong order:</b> <code>SELECT name, city ... UNION SELECT city, name ...</code> raises no error, but cities and names get mixed in one column. SQL matches columns <b>by position</b>, not by name.</li>
+<li><b>UNION instead of UNION ALL:</b> duplicates you need are silently removed, and the numbers come out too low.</li>
+<li><b>A separate ORDER BY for each SELECT:</b> sorting is written only at the end.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Show the list of <code>customer_id</code> values, without duplicates, of customers who ordered in August (<code>2024-08</code>) <b>or</b> in November (<code>2024-11</code>). Combine two SELECTs with <code>UNION</code>.', hints: ['The second SELECT is exactly the same, only the month differs.', "<code>... LIKE '2024-08%' UNION SELECT customer_id FROM orders WHERE order_date LIKE '2024-11%'</code>"] },
+        { prompt: 'Show the number of products in each category (<code>category</code>), and with <code>UNION ALL</code> add a row labeled <code>Барлығы</code> ("total") at the end, holding the number of all products. Two columns: the category and the count.', hints: ["In the second SELECT write text in place of the category: <code>SELECT 'Барлығы', COUNT(*) FROM products</code>.", 'Both SELECTs must have two columns.'] },
+        { prompt: 'Using <code>EXCEPT</code>, find the <code>id</code> of customers who have <b>no</b> <code>delivered</code> order at all.', hints: ['The first set is the <code>id</code> of all customers.', "The second set is the <code>customer_id</code> of <code>delivered</code> orders. Put <code>EXCEPT</code> between them."] },
+        { prompt: 'Using <code>INTERSECT</code>, find the <code>customer_id</code> of customers who ordered both in August (<code>2024-08</code>) and in October (<code>2024-10</code>).', hints: ['Look at the INTERSECT example in the lesson.'] },
+        { prompt: 'You are about to combine the sales tables of two branches and calculate total revenue. Which operator do you choose, and why?', options: ['UNION: it removes duplicates, so the result is clean', 'UNION ALL: every row is kept; UNION would turn two separate sales with the same amount and date into one row and understate revenue', 'INTERSECT: it gives the rows present in both', 'EXCEPT: it removes the extra rows'], explain: 'When you stack rows and then aggregate, always use UNION ALL. UNION is only for when you need a "list without duplicates".' }
+      ]
+    },
+    'sql-16': {
+      title: 'Date and text functions',
+      body: `
+<p>Most real reports are tied to time: monthly revenue, the number of days from signup to the first order. And real data is often dirty: extra spaces, mixed case, numbers stored as text. In this lesson you learn the functions you need for both.</p>
+<div class="tip">Date and text functions have different names in different databases. Here you write the <b>SQLite</b> version that runs in the browser, and at the end of the lesson there is a table of <b>PostgreSQL</b> equivalents: those are the ones you meet more often at work.</div>
+<h3>Parts of a date: strftime</h3>
+<p>In our tables a date is text like <code>'2024-08-19'</code> (ISO format: year-month-day). <code>strftime(format, date)</code> takes the part you need from it:</p>
+<table>
+<tr><th>Expression</th><th>Result</th><th>Meaning</th></tr>
+<tr><td><code>strftime('%Y', '2024-08-19')</code></td><td>2024</td><td>year</td></tr>
+<tr><td><code>strftime('%m', '2024-08-19')</code></td><td>08</td><td>month</td></tr>
+<tr><td><code>strftime('%d', '2024-08-19')</code></td><td>19</td><td>day</td></tr>
+<tr><td><code>strftime('%Y-%m', '2024-08-19')</code></td><td>2024-08</td><td>month key</td></tr>
+<tr><td><code>strftime('%w', '2024-08-19')</code></td><td>1</td><td>day of the week (0 is Sunday)</td></tr>
+</table>
+<p>The result is text. If you need a number, convert it: <code>CAST(strftime('%m', order_date) AS INTEGER)</code> → 8.</p>
+<h3>"Truncating" to the month</h3>
+<p>For a monthly report we bring each date to its month. There are two ways:</p>
+<pre><code>SELECT strftime('%Y-%m', order_date) AS month, COUNT(*) AS orders
+FROM orders
+GROUP BY month
+ORDER BY month;</code></pre>
+<table>
+<tr><th>month</th><th>orders</th></tr>
+<tr><td>2024-08</td><td>3</td></tr>
+<tr><td>2024-09</td><td>4</td></tr>
+<tr><td>2024-10</td><td>4</td></tr>
+<tr><td>…</td><td>…</td></tr>
+</table>
+<p>The second way is the first day of the month: <code>date(order_date, 'start of month')</code> → <code>2024-08-01</code>. This is called month truncation. Do not forget the year: if you group by <code>'%m'</code> alone, the Augusts of different years fall into one group.</p>
+<h3>Shifting dates and differences</h3>
+<pre><code>date('2024-08-19', '+7 days')         -- 2024-08-26
+date('2024-08-19', '-1 month')        -- 2024-07-19
+date('now')                           -- today's date
+
+julianday('2024-08-19') - julianday('2024-08-02')   -- 17.0</code></pre>
+<p><code>julianday</code> turns a date into a single number, so you can subtract one date from another. The difference is a number of days. If you subtract dates directly as text (<code>'2024-08-19' - '2024-08-02'</code>), SQLite subtracts only the years and returns 0.</p>
+<pre><code>SELECT o.id,
+       CAST(julianday(o.order_date) - julianday(c.signup_date) AS INTEGER) AS days
+FROM orders o
+JOIN customers c ON c.id = o.customer_id;</code></pre>
+<p>Order 101: Айгерім signed up on 2024-01-15 and ordered on 2024-08-02 → 200 days.</p>
+<h3>Text functions</h3>
+<table>
+<tr><th>Function</th><th>Example</th><th>Result</th></tr>
+<tr><td><code>LENGTH</code></td><td><code>LENGTH('Алматы')</code></td><td>6</td></tr>
+<tr><td><code>SUBSTR(text, start, length)</code></td><td><code>SUBSTR('2024-08-19', 1, 7)</code></td><td>2024-08</td></tr>
+<tr><td><code>REPLACE</code></td><td><code>REPLACE('12 500', ' ', '')</code></td><td>12500</td></tr>
+<tr><td><code>TRIM</code></td><td><code>TRIM('  Айгерім ')</code></td><td>Айгерім</td></tr>
+<tr><td><code>UPPER</code>, <code>LOWER</code></td><td><code>LOWER('NURLAN@mail.kz')</code></td><td>nurlan@mail.kz</td></tr>
+<tr><td><code>||</code></td><td><code>name || ' (' || city || ')'</code></td><td>Айгерім (Алматы)</td></tr>
+</table>
+<p>In <code>SUBSTR</code> counting starts <b>from 1</b> (not from 0 as in Python). When the date is in ISO format, <code>SUBSTR(order_date, 1, 7)</code> also gives the month key.</p>
+<div class="tip">In SQLite, <code>UPPER</code> and <code>LOWER</code> change only Latin letters: <code>LOWER('АЛМАТЫ')</code> stays unchanged. For emails that is enough. PostgreSQL changes Cyrillic correctly too.</div>
+<h3>Changing the type: CAST</h3>
+<p>In the "Messy data" database the amount is stored as text: <code>'12 500'</code>, <code>'8000'</code>. Text cannot be added up or compared as a number. First we remove the space, then turn it into a number:</p>
+<pre><code>SELECT id, CAST(REPLACE(amount, ' ', '') AS INTEGER) AS amount_num
+FROM raw_orders;</code></pre>
+<p><code>CAST(value AS type)</code>: <code>INTEGER</code> is a whole number, <code>REAL</code> is a decimal number, <code>TEXT</code> is text. Be careful: SQLite turns text that is not a number (<code>'abc'</code>) into <b>0</b> without an error. PostgreSQL raises an error in that case.</p>
+<p>You also need CAST when dividing whole numbers: <code>7 / 2</code> = 3, while <code>CAST(7 AS REAL) / 2</code> or <code>7 * 1.0 / 2</code> = 3.5.</p>
+<h3>Working with NULL: COALESCE and NULLIF</h3>
+<ul>
+<li><code>COALESCE(a, b, c)</code> returns the first value that is not NULL: <code>COALESCE(city, 'белгісіз')</code>.</li>
+<li><code>NULLIF(a, b)</code> is NULL if <code>a = b</code>, otherwise <code>a</code>. Its most common use is protecting against division by zero: <code>revenue / NULLIF(orders, 0)</code>. If there are 0 orders, the divisor becomes NULL and the result is NULL instead of an error.</li>
+<li>Turning empty text into NULL: <code>NULLIF(TRIM(phone), '')</code>.</li>
+</ul>
+<h3>PostgreSQL equivalents</h3>
+<table>
+<tr><th>What you need</th><th>SQLite</th><th>PostgreSQL</th></tr>
+<tr><td>Truncate to the start of the month</td><td><code>date(d, 'start of month')</code></td><td><code>DATE_TRUNC('month', d)</code></td></tr>
+<tr><td>Month key as text</td><td><code>strftime('%Y-%m', d)</code></td><td><code>TO_CHAR(d, 'YYYY-MM')</code></td></tr>
+<tr><td>Month number</td><td><code>CAST(strftime('%m', d) AS INTEGER)</code></td><td><code>EXTRACT(MONTH FROM d)</code></td></tr>
+<tr><td>Add 7 days</td><td><code>date(d, '+7 days')</code></td><td><code>d + INTERVAL '7 days'</code></td></tr>
+<tr><td>Difference between two dates</td><td><code>julianday(d2) - julianday(d1)</code></td><td><code>d2 - d1</code> (when both have the <code>date</code> type)</td></tr>
+<tr><td>Today</td><td><code>date('now')</code></td><td><code>CURRENT_DATE</code></td></tr>
+<tr><td>Change the type</td><td><code>CAST(x AS INTEGER)</code></td><td><code>CAST(x AS INTEGER)</code> or <code>x::int</code></td></tr>
+</table>
+<p><code>SUBSTR</code>, <code>LENGTH</code>, <code>REPLACE</code>, <code>TRIM</code>, <code>UPPER</code>, <code>LOWER</code>, <code>COALESCE</code> and <code>NULLIF</code> are written the same way in both.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>Grouping by month without the year.</b> <code>GROUP BY strftime('%m', order_date)</code> mixes different years. Write <code>'%Y-%m'</code>.</li>
+<li><b>Subtracting dates as text.</b> For a difference you need <code>julianday</code>.</li>
+<li><b>A non-ISO format.</b> <code>strftime</code> does not understand a date like <code>'15.02.2024'</code> (it returns NULL), and when sorted it lands in the wrong place. First bring it to <code>YYYY-MM-DD</code> with <code>SUBSTR</code>.</li>
+<li><b>Not checking CAST.</b> <code>'abc'</code> silently becomes 0. After converting, look through the 0 and NULL values.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Show the number of orders for each month: the month key (<code>YYYY-MM</code>, using <code>strftime</code>) and the count. Months in ascending order.', hints: ["The format: <code>'%Y-%m'</code>.", 'Add <code>GROUP BY month ORDER BY month</code>.'] },
+        { prompt: 'For each order, calculate how many days passed from the customer\'s signup (<code>signup_date</code>) to the order (<code>order_date</code>). Two columns: the order <code>id</code> and the number of days.', hints: ['The difference: <code>julianday(o.order_date) - julianday(c.signup_date)</code>.', 'For a whole number, wrap it in <code>CAST(... AS INTEGER)</code>.'] },
+        { prompt: 'Clean the <code>raw_customers</code> table. Show three columns: <code>id</code>, <code>name</code> with the spaces at its edges removed, and <code>email</code> in lowercase.', hints: ['<code>TRIM(name)</code> and <code>LOWER(email)</code>.'] },
+        { prompt: 'In the <code>raw_orders</code> table, <code>amount</code> is text (<code>\'12 500\'</code>). Show two columns: <code>id</code> and the amount with spaces removed and converted to a whole number.', hints: ["First remove the space: <code>REPLACE(amount, ' ', '')</code>.", 'Then: <code>CAST(... AS INTEGER)</code>.'] },
+        { prompt: 'At work you use PostgreSQL. You need to bring each order date to the first day of its month (in SQLite: <code>date(order_date, \'start of month\')</code>). How do you write it?', options: ["DATE_TRUNC('month', order_date)", "strftime('%Y-%m', order_date)", 'EXTRACT(MONTH FROM order_date)', "order_date + INTERVAL '1 month'"], explain: "DATE_TRUNC('month', ...) truncates a date to the start of the month. EXTRACT gives only the month number (without the year), INTERVAL shifts the date, and strftime does not exist in PostgreSQL." }
+      ]
+    },
+    'sql-17': {
+      title: 'Self join, the fan-out trap and execution order',
+      body: `
+<p>You know JOIN. In this lesson we look at three important sides of it: joining a table to itself, numbers silently multiplying after a JOIN, and the order in which a query actually runs. First, let's understand why tables are stored separately.</p>
+<h3>Keys and normalization</h3>
+<ul>
+<li>A <b>primary key (PK)</b> is a column that uniquely identifies a row: <code>customers.id</code>. It never repeats and is never empty.</li>
+<li>A <b>foreign key (FK)</b> is a column that points to the PK of another table: <code>orders.customer_id</code> → <code>customers.id</code>.</li>
+</ul>
+<table>
+<tr><th>Relationship</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><b>1:N</b> (one-to-many)</td><td>one customer has many orders, each order has one customer</td><td><code>customers</code> → <code>orders</code></td></tr>
+<tr><td><b>M:N</b> (many-to-many)</td><td>one order has many products, one product is in many orders</td><td><code>orders</code> ↔ <code>products</code>, with <code>order_items</code> between them</td></tr>
+</table>
+<p>An M:N relationship is not stored directly: a <b>junction table</b> is placed in the middle. <code>order_items</code> is exactly that: it has two FKs (<code>order_id</code>, <code>product_id</code>).</p>
+<p>Why not write everything into one big table? Then the customer's city would repeat in every one of their orders. If the customer moves, you have to change all those rows, and if you miss one, the data contradicts itself. Storing each fact <b>in one place</b> and linking tables through keys is called <b>normalization</b>. Its price is writing JOINs when you analyze.</p>
+<h3>Self join: joining a table to itself</h3>
+<p>In the <code>employees</code> table, the <code>manager_id</code> column points to <code>id</code> in the same table: a manager is an employee too.</p>
+<table>
+<tr><th>id</th><th>name</th><th>manager_id</th></tr>
+<tr><td>1</td><td>Серік</td><td>NULL</td></tr>
+<tr><td>2</td><td>Гүлнар</td><td>1</td></tr>
+<tr><td>3</td><td>Ақжол</td><td>2</td></tr>
+</table>
+<p>To show the manager's name next to each employee, we join the table to itself. We give one table two different aliases: <code>e</code> for the employee, <code>m</code> for the manager.</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+JOIN employees m ON m.id = e.manager_id;</code></pre>
+<table>
+<tr><th>name</th><th>manager</th></tr>
+<tr><td>Гүлнар</td><td>Серік</td></tr>
+<tr><td>Ақжол</td><td>Гүлнар</td></tr>
+</table>
+<p>Серік is missing from the result: his <code>manager_id</code> is NULL, so no matching row was found. To keep him too, write <code>LEFT JOIN</code>: then his <code>manager</code> column is NULL.</p>
+<h3>CROSS JOIN</h3>
+<p><code>CROSS JOIN</code> joins without a condition: every row of the first table is paired with every row of the second. 3 cities × 4 months = 12 rows. You need it to build the "skeleton" of a report: you make the list of all cities and months, then LEFT JOIN the actual sales to it. That way months with no sales show up too (as 0).</p>
+<pre><code>SELECT c.city, m.month
+FROM (SELECT DISTINCT city FROM customers) c
+CROSS JOIN (SELECT DISTINCT strftime('%Y-%m', order_date) AS month FROM orders) m;</code></pre>
+<p>Here there is a query in parentheses inside <code>FROM</code>. It is called a <b>derived table</b>: the database runs the inner query first and uses its result as a temporary table. It must be given an alias.</p>
+<h3>Fan-out: JOIN multiplies rows</h3>
+<p>When you JOIN over a 1:N relationship, a row on the "one" side is repeated for every match on the "many" side. This is called <b>fan-out</b>. Айгерім (id 1) has three orders: 101, 103, 111. Order 101 has two products.</p>
+<pre><code>SELECT c.name, COUNT(*) AS orders
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id
+WHERE c.id = 1;          -- gives 4, but there are 3 orders</code></pre>
+<p>Once <code>order_items</code> is joined, one row is no longer an order but a product within an order. <code>COUNT(*)</code> counted product rows. There is no error message, the number is simply bigger. This is the analyst's most expensive mistake.</p>
+<h3>Joining two "many" tables at once</h3>
+<p>In the "Product metrics" database, two 1:N relationships go out from <code>users</code>: <code>activity</code> (active months) and <code>payments</code>. User 1 has 3 active months and 3 payments of 5 000 each.</p>
+<pre><code>SELECT u.id, COUNT(a.month) AS months, SUM(p.amount) AS total
+FROM users u
+JOIN activity a ON a.user_id = u.id
+JOIN payments p ON p.user_id = u.id
+GROUP BY u.id;           -- user 1: months = 9, total = 45000</code></pre>
+<p>Every activity row was paired with every payment row: 3 × 3 = 9 rows. The correct answer is 3 months and 15 000.</p>
+<h3>The fix: aggregate first, then JOIN</h3>
+<p>We collapse each "many" table in its own derived table so that there is <b>one row per user</b>, and only then join:</p>
+<pre><code>SELECT u.id, a.months, p.total
+FROM users u
+JOIN (SELECT user_id, COUNT(*) AS months
+      FROM activity GROUP BY user_id) a ON a.user_id = u.id
+JOIN (SELECT user_id, SUM(amount) AS total
+      FROM payments GROUP BY user_id) p ON p.user_id = u.id;</code></pre>
+<p>Now the JOIN is 1:1 and nothing multiplies. If you only need a count, <code>COUNT(DISTINCT o.id)</code> helps too, but <code>DISTINCT</code> does not work for <code>SUM</code>: two payments with the same amount would be added only once.</p>
+<div class="tip">After every JOIN ask yourself: "what is one row now?". When in doubt, compare <code>COUNT(*)</code> before and after the JOIN. If the row count grew, there is fan-out.</div>
+<h3>Execution order</h3>
+<p>You write a query starting from <code>SELECT</code>, but the database runs it in a different order:</p>
+<pre><code>FROM / JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT</code></pre>
+<table>
+<tr><th>Consequence</th><th>Reason</th></tr>
+<tr><td>You cannot write an aggregate in <code>WHERE</code></td><td>When WHERE runs, there are no groups yet</td></tr>
+<tr><td>You cannot use an alias from <code>SELECT</code> in <code>WHERE</code></td><td>WHERE runs before SELECT, so the alias has not been created yet</td></tr>
+<tr><td>You can use an alias in <code>ORDER BY</code></td><td>ORDER BY runs after SELECT</td></tr>
+<tr><td>Fan-out breaks aggregates</td><td>JOIN runs first of all: GROUP BY sees the multiplied rows</td></tr>
+</table>
+<p>Note: SQLite accepts an alias in <code>WHERE</code> and <code>GROUP BY</code> as well (like <code>GROUP BY month</code> in this course). PostgreSQL raises an error for an alias in <code>WHERE</code> and <code>HAVING</code>: there you have to write the expression again.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>Forgetting aliases in a self join.</b> The same table appears twice, so you must write <code>e.</code> or <code>m.</code> before every column.</li>
+<li><b>Mixing up the direction of ON.</b> <code>m.id = e.manager_id</code> means "m is e's manager". Write it the other way round and you get the subordinates instead of the manager.</li>
+<li><b>Trusting <code>COUNT(*)</code> after a JOIN.</b> First work out what one row is.</li>
+<li><b>Joining two 1:N tables in one query and aggregating from both.</b> Collapse each one separately first.</li>
+</ul>`,
+      ex: [
+        { prompt: 'Show each employee\'s name and their manager\'s name. Серік, who has no manager, must stay in the list too (his manager is <code>NULL</code>). 12 rows in total.', hints: ['Join the table to itself: <code>LEFT JOIN employees m ON m.id = e.manager_id</code>.', 'With a plain <code>JOIN</code>, Серік drops out: you get 11 rows.'] },
+        { prompt: 'How many employees report to each manager? Two columns: the manager\'s name and the number of employees. People with no one reporting to them are not needed.', hints: ['Write the self join from the previous task with <code>JOIN</code>.', 'Group by the manager: <code>GROUP BY m.id, m.name</code>.'] },
+        { prompt: 'This query gives wrong numbers because of fan-out (user 1 gets 9 months and 45 000). Fix it: first collapse <code>activity</code> and <code>payments</code> in separate derived tables, then join them. Three columns: <code>id</code>, the number of active months, the total of payments.', hints: ['<code>JOIN (SELECT user_id, COUNT(*) AS months FROM activity GROUP BY user_id) a ON a.user_id = u.id</code>', 'Write the same kind of derived table for <code>payments</code>: <code>SUM(amount) AS total</code>. The outer query needs no GROUP BY.'] },
+        { prompt: 'Why does <code>SELECT price * 1.12 AS with_vat FROM products WHERE with_vat &gt; 10000</code> raise an error in PostgreSQL?', options: ['AS is written incorrectly', 'WHERE runs before SELECT, so the with_vat alias does not exist yet', 'You cannot multiply in WHERE', '1.12 is not a whole number'], explain: 'Execution order: FROM → WHERE → ... → SELECT. In the condition you have to write the expression again: WHERE price * 1.12 > 10000.' },
+        { prompt: 'One student enrolls in many courses, and one course has many students. What is the right way to store this in a database?', options: ['Add course1, course2, course3 columns to the students table', 'Three tables: students, courses and a junction table (enrollments) that stores the ids of both', 'Write the students\' names separated by commas in the courses table', 'Write everything into one table and repeat the student\'s data for each course'], explain: 'This is an M:N relationship. It is always stored through a junction table with two foreign keys, like our order_items.' }
+      ]
+    },
     'sql-gate': {
       title: 'Module exam: SQL Core',
       body: `
-<p>This is the module's final check. The tasks mix all the lessons, and there are no hints. Complete them all and the module is done, bringing you closer to the <b>L2 SQL Practitioner</b> level.</p>
+<p>This is the module's final check. The tasks mix all the lessons, and there are no step-by-step hints. Complete them all and the module is done, bringing you closer to the <b>L2 SQL Practitioner</b> level.</p>
 <p>Same database: <code>customers</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>.</p>
 <div class="tip">Take your time: look at the intermediate result with "Run" first, then check.</div>`,
       ex: [
         { prompt: 'Using only <code>delivered</code> orders, show the names of the 3 customers who spent the most and their total, from highest down.' },
-        { prompt: 'For each month (as <code>YYYY-MM</code>), show the number of distinct customers who ordered, with months in ascending order. Tip: <code>substr(order_date, 1, 7)</code>.' },
+        { prompt: 'For each month (as <code>YYYY-MM</code>), show the number of distinct customers who ordered, with months in ascending order.' },
         { prompt: 'Show the names of products with at least 3 items sold in total, and the total quantity sold.' },
         { prompt: 'In the query <code>customers c LEFT JOIN orders o ... WHERE o.status = \'delivered\'</code>, do customers with no orders appear in the result?', options: ['Yes, with NULL', 'No: the WHERE condition removes the NULL rows, so it works like an INNER JOIN', 'Only once', 'It raises an error'], explain: 'NULL = \'delivered\' is not true. Only if you move the condition into ON does the LEFT JOIN keep every customer.' }
       ]

@@ -9,9 +9,9 @@ DJ.i18n.patch({
       body: `
 <p>A <b>metric</b> is a measurable number (for example, the number of orders). A <b>KPI</b> is a key metric directly linked to a business goal that management keeps track of.</p>
 <h3>North Star and the metrics tree</h3>
-<p>A company chooses one main metric (the <b>North Star Metric</b>), for example "customers who made a purchase in a week". Then it breaks this metric into its parts:</p>
+<p>A company chooses one main metric (the <b>North Star Metric</b>). For an online store this could be, for example, "the number of customers who made at least one purchase in a month". It is directly tied to revenue: revenue = buyers × average check. So we put revenue at the root of the tree and break it into its parts. The North Star is one branch of this tree:</p>
 <pre><code>Revenue
-├── Number of buyers
+├── Number of buyers   ← North Star
 │   ├── Site visitors (traffic)
 │   └── Conversion
 └── Average check (AOV)
@@ -197,7 +197,7 @@ FROM m;</code></pre>
 <div class="tip">Months have different lengths: February has 28 days, March has 31. Comparing the average per day is sometimes fairer than comparing monthly totals.</div>`,
       ex: [
         { prompt: 'From <code>payments</code>, output the monthly revenue and the MoM growth in percent: <code>month</code>, <code>revenue</code>, <code>mom_pct</code> (one decimal place). In month order.', hints: ['In a CTE, get the monthly revenue, then use LAG to get the percentage change.'] },
-        { prompt: 'A flower shop\'s sales in March are 60% lower than in February. Which comparison is fairer?', options: ['MoM', 'With March of last year (YoY)', 'With the annual average', 'None of them'], explain: 'February has a peak before March 8, so for a seasonal business YoY is fairer.' }
+        { prompt: 'A flower shop\'s sales in April are 60% lower than in March. Which comparison is fairer?', options: ['MoM', 'With April of last year (YoY)', 'With the annual average', 'None of them'], explain: 'March has a peak because of March 8 (Women\'s Day), so the drop in April is normal seasonality. For a seasonal business YoY is fairer.' }
       ]
     },
     'ba-7': {
@@ -205,7 +205,7 @@ FROM m;</code></pre>
       body: `
 <h3>1. An average of averages</h3>
 <p>The conversion of two stores is 10% (from 100 visitors) and 2% (from 10,000 visitors). The average is not "6%": the overall conversion = (10 + 200) / 10,100 ≈ 2.1%. First add up the numerators and the denominators, and only then divide.</p>
-<h3>2. Survivorship and selection</h3>
+<h3>2. Reverse causality and selection</h3>
 <p>"Premium customers buy more": perhaps the customers who buy a lot are the ones who move to premium. The direction may be the opposite.</p>
 <h3>3. Goodhart's law</h3>
 <p>"When a measure becomes a target, it ceases to be a good measure." If you give a call center the KPI "shorten the call duration", the operators will hang up without solving the problem. Pair every KPI with a "counter-balance" metric (for example, the number of repeat calls).</p>
@@ -259,6 +259,171 @@ FROM m;</code></pre>
         { prompt: '<b>shop.</b> By category (<code>category</code>), output the revenue from orders with the status delivered and its share of the total revenue in percent (<code>share</code>, one decimal place): <code>category</code>, <code>revenue</code>, <code>share</code>.' },
         { prompt: 'Monthly ARPU 5,000 ₸, margin 60%, monthly churn 12.5%, CAC 8,000 ₸. What is the LTV/CAC ratio?', explain: 'LTV = 5,000 × 0.6 / 0.125 = 24,000. 24,000 / 8,000 = 3.' },
         { prompt: 'After launching a new registration feature, sign-ups grew by 30%, but the 30-day retention fell from 40% to 25%. What will you write in the memo?', options: ['The feature is a success: sign-ups grew', 'Although there are more sign-ups, their quality has dropped; we recommend calculating the effect on the number of active customers and reviewing the feature', 'Retention does not matter', 'There is an error in the data'], explain: 'If one metric improved and another got worse, you need to evaluate the overall result (active customers) together.' }
+      ]
+    },
+    'ba-9': {
+      title: 'RFM and ABC segmentation',
+      body: `
+<p>"Let's send every customer the same discount" is the most expensive and the weakest kind of marketing. Segmentation splits customers (or products) into groups that behave alike and lets you choose a <b>separate action</b> for each group. The two approaches named most often in analyst vacancies in Kazakhstan are RFM and ABC. The examples use the <code>qazaq</code> database (Qazaq Market).</p>
+<h3>RFM: three questions</h3>
+<ul>
+<li><b>Recency</b>: how many days have passed since the last purchase? Fewer is better.</li>
+<li><b>Frequency</b>: how many times did they buy?</li>
+<li><b>Monetary</b>: how much money did they bring in total?</li>
+</ul>
+<p>Only delivered (<code>delivered</code>) orders count. As "today" we take a fixed date: <code>2026-07-01</code>. On a real job it is the day the report is built.</p>
+<pre><code>SELECT o.customer_id,
+  CAST(julianday('2026-07-01') - julianday(MAX(o.order_date)) AS INTEGER) AS recency_days,
+  COUNT(DISTINCT o.order_id) AS frequency,
+  SUM(oi.quantity * oi.unit_price) AS monetary
+FROM orders o JOIN order_items oi ON oi.order_id = o.order_id
+WHERE o.status = 'delivered'
+GROUP BY o.customer_id;</code></pre>
+<p>You need <code>COUNT(DISTINCT o.order_id)</code>: joining with <code>order_items</code> multiplies one order into several rows.</p>
+<h3>Scoring: NTILE</h3>
+<p>Raw numbers are hard to compare, so for each measure we split the customers into equal groups and give a score. Here there are 3 groups (1 is weak, 3 is strong); large databases use 5 groups.</p>
+<pre><code>NTILE(3) OVER (ORDER BY recency_days DESC, customer_id) AS r,  -- bought recently = 3
+NTILE(3) OVER (ORDER BY frequency, customer_id)         AS f,  -- buys often = 3
+NTILE(3) OVER (ORDER BY monetary, customer_id)          AS m   -- spent a lot = 3</code></pre>
+<p>For Recency the order is reversed: a customer with <b>many</b> days gets a score of 1. <code>customer_id</code> keeps the result stable when values are equal.</p>
+<h3>Segment and action</h3>
+<p>The 70 buyers of Qazaq Market (by R and F):</p>
+<table>
+<tr><th>Segment</th><th>Rule</th><th>Customers</th><th>Share of revenue</th><th>Action</th></tr>
+<tr><td>Champions</td><td>r = 3, f = 3</td><td>10</td><td>15.8%</td><td>No discount. Early access, a loyalty programme, a request for a review</td></tr>
+<tr><td>At risk</td><td>r = 1, f ≥ 2</td><td>14</td><td>27.7%</td><td>A win-back campaign: a personal offer, a "we miss you" email, asking for the reason</td></tr>
+<tr><td>New</td><td>r = 3, f = 1</td><td>5</td><td>3.9%</td><td>Nudge towards a second purchase: a related product, a 14-day promo code</td></tr>
+<tr><td>Everyone else</td><td>other</td><td>41</td><td>52.5%</td><td>General messaging, raising frequency</td></tr>
+</table>
+<p>The most important row is the second: 14 customers who used to buy often brought 27.7% of revenue but have not come for a long time. Winning them back is cheaper than acquiring new customers.</p>
+<h3>ABC: splitting products by share</h3>
+<p>ABC analysis rests on the Pareto principle: a small part of the products gives most of the revenue. We sort the products by revenue in descending order and compute the <b>cumulative share</b>:</p>
+<ul>
+<li><b>A</b>: cumulative share up to 80%. Must always be in stock, and we watch the price closely.</li>
+<li><b>B</b>: from 80% to 95%. Normal control.</li>
+<li><b>C</b>: the rest. Reduce stock, consider dropping from the range.</li>
+</ul>
+<pre><code>ROUND(100.0 * SUM(revenue) OVER (ORDER BY revenue DESC) / SUM(revenue) OVER (), 1) AS cum_pct</code></pre>
+<p>In Qazaq Market, 7 of the 28 products sold fall into group A and give 77.5% of revenue.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Including cancelled and returned orders: the customer looks "strong" but brought no money.</li>
+<li>Taking <code>date('now')</code> as "today": on old data every customer's recency comes out equally bad. Take a date close to the last date in the data.</li>
+<li>Computing segments and then doing nothing. Segmentation is not a report; it is a list of what you do for each group.</li>
+<li>Doing ABC on revenue alone: a low-margin product may sit in A. If you can, repeat it on profit.</li>
+</ul>
+<div class="tip">Compute RFM every month, not once, and track how customers <b>move</b> from segment to segment: "how many champions dropped to at risk?" That shows churn ahead of time.</div>`,
+      ex: [
+        { prompt: 'Compute the RFM measures of each buyer (only <code>delivered</code> orders, "today" = <code>2026-07-01</code>): <code>customer_id</code>, <code>recency_days</code>, <code>frequency</code> (number of orders), <code>monetary</code> (the sum of quantity × unit_price). Sort by <code>customer_id</code>.', hints: [`<code>CAST(julianday('2026-07-01') - julianday(MAX(o.order_date)) AS INTEGER)</code>`, '<code>COUNT(DISTINCT o.order_id)</code>: after the JOIN one order becomes several rows.', `<code>orders o JOIN order_items oi</code>, <code>WHERE o.status = 'delivered'</code>, <code>GROUP BY o.customer_id</code>.`] },
+        { prompt: 'Score the ready-made <code>rfm</code> CTE with <code>NTILE(3)</code>: <code>r</code> (the customers with the most recent last order get 3), <code>f</code>, <code>m</code> (the largest get 3). Add <code>customer_id</code> as the second column in the <code>ORDER BY</code> of each window. Columns: <code>customer_id</code>, <code>r</code>, <code>f</code>, <code>m</code>.', hints: ['<code>NTILE(3) OVER (ORDER BY recency_days DESC, customer_id) AS r</code>: a customer with many days falls into group 1.', 'For <code>f</code> and <code>m</code> the order is ascending: <code>ORDER BY frequency, customer_id</code>.'] },
+        { prompt: `ABC analysis of the products (only <code>delivered</code>): <code>name</code>, <code>revenue</code>, <code>cum_pct</code> (the cumulative share in descending order of revenue, %, 1 decimal place), <code>abc</code> ('A' if <code>cum_pct</code> ≤ 80, 'B' if ≤ 95, otherwise 'C'). Sort by revenue in descending order.`, hints: ['CTE 1: each product\'s revenue (order_items, orders, products).', 'CTE 2: <code>ROUND(100.0 * SUM(revenue) OVER (ORDER BY revenue DESC) / SUM(revenue) OVER (), 1) AS cum_pct</code>', `At the end: <code>CASE WHEN cum_pct &lt;= 80 THEN 'A' WHEN cum_pct &lt;= 95 THEN 'B' ELSE 'C' END</code>`] },
+        { prompt: 'A customer\'s scores: r = 1, f = 3, m = 3. Which action is best?', options: ['Do nothing: they are already the best customer', 'A win-back campaign: send a personal offer and find out why they stopped coming', 'Delete them from the database', 'Send them the welcome email meant for new customers'], explain: 'They used to buy often and a lot (f and m are high) but have not come for a long time (r is low). This is a valuable customer who is slipping away.' },
+        { prompt: 'In an ABC analysis a product fell into group C. What does that mean?', options: ['The product is of poor quality', 'It is one of the products that give the last ~5% of revenue: you can consider reducing its stock or dropping it from the range', 'Its price should be raised at once', 'It is the best-selling product'], explain: 'C means products with a small share of revenue. But before deciding, check the margin and whether it sells together with A products.' }
+      ]
+    },
+    'ba-10': {
+      title: 'Product metrics: DAU/MAU, stickiness, activation',
+      body: `
+<p>A shop counts revenue, while an app or a service first counts <b>usage</b>: do people come, do they return, do they get value. These metrics are always asked about in interviews at product companies such as Kaspi, Kolesa and Yandex.</p>
+<h3>DAU, WAU, MAU</h3>
+<ul>
+<li><b>DAU</b> (daily active users): the <b>unique</b> users active on one day.</li>
+<li><b>WAU</b>, <b>MAU</b>: those active at least once in a week, in a month.</li>
+</ul>
+<p>The team itself defines what "active" means: opening the app, or a meaningful action (a search, a payment)? When the definition changes, the metric jumps too, so write it down on the dashboard.</p>
+<p>The example table: <code>daily_active(user_id, day)</code> in the <code>metrics</code> database, September 2024.</p>
+<pre><code>SELECT day, COUNT(DISTINCT user_id) AS dau
+FROM daily_active GROUP BY day;</code></pre>
+<h3>Stickiness: DAU / MAU</h3>
+<p><b>Stickiness</b> = average DAU / MAU. It shows "what part of the monthly audience comes every day".</p>
+<p>Example: MAU = 8, and over the 30 days of September there were 98 "user-days" in total. Average DAU = 98 / 30 ≈ 3.27. Stickiness = 3.27 / 8 ≈ 40.8%. So the average user logs in on about 12 days a month (30 × 0.408).</p>
+<table>
+<tr><th>Stickiness</th><th>What it means</th></tr>
+<tr><td>50% and above</td><td>A daily habit: a messenger, a social network</td></tr>
+<tr><td>20–30%</td><td>Once or twice a week: a banking app, delivery</td></tr>
+<tr><td>Below 10%</td><td>An occasional need: buying tickets, a repair service. Such a product needs a different metric, not stickiness</td></tr>
+</table>
+<h3>Activation: reaching the first value</h3>
+<p>A signup is not a customer yet. <b>Activation</b> is the moment a new user first gets the product's core value (the "aha moment"). It differs by product: the first ride in a taxi app, the first order in a shop, the first completed lesson on a learning platform.</p>
+<p><b>Activation rate</b> = new users activated within a set period / all signups. The period is required: "a first order within 30 days of signing up". In Qazaq Market this figure is 62.5% (50 of 80 customers).</p>
+<p>If activation is low, improving retention makes little sense: people leave without seeing the value. First you shorten the path from signup to first value.</p>
+<h3>How the metrics connect</h3>
+<pre><code>Acquisition → Activation → Retention → Revenue
+  signups     first value   coming back  payment</code></pre>
+<p>MAU is the outcome of this chain: newly activated users + returning users. When MAU grows, break down which part it grew from.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Computing MAU as the sum of DAUs. One person who logs in every day is counted 30 times in DAU and once in MAU. MAU is computed only with <code>COUNT(DISTINCT user_id)</code>.</li>
+<li>Dividing average DAU only by the days that have data. A day when nobody logged in is still a day: the denominator is the number of calendar days.</li>
+<li>Computing activation with no time limit: old cohorts have had more time, so they always look "better".</li>
+<li>Comparing an incomplete month with a full one: on the 10th of a month MAU is always lower.</li>
+</ul>
+<div class="tip">DAU swings a lot on weekends and holidays. To see the trend, use a 7-day moving average or WAU.</div>`,
+      ex: [
+        { prompt: '<b>metrics.</b> From <code>daily_active</code>, show each day\'s DAU: <code>day</code>, <code>dau</code>. In date order.', hints: ['<code>COUNT(DISTINCT user_id)</code>, <code>GROUP BY day</code>.'] },
+        { prompt: '<b>metrics.</b> Show September\'s stickiness in one row: <code>avg_dau</code> (number of user-days / 30 days, 2 decimal places), <code>mau</code> (unique users), <code>stickiness_pct</code> (average DAU / MAU, %, 1 decimal place). The day when nobody logged in is part of the 30 days too.', hints: ['In the table one row = one day of one user, so the number of user-days is <code>COUNT(*)</code>.', '<code>ROUND(COUNT(*) * 1.0 / 30, 2)</code> and <code>COUNT(DISTINCT user_id)</code>.', '<code>ROUND(COUNT(*) * 100.0 / 30 / COUNT(DISTINCT user_id), 1)</code>'] },
+        { prompt: '<b>qazaq.</b> Activation rate by signup year: <code>reg_year</code>, <code>registered</code> (signups), <code>activated</code> (those who placed their first order, with any status, within 30 days of signing up), <code>activation_pct</code> (%, 1 decimal place). Sort by year.', hints: ['The difference in days: <code>julianday(first_order) - julianday(registered_at)</code>. For a customer with no orders it is NULL and the condition does not hold.', '<code>SUM(CASE WHEN julianday(first_order) - julianday(registered_at) &lt;= 30 THEN 1 ELSE 0 END) AS activated</code>', `Group by <code>strftime('%Y', registered_at)</code>.`] },
+        { prompt: 'An app\'s average DAU in April is 1,200 and its MAU is 6,000. What is the stickiness, in percent?', explain: '1,200 / 6,000 = 0.2 = 20%. The average user logs in on about 6 days a month (30 × 0.2).' },
+        { prompt: 'An analyst computed MAU by "adding up the DAUs of 30 days" and got 98, while the real MAU is 8. What is the mistake?', options: ['There is no mistake, both are correct', 'The sum of DAUs counts one person again for every day they logged in; MAU is the number of unique users over the month', 'MAU should have been divided by 30', 'The DAUs should have been added by week'], explain: 'You cannot add up unique counts (DISTINCT). MAU is computed only with COUNT(DISTINCT user_id) over the whole month.' }
+      ]
+    },
+    'ba-ab': {
+      title: 'Reading an A/B test: the basics for an analyst',
+      body: `
+<p>The "Traps in metrics" lesson said it: the reliable way to prove a cause is an <b>A/B test</b>. An analyst is rarely asked to derive the maths of a test from scratch, but <b>reading</b> a results table correctly and answering "do we ship it or not?" is everyday work. The deeper theory (distributions, power, sample size) is in module M4.2 "Inference &amp; A/B Testing".</p>
+<h3>How a test is set up</h3>
+<ol>
+<li><b>Hypothesis</b>: "A 'Buy in one click' button will raise payment conversion".</li>
+<li><b>Two groups</b>: users are split <b>at random</b>. A (control) sees the old version, B (test) sees the new one. Random assignment makes the groups the same in every other respect.</li>
+<li><b>One primary metric</b> and the <b>duration</b> of the test are fixed before it starts.</li>
+</ol>
+<h3>Reading the results table</h3>
+<table>
+<tr><th>Group</th><th>Users</th><th>Purchases</th><th>Conversion</th></tr>
+<tr><td>A (control)</td><td>10 000</td><td>500</td><td>5.0%</td></tr>
+<tr><td>B (test)</td><td>10 000</td><td>560</td><td>5.6%</td></tr>
+</table>
+<p>The difference: +0.6 percentage points (absolute), +12% (relative: 0.6 / 5.0). p-value = 0.058. The 95% confidence interval of the difference: from −0.02 to +1.22 pp.</p>
+<ul>
+<li><b>Absolute and relative lift</b>. "Conversion grew by 12%" and "grew by 0.6 pp" are the same thing. Always say in the report which one you mean.</li>
+<li><b>p-value</b>: the probability of seeing a difference this large or larger by chance if there is in fact <b>no</b> difference between A and B. Here it is 5.8%. The usual threshold is 5% (0.05). If p is below it, the result is called "statistically significant". Here it is just above the threshold: the difference is not proven.</li>
+<li><b>Confidence interval (CI)</b>: the range where the true difference probably lies. If the interval <b>contains zero</b> (here −0.02 … +1.22), we cannot rule out "no effect". A CI is more useful than a p-value: it also shows the possible <b>size</b> of the effect.</li>
+</ul>
+<p>A p-value does <b>not</b> mean "the probability that B is better is 94.2%". That is the most common misreading.</p>
+<h3>Before trusting the result: the SRM check</h3>
+<p><b>SRM</b> (sample ratio mismatch) is when the group sizes deviate from the plan. If 50/50 was planned and A has 10,000 people while B has 9,400, the assignment mechanism has a bug: for example, the new page loads slowly and some users never get counted. You cannot trust the result of such a test.</p>
+<p>The check: the expected size e = (10,000 + 9,400) / 2 = 9,700. χ² = (10,000 − 9,700)² / 9,700 + (9,400 − 9,700)² / 9,700 ≈ 18.56. If χ² is above 3.84 (p &lt; 0.05), the deviation is not random. Many teams use a stricter threshold: 10.83 (p &lt; 0.001).</p>
+<h3>Peeking: looking early, stopping early</h3>
+<p>If you look at the test every day and stop the moment p &lt; 0.05, the share of false "wins" grows from 5% to 20–30%: the p-value fluctuates from day to day and sooner or later crosses the threshold by chance. The rule: compute the sample size and duration in advance and wait until the end. The duration should be at least 1–2 <b>full weeks</b>, because behaviour differs between weekdays and weekends.</p>
+<h3>Statistical significance and practical significance</h3>
+<p>With a million users, even a +0.05 pp difference comes out "significant". But does it pay for the cost of development and support? That is why an <b>MDE</b> (minimum detectable effect), the smallest effect that matters to the business, is set before the test. And the other way round, in a small test a large useful effect may stay "not significant": there was not enough data.</p>
+<h3>Making the decision</h3>
+<table>
+<tr><th>Situation</th><th>Decision</th></tr>
+<tr><td>There is SRM</td><td>We do not use the result. Find the assignment bug and rerun the test</td></tr>
+<tr><td>The CI is entirely above zero and the effect is larger than the MDE</td><td>Ship the new version</td></tr>
+<tr><td>The CI contains zero and the planned sample was collected</td><td>The effect is not proven. Do not ship, or revisit the hypothesis</td></tr>
+<tr><td>The primary metric grew, a guardrail metric (returns, complaints) got worse</td><td>Do not ship; investigate the cause</td></tr>
+</table>
+<div class="tip">Write the test conclusion in one sentence: "Variant B changed payment conversion from 5.0% to 5.6% (+0.6 pp, 95% CI −0.02…+1.22, p = 0.058); no SRM; the effect is not proven, I recommend not shipping". The numbers, the confidence and the recommendation together.</div>`,
+      ex: [
+        { prompt: 'A test result: p-value = 0.03. Which interpretation is correct?', options: ['The probability that variant B is better is 97%', 'If there is in fact no difference between the variants, the probability of seeing a difference this large or larger by chance is 3%', 'Conversion grew by 3%', '3% of the users did not like variant B'], explain: 'A p-value is the probability of data like this when the "no difference" assumption is true. It is not the probability that B is better.' },
+        { prompt: 'Group A: 8,000 users, 400 purchases. Group B: 8,000 users, 460 purchases. What is the <b>relative</b> lift in conversion, in percent?', explain: 'A: 400 / 8,000 = 5.0%. B: 460 / 8,000 = 5.75%. Relative lift = (5.75 − 5.0) / 5.0 = 15%. The absolute lift is 0.75 pp.' },
+        { prompt: 'Write a function <code>ab_summary(a_users, a_conv, b_users, b_conv)</code>. It should return a dictionary: <code>cr_a</code> and <code>cr_b</code> (conversion, %), <code>abs_lift_pp</code> (B − A, percentage points), <code>rel_lift_pct</code> (relative lift, %). Round every value to 2 decimal places with <code>round</code>.', check: { tests: `_r = ab_summary(10000, 500, 10000, 560)
+assert isinstance(_r, dict), "The function should return a dictionary"
+for _k, _v in [("cr_a", 5.0), ("cr_b", 5.6), ("abs_lift_pp", 0.6), ("rel_lift_pct", 12.0)]:
+    assert _k in _r, f"The dictionary has no key {_k}"
+    assert abs(_r[_k] - _v) < 0.011, f"ab_summary(10000, 500, 10000, 560): expected {_k} = {_v}, you have {_r[_k]}"
+_r = ab_summary(8000, 400, 4000, 230)
+assert abs(_r["cr_b"] - 5.75) < 0.011, "Each group's conversion is divided by its own number of users"
+assert abs(_r["rel_lift_pct"] - 15.0) < 0.011, "Relative lift: (cr_b - cr_a) / cr_a * 100"` }, hints: ['<code>cr_a = a_conv / a_users * 100</code>', 'Relative lift: <code>(cr_b - cr_a) / cr_a * 100</code>'] },
+        { prompt: 'Write an SRM check for a test that should split 50/50. The function <code>srm_check(n_a, n_b)</code> should return the pair <code>(chi2, has_srm)</code>: <code>chi2</code> = (n_a − e)² / e + (n_b − e)² / e, where e is the average size of the two groups (<code>round</code> to 2 decimal places); <code>has_srm</code> is <code>True</code> when <code>chi2</code> is greater than 3.84.', check: { tests: `_c, _f = srm_check(10000, 9400)
+assert abs(_c - 18.56) < 0.011, f"srm_check(10000, 9400): expected chi2 = 18.56, you have {_c}"
+assert _f is True, "chi2 is greater than 3.84: has_srm should be True"
+_c, _f = srm_check(5050, 4950)
+assert abs(_c - 1.0) < 0.011, f"srm_check(5050, 4950): expected chi2 = 1.0, you have {_c}"
+assert _f is False, "chi2 is less than 3.84: has_srm should be False"` }, hints: ['<code>e = (n_a + n_b) / 2</code>', '<code>return chi2, chi2 &gt; 3.84</code>'] },
+        { prompt: 'A test ran for the planned 2 weeks and there is no SRM. The 95% confidence interval of the difference in conversion: from −0.02 to +1.22 pp. What is the conclusion?', options: ['B won: most of the interval is positive', 'The interval contains zero: the effect is not proven. There are no grounds to ship the new version as one that "raises conversion"', 'B lost: conversion went down', 'Check the test every day until p &lt; 0.05 and stop at that moment'], explain: 'Zero is inside the interval, so the "no difference" option has not been ruled out. Waiting until p &lt; 0.05 is peeking, which multiplies false wins.' }
       ]
     }
   }

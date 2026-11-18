@@ -174,11 +174,16 @@ git pull                                     # получить изменени
       body: `
 <h3>.gitignore</h3>
 <p>Файл, который говорит Git, что <b>не сохранять</b>:</p>
-<pre><code># .gitignore
-.env                 # секретные ключи и пароли
-data/raw/*.csv       # большие или личные данные
+<pre><code># секретные ключи и пароли
+.env
+
+# большие или личные данные
+data/raw/*.csv
+
+# временные файлы Python и Jupyter
 __pycache__/
 .ipynb_checkpoints/</code></pre>
+<p>Комментарий начинается со знака <code>#</code> и всегда пишется <b>на отдельной строке</b>. Запись <code>.env  # секрет</code> в одной строке с шаблоном комментарием не считается: Git прочитает всю строку как имя файла, и <code>.env</code> не будет игнорироваться.</p>
 <div class="tip">Если хоть раз закоммитить пароль или API-ключ, он останется в истории, даже если потом удалить файл. Сразу смените ключ.</div>
 <h3>Репозиторий-портфолио аналитика</h3>
 <pre><code>cafe-analysis/
@@ -209,6 +214,106 @@ Python: расчет ROAS.
       ex: [
         { prompt: 'Какой файл никогда нельзя коммитить в репозиторий?', options: ['README.md', 'cleaning.sql', '.env (пароли и API-ключи)', '.gitignore'], explain: 'Добавьте .env в .gitignore.' },
         { prompt: 'Что должно стоять в README портфолио в самом начале?', options: ['Полный листинг кода', 'Бизнес-вопрос и главный результат', 'Лицензия', 'Версия Python'], explain: 'Читатель должен за 30 секунд понять, что решали и что нашли.' }
+      ]
+    },
+    'git-7': {
+      title: 'Вход в GitHub (token/SSH) и разрешение конфликта',
+      body: `
+<p>При первом <code>git push</code> большинство новичков натыкается на два препятствия: GitHub не принимает пароль, а позже возникает первый merge-конфликт. Обе ситуации нормальны, и у обеих есть чёткое решение.</p>
+<h3>Почему пароль не работает?</h3>
+<pre><code>$ git push
+Username: aigerim
+Password: ********
+remote: Support for password authentication was removed.
+fatal: Authentication failed</code></pre>
+<p>С 2021 года GitHub не принимает пароль от аккаунта для команд Git: если пароль украдут, потерян весь аккаунт. Вместо него используют один из трёх способов.</p>
+<table>
+<tr><th>Способ</th><th>Как работает</th><th>Кому подходит</th></tr>
+<tr><td><b>GitHub CLI</b></td><td><code>gh auth login</code> открывает браузер и сам настраивает вход</td><td>Самый простой, для новичка</td></tr>
+<tr><td><b>Personal access token</b></td><td>Длинный ключ, который вводят вместо пароля, с адресом HTTPS</td><td>Там, где нельзя устанавливать программы</td></tr>
+<tr><td><b>SSH-ключ</b></td><td>На компьютере создаётся пара ключей, открытая часть добавляется в GitHub</td><td>Для компьютера, на котором вы работаете каждый день</td></tr>
+</table>
+<h3>Способ 1: gh auth login</h3>
+<pre><code>gh auth login</code></pre>
+<p>Вы отвечаете на вопросы (GitHub.com → HTTPS → вход через браузер) и подтверждаете код в браузере. После этого <code>git push</code> не спрашивает пароль. <code>gh</code> — официальный инструмент командной строки GitHub, его устанавливают с сайта cli.github.com.</p>
+<h3>Способ 2: personal access token (PAT)</h3>
+<ol>
+<li>GitHub → <b>Settings → Developer settings → Personal access tokens</b> → создайте новый token.</li>
+<li>Выберите срок действия (например, 90 дней) и права: только нужный репозиторий, <b>Contents: Read and write</b>.</li>
+<li>Token показывается только один раз: сразу скопируйте его.</li>
+<li>Когда <code>git push</code> спросит пароль, вставьте вместо пароля token.</li>
+</ol>
+<p>Token — такой же секрет, как пароль. Не пишите его в коде, в README или в чате. Если он раскрыт, сразу отзовите его (revoke) в GitHub и создайте новый.</p>
+<h3>Способ 3: SSH-ключ</h3>
+<pre><code>ssh-keygen -t ed25519 -C "aigerim@mail.kz"   # создать пару ключей
+cat ~/.ssh/id_ed25519.pub                    # показать ОТКРЫТЫЙ ключ</code></pre>
+<p>Скопируйте выведенную строку и вставьте её в GitHub → <b>Settings → SSH and GPG keys → New SSH key</b>. Проверка и перевод адреса репозитория на SSH:</p>
+<pre><code>ssh -T git@github.com
+git remote set-url origin git@github.com:aigerim/cafe-analysis.git</code></pre>
+<p>Создаются два файла: <code>id_ed25519</code> — <b>закрытый</b> ключ (его никому не дают), <code>id_ed25519.pub</code> — <b>открытый</b> ключ (его добавляют в GitHub). Смотрите на вид адреса: <code>https://github.com/...</code> спрашивает token, <code>git@github.com:...</code> использует SSH-ключ. Текущий адрес показывает <code>git remote -v</code>.</p>
+<h3>fetch и pull</h3>
+<table>
+<tr><th>Команда</th><th>Что делает</th></tr>
+<tr><td><code>git fetch</code></td><td>Скачивает новые commit-ы с GitHub, но ваши файлы <b>не трогает</b></td></tr>
+<tr><td><code>git pull</code></td><td><code>fetch</code> + <code>merge</code>: скачивает и сразу вливает в вашу ветку</td></tr>
+</table>
+<p>После <code>git fetch</code> можно посмотреть, что пришло: <code>git log main..origin/main</code> (commit-ы, которых у вас нет) или <code>git diff main origin/main</code>. Если всё в порядке, делаете <code>git pull</code>.</p>
+<h3>stash: временно отложить незаконченную работу</h3>
+<p>Посреди работы понадобилось сделать <code>git pull</code> или перейти на другую ветку, а изменения ещё не готовы для commit. Git не пускает: «ваши изменения будут потеряны». <code>stash</code> временно кладёт их на полку:</p>
+<pre><code>git stash          # спрятать изменения и очистить рабочую папку
+git pull           # или git switch main
+git stash pop      # вернуть изменения
+git stash list     # посмотреть, что лежит на полке</code></pre>
+<h3>Убрать файл .env, который уже попал в commit</h3>
+<p>Если добавить <code>.env</code> в <code>.gitignore</code> позже, ничего не изменится: файл, который Git уже отслеживает, он игнорировать не начнёт. Сначала файл нужно снять с отслеживания:</p>
+<pre><code>git rm --cached .env                 # убирает из Git, файл на диске остаётся
+echo ".env" &gt;&gt; .gitignore            # теперь он не добавится снова
+git add .gitignore
+git commit -m ".env файлын бақылаудан алып тастадым"</code></pre>
+<p>Без <code>--cached</code> команда <code>git rm</code> удалит файл и с диска. Помните: файл <b>остаётся в старых commit-ах</b>. Поэтому сразу смените (rotate) пароли и ключи, которые в нём были: считайте их раскрытыми.</p>
+<h3>Merge-конфликт</h3>
+<p>Если два человека по-разному изменили <b>одну и ту же строку</b> одного файла, Git не может сам решить, какой вариант оставить:</p>
+<pre><code>$ git pull
+CONFLICT (content): Merge conflict in report.sql
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+<p>Git ставит внутри файла метки:</p>
+<pre><code>SELECT city, SUM(amount) AS revenue
+FROM orders
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+WHERE status = 'paid'
+=======
+WHERE status = 'paid' AND amount &lt; 20000
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+GROUP BY city;</code></pre>
+<table>
+<tr><th>Часть</th><th>Что означает</th></tr>
+<tr><td>Между <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> и <code>=======</code></td><td>ваш вариант</td></tr>
+<tr><td>Между <code>=======</code> и <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code></td><td>пришедший вариант (коллеги)</td></tr>
+</table>
+<p>Шаги решения:</p>
+<ol>
+<li><code>git status</code> показывает, в каких файлах есть конфликт (<code>both modified</code>).</li>
+<li>Откройте файл и оставьте правильный вариант: свой, коллеги или сочетание обоих. Если не знаете, какой верный, спросите коллегу.</li>
+<li>Удалите все три строки с метками (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>).</li>
+<li><code>git add report.sql</code> — отметка «этот файл разрешён».</li>
+<li><code>git commit</code> завершает merge.</li>
+</ol>
+<p>Если всё запуталось, <code>git merge --abort</code> возвращает состояние до merge. Ничего не теряется.</p>
+<div class="tip">Как уменьшить число конфликтов: перед началом работы делайте <code>git pull</code>, делайте небольшие commit-ы и чаще отправляйте их через push. Чем дольше ветка живёт отдельно от main, тем больше конфликтов.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li><b>Снова и снова вводить пароль от аккаунта.</b> Он не работает: нужен token, SSH или <code>gh auth login</code>.</li>
+<li><b>Делиться закрытым ключом.</b> В GitHub вставляют только содержимое файла <code>.pub</code>. Файл без <code>.pub</code> — закрытый ключ, никому его не отправляйте.</li>
+<li><b>Сделать commit, не удалив метки конфликта.</b> В файле останется <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, и код SQL или Python сломается.</li>
+<li><b>Написать <code>git rm .env</code> без <code>--cached</code>.</b> Файл удалится и с диска.</li>
+<li><b>Забыть <code>pop</code> после <code>git stash</code>.</b> Работа останется на полке, а вы решите, что она «пропала». Проверьте <code>git stash list</code>.</li>
+</ul>`,
+      ex: [
+        { prompt: '<code>git push</code> спросил логин и пароль от GitHub. Вы ввели пароль правильно, но получили <code>Authentication failed</code>. В чём причина?', options: ['Нет интернета', 'GitHub не принимает пароль от аккаунта для команд Git: нужен token, SSH-ключ или gh auth login', 'Репозиторий удалён', 'Сначала нужно было сделать git pull'], explain: 'Вход по паролю отключён в 2021 году. Для адреса HTTPS вместо пароля вводят personal access token либо настраивают SSH-ключ.' },
+        { prompt: 'Вы не закончили анализ, делать commit ещё рано, а нужно выполнить <code>git pull</code>. Временно отложите изменения на полку.', hints: ['Команда начинается с <code>git stash</code>.'], explain: 'Рабочая папка очищена. После pull изменения вернёт <code>git stash pop</code>.' },
+        { prompt: 'Файл <code>.env</code> случайно попал в commit. Уберите его из-под отслеживания Git, но файл на диске должен <b>остаться</b>.', hints: ['Добавьте к команде <code>git rm</code> флаг, который оставляет файл на диске.', '<code>git rm --cached .env</code>'], explain: 'Теперь добавьте .env в .gitignore и сделайте commit. Файл остаётся в старых commit-ах, поэтому смените ключи, которые в нём были.' },
+        { prompt: 'При <code>git pull</code> в файле <code>report.sql</code> возник конфликт. Вы открыли файл, оставили правильный вариант и удалили метки. Теперь сообщите Git, что этот файл разрешён.', hints: ['Разрешённый файл добавляют в staging.', '<code>git add report.sql</code>'], explain: 'Файл отмечен как разрешённый. Последний шаг — <code>git commit</code>: он завершает merge.' },
+        { prompt: 'Вы хотите посмотреть, что коллеги отправили в GitHub, но ваши файлы пока не должны меняться. Какая команда?', options: ['git pull', 'git fetch', 'git push', 'git stash pop'], explain: 'fetch только скачивает: новые commit-ы появляются в origin/main, а рабочая папка не меняется. pull — это fetch + merge, он сразу меняет файлы.' }
       ]
     },
     'git-gate': {

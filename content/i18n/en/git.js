@@ -174,11 +174,16 @@ git pull                                     # get other people's changes</code>
       body: `
 <h3>.gitignore</h3>
 <p>A file that tells Git what <b>not to save</b>:</p>
-<pre><code># .gitignore
-.env                 # secret keys and passwords
-data/raw/*.csv       # large or personal data
+<pre><code># secret keys and passwords
+.env
+
+# large or personal data
+data/raw/*.csv
+
+# temporary files of Python and Jupyter
 __pycache__/
 .ipynb_checkpoints/</code></pre>
+<p>A comment starts with <code>#</code> and always goes <b>on its own line</b>. Writing <code>.env  # secret</code> on the same line as the pattern does not count as a comment: Git reads the whole line as a file name, and <code>.env</code> ends up not being ignored.</p>
 <div class="tip">If you commit a password or an API key even once, it stays in the history, even if you delete the file later. Change the key immediately.</div>
 <h3>An analyst's portfolio repository</h3>
 <pre><code>cafe-analysis/
@@ -209,6 +214,106 @@ Run the files from the sql/ folder in order.</code></pre>
       ex: [
         { prompt: 'Which file must never be committed to a repository?', options: ['README.md', 'cleaning.sql', '.env (passwords and API keys)', '.gitignore'], explain: 'Add .env to .gitignore.' },
         { prompt: 'What should be at the very beginning of a portfolio README?', options: ['The full listing of the code', 'The business question and the main result', 'The license', 'The Python version'], explain: 'A reader should understand within 30 seconds what was solved and what was found.' }
+      ]
+    },
+    'git-7': {
+      title: 'Signing in to GitHub (token/SSH) and resolving a conflict',
+      body: `
+<p>On their first <code>git push</code> most beginners hit two obstacles: GitHub does not accept the password, and later the first merge conflict appears. Both are normal, and both have a clear solution.</p>
+<h3>Why doesn't the password work?</h3>
+<pre><code>$ git push
+Username: aigerim
+Password: ********
+remote: Support for password authentication was removed.
+fatal: Authentication failed</code></pre>
+<p>Since 2021 GitHub has not accepted the account password for Git commands: if the password is stolen, the whole account is gone. You use one of three methods instead.</p>
+<table>
+<tr><th>Method</th><th>How it works</th><th>Who it suits</th></tr>
+<tr><td><b>GitHub CLI</b></td><td><code>gh auth login</code> opens the browser and sets up sign-in for you</td><td>The easiest, for a beginner</td></tr>
+<tr><td><b>Personal access token</b></td><td>A long key you enter in place of the password, with an HTTPS address</td><td>Where you cannot install software</td></tr>
+<tr><td><b>SSH key</b></td><td>A key pair is created on your computer, and its public part is added to GitHub</td><td>The computer you work on every day</td></tr>
+</table>
+<h3>Method 1: gh auth login</h3>
+<pre><code>gh auth login</code></pre>
+<p>You answer the questions (GitHub.com → HTTPS → sign in through the browser) and confirm a code in the browser. After that, <code>git push</code> does not ask for a password. <code>gh</code> is GitHub's official command-line tool; you install it from cli.github.com.</p>
+<h3>Method 2: personal access token (PAT)</h3>
+<ol>
+<li>GitHub → <b>Settings → Developer settings → Personal access tokens</b> → create a new token.</li>
+<li>Choose its expiration (for example 90 days) and its permissions: only the repository you need, <b>Contents: Read and write</b>.</li>
+<li>The token is shown only once: copy it right away.</li>
+<li>When <code>git push</code> asks for a password, paste the token in place of the password.</li>
+</ol>
+<p>A token is as secret as a password. Do not write it in code, in a README or in a chat. If it leaks, revoke it on GitHub at once and create a new one.</p>
+<h3>Method 3: an SSH key</h3>
+<pre><code>ssh-keygen -t ed25519 -C "aigerim@mail.kz"   # create a key pair
+cat ~/.ssh/id_ed25519.pub                    # show the PUBLIC key</code></pre>
+<p>Copy the line that is printed and paste it into GitHub → <b>Settings → SSH and GPG keys → New SSH key</b>. Checking, and switching the repository address to the SSH form:</p>
+<pre><code>ssh -T git@github.com
+git remote set-url origin git@github.com:aigerim/cafe-analysis.git</code></pre>
+<p>Two files are created: <code>id_ed25519</code> is the <b>private</b> key (you give it to no one), and <code>id_ed25519.pub</code> is the <b>public</b> key (you add it to GitHub). Look at the form of the address: <code>https://github.com/...</code> asks for a token, <code>git@github.com:...</code> uses the SSH key. <code>git remote -v</code> shows the current address.</p>
+<h3>fetch and pull</h3>
+<table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>git fetch</code></td><td>Downloads the new commits from GitHub but <b>does not touch</b> your files</td></tr>
+<tr><td><code>git pull</code></td><td><code>fetch</code> + <code>merge</code>: downloads and merges into your branch right away</td></tr>
+</table>
+<p>After <code>git fetch</code> you can look at what arrived: <code>git log main..origin/main</code> (commits you do not have) or <code>git diff main origin/main</code>. Once you are confident, you run <code>git pull</code>.</p>
+<h3>stash: putting unfinished work aside for a while</h3>
+<p>In the middle of your work you need to <code>git pull</code> or switch to another branch, but your changes are not ready for a commit yet. Git refuses, saying your changes would be lost. <code>stash</code> puts them on a temporary shelf:</p>
+<pre><code>git stash          # hide the changes and clean the working folder
+git pull           # or git switch main
+git stash pop      # bring the changes back
+git stash list     # see what is on the shelf</code></pre>
+<h3>Removing a .env file that was already committed</h3>
+<p>If you add <code>.env</code> to <code>.gitignore</code> afterwards, nothing changes: Git does not start ignoring a file it is already tracking. First you have to stop tracking it:</p>
+<pre><code>git rm --cached .env                 # removes it from Git, the file on disk stays
+echo ".env" &gt;&gt; .gitignore            # now it will not be added again
+git add .gitignore
+git commit -m ".env файлын бақылаудан алып тастадым"</code></pre>
+<p>Without <code>--cached</code>, <code>git rm</code> deletes the file from the disk too. Remember: the file <b>stays in the old commits</b>. So rotate the passwords and keys in it right away: treat them as exposed.</p>
+<h3>Merge conflicts</h3>
+<p>If two people change <b>the same line</b> of a file in different ways, Git cannot decide by itself which one to keep:</p>
+<pre><code>$ git pull
+CONFLICT (content): Merge conflict in report.sql
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+<p>Git puts markers inside the file:</p>
+<pre><code>SELECT city, SUM(amount) AS revenue
+FROM orders
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+WHERE status = 'paid'
+=======
+WHERE status = 'paid' AND amount &lt; 20000
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+GROUP BY city;</code></pre>
+<table>
+<tr><th>Part</th><th>Meaning</th></tr>
+<tr><td>Between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code></td><td>your version</td></tr>
+<tr><td>Between <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code></td><td>the incoming version (your colleague's)</td></tr>
+</table>
+<p>The steps to resolve it:</p>
+<ol>
+<li><code>git status</code> shows which files have a conflict (<code>both modified</code>).</li>
+<li>Open the file and keep the right version: yours, your colleague's, or a combination of the two. If you do not know which is right, ask your colleague.</li>
+<li>Delete all three marker lines (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>).</li>
+<li><code>git add report.sql</code> marks the file as resolved.</li>
+<li><code>git commit</code> finishes the merge.</li>
+</ol>
+<p>If everything gets tangled, <code>git merge --abort</code> takes you back to the state before the merge. Nothing is lost.</p>
+<div class="tip">How to have fewer conflicts: run <code>git pull</code> before you start working, make small commits and push often. The longer a branch stays apart from main, the more conflicts there are.</div>
+<h3>Common mistakes</h3>
+<ul>
+<li><b>Entering the account password again and again.</b> It does not work: you need a token, SSH or <code>gh auth login</code>.</li>
+<li><b>Sharing the private key.</b> Only the contents of the <code>.pub</code> file go to GitHub. The file without <code>.pub</code> is the private key: do not send it to anyone.</li>
+<li><b>Committing without deleting the conflict markers.</b> <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> stays in the file and the SQL or Python code breaks.</li>
+<li><b>Writing <code>git rm .env</code> without <code>--cached</code>.</b> The file is deleted from the disk too.</li>
+<li><b>Forgetting <code>pop</code> after <code>git stash</code>.</b> The work stays on the shelf and you think it is "lost". Check <code>git stash list</code>.</li>
+</ul>`,
+      ex: [
+        { prompt: '<code>git push</code> asked for your username and GitHub password. You typed the password correctly, but got <code>Authentication failed</code>. Why?', options: ['There is no internet', 'GitHub does not accept the account password for Git commands: you need a token, an SSH key or gh auth login', 'The repository was deleted', 'You should have run git pull first'], explain: 'Password sign-in was switched off in 2021. With an HTTPS address you enter a personal access token in place of the password, or you set up an SSH key.' },
+        { prompt: 'You have not finished your analysis, it is too early to commit, but you need to run <code>git pull</code>. Put your changes on the temporary shelf.', hints: ['The command starts with <code>git stash</code>.'], explain: 'The working folder is clean. After the pull, <code>git stash pop</code> brings the changes back.' },
+        { prompt: 'The <code>.env</code> file was committed by accident. Remove it from Git tracking, but the file on disk must <b>stay</b>.', hints: ['Add to <code>git rm</code> the flag that keeps the file on disk.', '<code>git rm --cached .env</code>'], explain: 'Now add .env to .gitignore and commit. The file stays in the old commits, so rotate the keys in it.' },
+        { prompt: 'During <code>git pull</code> a conflict appeared in <code>report.sql</code>. You opened the file, kept the right version and deleted the markers. Now tell Git that this file is resolved.', hints: ['A resolved file is added to staging.', '<code>git add report.sql</code>'], explain: 'The file is marked as resolved. The last step is <code>git commit</code>: it finishes the merge.' },
+        { prompt: 'You want to see what your colleagues pushed to GitHub, but your own files should not change for now. Which command?', options: ['git pull', 'git fetch', 'git push', 'git stash pop'], explain: 'fetch only downloads: the new commits appear in origin/main, and your working folder does not change. pull is fetch + merge, and it changes files right away.' }
       ]
     },
     'git-gate': {

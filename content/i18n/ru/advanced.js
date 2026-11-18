@@ -277,7 +277,7 @@ GROUP BY cohort, a.month;</code></pre>
 <ul>
 <li>Вместо <code>SELECT *</code> берите только нужные столбцы.</li>
 <li>Не применяйте функции к индексированному столбцу: <code>WHERE substr(order_date,1,4) = '2024'</code> «выключает» индекс, а <code>WHERE order_date &gt;= '2024-01-01' AND order_date &lt; '2025-01-01'</code> использует его.</li>
-<li>Сначала фильтруйте, потом делайте JOIN: меньше строк — быстрее результат.</li>
+<li>Пишите фильтр рано, внутри CTE: запрос легче читать, промежуточный результат становится меньше. Современные оптимизаторы (PostgreSQL, ClickHouse) сами «проталкивают» фильтр до JOIN (predicate pushdown), поэтому это нужно прежде всего для читаемости и защиты от ошибок; скорость проверяйте через <code>EXPLAIN</code>.</li>
 </ul>`,
       ex: [
         { prompt: 'Создайте индекс на столбце <code>customer_id</code> таблицы <code>orders</code> (имя любое).', hints: ['<code>CREATE INDEX имя ON таблица(столбец);</code>'] },
@@ -296,6 +296,172 @@ GROUP BY cohort, a.month;</code></pre>
         { prompt: '<b>metrics.</b> Выведите дни в Алматы, когда выручка <b>снизилась</b> по сравнению с предыдущим днём: <code>day</code>, <code>revenue</code>, <code>prev</code> (выручка предыдущего дня).' },
         { prompt: '<b>metrics.</b> Выведите конверсию по каналам (<code>channel</code>): <code>channel</code>, <code>users</code> (число пользователей), <code>buyers</code> (дошедшие до шага <code>purchase</code>). Используйте <code>LEFT JOIN</code> или <code>CASE</code>.' },
         { prompt: 'Почему <code>WHERE RANK() OVER (...) = 1</code> вызывает ошибку?', options: ['RANK работает только в ORDER BY', 'Оконные функции вычисляются после WHERE, поэтому фильтровать нужно снаружи подзапроса/CTE', 'SQLite не поддерживает RANK', 'В WHERE могут быть только числа'], explain: 'Логический порядок: FROM → WHERE → GROUP BY → HAVING → window → SELECT → ORDER BY.' }
+      ]
+    },
+    'adv-10': {
+      title: 'Таблица-календарь и gaps-and-islands',
+      body: `
+<p><code>GROUP BY day</code> возвращает только те дни, за которые данные <b>есть</b>. Дня, когда никто не заходил, в результате просто не будет. На графике такая «дыра» незаметна, а скользящее среднее считается неверно: 7 строк перестают быть 7 днями. Решение — <b>таблица-календарь</b> (date spine): список всех дней, к которому данные присоединяются через <code>LEFT JOIN</code>.</p>
+<p>В этом уроке используется таблица <code>daily_active(user_id, day)</code> из базы <code>metrics</code>: какой пользователь в какой день сентября 2024 года открывал приложение. 15 сентября не зашёл никто.</p>
+<h3>Список дней через рекурсивный CTE</h3>
+<pre><code>WITH RECURSIVE cal(day) AS (
+  SELECT '2024-09-01'                 -- начальная строка
+  UNION ALL
+  SELECT date(day, '+1 day') FROM cal -- из предыдущей строки строит следующую
+  WHERE day &lt; '2024-09-30'           -- условие остановки
+)
+SELECT day FROM cal;</code></pre>
+<p>Рекурсивный CTE состоит из двух частей: первый <code>SELECT</code> выполняется один раз, второй снова и снова применяется к собственному результату, пока условие остановки не станет ложным. Если забыть условие остановки, запрос будет крутиться бесконечно.</p>
+<p>В PostgreSQL есть готовая функция: <code>generate_series('2024-09-01'::date, '2024-09-30', interval '1 day')</code>. В хранилищах компаний обычно лежит готовая таблица <code>dim_date</code>.</p>
+<h3>Заполнение нулями (zero-fill)</h3>
+<pre><code>SELECT c.day, COUNT(a.user_id) AS dau
+FROM cal c
+LEFT JOIN daily_active a ON a.day = c.day
+GROUP BY c.day;</code></pre>
+<p>Календарь стоит <b>слева</b>, поэтому каждый день сохраняется. <code>COUNT(a.user_id)</code> не считает NULL, поэтому в пустой день получается 0. Если написать <code>COUNT(*)</code>, пустой день превратится в 1.</p>
+<h3>Gaps-and-islands: ищем непрерывные серии</h3>
+<p>Вопрос: «Сколько дней подряд заходил пользователь?» Дни, идущие подряд, — это «остров» (island), пустые дни между ними — «разрыв» (gap). Приём такой: из даты вычитаем её порядковый номер. Внутри одного острова и дата, и номер растут вместе на 1, поэтому разность остаётся <b>постоянной</b>.</p>
+<table>
+<tr><th>day</th><th>rn</th><th>day − rn дней</th><th>Остров</th></tr>
+<tr><td>2024-09-01</td><td>1</td><td>2024-08-31</td><td>остров 1</td></tr>
+<tr><td>2024-09-02</td><td>2</td><td>2024-08-31</td><td>остров 1</td></tr>
+<tr><td>2024-09-04</td><td>3</td><td>2024-09-01</td><td>остров 2</td></tr>
+<tr><td>2024-09-05</td><td>4</td><td>2024-09-01</td><td>остров 2</td></tr>
+</table>
+<pre><code>WITH r AS (
+  SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn
+  FROM daily_active WHERE user_id = 1
+), g AS (
+  SELECT day, date(day, '-' || rn || ' day') AS grp FROM r
+)
+SELECT MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days
+FROM g GROUP BY grp;</code></pre>
+<p>Этим же способом решаются вопросы «сколько месяцев подряд платил», «сколько времени сервер работал без перерыва», «сколько дней подряд товара не было на складе».</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Поставить календарь справа или отфильтровать через <code>WHERE a.user_id = 1</code>: LEFT JOIN превращается в INNER JOIN, пустые дни пропадают. Условие на правую таблицу пишите внутри <code>ON</code>.</li>
+<li>Если на один день приходится несколько строк (например, таблица событий), сначала приведите данные к уровню «один пользователь, один день» через <code>DISTINCT</code>. Иначе <code>ROW_NUMBER</code> сломает разность.</li>
+<li>Забыть <code>PARTITION BY user_id</code>, когда пользователей несколько.</li>
+</ul>
+<div class="tip">На собеседованиях часто дают задание «найдите самый длинный streak». Начните ответ с одной фразы: «дата минус ROW_NUMBER остаётся постоянной» — интервьюер сразу увидит, что вы знаете приём.</div>`,
+      ex: [
+        { prompt: 'С помощью рекурсивного CTE выведите все 30 дней сентября 2024 года. Столбец: <code>day</code> (<code>YYYY-MM-DD</code>), по порядку дат.', hints: [`Вторая часть: <code>SELECT date(day, '+1 day') FROM cal</code>`, `Условие остановки: <code>WHERE day &lt; '2024-09-30'</code>`] },
+        { prompt: 'Для каждого дня сентября выведите DAU (число пользователей, заходивших в этот день): <code>day</code>, <code>dau</code>. День, когда никто не заходил, должен быть показан с 0. Всего 30 строк, по порядку дат.', hints: ['<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>', '<code>COUNT(a.user_id)</code> в пустой день даёт 0, а <code>COUNT(*)</code> — 1.'] },
+        { prompt: 'Выведите непрерывные серии (острова) пользователя 1: <code>start_day</code>, <code>end_day</code>, <code>days</code> (число дней в серии). Отсортируйте по дате начала.', hints: [`Метка группы: <code>date(day, '-' || rn || ' day') AS grp</code>`, '<code>GROUP BY grp</code>, затем <code>MIN(day)</code>, <code>MAX(day)</code>, <code>COUNT(*)</code>.'] },
+        { prompt: 'Найдите самую длинную серию каждого пользователя в сентябре: <code>user_id</code>, <code>longest</code> (наибольшее число дней захода подряд). По убыванию <code>longest</code>, при равенстве — по <code>user_id</code>.', hints: ['<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>', 'Сначала через <code>GROUP BY user_id, grp</code> получите длину каждой серии, затем через <code>MAX</code> — самую длинную.'] },
+        { prompt: 'В таблице дневных продаж нет строк за 3 дня. Аналитик без календаря посчитал «7-дневное» среднее как <code>AVG(revenue) OVER (ORDER BY day ROWS 6 PRECEDING)</code>. Что здесь неверно?', options: ['Ничего, всё верно', 'Окно берёт не 7 дней, а 7 строк: отсутствующие дни не учитываются как 0, среднее получается завышенным, а окно охватывает период длиннее 7 дней', 'SQLite не поддерживает эту функцию', 'Среднее всегда будет NULL'], explain: 'ROWS считает строки. Сначала сделайте LEFT JOIN с календарём и заполните отсутствующие дни нулями, тогда 7 строк = 7 дней.' }
+      ]
+    },
+    'adv-11': {
+      title: 'UNION, self-join, NTILE и FIRST_VALUE',
+      body: `
+<p>В этом уроке собраны четыре инструмента, которые часто встречаются и на собеседованиях, и в работе: соединение таблицы с самой собой, операции над множествами, разбиение на квартили и получение первого/последнего значения окна.</p>
+<h3>Self-join: таблица с самой собой</h3>
+<p>В таблице <code>employees</code> базы <code>staff</code> столбец <code>manager_id</code> ссылается на <code>id</code> той же таблицы. Чтобы поставить рядом с сотрудником имя его руководителя, берём таблицу дважды под разными псевдонимами:</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;</code></pre>
+<p><code>e</code> — сотрудник, <code>m</code> — руководитель. Нужен именно <code>LEFT JOIN</code>: у директора нет руководителя (<code>manager_id</code> равен NULL), и <code>INNER JOIN</code> его потеряет.</p>
+<h3>Операции над множествами</h3>
+<table>
+<tr><th>Оператор</th><th>Что возвращает</th></tr>
+<tr><td><code>UNION ALL</code></td><td>Складывает два результата один под другим, повторы сохраняет. Быстро.</td></tr>
+<tr><td><code>UNION</code></td><td>Складывает и убирает повторяющиеся строки (нужна сортировка, поэтому медленнее).</td></tr>
+<tr><td><code>INTERSECT</code></td><td>Строки, которые есть в обоих результатах.</td></tr>
+<tr><td><code>EXCEPT</code></td><td>Строки, которые есть в первом результате и которых нет во втором.</td></tr>
+</table>
+<p>У двух запросов должно быть одинаковое число столбцов и совместимые типы. Имена столбцов берутся из первого запроса. Если вы знаете, что повторов быть не может, или повторы нужны, пишите <code>UNION ALL</code>.</p>
+<h3>NTILE и PERCENT_RANK</h3>
+<p><code>NTILE(4) OVER (ORDER BY salary DESC)</code> делит строки на 4 примерно равные по размеру группы: 1 — верхняя четверть (квартиль). <code>NTILE(10)</code> даёт децили. Именно эта функция используется в RFM-сегментации.</p>
+<p><code>PERCENT_RANK()</code> показывает место строки в диапазоне от 0 до 1: 0.9 означает «выше 90% остальных».</p>
+<p>Если значения равны, NTILE может отправить их в разные группы. Чтобы результат был стабильным, добавьте в <code>ORDER BY</code> второй столбец: <code>ORDER BY salary DESC, name</code>.</p>
+<h3>FIRST_VALUE и LAST_VALUE</h3>
+<pre><code>SELECT name, department, salary,
+  FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS top_name
+FROM employees;</code></pre>
+<p>В каждую строку записывается имя человека с самой высокой зарплатой в его отделе. Применение: канал первого заказа клиента, первая страница сессии.</p>
+<h3>ROWS и RANGE: граница окна</h3>
+<p>Если внутри <code>OVER</code> есть <code>ORDER BY</code>, а граница не указана, граница по умолчанию — <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>. <code>RANGE</code> включает все строки, <b>значение которых равно</b> значению текущей строки. Отдел аналитики, накопительная сумма по зарплате:</p>
+<table>
+<tr><th>name</th><th>salary</th><th>RANGE (по умолчанию)</th><th>ROWS</th></tr>
+<tr><td>Ерлан</td><td>410 000</td><td>410 000</td><td>410 000</td></tr>
+<tr><td>Ақжол</td><td>520 000</td><td>1 450 000</td><td>930 000</td></tr>
+<tr><td>Камила</td><td>520 000</td><td>1 450 000</td><td>1 450 000</td></tr>
+<tr><td>Гүлнар</td><td>750 000</td><td>2 200 000</td><td>2 200 000</td></tr>
+</table>
+<p>У Ақжола и Камилы зарплаты равны, поэтому RANGE даёт обоим одинаковую сумму. Если нужна сумма, накапливаемая строка за строкой, пишите явно: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Писать <code>LAST_VALUE</code> без границы: граница по умолчанию заканчивается на текущей строке, поэтому функция возвращает не «последнее», а текущее значение. Решение: добавить <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code> или развернуть порядок и использовать <code>FIRST_VALUE</code>.</li>
+<li>Путать псевдонимы в self-join: если вместо <code>ON m.id = e.manager_id</code> написать <code>ON e.id = m.manager_id</code>, руководитель и подчинённый поменяются местами.</li>
+<li>Писать <code>UNION</code> по привычке: он молча удаляет повторяющиеся строки, и сумма может уменьшиться.</li>
+</ul>
+<div class="tip">Быстрый способ сравнить результаты двух запросов: <code>SELECT ... EXCEPT SELECT ...</code>. Если результат пустой, все строки первого запроса есть во втором. Проверяйте в обе стороны.</div>`,
+      ex: [
+        { prompt: '<b>staff.</b> Выведите имя каждого сотрудника и имя его руководителя: <code>name</code>, <code>manager</code>. Сотрудник без руководителя тоже должен быть в результате (<code>manager</code> равен NULL).', hints: ['Возьмите таблицу дважды: <code>employees e</code> и <code>employees m</code>.', '<code>LEFT JOIN employees m ON m.id = e.manager_id</code>'] },
+        { prompt: '<b>staff.</b> Для каждого руководителя: <code>manager</code> (имя), <code>reports</code> (число прямых подчинённых), <code>avg_salary</code> (средняя зарплата подчинённых, <code>ROUND</code> до целого).', hints: ['Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>', 'Группируйте по руководителю: <code>GROUP BY m.id, m.name</code>. Зарплата берётся у подчинённого (<code>e.salary</code>).'] },
+        { prompt: '<b>shop.</b> С помощью <code>EXCEPT</code> выведите <code>customer_id</code> клиентов, которые делали заказы, но не имеют ни одного заказа <code>delivered</code>.', hints: ['Первый запрос: все клиенты, делавшие заказы. Второй: те, у кого есть заказ delivered.', `<code>SELECT customer_id FROM orders EXCEPT SELECT customer_id FROM orders WHERE status = 'delivered'</code>`] },
+        { prompt: '<b>staff.</b> Разделите сотрудников по зарплате на 4 квартиля (1 — самый высокий): <code>name</code>, <code>salary</code>, <code>quartile</code>. Порядок и в окне, и в результате: по убыванию зарплаты, при равенстве — по <code>name</code>.', hints: ['<code>NTILE(4) OVER (ORDER BY salary DESC, name)</code>'] },
+        { prompt: '<b>staff.</b> Для каждого сотрудника выведите имя человека с самой высокой зарплатой в его отделе (<code>top_name</code>) и разницу с этой зарплатой (<code>gap</code>): <code>name</code>, <code>department</code>, <code>salary</code>, <code>top_name</code>, <code>gap</code>.', hints: ['<code>FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC)</code>', '<code>gap</code>: <code>FIRST_VALUE(salary)</code> в том же окне минус <code>salary</code>. Подойдёт и <code>MAX(salary) OVER (PARTITION BY department)</code>.'] }
+      ]
+    },
+    'adv-12': {
+      title: 'Сессии и упорядоченная воронка',
+      body: `
+<p>В продуктовой аналитике данные чаще всего приходят в виде <b>журнала событий</b>: кто, что сделал и когда. В базу <code>qazaq</code> добавлена такая таблица:</p>
+<table>
+<tr><th>Таблица</th><th>Столбцы</th><th>Что хранит</th></tr>
+<tr><td><code>events_ts</code></td><td>user_id, event, ts</td><td>525 событий 50 пользователей за 1–15 марта 2026 года. <code>event</code>: view, cart, checkout, purchase. <code>ts</code>: время в виде <code>'2026-03-01 10:25:00'</code></td></tr>
+</table>
+<p>Столбца «сессия» в журнале нет. Аналитик собирает его сам.</p>
+<h3>Шаг 1: сколько времени прошло с предыдущего события</h3>
+<pre><code>SELECT user_id, event, ts,
+  (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min
+FROM events_ts;</code></pre>
+<p><code>julianday</code> превращает время в число дней. Умножив разность на 1440 (минут в сутках), получаем минуты. Неточность дробных чисел (9.9999 вместо 10) убирает <code>ROUND</code>. В PostgreSQL: <code>EXTRACT(EPOCH FROM ts - LAG(ts) OVER (...)) / 60</code>.</p>
+<h3>Шаг 2: отмечаем начало сессии</h3>
+<p>Распространённое правило: если между двумя событиями прошло <b>больше 30 минут</b>, начинается новая сессия. Самое первое событие пользователя (<code>gap_min IS NULL</code>) тоже начало сессии.</p>
+<pre><code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END AS is_new</code></pre>
+<h3>Шаг 3: номер сессии</h3>
+<p>Накопительная сумма столбца <code>is_new</code> даёт номер сессии: с каждой новой сессией сумма растёт на 1.</p>
+<pre><code>SUM(is_new) OVER (PARTITION BY user_id ORDER BY ts) AS session_no</code></pre>
+<table>
+<tr><th>ts</th><th>event</th><th>gap_min</th><th>is_new</th><th>session_no</th></tr>
+<tr><td>03-01 11:10</td><td>checkout</td><td>2</td><td>0</td><td>1</td></tr>
+<tr><td>03-01 11:20</td><td>purchase</td><td>10</td><td>0</td><td>1</td></tr>
+<tr><td>03-03 09:51</td><td>view</td><td>2791</td><td>1</td><td>2</td></tr>
+<tr><td>03-03 09:58</td><td>view</td><td>7</td><td>0</td><td>2</td></tr>
+</table>
+<p>Теперь через <code>GROUP BY user_id, session_no</code> можно посчитать длительность сессии, число событий и то, закончилась ли она покупкой. В этой базе 128 сессий, 28.9% из них закончились покупкой.</p>
+<h3>Упорядоченная воронка</h3>
+<p>Простая воронка из Business Analytics считает «пользователей, у которых есть это событие». Но важен <b>порядок</b> событий: добавление в корзину должно быть <b>после</b> просмотра, а покупка — <b>после</b> корзины.</p>
+<pre><code>WITH v AS (
+  SELECT user_id, MIN(ts) AS view_ts
+  FROM events_ts WHERE event = 'view' GROUP BY user_id
+), c AS (
+  SELECT e.user_id, MIN(e.ts) AS cart_ts
+  FROM events_ts e JOIN v ON v.user_id = e.user_id
+  WHERE e.event = 'cart' AND e.ts &gt; v.view_ts
+  GROUP BY e.user_id
+)
+SELECT (SELECT COUNT(*) FROM v) AS viewed, (SELECT COUNT(*) FROM c) AS carted;</code></pre>
+<p>В этой базе 42 пользователя хотя бы раз добавили товар в корзину, но только 39 из них сделали это после первого просмотра. Остальные трое попали сразу в корзину по ссылке из push-уведомления. Воронка без учёта порядка завышает конверсию.</p>
+<h3>Время до конверсии</h3>
+<p>Время между первым просмотром и первой покупкой (time-to-convert) подсказывает маркетингу, когда отправлять напоминание. Это распределение обычно сильно скошено: большинство покупает в той же сессии, небольшая часть — через несколько дней. Поэтому показывайте не среднее, а медиану и доли («купили в течение 1 часа»).</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Забыть <code>PARTITION BY user_id</code>: событие одного пользователя сравнивается с событием другого.</li>
+<li>Вычитать время как текст: <code>ts - LAG(ts)</code> в SQLite даёт разность годов (0). Используйте <code>julianday</code> или <code>strftime('%s', ts)</code>.</li>
+<li>Не поставить в воронке условие «после первого события».</li>
+<li>Считать порог в 30 минут законом: это всего лишь договорённость. В видеосервисе 30 минут тишины — обычный просмотр, порог выбирают под продукт.</li>
+</ul>
+<div class="tip">Google Analytics и AppMetrica делят сессии именно по правилу «30 минут бездействия». Если число сессий на дашборде отличается от вашего SQL, сначала проверьте, одинаков ли порог.</div>`,
+      ex: [
+        { prompt: 'Выведите события пользователя 26 в порядке времени: <code>ts</code>, <code>event</code>, <code>gap_min</code> (минуты, прошедшие с предыдущего события, <code>ROUND</code> до целого; для первого события NULL).', hints: ['<code>LAG(ts) OVER (ORDER BY ts)</code> даёт время предыдущего события.', '<code>ROUND((julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440)</code>'] },
+        { prompt: 'Сколько всего сессий в таблице <code>events_ts</code>? Правило: новую сессию начинает первое событие пользователя или перерыв больше 30 минут после предыдущего события. Столбец: <code>sessions</code>.', hints: ['Число сессий = число событий, начинающих сессию.', '<code>WHERE gap_min IS NULL OR gap_min &gt; 30</code>'] },
+        { prompt: 'Выведите сессии пользователей 7 и 26: <code>user_id</code>, <code>session_no</code>, <code>started_at</code> (первое событие сессии), <code>events</code> (число событий). Отсортируйте по <code>user_id</code>, <code>session_no</code>.', hints: ['Три шага: <code>gap_min</code> (LAG), <code>is_new</code> (CASE), <code>session_no</code> (накопительная SUM).', '<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts)</code>', 'Фильтр по пользователям делайте в самом последнем SELECT, затем <code>GROUP BY user_id, session_no</code>.'] },
+        { prompt: 'Выведите упорядоченную воронку одной строкой: <code>viewed</code> (сделали хотя бы один <code>view</code>), <code>carted</code> (сделали <code>cart</code> <b>после</b> первого просмотра), <code>purchased</code> (сделали <code>purchase</code> <b>после</b> этой первой корзины).', hints: [`CTE <code>c</code>: <code>events_ts e JOIN v</code>, условие <code>e.event = 'cart' AND e.ts &gt; v.view_ts</code>, для каждого пользователя <code>MIN(e.ts)</code>.`, `CTE <code>p</code> такой же, но соединяется с <code>c</code>: <code>e.event = 'purchase' AND e.ts &gt; c.cart_ts</code>.`, 'В конце: <code>SELECT (SELECT COUNT(*) FROM v) AS viewed, ...</code>'] },
+        { prompt: 'Для каждого купившего пользователя выведите, сколько минут прошло от первого просмотра до первой покупки после него: <code>user_id</code>, <code>minutes_to_buy</code> (<code>ROUND</code> до целого). Отсортируйте начиная с самых быстрых.', hints: ['Сначала время первого <code>view</code> каждого пользователя, затем время первой <code>purchase</code> после него.', '<code>ROUND((julianday(buy_ts) - julianday(view_ts)) * 1440)</code>'] }
       ]
     }
   }

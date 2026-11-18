@@ -177,7 +177,7 @@ WHERE REPLACE(amount, ' ', '') GLOB '*[^0-9-]*';</code></pre>
 <p>There are two common approaches:</p>
 <ul>
 <li><b>Business threshold</b>: a rule such as "a single order does not exceed 200,000 ₸". Easy to understand, but the threshold has to be agreed with the business.</li>
-<li><b>Statistical threshold (IQR)</b>: find the quartiles Q1 and Q3 and flag values greater than <code>Q3 + 1.5 × (Q3 − Q1)</code> as suspicious. We cover this approach in more detail in the statistics module.</li>
+<li><b>Statistical threshold (IQR)</b>: find the quartiles Q1 and Q3 and flag values greater than <code>Q3 + 1.5 × (Q3 − Q1)</code> as suspicious. We covered this approach in more detail in the statistics module.</li>
 </ul>
 <h3>An SQL pattern for flagging</h3>
 <pre><code>CASE
@@ -274,6 +274,108 @@ def clean_city(s):
         { prompt: 'Output the total amount of valid orders (amount greater than 0 and not over 500,000) as a single value <code>total</code>.' },
         { prompt: 'Write a function <code>profile(rows)</code>: it takes a list of dictionaries and returns a dictionary with the number of missing values (<code>None</code> or empty text <code>""</code>) for each key. The keys come from the first row.', check: { tests: '_rows = [{"a": 1, "b": None, "c": "x"}, {"a": None, "b": "", "c": "y"}, {"a": 3, "b": "z", "c": ""}]\nassert profile(_rows) == {"a": 1, "b": 2, "c": 1}, f"Expected {{\'a\': 1, \'b\': 2, \'c\': 1}}, you have {profile(_rows)}"' } },
         { prompt: 'Which cleaning step <b>must</b> be documented?', options: ['Removing spaces', 'Decisions to drop rows or fill in values', 'Changing the column order', 'None'], explain: 'Dropping rows or filling values changes the result: later someone will ask "why is the number different?".' }
+      ]
+    },
+    'cl-9': {
+      title: 'EDA with pandas and a data quality check',
+      body: `
+<p>In the earlier lessons you cleaned data by hand, in plain Python: that shows what is really going on. At work, <b>pandas</b> does the same steps in a few lines. In this lesson we check the coffee shop files <code>orders.csv</code> (150 orders) and <code>customers.csv</code> (40 customers).</p>
+<h3>Profiling in five lines</h3>
+<pre><code>import pandas as pd
+df = pd.read_csv('orders.csv')
+
+df.info()                      # columns, types, count of non-missing values
+df.describe()                  # numeric columns: min, quartiles, max
+df.isna().sum()                # missing values in each column
+df['status'].value_counts()    # how often each category occurs
+df.duplicated().sum()          # fully duplicated rows</code></pre>
+<p>On this file the commands show the following:</p>
+<table>
+<tr><th>Command</th><th>What we saw</th><th>Conclusion</th></tr>
+<tr><td><code>info()</code></td><td><code>amount</code>: 144 non-missing out of 150; <code>order_date</code> is text</td><td>6 amounts are missing; the date needs converting with <code>pd.to_datetime</code></td></tr>
+<tr><td><code>describe()</code></td><td>median 2,450, max 48,000</td><td>One order is 20 times the median: a suspicious value</td></tr>
+<tr><td><code>value_counts()</code></td><td>paid 146, refund 4</td><td>We leave out refunds when we count revenue</td></tr>
+<tr><td><code>duplicated()</code></td><td>0</td><td>No full duplicates. Check by key too: <code>df['id'].is_unique</code></td></tr>
+</table>
+<p><code>value_counts(dropna=False)</code> also shows missing values as a row of their own. <code>nunique()</code> gives the number of distinct values in a column.</p>
+<h3>merge: checking the keys</h3>
+<p>Joining two tables is where data breaks most often. pandas has two safety catches.</p>
+<p><b>1. <code>indicator=True</code></b> adds a <code>_merge</code> column that shows where each row came from:</p>
+<pre><code>m = orders.merge(customers, on='customer_id', how='left', indicator=True)
+m['_merge'].value_counts()
+# both         — the customer was found
+# left_only    — there is an order but no customer (an "orphan" key)</code></pre>
+<p>Orphan rows vanish silently in an INNER JOIN, and in a LEFT JOIN their city and channel columns become NaN. Either way the total comes out wrong, so you need to find them first.</p>
+<p><b>2. <code>validate</code></b> checks the type of relationship. If your expectation does not hold, pandas raises a <code>MergeError</code>:</p>
+<pre><code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code></pre>
+<p><code>many_to_one</code>: the key may repeat on the left but must be unique on the right. If one <code>customer_id</code> appeared twice in the customers table, each of that customer's orders would be doubled and revenue would be overstated. <code>validate</code> catches this at once.</p>
+<h3>Reconciling row counts</h3>
+<p>After every step, write down the row count and a control total:</p>
+<pre><code>print(len(orders))               # 150
+m = orders.merge(customers, on='customer_id', how='left')
+assert len(m) == len(orders)     # a left join must not add rows
+clean = m[(m['status'] == 'paid') &amp; m['amount'].notna()]
+print(len(clean), clean['amount'].sum())</code></pre>
+<p>If your numbers do not match the number in SQL or on the dashboard, these notes help you find the step where the difference appeared.</p>
+<h3>Data quality checklist</h3>
+<table>
+<tr><th>Dimension</th><th>Question</th><th>pandas</th></tr>
+<tr><td>Completeness</td><td>Where are the missing values, and how many?</td><td><code>df.isna().sum()</code></td></tr>
+<tr><td>Uniqueness</td><td>Does the key repeat?</td><td><code>df['id'].is_unique</code>, <code>df.duplicated(subset=['id'])</code></td></tr>
+<tr><td>Validity</td><td>Are the values within the allowed range?</td><td><code>describe()</code>, <code>(df['amount'] &lt;= 0).sum()</code>, <code>value_counts()</code></td></tr>
+<tr><td>Consistency</td><td>Can every foreign key be found?</td><td><code>merge(..., indicator=True)</code></td></tr>
+<tr><td>Freshness</td><td>Up to what date does the data go?</td><td><code>df['order_date'].min()</code>, <code>.max()</code></td></tr>
+<tr><td>Reconciliation</td><td>Do the row count and the total match the source?</td><td><code>len(df)</code>, <code>df['amount'].sum()</code></td></tr>
+</table>
+<h3>Common mistakes</h3>
+<ul>
+<li>Computing the mean without looking at <code>describe()</code>: a single 48,000 ₸ order shifts the mean a lot.</li>
+<li>Not checking the row count after a merge. If there are more rows, the right key is not unique; if there are fewer, an INNER JOIN dropped the orphan rows.</li>
+<li>Filling missing values with <code>fillna(0)</code> without knowing why they are missing: "the amount is unknown" and "the amount is zero" are two different things.</li>
+<li><code>duplicated()</code> finds only fully identical rows. If one order was written twice with two different times, only a check by key catches it.</li>
+</ul>
+<div class="tip">Write the checklist as a function and run it first on every new file. In a take-home task, the "how I checked the data" section is the first thing an employer looks at.</div>`,
+      ex: [
+        { prompt: 'Write a function <code>profile(df)</code>. It should return a dictionary: <code>rows</code> (number of rows), <code>cols</code> (number of columns), <code>missing</code> (only the columns that have missing values: <code>{column: count}</code>), <code>duplicates</code> (number of fully duplicated rows).', check: { tests: `import pandas as _pd
+_d = _pd.read_csv('orders.csv')
+_r = profile(_d)
+assert isinstance(_r, dict), 'profile should return a dictionary'
+assert _r.get('rows') == 150 and _r.get('cols') == 5, f"orders.csv: expected rows = 150, cols = 5, you have {_r.get('rows')}, {_r.get('cols')}"
+assert dict(_r.get('missing') or {}) == {'amount': 6}, f"Expected missing = {{'amount': 6}}, you have {_r.get('missing')}"
+assert _r.get('duplicates') == 0, 'orders.csv has no full duplicates: duplicates = 0'
+_r2 = profile(_pd.concat([_d, _d.head(3)], ignore_index=True))
+assert _r2.get('rows') == 153 and _r2.get('duplicates') == 3, 'In a table with three repeated rows, duplicates should be 3'` }, hints: ['<code>df.isna().sum()</code> gives the number of missing values in each column; loop over it with <code>.items()</code> and keep the ones above zero.', '<code>df.duplicated().sum()</code> is the number of fully duplicated rows. Wrap it in <code>int(...)</code>.', '<code>df.shape[1]</code> is the number of columns.'] },
+        { prompt: 'Left join <code>customers</code> to <code>orders</code> on <code>customer_id</code> and add <code>indicator=True</code>: call the result <code>merged</code>. Then put the <code>customer_id</code> values of the orders whose customer was not found into the list <code>orphans</code>, without repeats and in ascending order.', starter: `import pandas as pd
+
+orders = pd.read_csv('orders.csv')
+customers = pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})
+# Two orders loaded by mistake from another system: these customers do not exist
+extra = pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})
+orders = pd.concat([orders, extra], ignore_index=True)
+
+# merged = ...
+# orphans = ...
+`, check: { tests: `assert 'merged' in globals(), 'Create the variable merged'
+assert '_merge' in merged.columns, 'Add indicator=True to the merge'
+assert len(merged) == 152, f'A left join must not change the row count: 152 rows, you have {len(merged)}'
+assert 'orphans' in globals(), 'Create the list orphans'
+assert [int(x) for x in orphans] == [98, 99], f'Expected orphans = [98, 99], you have {list(orphans)}'` }, hints: [`<code>orders.merge(customers, on='customer_id', how='left', indicator=True)</code>`, `Orphan rows: <code>merged['_merge'] == 'left_only'</code>`, `<code>sorted(merged.loc[condition, 'customer_id'].unique().tolist())</code>`] },
+        { prompt: `Write a function <code>safe_join(orders, customers)</code>: it does a left join on <code>customer_id</code>, checks with <code>validate='many_to_one'</code> that the customers key is unique, puts an <code>assert</code> on the row count staying the same, and returns the joined table. If the key repeats in the customers table, an error must be raised.`, check: { tests: `import pandas as _pd
+_o = _pd.read_csv('orders.csv')
+_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})
+_m = safe_join(_o, _c)
+assert _m is not None, 'safe_join should return the joined table'
+assert len(_m) == len(_o), f'The row count should stay 150, you have {len(_m)}'
+assert 'city' in _m.columns and 'channel' in _m.columns, 'The result should have the customer columns city and channel'
+_bad = _pd.concat([_c, _c.head(1)], ignore_index=True)
+try:
+    safe_join(_o, _bad)
+    _raised = False
+except Exception:
+    _raised = True
+assert _raised, 'If the key repeats in the customers table, safe_join should raise an error'` }, hints: [`<code>orders.merge(customers, on='customer_id', how='left', validate='many_to_one')</code>`, '<code>assert len(out) == len(orders)</code>, then <code>return out</code>.'] },
+        { prompt: 'After left joining a 150-row orders table with the customers table, you got 163 rows. What is the most likely reason?', options: ['The customer was not found for 13 orders', 'Some <code>customer_id</code> values repeat in the customers table, so their orders were multiplied', 'pandas adds rows at random', 'The orders table has missing values'], explain: `In a left join, a row whose customer is not found is neither lost nor multiplied. The row count grows only when the key on the right is not unique. <code>validate='many_to_one'</code> catches this at once.` },
+        { prompt: 'In your pandas calculation the coffee shop\'s revenue is 382,850 ₸, while your colleague\'s SQL query gives 334,850 ₸. What do you do first?', options: ['Take the average of the two numbers', 'Compare the filters and row counts of the two calculations step by step: status, missing amounts, outliers', 'Declare my number correct', 'Reload the data'], explain: 'The difference is exactly 48,000 ₸: one corporate order is in one calculation and excluded from the other. Reconciliation shows at which step the difference appeared.' }
       ]
     }
   }

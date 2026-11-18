@@ -1,7 +1,7 @@
 // M5.2 ML in Practice: Russian text. Code, solutions and expected output are in content/mlpractice.js.
 DJ.i18n.patch({
   modules: {
-    "m5-2": { intro: "В реальной работе важна не сама модель, а всё вокруг неё: подготовка данных, защита от утечки (leakage), подбор гиперпараметров, сильные ансамбли, несбалансированные классы, кластеризация и интерпретация модели. Всё это вы сделаете на данных churn.csv и flats.csv с помощью scikit-learn." }
+    "m5-2": { intro: "В реальной работе важна не сама модель, а всё вокруг неё: подготовка данных, защита от утечки (leakage), подбор гиперпараметров, сильные ансамбли, несбалансированные классы, кластеризация и интерпретация модели. Затем прикладные темы, которые спрашивают в вакансиях: временные ряды, практика CatBoost/XGBoost/LightGBM, PCA, текст (TF-IDF), мониторинг моделей (PSI, out-of-time), антифрод и рекомендательные системы. Всё это вы сделаете с помощью scikit-learn на реальных данных: churn, flats, продажи, отзывы, кредитные заявки, транзакции." }
   },
   lessons: {
     "mp-1": {
@@ -215,7 +215,7 @@ cross_val_score(rf, X, y, cv=5, scoring='roc_auc').mean()</code></pre>
 <tr><td>0.5</td><td>0.748</td><td>0.745</td></tr>
 <tr><td>1.0</td><td>0.714</td><td>0.701</td></tr>
 </table>
-<p>При 0.01 деревьев не хватает (underfit), при 1.0 слишком агрессивно (overfit). Правило: уменьшили learning_rate в 2 раза — увеличьте n_estimators примерно в 2 раза.</p>
+<p>Читайте таблицу по строкам. При 0.01 50 деревьев не хватает (0.781, underfit): при увеличении до 100 деревьев результат всё ещё растёт (0.790), то есть деревьев нужно ещё больше. При 0.1 наоборот: 50 деревьев достаточно (0.804), а на 100 деревьях модель начинает заучивать шум (0.787). 0.5 и 1.0 слишком агрессивны: плохо при любом числе деревьев (overfit). Правило: уменьшили learning_rate в 2 раза — увеличьте n_estimators примерно в 2 раза.</p>
 <h3>HistGradientBoosting</h3>
 <p><code>HistGradientBoostingClassifier</code> раскладывает значения по корзинам гистограммы — на больших данных это намного быстрее. Бонус: он <b>сам обрабатывает NaN</b>, imputer не нужен. Число деревьев здесь называется <code>max_iter</code>. Большинство табличных соревнований на Kaggle выигрывает именно это семейство (XGBoost, LightGBM, CatBoost) — но только после тщательного тюнинга.</p>
 <div class="tip"><b>Частые ошибки:</b> (1) Считать boosting «всегда лучшим» — на этих данных LogisticRegression (0.81) всё ещё конкурентоспособна. (2) Изменить learning_rate и оставить n_estimators прежним. (3) Глубокие деревья (max_depth=10) — boosting быстро переобучается. (4) Думать, что деревьям обязателен StandardScaler — на дерево масштаб не влияет.</div>`,
@@ -377,12 +377,441 @@ loaded.predict(new_clients)      # подаётся сырой DataFrame</code><
         { prompt: "Напишите короткую <b>model card</b> для модели churn (не меньше 80 слов): цель, данные, метрики и threshold, ограничения, справедливость по городам. Затем честно оцените её по четырём критериям. Для зачёта по каждому критерию нужно не меньше <b>3 / 4</b>.", done: "Положите model card в файл MODEL_CARD.md в репозитории проекта.", criteria: [{"name":"Цель и пользователь","levels":["Не указаны","Только «предсказывает churn»","Сказано, кто и для какого решения использует","Указаны решение, пользователь и то, для чего модель НЕ следует использовать"]},{"name":"Данные и метрики","levels":["Чисел нет","Только accuracy","AUC, recall, precision на test и число строк","Метрики, threshold и его обоснование бизнес-стоимостью"]},{"name":"Ограничения","levels":["Нет","Общие слова («может ошибаться»)","Конкретное ограничение (пропуски, мало данных, синтетика)","Ограничения, их влияние на решение и план переобучения"]},{"name":"Справедливость","levels":["Не упомянута","Утверждение «модель справедлива»","Приведён recall по городам","Recall, размеры групп, предупреждение о малой выборке и конкретное действие"]}] }
       ]
     },
+    "mp-ts": {
+      title: "Временные ряды: разбиение по времени, признаки lag и rolling, baseline",
+      body: `
+<p>До сих пор порядок строк не имел значения: если перемешать квартиры, ничего не изменится. Во <b>временном ряде</b> (time series) порядок — это всё. Владелец магазина спрашивает вас: «сколько товаров продастся завтра?» Вы знаете только <b>прошлое</b>.</p>
+<p>Данные: <code>sales_daily.csv</code> — ежедневные продажи магазина за 2024–2025 годы (730 дней). Столбцы: <code>date</code>, <code>sales</code> (штуки), <code>promo</code> (была ли в этот день акция, 0/1).</p>
+<h3>Что есть в ряде</h3>
+<ul>
+<li><b>Тренд</b>: продажи медленно растут (в 1-м квартале 2024 года в среднем 199, в 4-м квартале 2025 года — 253).</li>
+<li><b>Недельная сезонность</b>: понедельник–четверг ≈ 210–220, пятница 241, суббота 272, воскресенье 254.</li>
+<li><b>Шум</b>: случайные колебания, которые не объяснить.</li>
+</ul>
+<h3>Правило 1: разбиение по времени</h3>
+<p><code>train_test_split</code> перемешивает строки случайно. Во временном ряде это leakage: чтобы предсказать 15 марта, модель уже «видела» 16 марта. Правильно: <b>прошлое — train, будущее — test</b>.</p>
+<pre><code>df = pd.read_csv('sales_daily.csv', parse_dates=['date'])
+train = df[df['date'] &lt; '2025-07-01']    # 547 дней
+test = df[df['date'] &gt;= '2025-07-01']    # 183 дня</code></pre>
+<h3>Правило 2: сначала baseline</h3>
+<table>
+<tr><th>Baseline</th><th>Прогноз</th><th>Код</th><th>Test MAE</th></tr>
+<tr><td>Среднее</td><td>среднее по train</td><td><code>train['sales'].mean()</code></td><td>30.7</td></tr>
+<tr><td><b>Naive</b></td><td>завтра = сегодня</td><td><code>df['sales'].shift(1)</code></td><td>21.6</td></tr>
+<tr><td><b>Seasonal naive</b></td><td>завтра = тот же день прошлой недели</td><td><code>df['sales'].shift(7)</code></td><td><b>15.2</b></td></tr>
+</table>
+<p>Seasonal naive побеждает, потому что недельная сезонность сильная: субботу правильно сравнивать с прошлой субботой. Любая модель должна быть лучше этих 15.2, иначе она не нужна.</p>
+<h3>MAE и MAPE</h3>
+<p><b>MAPE</b> — средняя ошибка в процентах: <code>mean(|факт − прогноз| / факт) · 100</code>. Она понятна бизнесу: «в среднем ошибаемся на 6%».</p>
+<ol>
+<li>Фактические значения: 200, 250, 300. Прогноз: 210, 240, 330.</li>
+<li>Ошибки: 10, 10, 30. MAE = 50 / 3 ≈ 16.7 штуки.</li>
+<li>Проценты: 5%, 4%, 10%. MAPE = 19 / 3 ≈ 6.3%.</li>
+</ol>
+<h3>Признаки lag и rolling</h3>
+<p>Чтобы дать временной ряд обычной модели (LinearRegression, boosting), превращаем прошлое в <b>признаки</b>:</p>
+<pre><code>df['lag_1'] = df['sales'].shift(1)                      # вчерашние продажи
+df['lag_7'] = df['sales'].shift(7)                      # неделю назад
+df['roll_7'] = df['sales'].shift(1).rolling(7).mean()   # среднее за последние 7 дней
+d = df.dropna()                                         # в первые 7 дней lag нет</code></pre>
+<ol>
+<li><code>shift(1)</code> сдвигает столбец на одну строку вниз: в строке каждого дня стоит вчерашнее значение.</li>
+<li><code>rolling(7).mean()</code> — скользящее среднее. Перед ним обязателен <code>shift(1)</code>: без него в окно попадут <b>сегодняшние</b> продажи, а именно их мы и предсказываем.</li>
+<li><code>promo</code> можно использовать как признак: акции планируют заранее, завтрашнее значение известно уже сегодня.</li>
+<li>LinearRegression с этими четырьмя признаками даёт test MAE = 13.1 (MAPE 5.2%). Если добавить день недели (<code>date.dt.dayofweek</code>, one-hot) — 9.6.</li>
+</ol>
+<h3>TimeSeriesSplit: CV, которая сохраняет время</h3>
+<p>Обычный K-fold тоже перемешивает. <code>TimeSeriesSplit</code> в каждом fold удлиняет train и проверяет на следующем периоде:</p>
+<table>
+<tr><th>Fold</th><th>Train (строки)</th><th>Validation (строки)</th><th>MAE</th></tr>
+<tr><td>1</td><td>1–147</td><td>148–291</td><td>14.2</td></tr>
+<tr><td>2</td><td>1–291</td><td>292–435</td><td>11.6</td></tr>
+<tr><td>3</td><td>1–435</td><td>436–579</td><td>14.6</td></tr>
+<tr><td>4</td><td>1–579</td><td>580–723</td><td>12.9</td></tr>
+</table>
+<div class="tip">В этом уроке мы прогнозируем <b>на один день вперёд</b>: в качестве lag_1 известны вчерашние фактические продажи. Для прогноза на 30 дней вперёд lag_1 нет: нужно либо брать lag под горизонт (lag_30), либо по очереди подавать прогноз модели на её же вход. На собеседовании обязательно уточняйте: «какой горизонт?»</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Делить временной ряд случайно или использовать обычный <code>KFold(shuffle=True)</code>.</li>
+<li>Считать <code>rolling</code> без <code>shift(1)</code>: target попадает внутрь признака.</li>
+<li>Строить модель без baseline. «MAE = 13» — это хорошо? Не зная, что у seasonal naive 15.2, сказать нельзя.</li>
+<li>Использовать MAPE на ряде со значениями около 0: деление на ноль, проценты растут до бесконечности.</li>
+<li>Добавить признак, который в момент прогноза неизвестен (например, число клиентов в тот же день).</li>
+</ul>`,
+      ex: [
+        { prompt: "Разбейте данные по времени: <code>train</code> — строки до <code>2025-07-01</code>, <code>test</code> — начиная с этой даты. Сделайте два baseline: <code>df['naive']</code> = вчерашние продажи, <code>df['snaive']</code> = продажи 7 дней назад. Запишите их MAE на периоде test в <code>mae_naive</code> и <code>mae_snaive</code>. (Столбцы baseline добавьте <b>до</b> разбиения.)", check: { tests: "import pandas as _pd\nimport numpy as _np\n_d = _pd.read_csv('sales_daily.csv', parse_dates=['date'])\n_m = _d['date'] >= '2025-07-01'\n_n = (_d['sales'] - _d['sales'].shift(1)).abs()[_m].mean()\n_s = (_d['sales'] - _d['sales'].shift(7)).abs()[_m].mean()\nassert len(train) == 547 and len(test) == 183, f\"train должен быть 547 дней, test — 183, у вас {len(train)} и {len(test)}\"\nassert train['date'].max() < test['date'].min(), \"Последний день train должен быть раньше первого дня test\"\nassert abs(mae_naive - _n) < 1e-6, f\"mae_naive должна быть ≈ {_n:.2f}: shift(1), только на периоде test\"\nassert abs(mae_snaive - _s) < 1e-6, f\"mae_snaive должна быть ≈ {_s:.2f}: shift(7), только на периоде test\"" }, hints: ["<code>df['naive'] = df['sales'].shift(1)</code>, <code>df['snaive'] = df['sales'].shift(7)</code>", "<code>test = df[df['date'] &gt;= '2025-07-01']</code>, затем <code>(test['sales'] - test['naive']).abs().mean()</code>"] },
+        { prompt: "Добавьте в <code>df</code> три признака: <code>lag_1</code>, <code>lag_7</code> и <code>roll_7</code> (среднее за последние 7 дней, без сегодняшнего). <code>d = df.dropna()</code>. Разбейте по времени (<code>2025-07-01</code>) и обучите на train <code>LinearRegression</code> под именем <code>model</code> на признаках <code>['lag_1', 'lag_7', 'roll_7', 'promo']</code>. Посчитайте на test <code>mae_model</code> и <code>mape_model</code> (в процентах).", check: { tests: "import pandas as _pd\nimport numpy as _np\n_d = _pd.read_csv('sales_daily.csv', parse_dates=['date'])\nfrom sklearn.linear_model import LinearRegression as _LR\nassert abs(df.loc[7, 'roll_7'] - _d['sales'].iloc[0:7].mean()) < 1e-9, \"roll_7 не должен включать сегодняшние продажи: df['sales'].shift(1).rolling(7).mean()\"\nassert abs(df.loc[7, 'lag_1'] - _d['sales'].iloc[6]) < 1e-9 and abs(df.loc[7, 'lag_7'] - _d['sales'].iloc[0]) < 1e-9, \"lag_1 = shift(1), lag_7 = shift(7)\"\n_d['lag_1'] = _d['sales'].shift(1); _d['lag_7'] = _d['sales'].shift(7); _d['roll_7'] = _d['sales'].shift(1).rolling(7).mean()\n_d = _d.dropna()\n_F = ['lag_1', 'lag_7', 'roll_7', 'promo']\n_tr = _d[_d['date'] < '2025-07-01']; _te = _d[_d['date'] >= '2025-07-01']\n_p = _LR().fit(_tr[_F], _tr['sales']).predict(_te[_F])\n_mae = _np.abs(_te['sales'] - _p).mean()\n_mape = (_np.abs(_te['sales'] - _p) / _te['sales']).mean() * 100\nassert hasattr(model, 'coef_') and len(model.coef_) == 4, \"model должна быть обучена на четырёх признаках\"\nassert abs(mae_model - _mae) < 1e-6, f\"mae_model должна быть ≈ {_mae:.2f}. Train: до 2025-07-01, test: после\"\nassert abs(mape_model - _mape) < 1e-6, f\"mape_model ≈ {_mape:.2f} (в процентах): mean(|факт − прогноз| / факт) * 100\"" }, hints: ["<code>df['roll_7'] = df['sales'].shift(1).rolling(7).mean()</code>", "MAPE: <code>(np.abs(test['sales'] - pred) / test['sales']).mean() * 100</code>"] },
+        { prompt: "Признаки готовы (<code>d</code>, <code>F</code>). Оцените <code>LinearRegression</code> через <code>cross_val_score</code> с <code>TimeSeriesSplit(n_splits=4)</code> (<code>scoring='neg_mean_absolute_error'</code>). Запишите MAE каждого fold (положительное число) в массив <code>cv_mae</code>, а среднее — в <code>cv_mean</code>.", check: { tests: "import numpy as _np\nfrom sklearn.model_selection import TimeSeriesSplit as _TS, cross_val_score as _cvs\nfrom sklearn.linear_model import LinearRegression as _LR\n_c = -_cvs(_LR(), d[F], d['sales'], cv=_TS(n_splits=4), scoring='neg_mean_absolute_error')\nassert len(cv_mae) == 4, \"cv_mae — MAE четырёх fold\"\nassert all(v > 0 for v in cv_mae), \"MAE должна быть положительной: cross_val_score возвращает отрицательные значения, поставьте перед ним минус\"\nassert _np.allclose(_np.asarray(cv_mae, dtype=float), _c, atol=1e-6), \"Значения MAE не совпадают: cv=TimeSeriesSplit(n_splits=4), scoring='neg_mean_absolute_error'\"\nassert abs(cv_mean - _c.mean()) < 1e-6, f\"cv_mean должно быть ≈ {_c.mean():.2f}\"" }, hints: ["<code>tscv = TimeSeriesSplit(n_splits=4)</code>, передайте его как <code>cv=tscv</code>", "<code>cv_mae = -cross_val_score(LinearRegression(), d[F], d['sales'], cv=tscv, scoring='neg_mean_absolute_error')</code>"] },
+        { prompt: "Аналитик разбил данные о ежедневных продажах через <code>train_test_split(shuffle=True)</code> и получил MAE = 8. В production MAE оказалась 15. Какова самая вероятная причина?", options: ["Модель слишком простая", "При случайном разбиении соседние дни по обе стороны от дней test оказались в train: модель училась, «видя будущее»", "Неправильно выбран random_state", "MAE не подходит для временных рядов"], explain: "Во временном ряде соседние дни очень похожи. Случайное разбиение — это leakage. Только разбиение по времени даёт оценку, похожую на production." }
+      ]
+    },
+    "mp-gbm": {
+      title: "Градиентный бустинг на практике: CatBoost/XGBoost/LightGBM",
+      body: `
+<p>В трети вакансий Data Scientist в Казахстане упоминаются <b>CatBoost, XGBoost</b> или <b>LightGBM</b>. Эти три библиотеки — промышленные реализации gradient boosting: на табличных данных (банк, телеком, ритейл) это обычно самые сильные модели. Идею вы видели в предыдущем уроке: деревья по очереди исправляют ошибки. Теперь — как их настраивают на практике.</p>
+<p>В браузере этих библиотек нет, поэтому используем <code>HistGradientBoostingClassifier</code> из sklearn. Он сделан по образцу LightGBM, и параметры легко переводятся из одной библиотеки в другую.</p>
+<h3>Словарь параметров</h3>
+<table>
+<tr><th>Смысл</th><th>sklearn HistGB</th><th>XGBoost</th><th>LightGBM</th><th>CatBoost</th></tr>
+<tr><td>Число деревьев</td><td><code>max_iter</code></td><td><code>n_estimators</code></td><td><code>n_estimators</code></td><td><code>iterations</code></td></tr>
+<tr><td>Шаг</td><td><code>learning_rate</code></td><td><code>learning_rate</code></td><td><code>learning_rate</code></td><td><code>learning_rate</code></td></tr>
+<tr><td>Размер дерева</td><td><code>max_depth</code>, <code>max_leaf_nodes</code></td><td><code>max_depth</code></td><td><code>num_leaves</code></td><td><code>depth</code></td></tr>
+<tr><td>L2-регуляризация</td><td><code>l2_regularization</code></td><td><code>reg_lambda</code></td><td><code>reg_lambda</code></td><td><code>l2_leaf_reg</code></td></tr>
+<tr><td>Ранняя остановка</td><td><code>early_stopping</code>, <code>n_iter_no_change</code></td><td><code>early_stopping_rounds</code></td><td><code>lgb.early_stopping()</code></td><td><code>early_stopping_rounds</code></td></tr>
+<tr><td>Категории</td><td><code>categorical_features</code></td><td><code>enable_categorical</code></td><td><code>categorical_feature</code></td><td><code>cat_features</code></td></tr>
+</table>
+<h3>Early stopping: модель сама находит число деревьев</h3>
+<p>Если деревьев слишком много, boosting начинает заучивать шум. Сколько деревьев нужно? Вместо ручного поиска отделяем от train часть <b>validation</b>. После каждого нового дерева измеряем ошибку на validation. Если она не улучшается N шагов подряд — останавливаемся.</p>
+<pre><code>from sklearn.ensemble import HistGradientBoostingClassifier
+es = HistGradientBoostingClassifier(
+    max_iter=300, learning_rate=0.1, max_depth=3,
+    early_stopping=True,        # по умолчанию включается только от 10 000 строк
+    validation_fraction=0.2,    # 20% train уходит в validation
+    n_iter_no_change=10,        # нет улучшения 10 шагов — стоп
+    random_state=0)
+es.fit(X_train[num], y_train)
+print(es.n_iter_)               # 39</code></pre>
+<table>
+<tr><th>Модель</th><th>Фактическое число деревьев</th><th>Test AUC</th></tr>
+<tr><td>300 деревьев, без early stopping</td><td>300</td><td>0.711</td></tr>
+<tr><td>До 300, с early stopping</td><td><b>39</b></td><td><b>0.787</b></td></tr>
+</table>
+<ol>
+<li><code>max_iter=300</code> — только верхняя граница. Модель остановилась на 39: дальше ошибка на validation не улучшалась.</li>
+<li>Без ранней остановки выросли все 300 деревьев, и модель заучила train: test AUC 0.711.</li>
+<li>Рецепт из практики: маленький <code>learning_rate</code> (0.03–0.1), большой лимит деревьев, а их число доверить early stopping.</li>
+</ol>
+<div class="tip">Часть validation для early stopping — <b>это не test</b>. Если останавливаться, глядя на test, вы подгоняете число деревьев под test — это leakage. Три части: train (обучение), validation (остановка), test (итоговая оценка).</div>
+<h3>Категориальные признаки: one-hot не нужен</h3>
+<p>Современный boosting принимает категории напрямую: дерево может сразу разделить по условию «город ∈ {Алматы, Астана}». Это быстрее, чем one-hot, а когда категорий много (сотни городов), выше и качество.</p>
+<pre><code>for c in ['city', 'plan']:
+    X[c] = X[c].astype('category')      # тип category в pandas
+model = HistGradientBoostingClassifier(
+    categorical_features='from_dtype',  # сам находит столбцы category
+    max_iter=300, early_stopping=True, random_state=0)</code></pre>
+<p>Этой модели не нужны ни imputer, ни scaler, ни encoder: NaN и категории она обрабатывает сама. На churn test AUC = 0.794.</p>
+<h3>Тот же код в CatBoost и LightGBM (для чтения)</h3>
+<pre><code>from catboost import CatBoostClassifier
+model = CatBoostClassifier(iterations=1000, learning_rate=0.05, depth=4,
+                           eval_metric='AUC', early_stopping_rounds=50,
+                           random_seed=0, verbose=100)
+model.fit(X_train, y_train,
+          cat_features=['city', 'plan'],     # текстовые столбцы передаём напрямую
+          eval_set=(X_val, y_val))           # сюда смотрит early stopping
+print(model.get_best_iteration())</code></pre>
+<pre><code>import lightgbm as lgb
+model = lgb.LGBMClassifier(n_estimators=1000, learning_rate=0.05,
+                           num_leaves=15, random_state=0)
+model.fit(X_train, y_train,
+          eval_set=[(X_val, y_val)], eval_metric='auc',
+          callbacks=[lgb.early_stopping(50)])
+print(model.best_iteration_)</code></pre>
+<p>Структура одна и та же: большой лимит деревьев, маленький learning_rate, отдельный <code>eval_set</code>, ранняя остановка. Сильная сторона CatBoost — категории (отсюда и название: <i>Cat</i>egorical <i>Boost</i>ing) и хорошие параметры по умолчанию. LightGBM — скорость на больших данных. XGBoost — самый старый и самый распространённый.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Передавать test как <code>eval_set</code> для early stopping.</li>
+<li>Оставить значение по умолчанию <code>n_estimators=100</code> и менять только learning_rate.</li>
+<li>Превратить категорию через <code>LabelEncoder</code> в числа 0, 1, 2 и передать как числовой признак: модель увидит ложный порядок «Алматы &lt; Астана &lt; Шымкент». Используйте тип category или <code>cat_features</code>.</li>
+<li>Ставить StandardScaler перед boosting: масштаб на деревья не влияет.</li>
+<li>Ждать, что на маленьких данных (несколько сотен строк) boosting обязательно победит. На churn LogisticRegression (0.81) всё ещё впереди. Преимущество boosting раскрывается на тысячах строк и сложных зависимостях.</li>
+</ul>`,
+      ex: [
+        { prompt: "Обучите на числовых столбцах (<code>X_train[num]</code>) два <code>HistGradientBoostingClassifier</code>, оба с <code>max_iter=300, learning_rate=0.1, max_depth=3, random_state=0</code>. <code>full</code>: <code>early_stopping=False</code>. <code>es</code>: <code>early_stopping=True, validation_fraction=0.2, n_iter_no_change=10</code>. Запишите фактическое число деревьев (<code>n_iter_</code>) в <code>n_full</code>, <code>n_es</code>, а ROC AUC на test — в <code>auc_full</code>, <code>auc_es</code>.", check: { tests: "from sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\n_e = _H(max_iter=300, learning_rate=0.1, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0).fit(X_train[num], y_train)\n_a = _ras(y_test, _e.predict_proba(X_test[num])[:, 1])\nassert n_full == 300, f\"Без early stopping модель должна вырастить все 300 деревьев, у вас {n_full}: early_stopping=False\"\nassert n_es == _e.n_iter_, f\"n_es должно быть = {_e.n_iter_}: early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0\"\nassert abs(auc_es - _a) < 1e-6, f\"auc_es должен быть ≈ {_a:.3f} (на test, predict_proba)\"\nassert 0.5 < auc_full < auc_es, \"На этих данных модель с ранней остановкой должна быть лучше на test\"" }, hints: ["<code>HistGradientBoostingClassifier(max_iter=300, learning_rate=0.1, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0)</code>", "Число деревьев: <code>es.n_iter_</code>. AUC: <code>roc_auc_score(y_test, es.predict_proba(X_test[num])[:, 1])</code>"] },
+        { prompt: "Передайте категории без one-hot. (1) Преобразуйте <code>city</code> и <code>plan</code> в <code>X</code> в тип <code>category</code>. (2) <code>train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)</code>. (3) <code>model</code> = <code>HistGradientBoostingClassifier(categorical_features='from_dtype', max_iter=300, learning_rate=0.1, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0)</code>, обучите на всех столбцах. ROC AUC на test → <code>auc_cat</code>.", check: { tests: "from sklearn.ensemble import HistGradientBoostingClassifier as _H\nfrom sklearn.metrics import roc_auc_score as _ras\nassert str(X_train['city'].dtype) == 'category' and str(X_train['plan'].dtype) == 'category', \"city и plan должны иметь тип category: X[c] = X[c].astype('category')\"\nassert len(X_train) == 450 and len(X_test) == 150 and X_train.shape[1] == 8, \"Разбиение: test_size=0.25, все 8 столбцов\"\nassert hasattr(model, 'is_categorical_') and model.is_categorical_ is not None and int(model.is_categorical_.sum()) == 2, \"Модель должна видеть два категориальных столбца: categorical_features='from_dtype'\"\n_m = _H(categorical_features='from_dtype', max_iter=300, learning_rate=0.1, max_depth=3, early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0).fit(X_train, y_train)\n_a = _ras(y_test, _m.predict_proba(X_test)[:, 1])\nassert abs(auc_cat - _a) < 1e-6, f\"auc_cat должен быть ≈ {_a:.3f}: проверьте параметры и random_state=0\"" }, hints: ["<code>for c in cat: X[c] = X[c].astype('category')</code> — до разбиения", "<code>roc_auc_score(y_test, model.predict_proba(X_test)[:, 1])</code>"] },
+        { prompt: "Коллега обучил CatBoost так: <code>model.fit(X_train, y_train, eval_set=(X_test, y_test))</code>, <code>early_stopping_rounds=50</code>. Затем отчитался, что на том же <code>X_test</code> AUC = 0.86. В чём проблема?", options: ["Проблемы нет, это стандартный подход", "Число деревьев выбрано с оглядкой на test, поэтому 0.86 слишком оптимистично: для eval_set нужна отдельная validation из train", "early_stopping_rounds слишком большой", "В CatBoost нельзя передавать eval_set"], explain: "Early stopping — это подбор гиперпараметра (числа деревьев). Если делать его на test, test становится «увиденным». Train → validation (остановка) → test (одна оценка)." },
+        { prompt: "Код LightGBM: <code>LGBMClassifier(n_estimators=2000, learning_rate=0.03)</code> + <code>callbacks=[lgb.early_stopping(100)]</code>. После обучения <code>model.best_iteration_</code> = 412. Что это значит?", options: ["Модель использует все 2000 деревьев", "Метрика на validation была лучшей на 412-м дереве; после этого 100 шагов улучшения не было, и обучение остановилось", "Модель обучалась 412 секунд", "Важными признаны 412 признаков"], explain: "n_estimators — верхняя граница. Early stopping запоминает лучшую итерацию: при прогнозе используются именно эти 412 деревьев." }
+      ]
+    },
+    "mp-pca": {
+      title: "PCA и снижение размерности",
+      body: `
+<p>Число комнат и площадь квартиры говорят об одном и том же: насколько квартира большая. Столбцов два, а информация почти одна (корреляция 0.92). Если признаков не 5, а 500, таких повторов много: модель замедляется, overfitting растёт, а нарисовать данные на графике невозможно.</p>
+<p><b>PCA</b> (Principal Component Analysis) поворачивает признаки к <b>новым осям</b>. Первая ось (PC1) — направление, вдоль которого данные разбросаны сильнее всего. Вторая (PC2) перпендикулярна ей и забирает наибольшую часть оставшегося разброса. В последних осях информации мало, их можно отбросить.</p>
+<h3>Пример по шагам: 5 числовых признаков flats</h3>
+<pre><code>from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+num = ['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']
+Xs = StandardScaler().fit_transform(flats[num])
+pca = PCA(n_components=2)
+X2 = pca.fit_transform(Xs)                 # (400, 2)
+print(pca.explained_variance_ratio_)       # [0.387 0.306]</code></pre>
+<ol>
+<li><b>Сначала масштаб.</b> PCA смотрит на дисперсию. Без масштабирования побеждает столбец с самыми большими числами: на сырых данных PC1 — это фактически просто <code>area_m2</code> (вес 0.97).</li>
+<li><code>explained_variance_ratio_</code>: PC1 сохраняет 38.7% общего разброса, PC2 — 30.6%. Вместе 69%.</li>
+<li><code>pca.components_</code> показывает «рецепт» каждой оси. PC1 ≈ 0.69 · rooms + 0.69 · area_m2 — «размер квартиры». PC2 ≈ 0.69 · floor + 0.70 · floors_total — «высота дома».</li>
+</ol>
+<table>
+<tr><th>Число компонент</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><td>Накопленная дисперсия</td><td>0.387</td><td>0.693</td><td>0.891</td><td>0.983</td><td>1.000</td></tr>
+</table>
+<p>Распространённое правило: брать столько компонент, чтобы сохранить 90–95% дисперсии. Здесь для 90% нужны 4 компоненты (3 дают 89.1%). Короткий путь: <code>PCA(n_components=0.9)</code>.</p>
+<h3>Для чего применяют PCA</h3>
+<ul>
+<li><b>Визуализация</b>: свести 20 признаков к 2 осям и построить scatter plot; увидеть кластеры (KMeans) глазами.</li>
+<li><b>Сжатие и подавление шума</b>: сотни коррелированных признаков (датчики, анкеты, пиксели изображений).</li>
+<li><b>Шаг перед моделью</b>: внутри Pipeline <code>StandardScaler → PCA → модель</code>.</li>
+</ul>
+<p>У сжатия есть цена. 5-fold R² для LinearRegression на flats: 0.663 со всеми 5 признаками, 0.644 с 3 компонентами, 0.535 с 2 компонентами. PCA не смотрит на target: он сохраняет разброс, а признак с небольшим разбросом (<code>year_built</code>) может быть важен для цены.</p>
+<div class="tip">PCA — шаг, который учится на данных. Его тоже нужно <code>fit</code> только на train и держать внутри Pipeline, иначе будет leakage.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Делать PCA без StandardScaler.</li>
+<li>Сделать fit PCA на всех данных, а затем делить.</li>
+<li>Трактовать компоненты как «признаки»: PC1 — смесь нескольких столбцов, объяснить её бизнесу трудно. Там, где важна интерпретация (скоринг), PCA не применяют.</li>
+<li>Применять PCA к категориальным one-hot столбцам: смысла мало.</li>
+<li>Считать PCA обязательным на данных с 5–10 признаками. Он полезен на сотнях признаков.</li>
+</ul>`,
+      ex: [
+        { prompt: "Отмасштабируйте 5 числовых признаков flats через <code>StandardScaler</code> (<code>Xs</code>) и обучите <code>PCA(n_components=2)</code> под именем <code>pca</code>. Запишите преобразованные данные в <code>X2</code>, а долю дисперсии каждой компоненты — в <code>evr</code>.", check: { tests: "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_Xs = _SS().fit_transform(X)\n_e = _PCA(n_components=2).fit(_Xs).explained_variance_ratio_\n_raw = _PCA(n_components=2).fit(X).explained_variance_ratio_\nassert _np.asarray(X2).shape == (400, 2), \"X2 — 400 строк, 2 столбца: pca.fit_transform(Xs)\"\nassert len(evr) == 2, \"evr — два числа: pca.explained_variance_ratio_\"\nassert not _np.allclose(evr, _raw, atol=1e-3), \"Сначала отмасштабируйте: StandardScaler().fit_transform(X). Без масштаба PC1 получается просто area_m2\"\nassert _np.allclose(evr, _e, atol=1e-6), f\"evr должен быть ≈ {_e.round(3)}\"\nassert abs(abs(_np.corrcoef(_np.asarray(X2)[:, 0], _Xs[:, 1])[0, 1]) - 1) < 0.1, \"Первый столбец X2 должен быть тесно связан с area_m2\"" }, hints: ["<code>Xs = StandardScaler().fit_transform(X)</code>", "<code>X2 = pca.fit_transform(Xs)</code>, <code>evr = pca.explained_variance_ratio_</code>"] },
+        { prompt: "Обучите <code>PCA()</code> со всеми компонентами и запишите накопленную долю дисперсии в массив <code>cum</code> (<code>np.cumsum</code>). <code>n90</code> — наименьшее число компонент, сохраняющее не менее 90% дисперсии.", check: { tests: "import numpy as _np\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.decomposition import PCA as _PCA\n_Xs = _SS().fit_transform(X)\n_c = _np.cumsum(_PCA().fit(_Xs).explained_variance_ratio_)\nassert len(cum) == 5, \"cum — 5 чисел: накопленная доля всех компонент\"\nassert _np.allclose(_np.asarray(cum, dtype=float), _c, atol=1e-6), f\"cum должен быть ≈ {_c.round(3)}: np.cumsum(pca.explained_variance_ratio_)\"\nassert n90 == int(_np.argmax(_c >= 0.9)) + 1, \"n90: первая позиция, где cum >= 0.9 (считая с 1). 3 компоненты дают 0.891 — этого мало\"" }, hints: ["<code>cum = np.cumsum(PCA().fit(Xs).explained_variance_ratio_)</code>", "<code>np.argmax(cum &gt;= 0.9)</code> даёт индекс первого True (с 0), прибавьте к нему 1"] },
+        { prompt: "PCA нашёл три компоненты, их дисперсии равны 6, 3 и 1. Какую долю общей дисперсии сохраняют первые две компоненты?", explain: "(6 + 3) / (6 + 3 + 1) = 9 / 10 = 0.9. Отбросив третью компоненту, мы теряем только 10% информации." },
+        { prompt: "В данных есть <code>income</code> (в тенге, 100 000 – 2 000 000) и <code>age</code> (18–70). Что будет, если сделать PCA без масштабирования?", options: ["Ничего, PCA не зависит от масштаба", "PC1 почти целиком окажется income: его дисперсия численно больше в миллионы раз", "PCA выдаст ошибку", "age окажется важнее"], explain: "PCA ищет направление наибольшей дисперсии. Столбец с крупными единицами подавляет все остальные. Поэтому сначала StandardScaler." }
+      ]
+    },
+    "mp-text": {
+      title: "Текстовые признаки: TF-IDF + логистическая регрессия",
+      body: `
+<p>На маркетплейс приходят тысячи отзывов в день. Какие из них жалобы, а какие благодарности? Человек не успеет прочитать все. Модель текст не понимает — ей нужны <b>числа</b>. Самый простой и до сих пор сильный способ превратить текст в числа — <b>TF-IDF</b>.</p>
+<p>Данные: <code>reviews.csv</code> — 300 коротких отзывов на казахском и русском (вперемешку, как в реальных данных в Казахстане). Столбцы: <code>text</code>, <code>label</code> (positive / negative), <code>lang</code>.</p>
+<h3>Bag of words: мешок слов</h3>
+<p>Каждое уникальное слово — столбец. Каждый отзыв — строка. В ячейке — сколько раз слово встречается в этом отзыве. Порядок слов теряется (поэтому «мешок»).</p>
+<h3>TF-IDF: редкое слово ценнее</h3>
+<p>Слова вроде «және» («и» по-казахски), «и», «өте» («очень») встречаются везде, пользы от них мало. TF-IDF даёт каждому слову вес:</p>
+<ul>
+<li><b>TF</b> (term frequency): сколько раз слово встречается в этом отзыве.</li>
+<li><b>IDF</b> (inverse document frequency): чем в меньшем числе отзывов встречается слово, тем он выше. В sklearn: <code>idf = ln((1 + n) / (1 + df)) + 1</code>, где n — число отзывов, df — число отзывов со словом.</li>
+</ul>
+<ol>
+<li>В train 225 отзывов. Допустим, слово «және» встречается в 100 отзывах: idf = ln(226 / 101) + 1 ≈ 1.81.</li>
+<li>А если слово «дөрекі» («грубый») встречается только в 3 отзывах: idf = ln(226 / 4) + 1 ≈ 5.03. Вес примерно в 3 раза выше.</li>
+<li>В конце каждая строка нормируется до длины 1: длинные и короткие отзывы уравниваются.</li>
+</ol>
+<h3>Пример по шагам</h3>
+<pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+
+df = pd.read_csv('reviews.csv')
+X_train, X_test, y_train, y_test = train_test_split(
+    df['text'], df['label'], test_size=0.25, random_state=0, stratify=df['label'])
+
+vec = TfidfVectorizer()
+V_train = vec.fit_transform(X_train)   # словарь учится на train
+V_test = vec.transform(X_test)         # только transform!
+print(V_train.shape)                   # (225, 113): 113 уникальных слов
+
+model = Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2))),
+                  ('clf', LogisticRegression(max_iter=1000))])
+model.fit(X_train, y_train)
+print(model.score(X_test, y_test))     # 0.947</code></pre>
+<ol>
+<li><code>TfidfVectorizer</code> переводит текст в нижний регистр, делит на слова и строит матрицу. Результат — <b>sparse</b>-матрица: большинство ячеек равны 0, в памяти хранятся только ненулевые.</li>
+<li>Признаков много (сотни, в реальном проекте — десятки тысяч), каждый слабый. Для таких данных <b>LogisticRegression</b> — классический выбор: быстрая, с регуляризацией (параметр C), коэффициенты можно читать.</li>
+<li><code>ngram_range=(1, 2)</code> делает признаками не только отдельные слова, но и <b>пары слов</b> (биграммы): «не понравилось», «сай емес» («не соответствует»), «өте нашар» («очень плохо»). Модель на отдельных словах считает слово «понравилось» хорошим, а «не» стоит отдельно. Здесь accuracy 0.933 → 0.947.</li>
+<li>Коэффициенты: самая отрицательная n-грамма — «не», самая положительная — «всем» («всем рекомендую»). Само слово «рекомендую» есть в обоих классах («никому не рекомендую»), поэтому модель опирается на соседние слова.</li>
+</ol>
+<p>Где модель ошибается? На смешанных отзывах: «Курьер дөрекі екен бірақ тез жеткізді» («Курьер был груб, но доставил быстро»). Мешок слов не знает, что часть после «бірақ» («но») важнее. Для таких случаев нужны модели, учитывающие порядок слов (трансформеры), но в качестве baseline первым всегда проверяют TF-IDF + LogisticRegression.</p>
+<div class="tip">Казахский язык агглютинативный: «ұнады», «ұнамады», «ұнайды» («понравилось», «не понравилось», «нравится») — один корень, но три разных слова-столбца. Помогает такой приём: символьные n-граммы, <code>TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))</code>. Он делает признаками части слова («ұна», «мады»).</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Делать <code>fit</code> векторизатора на всех данных: словарь и IDF учатся и на test — это leakage. Pipeline от этого защищает.</li>
+<li>Вызывать <code>fit_transform</code> на test: число и порядок столбцов меняются, модель их не понимает.</li>
+<li>Превращать sparse-матрицу в полный массив через <code>.toarray()</code>: на больших данных не хватит памяти.</li>
+<li>Смотреть только на accuracy: если жалобы редкие (5%), проверяйте precision и recall.</li>
+<li>Не читать неверно классифицированные примеры. Для текста просмотр ошибок глазами — самая полезная диагностика.</li>
+</ul>`,
+      ex: [
+        { prompt: "Разбиение готово. Создайте <code>TfidfVectorizer()</code> под именем <code>vec</code> и получите матрицу <code>V_train</code> из текстов train. Преобразуйте тексты test в <code>V_test</code> <b>с тем же словарём</b>. Запишите число слов в словаре в <code>n_words</code>.", check: { tests: "from sklearn.feature_extraction.text import TfidfVectorizer as _TV\n_v = _TV().fit(X_train)\n_n = len(_v.vocabulary_)\nassert V_train.shape == (225, _n), f\"Размер V_train должен быть (225, {_n}): vec.fit_transform(X_train)\"\nassert V_test.shape == (75, _n), f\"Размер V_test должен быть (75, {_n}). Для test вызывайте не fit_transform, а vec.transform(X_test)\"\nassert n_words == _n, f\"n_words = {_n}: len(vec.vocabulary_)\"\nassert abs(V_test.sum() - _v.transform(X_test).sum()) < 1e-6, \"V_test должен считаться по словарю train: vec.transform(X_test)\"" }, hints: ["<code>V_train = vec.fit_transform(X_train)</code>", "<code>V_test = vec.transform(X_test)</code>, <code>n_words = len(vec.vocabulary_)</code>"] },
+        { prompt: "Постройте Pipeline с именем <code>model</code>: шаги <code>'tfidf'</code> — <code>TfidfVectorizer(ngram_range=(1, 2))</code> и <code>'clf'</code> — <code>LogisticRegression(max_iter=1000)</code>. Обучите на train и запишите accuracy на test в <code>acc</code>. Запишите n-грамму с самым отрицательным коэффициентом в <code>top_neg</code>, а с самым положительным — в <code>top_pos</code> (<code>get_feature_names_out()</code> и <code>coef_[0]</code>).", check: { tests: "import numpy as _np\nfrom sklearn.feature_extraction.text import TfidfVectorizer as _TV\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import Pipeline as _P\n_m = _P([('tfidf', _TV(ngram_range=(1, 2))), ('clf', _LR(max_iter=1000))]).fit(X_train, y_train)\n_nm = _m['tfidf'].get_feature_names_out(); _cf = _m['clf'].coef_[0]\nassert isinstance(model, _P) and hasattr(model[-1], 'coef_'), \"model — обученный Pipeline (tfidf + clf)\"\nassert len(model[0].vocabulary_) == len(_nm), f\"В словаре должно быть {len(_nm)} n-грамм: TfidfVectorizer(ngram_range=(1, 2))\"\nassert abs(acc - _m.score(X_test, y_test)) < 1e-6, f\"acc должна быть ≈ {_m.score(X_test, y_test):.3f}: model.score(X_test, y_test)\"\nassert str(top_neg) == str(_nm[_np.argmin(_cf)]), \"top_neg — n-грамма с наименьшим coef_[0]: names[np.argmin(coef)]\"\nassert str(top_pos) == str(_nm[_np.argmax(_cf)]), \"top_pos — n-грамма с наибольшим coef_[0]: names[np.argmax(coef)]\"" }, hints: ["<code>names = model['tfidf'].get_feature_names_out()</code>, <code>coef = model['clf'].coef_[0]</code>", "<code>top_neg = names[np.argmin(coef)]</code>. Положительный коэффициент — класс <code>positive</code>, потому что <code>classes_</code> идут по алфавиту: negative, positive"] },
+        { prompt: "Почему отзыв «Товар не понравился» модель на отдельных словах (unigram) часто классифицирует неверно, а <code>ngram_range=(1, 2)</code> помогает?", options: ["Биграммы ускоряют модель", "В unigram «не» и «понравился» — отдельные признаки, а биграмма делает сочетание «не понравился» одним признаком и ловит отрицание", "Unigram не поддерживает русский язык", "Биграммы уменьшают словарь"], explain: "Мешок слов теряет порядок. Биграмма хранит два соседних слова вместе и превращает отрицание «не + слово» в признак. Цена: словарь вырастает в несколько раз (здесь 113 → 429)." },
+        { prompt: "Коллега выполнил <code>TfidfVectorizer().fit_transform(df['text'])</code> на всех данных, а затем разделил их на train/test. Что не так?", options: ["Ничего, в тексте leakage не бывает", "Словарь и веса IDF учились и на текстах test: это leakage. Векторизатор должен делать fit только на train, внутри Pipeline", "TF-IDF нельзя применять после разбиения", "Вместо fit_transform нужен был predict"], explain: "Любой шаг, который учится на данных (scaler, imputer, PCA, векторизатор), делает fit только на train." }
+      ]
+    },
+    "mp-ops": {
+      title: "Мониторинг модели: MLflow, дрейф по PSI и out-of-time валидация",
+      body: `
+<p>В день выхода в production работа модели не заканчивается — она начинается. Мир меняется: зарплаты растут, приходят новые клиенты, экономику лихорадит. Модель, которая вчера работала хорошо, сегодня молча деградирует. Почти в половине DS-вакансий в Казахстане есть требование «валидация и мониторинг моделей: PSI, Gini, out-of-time», особенно в банках. Этот урок — об этом.</p>
+<p>Данные: <code>loans.csv</code> — 1 260 кредитных заявок за 18 месяцев (2024-01 … 2025-06). Столбцы: <code>month</code>, <code>age</code>, <code>income</code> (тыс. ₸), <code>debt_ratio</code> (долговая нагрузка), <code>delays_12m</code> (число просрочек), <code>employment_years</code>, <code>default</code> (1 — кредит не возвращён).</p>
+<h3>1. Учёт экспериментов: MLflow</h3>
+<p>В одном проекте обучают сотни вариантов модели. Через три недели на вопрос «с какими параметрами был Gini 0.52?» ответа уже нет. <b>MLflow</b> записывает каждый запуск (run) в журнал:</p>
+<pre><code>import mlflow
+with mlflow.start_run(run_name='logreg_C1'):
+    mlflow.log_param('C', 1.0)                  # параметры
+    mlflow.log_param('train_period', '2024-01..2024-09')
+    model.fit(X_train, y_train)
+    mlflow.log_metric('gini_val', 0.47)         # метрики
+    mlflow.log_metric('gini_oot', 0.41)
+    mlflow.sklearn.log_model(model, 'model')    # сама модель (артефакт)</code></pre>
+<p>Результат — таблица: каждая строка — один эксперимент, столбцы — параметры и метрики. Лучший вы выбираете и регистрируете в <b>Model Registry</b> (с номером версии). В браузере MLflow нет, но идея проста: <b>параметры + период данных + метрики + файл модели</b> хранятся вместе. Это можно сделать даже обычным списком словарей.</p>
+<h3>2. Out-of-time (OOT) валидация</h3>
+<p>Случайный test даёт модели «других клиентов того же периода». А в production модель работает с <b>будущими</b> клиентами. OOT — более поздний период, который модель не видела вообще:</p>
+<table>
+<tr><th>Часть</th><th>Период</th><th>Gini</th><th>Средний прогноз (PD)</th><th>Фактический default</th></tr>
+<tr><td>Train (70%)</td><td>2024-01 … 2024-09</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Validation (30%, случайно)</td><td>2024-01 … 2024-09</td><td>0.47</td><td>10.6%</td><td>11.6%</td></tr>
+<tr><td><b>OOT</b></td><td>2025-01 … 2025-06</td><td><b>0.41</b></td><td><b>13.2%</b></td><td><b>23.3%</b></td></tr>
+</table>
+<ol>
+<li>Gini упал с 0.47 до 0.41: модель стала чуть хуже различать клиентов.</li>
+<li>Ещё важнее: модель ожидала 13.2% дефолтов, а фактически их 23.3%. Порядок почти верный, но <b>уровень</b> неверный. Если банк посчитает резервы по этому прогнозу, он недооценит потери почти вдвое.</li>
+<li>Решение: <b>рекалибровка</b> (заново подстроить вероятности под новые данные) или переобучение модели на новом периоде.</li>
+</ol>
+<h3>3. PSI: изменились ли данные?</h3>
+<p>Факт дефолта становится известен только через месяцы после выдачи кредита. А изменение <b>входных данных</b> видно сразу. <b>PSI</b> (Population Stability Index) сравнивает распределение одного признака в двух периодах.</p>
+<ol>
+<li>Делим значения старого периода на группы (bin), обычно 10 квантилей.</li>
+<li>Для каждой группы: <code>e</code> — доля в старом периоде, <code>a</code> — доля в новом периоде.</li>
+<li><code>PSI = Σ (a − e) · ln(a / e)</code>.</li>
+</ol>
+<p>Пример вручную, 4 группы. Раньше в каждой группе было по 25%. Сейчас: 10%, 20%, 30%, 40%.</p>
+<table>
+<tr><th>Группа</th><th>e</th><th>a</th><th>(a − e) · ln(a / e)</th></tr>
+<tr><td>1</td><td>0.25</td><td>0.10</td><td>(−0.15) · ln(0.4) = 0.137</td></tr>
+<tr><td>2</td><td>0.25</td><td>0.20</td><td>(−0.05) · ln(0.8) = 0.011</td></tr>
+<tr><td>3</td><td>0.25</td><td>0.30</td><td>0.05 · ln(1.2) = 0.009</td></tr>
+<tr><td>4</td><td>0.25</td><td>0.40</td><td>0.15 · ln(1.6) = 0.071</td></tr>
+<tr><td colspan="3"><b>PSI</b></td><td><b>0.228</b></td></tr>
+</table>
+<table>
+<tr><th>PSI</th><th>Толкование</th><th>Действие</th></tr>
+<tr><td>&lt; 0.1</td><td>стабильно</td><td>ничего</td></tr>
+<tr><td>0.1 – 0.25</td><td>умеренный сдвиг</td><td>наблюдать, искать причину</td></tr>
+<tr><td>&gt; 0.25</td><td>сильный сдвиг</td><td>проверить модель, рекалибровка или переобучение</td></tr>
+</table>
+<p>В loans между 2024 и 2025 годами: PSI для <code>income</code> = <b>0.35</b> (номинальные зарплаты выросли), для <code>debt_ratio</code> 0.15, для <code>age</code> 0.12, у остальных ниже 0.05. Модель понимает «доход 450 тыс.» в смысле 2024 года, а в 2025 году та же сумма означает другой уровень жизни. Это одна из причин ошибки на OOT.</p>
+<div class="tip">PSI считают не только по признакам, но и по <b>скору</b> модели: если распределение прогнозов изменилось, это первый сигнал. На дашборде мониторинга обычно стоят три вещи: PSI признаков, PSI скора и (когда появятся фактические данные) Gini.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Оценивать модель только на случайном test и не делать OOT.</li>
+<li>Брать границы групп для PSI из новых данных. Границы всегда берутся из <b>старого</b> (эталонного) периода.</li>
+<li><code>ln(0)</code> в пустой группе: ограничивайте доли снизу маленьким числом (например, 0.0001).</li>
+<li>Сразу решать, что высокий PSI = плохая модель. PSI — повод для проверки; качество показывают Gini и калибровка.</li>
+<li>Думать, что при стабильном Gini всё хорошо: Gini измеряет порядок, а уровень PD (калибровка) может сломаться отдельно.</li>
+<li>Не записывать результаты экспериментов: вопрос «на каких данных, с какими параметрами» возникнет обязательно.</li>
+</ul>`,
+      ex: [
+        { prompt: "Напишите функцию <code>psi_from_shares(e, a)</code>: она принимает два массива долей и возвращает <code>Σ (a − e) · ln(a / e)</code>. Чтобы не делить на ноль, сначала ограничьте оба массива через <code>np.clip(..., 0.0001, None)</code>. Запишите результат для примера из урока в <code>psi_example</code>.", check: { tests: "import numpy as _np\nassert psi_example is not None and abs(psi_example - 0.228217) < 1e-4, \"psi_example должен быть ≈ 0.228: np.sum((a - e) * np.log(a / e))\"\nassert abs(psi_from_shares([0.5, 0.5], [0.5, 0.5])) < 1e-12, \"При одинаковых долях PSI = 0\"\nassert abs(psi_from_shares([0.5, 0.5], [0.3, 0.7]) - 0.169460) < 1e-4, \"psi_from_shares([0.5, 0.5], [0.3, 0.7]) должен быть ≈ 0.169\"\n_z = psi_from_shares([0.5, 0.5, 0.0], [0.4, 0.5, 0.1])\nassert _np.isfinite(_z) and _z > 0, \"На пустой группе не должно быть ошибки: ограничьте доли через np.clip(x, 0.0001, None)\"" }, hints: ["<code>e = np.clip(np.asarray(e, dtype=float), 0.0001, None)</code>, так же и для <code>a</code>", "<code>return float(np.sum((a - e) * np.log(a / e)))</code>"] },
+        { prompt: "В стартере готова функция <code>psi(expected, actual)</code>: она строит 10 квантильных групп по старому периоду и возвращает PSI. <code>old</code> — заявки 2024 года, <code>new</code> — заявки 2025 года (<code>month</code> — строковый столбец, сравнивайте с <code>'2025-01'</code>). Для каждого признака из списка <code>F</code> запишите PSI в словарь <code>psi_table</code>. Признаки с PSI &gt; 0.25 соберите в список <code>drifted</code>.", starter: "import pandas as pd\nimport numpy as np\ndf = pd.read_csv('loans.csv')\nF = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n\ndef psi(expected, actual, bins=10):\n    expected = np.asarray(expected, dtype=float)\n    actual = np.asarray(actual, dtype=float)\n    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))   # границы берутся из старого периода\n    edges[0], edges[-1] = -np.inf, np.inf\n    e = np.clip(np.histogram(expected, edges)[0] / len(expected), 0.0001, None)\n    a = np.clip(np.histogram(actual, edges)[0] / len(actual), 0.0001, None)\n    return float(np.sum((a - e) * np.log(a / e)))\n\npsi_table = {}\n", check: { tests: "import pandas as _pd, numpy as _np\n_d = _pd.read_csv('loans.csv')\n_o = _d[_d['month'] < '2025-01']; _n = _d[_d['month'] >= '2025-01']\ndef _psi(ex, ac, bins=10):\n    ex = _np.asarray(ex, dtype=float); ac = _np.asarray(ac, dtype=float)\n    ed = _np.quantile(ex, _np.linspace(0, 1, bins + 1)); ed[0], ed[-1] = -_np.inf, _np.inf\n    e = _np.clip(_np.histogram(ex, ed)[0] / len(ex), 0.0001, None); a = _np.clip(_np.histogram(ac, ed)[0] / len(ac), 0.0001, None)\n    return float(_np.sum((a - e) * _np.log(a / e)))\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_t = {f: _psi(_o[f], _n[f]) for f in _F}\nassert len(old) == 840 and len(new) == 420, f\"old должен быть 840 строк (2024), new — 420 (2025), у вас {len(old)} и {len(new)}\"\nassert sorted(psi_table) == sorted(_F), \"Ключи psi_table — пять признаков из списка F\"\nassert all(abs(psi_table[f] - _t[f]) < 1e-6 for f in _F), \"Значения PSI не совпадают: psi(old[f], new[f]) — первый аргумент — старый период\"\nassert list(drifted) == [f for f in _F if _t[f] > 0.25], \"drifted — признаки с PSI > 0.25 (в порядке F)\"" }, hints: ["<code>old = df[df['month'] &lt; '2025-01']</code>, <code>new = df[df['month'] &gt;= '2025-01']</code>", "<code>psi_table[f] = psi(old[f], new[f])</code>; <code>drifted = [f for f in F if psi_table[f] &gt; 0.25]</code>"] },
+        { prompt: "Out-of-time валидация. <code>dev</code> — заявки до <code>2024-09</code> (включительно), <code>oot</code> — начиная с <code>2025-01</code>. Разбейте <code>dev</code> на train/validation через <code>train_test_split(test_size=0.3, random_state=0, stratify=...)</code>. Обучите на train <code>model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))</code>. Посчитайте: <code>gini_val</code>, <code>gini_oot</code> (2 · AUC − 1), <code>pd_pred</code> (средняя прогнозная вероятность на OOT), <code>pd_fact</code> (фактическая доля default на OOT).", check: { tests: "import pandas as _pd\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.metrics import roc_auc_score as _ras\n_d = _pd.read_csv('loans.csv')\n_F = ['age', 'income', 'debt_ratio', 'delays_12m', 'employment_years']\n_dev = _d[_d['month'] <= '2024-09']; _oot = _d[_d['month'] >= '2025-01']\n_a, _b, _c, _e = _tts(_dev[_F], _dev['default'], test_size=0.3, random_state=0, stratify=_dev['default'])\n_m = _mp(_SS(), _LR(max_iter=1000)).fit(_a, _c)\n_gv = 2 * _ras(_e, _m.predict_proba(_b)[:, 1]) - 1\n_po = _m.predict_proba(_oot[_F])[:, 1]\n_go = 2 * _ras(_oot['default'], _po) - 1\nassert len(dev) == 630 and len(oot) == 420, f\"dev должен быть 630 строк, oot — 420, у вас {len(dev)} и {len(oot)}\"\nassert abs(gini_val - _gv) < 1e-6, f\"gini_val должен быть ≈ {_gv:.3f}: 2 * AUC - 1 на validation\"\nassert abs(gini_oot - _go) < 1e-6, f\"gini_oot должен быть ≈ {_go:.3f}: модель обучается только на train, на OOT только оценивается\"\nassert abs(pd_pred - _po.mean()) < 1e-6, f\"pd_pred ≈ {_po.mean():.3f}: среднее predict_proba[:, 1] на OOT\"\nassert abs(pd_fact - _oot['default'].mean()) < 1e-9, f\"pd_fact ≈ {_oot['default'].mean():.3f}: oot['default'].mean()\"\nassert pd_fact > pd_pred, \"На этих данных модель недооценивает риск на OOT\"" }, hints: ["<code>dev = df[df['month'] &lt;= '2024-09']</code>, <code>oot = df[df['month'] &gt;= '2025-01']</code>", "Разбиение: <code>train_test_split(dev[F], dev['default'], test_size=0.3, random_state=0, stratify=dev['default'])</code>", "<code>p_oot = model.predict_proba(oot[F])[:, 1]</code>; <code>pd_pred = p_oot.mean()</code>"] },
+        { prompt: "Ежемесячный мониторинг скоринговой модели: PSI для <code>income</code> = 0.31, Gini упал с 0.52 до 0.50, а прогнозный дефолт 8% при фактическом 14%. Какое действие самое правильное?", options: ["Ничего не делать: Gini почти не изменился", "PSI &gt; 0.25 и калибровка нарушена: разобрать причину и рекалибровать модель или переобучить её на новых данных", "Немедленно удалить признак income", "Вернуть threshold к 0.5"], explain: "Gini измеряет только порядок. Уровень (PD) ошибочен почти вдвое — резервы и ценообразование искажаются. PSI показывает, от какого признака идёт сдвиг." },
+        { prompt: "Что как минимум должно сохраняться для каждого run в MLflow (или любом журнале экспериментов)?", options: ["Только лучшая метрика", "Параметры, период/версия данных, метрики и файл модели: чтобы результат можно было воспроизвести в любой момент", "Только код", "Только файл модели"], explain: "Смысл эксперимента — воспроизводимость (reproducibility). Метрика без параметров и данных — просто число." }
+      ]
+    },
+    "mp-anom": {
+      title: "Поиск аномалий и основы антифрода",
+      body: `
+<p>Банковской картой в 3 часа ночи, с нового телефона, из-за границы оплатили 400 000 ₸. Мошенничество? Антифрод-система должна решить это за несколько миллисекунд. Сложность в том, что мошенничество очень редкое (меньше 1%), размеченных примеров мало, а мошенники постоянно меняют приёмы. Поэтому здесь кроме обычной classification применяют <b>поиск аномалий</b>: ищут «то, что не похоже на нормальное».</p>
+<p>Данные: <code>transactions.csv</code> — 1 000 транзакций, 30 из них мошеннические (3%). Столбцы: <code>amount</code> (₸), <code>hour</code>, <code>tx_24h</code> (число транзакций за последние сутки), <code>new_device</code>, <code>foreign</code>, <code>is_fraud</code>.</p>
+<h3>Слой 1: простые правила</h3>
+<p><b>Правило IQR</b> (знакомо по M3.1): если значение выше <code>Q3 + 1.5 · IQR</code> — это выброс (outlier).</p>
+<ol>
+<li><code>amount</code>: Q1 = 4 800, Q3 = 14 725. IQR = 9 925.</li>
+<li>Верхняя граница = 14 725 + 1.5 · 9 925 = 29 612.5 ₸.</li>
+<li>Границу превышают 76 транзакций. Из них 24 действительно мошеннические.</li>
+<li>Recall = 24 / 30 = 0.80, precision = 24 / 76 = 0.32. Две тревоги из трёх ложные.</li>
+</ol>
+<p>Правило <b>z-score</b> похожее: <code>|x − среднее| / std &gt; 3</code>. Для скошенных (skewed) распределений, таких как сумма, сначала лучше взять логарифм. Бизнес-правила тоже относятся к этому слою: «новое устройство <b>и</b> заграница», «8+ транзакций в сутки».</p>
+<p>Преимущества правил: они понятны, быстры, их легко объяснить регулятору. Недостаток: они смотрят на признаки по одному. Транзакцию со средней суммой, но сделанную <i>ночью + с нового устройства + часто</i>, они не поймают.</p>
+<h3>Слой 2: IsolationForest</h3>
+<p>Идея: аномалию <b>легко изолировать</b> от остальных. Выбираем случайный признак и случайный порог и делим данные снова и снова. Нормальная точка находится внутри плотной группы, чтобы отделить её, нужно много шагов. Необычная точка стоит на краю — после двух-трёх делений она остаётся одна. Чем меньше средняя «глубина» в сотне случайных деревьев, тем подозрительнее точка.</p>
+<pre><code>from sklearn.ensemble import IsolationForest
+F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']
+iso = IsolationForest(n_estimators=100, contamination=0.03, random_state=0)
+iso.fit(df[F])                       # is_fraud НЕ ВИДИТ: unsupervised
+score = -iso.score_samples(df[F])    # выше = подозрительнее
+top = df.assign(score=score).sort_values('score', ascending=False).head(30)
+print(top['is_fraud'].mean())        # 0.83</code></pre>
+<ol>
+<li>Модель не получает <code>is_fraud</code>. Она только ищет, «кто необычный». Метка (label) нужна только для оценки.</li>
+<li><code>contamination=0.03</code> — предположение о доле аномалий; оно влияет только на порог <code>predict</code>.</li>
+<li><code>score_samples</code> идёт с обратным знаком: ниже = аномалия. Для удобства переворачиваем его минусом.</li>
+</ol>
+<h3>Precision@k: время аналитика ограничено</h3>
+<p>Отдел антифрода может проверить вручную, скажем, только 30 транзакций в день. Поэтому вопрос звучит так: «сколько из <b>k</b> самых подозрительных транзакций действительно мошеннические?»</p>
+<table>
+<tr><th>Подход</th><th>Число тревог</th><th>Мошенничество</th><th>Precision</th></tr>
+<tr><td>Правило IQR (amount)</td><td>76</td><td>24</td><td>0.32</td></tr>
+<tr><td>IsolationForest, топ-10</td><td>10</td><td>10</td><td>1.00</td></tr>
+<tr><td>IsolationForest, топ-30</td><td>30</td><td>25</td><td><b>0.83</b></td></tr>
+</table>
+<h3>Реальная система: слои</h3>
+<ul>
+<li><b>Правила</b>: жёсткие, понятные случаи (лимиты, чёрные списки). Блокируют сразу.</li>
+<li><b>Supervised-модель</b> (boosting): если есть размеченная история мошенничества. Хорошо ловит известные схемы. Метрики: PR-AUC, recall при заданной precision.</li>
+<li><b>Детектор аномалий</b>: для новых, ранее не встречавшихся схем.</li>
+<li><b>Аналитик</b>: вручную проверяет подозрительные случаи и ставит метки. Эти метки становятся данными для следующей модели.</li>
+</ul>
+<div class="tip">Аномалия ≠ мошенничество. IsolationForest находит «необычную» транзакцию: это может быть и крупная, но законная покупка состоятельного клиента. Поэтому результат — не «заблокировать», а «отправить на проверку».</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Измерять качество через accuracy: модель «всё чисто» получает 97%.</li>
+<li>Случайно передать <code>is_fraud</code> в IsolationForest как признак.</li>
+<li>Не задать <code>random_state</code>: деревья случайны, результат каждый раз меняется.</li>
+<li>Забыть о цене ложной тревоги: каждая зря заблокированная карта — это рассерженный клиент.</li>
+<li>Построить модель один раз и забыть. Мошенники адаптируются; мониторинг и переобучение обязательны.</li>
+</ul>`,
+      ex: [
+        { prompt: "Постройте правило IQR по <code>amount</code>. <code>upper</code> = Q3 + 1.5 · IQR. <code>flag</code> — транзакции с суммой выше <code>upper</code> (bool Series). Посчитайте <code>n_flag</code> — число тревог, <code>n_caught</code> — число мошеннических среди них, а также <code>precision_rule</code> и <code>recall_rule</code>.", check: { tests: "import pandas as _pd\n_d = _pd.read_csv('transactions.csv')\n_q1, _q3 = _d['amount'].quantile(0.25), _d['amount'].quantile(0.75)\n_u = _q3 + 1.5 * (_q3 - _q1)\n_f = _d['amount'] > _u\n_c = int((_f & (_d['is_fraud'] == 1)).sum())\nassert abs(upper - _u) < 1e-6, f\"upper должен быть = {_u}: q3 + 1.5 * (q3 - q1)\"\nassert len(flag) == 1000 and int(flag.sum()) == int(_f.sum()), \"flag = df['amount'] > upper (bool Series из 1000 значений)\"\nassert n_flag == int(_f.sum()), f\"n_flag должно быть = {int(_f.sum())}\"\nassert n_caught == _c, f\"n_caught должно быть = {_c}: flag и is_fraud == 1\"\nassert abs(precision_rule - _c / _f.sum()) < 1e-9, \"precision_rule = n_caught / n_flag\"\nassert abs(recall_rule - _c / _d['is_fraud'].sum()) < 1e-9, \"recall_rule = n_caught / число всех мошеннических транзакций (30)\"" }, hints: ["<code>q1 = df['amount'].quantile(0.25)</code>, <code>q3 = df['amount'].quantile(0.75)</code>", "<code>n_caught = int((flag &amp; (df['is_fraud'] == 1)).sum())</code>"] },
+        { prompt: "Обучите <code>IsolationForest(n_estimators=100, contamination=0.03, random_state=0)</code> под именем <code>iso</code> на <code>df[F]</code>. <code>score = -iso.score_samples(df[F])</code>. Запишите долю мошенничества среди 30 транзакций с самым высоким скором в <code>p_at_30</code> (precision@30). Запишите в <code>n_found</code>, сколько мошеннических транзакций среди этих 30.", check: { tests: "import pandas as _pd, numpy as _np\nfrom sklearn.ensemble import IsolationForest as _IF\n_d = _pd.read_csv('transactions.csv')\n_F = ['amount', 'hour', 'tx_24h', 'new_device', 'foreign']\n_s = -_IF(n_estimators=100, contamination=0.03, random_state=0).fit(_d[_F]).score_samples(_d[_F])\n_n = int(_d['is_fraud'].values[_np.argsort(-_s, kind='stable')[:30]].sum())\nassert len(score) == 1000, \"score — одно число на каждую транзакцию\"\nassert _np.allclose(_np.asarray(score, dtype=float), _s, atol=1e-9), \"score = -iso.score_samples(df[F]); параметры: n_estimators=100, contamination=0.03, random_state=0. is_fraud не должен быть признаком\"\nassert abs(n_found - _n) <= 1, f\"n_found должно быть = {_n}: число мошеннических среди 30 транзакций с самым высоким скором\"\nassert abs(p_at_30 - n_found / 30) < 1e-9, \"p_at_30 = n_found / 30\"" }, hints: ["<code>iso.fit(df[F])</code>, затем <code>score = -iso.score_samples(df[F])</code>", "<code>top = df.assign(score=score).sort_values('score', ascending=False).head(30)</code>"] },
+        { prompt: "Антифрод-модель отправила аналитику 50 самых подозрительных транзакций. 20 из них действительно оказались мошенническими. Всего за день было 40 случаев мошенничества. Чему равна Precision@50?", explain: "Precision@50 = 20 / 50 = 0.40. Recall@50 = 20 / 40 = 0.50 — это отдельная метрика." },
+        { prompt: "В банке мало размеченной истории мошенничества, а мошенники постоянно придумывают новые схемы. Какая архитектура подходит лучше всего?", options: ["Только одна supervised-модель, настроенная по accuracy", "Слои: жёсткие бизнес-правила + supervised-модель для известных схем + детектор аномалий для новых схем; подозрительные случаи идут на проверку аналитику", "Только правило IQR", "Автоматически блокировать все крупные суммы"], explain: "Каждый слой закрывает слабое место другого. Решения аналитика превращаются в новые размеченные данные и обновляют модель." }
+      ]
+    },
+    "mp-rec": {
+      title: "Основы рекомендательных систем",
+      body: `
+<p>«Вам может понравиться» на маркетплейсе, «Те, кто смотрел это, смотрели и вот это» в онлайн-кинотеатре — это <b>рекомендательные системы</b> (recommender systems). Цель: показать каждому пользователю несколько самых нужных ему товаров из тысяч.</p>
+<p>Данные: <code>purchases.csv</code> — 415 покупок 117 клиентов по 15 товарам. Столбцы: <code>user_id</code>, <code>item</code>. Оценок (рейтингов) нет, есть только факт «купил» — это называют <b>implicit feedback</b>, в реальной жизни данные чаще всего именно такие. Названия товаров в файле на казахском.</p>
+<h3>Baseline: популярность</h3>
+<p>Рекомендовать всем самые продаваемые товары. Личный вкус не учитывается, но для нового клиента (о нём мы ничего не знаем — <b>cold start</b>) это единственный путь. Здесь топ-3: бөтелке (бутылка, 40), зарядтағыш (зарядка, 39), смартфон (38).</p>
+<h3>Матрица user-item</h3>
+<pre><code>M = pd.crosstab(df['user_id'], df['item'])   # 117 × 15, в ячейке 0 или 1</code></pre>
+<p>Каждая строка — клиент, каждый столбец — товар. Теперь каждый товар — вектор длины 117: кто его купил.</p>
+<h3>Сходство item-item</h3>
+<p>Если два товара покупают <b>одни и те же люди</b>, они похожи. Мера — <b>косинус</b> между векторами (M4.3):</p>
+<ol>
+<li>Товар A купили 3 клиента: {1, 2, 3}. Товар B — 4 клиента: {2, 3, 4, 5}.</li>
+<li>Общие покупатели: {2, 3} — 2 человека.</li>
+<li>cos = 2 / √(3 · 4) = 2 / 3.46 ≈ 0.58.</li>
+</ol>
+<pre><code>from sklearn.metrics.pairwise import cosine_similarity
+sim = pd.DataFrame(cosine_similarity(M.T), index=M.columns, columns=M.columns)
+print(sim['смартфон'].drop('смартфон').sort_values(ascending=False).head(3))
+# құлаққап      0.552
+# зарядтағыш    0.546
+# қап           0.429</code></pre>
+<p>Модель обнаружила, что «смартфон, құлаққап (наушники), зарядтағыш (зарядка), қап (чехол) — одна группа», только по истории покупок: ей никто об этом не говорил.</p>
+<h3>Рекомендация клиенту</h3>
+<ol>
+<li>Клиент №1 купил тышқан (мышь) и пернетақта (клавиатуру).</li>
+<li>Скор каждого товара = сумма его сходств с товарами, которые купил клиент: <code>sim.values @ M.loc[1].values</code>.</li>
+<li>Убираем уже купленные товары, остальные сортируем по скору.</li>
+<li>Результат: сөмке (сумка), ноутбук, зарядтағыш (зарядка). Baseline по популярности предложил бы ему бөтелке (бутылку).</li>
+</ol>
+<h3>Как оцениваем: precision@k</h3>
+<p>У каждого клиента скрываем одну покупку, по остальным строим рекомендации и проверяем, попал ли скрытый товар в топ-k. На этих данных (топ-3): популярность находит его в 36% случаев, item-item — в 56%. <b>Precision@k</b> — сколько из k рекомендованных товаров действительно пригодилось.</p>
+<div class="tip">В реальных системах после офлайн-метрики обязательно проводят A/B-тест: действительно ли блок рекомендаций увеличивает продажи? Офлайн precision@k нужна только для отбора кандидатов.</div>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Строить сложную модель без baseline. Обыграть популярность труднее, чем кажется.</li>
+<li>Снова рекомендовать клиенту уже купленный товар (забыть фильтр).</li>
+<li>Не разделять train и test по времени при оценке: «предсказывать» прошлое по будущим покупкам.</li>
+<li>Забыть о cold start: у нового клиента и нового товара нет истории, для них нужна отдельная стратегия.</li>
+<li>Рекомендовать только популярные товары: редкие, но точно подходящие товары вообще перестают показываться.</li>
+</ul>`,
+      ex: [
+        { prompt: "Baseline по популярности: запишите названия 3 самых продаваемых товаров в список <code>top3</code> (по убыванию). Постройте матрицу user-item в <code>M</code>: <code>pd.crosstab</code>, строки — <code>user_id</code>, столбцы — <code>item</code>.", check: { tests: "import pandas as _pd\n_d = _pd.read_csv('purchases.csv')\n_vc = _d['item'].value_counts()\nassert list(top3) == list(_vc.head(3).index), \"top3 — df['item'].value_counts().head(3).index (список)\"\nassert isinstance(M, _pd.DataFrame) and M.shape == (117, 15), \"M — таблица 117 × 15: pd.crosstab(df['user_id'], df['item'])\"\nassert int(M.values.sum()) == len(_d) and int(M.values.max()) == 1, \"Ячейки M — 0/1, их сумма равна числу покупок\"\nassert int(M['смартфон'].sum()) == int(_vc['смартфон']), \"Столбцы — названия товаров\"" }, hints: ["<code>df['item'].value_counts().head(3).index</code>", "<code>M = pd.crosstab(df['user_id'], df['item'])</code>"] },
+        { prompt: "<code>M</code> готова. Запишите таблицу косинусного сходства между товарами в <code>sim</code> (DataFrame 15 × 15, индекс и столбцы — названия товаров). Запишите 3 товара, наиболее похожих на смартфон (не считая его самого), в список <code>nearest</code>. Посчитайте скоры для клиента №1 и запишите в список <code>recs</code> 3 товара с самым высоким скором среди тех, что он ещё не покупал.", check: { tests: "import pandas as _pd, numpy as _np\n_d = _pd.read_csv('purchases.csv')\n_M = _pd.crosstab(_d['user_id'], _d['item'])\n_A = _M.values.astype(float); _nr = _np.sqrt((_A ** 2).sum(axis=0))\n_S = _pd.DataFrame((_A.T @ _A) / _np.outer(_nr, _nr), index=_M.columns, columns=_M.columns)\nassert isinstance(sim, _pd.DataFrame) and sim.shape == (15, 15), \"sim — DataFrame 15 × 15: сходство между товарами (используйте M.T, а не M)\"\nassert _np.allclose(sim.loc[_M.columns, _M.columns].values, _S.values, atol=1e-9), \"Значения сходства не совпадают: cosine_similarity(M.T)\"\n_ne = list(_S['смартфон'].drop('смартфон').sort_values(ascending=False).head(3).index)\nassert list(nearest) == _ne, \"nearest: sim['смартфон'].drop('смартфон').sort_values(ascending=False).head(3).index\"\n_own = _M.loc[1]\n_sc = _pd.Series(_S.values @ _own.values, index=_M.columns)[_own == 0].sort_values(ascending=False)\nassert len(recs) == 3 and not any(_own[r] == 1 for r in recs), \"recs — 3 товара, которые клиент №1 ещё не покупал\"\nassert set(recs) == set(_sc.head(3).index), \"recs: скор = sim.values @ M.loc[1].values, уберите купленные товары и возьмите 3 с самым высоким скором\"" }, hints: ["<code>sim = pd.DataFrame(cosine_similarity(M.T), index=M.columns, columns=M.columns)</code>", "<code>own = M.loc[1]</code>; <code>scores = pd.Series(sim.values @ own.values, index=M.columns)</code>; фильтр: <code>scores[own == 0]</code>"] },
+        { prompt: "Система порекомендовала клиенту 5 товаров. На следующей неделе клиент купил 2 из них. Чему равна Precision@5?", explain: "Precision@5 = 2 / 5 = 0.4: сколько из рекомендованного пригодилось." }
+      ]
+    },
     "mp-gate": {
       title: "Экзамен модуля: ML in Practice",
       body: `
 <p>Итоговая проверка. Pipeline, leakage, feature engineering, тюнинг, ансамбли, threshold и интерпретация — всё вместе. Держите модели небольшими (n_estimators ≤ 100, cv ≤ 5) и задавайте <code>random_state</code>.</p>`,
       ex: [
-        { prompt: "Предскажите цену квартир flats. Создайте Pipeline (или GridSearchCV) с именем <code>model</code>: он должен принимать сырые столбцы <code>X_train</code> (district — в текстовом виде). Feature engineering и модель выбирайте сами. Test R² (<code>model.score(X_test, y_test)</code>) должен быть не меньше <b>0.90</b>. Не используйте <code>price_mln</code> как признак.", hints: [], check: {"tests":"from sklearn.pipeline import Pipeline as _P\nfrom sklearn.model_selection import GridSearchCV as _G\nassert isinstance(model, (_P, _G)), 'model — Pipeline или GridSearchCV'\nassert 'price_mln' not in X_train.columns, 'price_mln не должен быть признаком'\nassert not any('price' in str(c) for c in X_test.columns), 'Признак, построенный из цены, — target leakage'\nassert len(X_test) == 100, 'X_test нельзя менять (100 строк)'\n_r2 = model.score(X_test, y_test)\nassert _r2 >= 0.90, f'Test R² должен быть не меньше 0.90, у вас {_r2:.3f}. Вы добавили district через OneHotEncoder?'"} },
+        { prompt: "Предскажите цену квартир flats. Создайте Pipeline (или GridSearchCV) с именем <code>model</code>: он должен принимать сырые столбцы <code>X_train</code> (district — в текстовом виде). Feature engineering и модель выбирайте сами: например, <code>LinearRegression</code> или <code>Ridge</code> из M5.1 либо регрессионный вариант ансамблей из этого модуля. Test R² (<code>model.score(X_test, y_test)</code>) должен быть не меньше <b>0.90</b>. Не используйте <code>price_mln</code> как признак.", hints: [], check: {"tests":"from sklearn.pipeline import Pipeline as _P\nfrom sklearn.model_selection import GridSearchCV as _G\nassert isinstance(model, (_P, _G)), 'model — Pipeline или GridSearchCV'\nassert 'price_mln' not in X_train.columns, 'price_mln не должен быть признаком'\nassert not any('price' in str(c) for c in X_test.columns), 'Признак, построенный из цены, — target leakage'\nassert len(X_test) == 100, 'X_test нельзя менять (100 строк)'\n_r2 = model.score(X_test, y_test)\nassert _r2 >= 0.90, f'Test R² должен быть не меньше 0.90, у вас {_r2:.3f}. Вы добавили district через OneHotEncoder?'"} },
         { prompt: "Churn: отдел удержания хочет находить не меньше <b>70%</b> уходящих (recall ≥ 0.70), но так, чтобы не меньше <b>40%</b> предупреждений были верными (precision ≥ 0.40). Задайте <code>model</code> (Pipeline с predict_proba) и число <code>threshold</code>. Проверка: <code>(model.predict_proba(X_test)[:, 1] &gt;= threshold)</code>.", hints: [], check: {"tests":"from sklearn.metrics import recall_score as _rs, precision_score as _ps\nassert model is not None and hasattr(model, 'predict_proba'), 'model — обученная модель с predict_proba'\nassert 0 < threshold < 1, 'threshold между 0 и 1'\nassert len(X_test) == 150, 'X_test нельзя менять'\n_yp = (model.predict_proba(X_test)[:, 1] >= threshold).astype(int)\n_r, _p = _rs(y_test, _yp), _ps(y_test, _yp, zero_division=0)\nassert _r >= 0.70, f'recall {_r:.2f} < 0.70: понизьте threshold или используйте class_weight'\nassert _p >= 0.40, f'precision {_p:.2f} < 0.40: threshold слишком низкий'"} },
         { prompt: "Аналитик заполнил пропуски в <code>age</code> медианой по всем данным, обучил StandardScaler на всех данных, а затем разделил на train/test. Какое исправление самое правильное?", options: ["Использовать среднее вместо медианы","Сначала разделить, а SimpleImputer и StandardScaler поместить внутрь Pipeline и обучать только на train","Увеличить test_size до 0.5","Заменить StandardScaler на MinMaxScaler"], explain: "Каждый шаг, который учится на данных, должен обучаться только на train. Pipeline автоматически обеспечивает это в CV и в production." },
         { prompt: "В Random Forest feature_importances_ у <code>data_gb</code> равна 0.14, а permutation importance на test ≈ 0. Какой вывод самый правильный?", options: ["data_gb — один из самых важных признаков","Impurity importance показывает, что признак использовался для разделения шума в train; на test он не улучшает прогноз","Permutation importance посчитана неправильно","data_gb — причина churn"], explain: "Impurity importance считается на train и переоценивает непрерывные признаки. Permutation на test напрямую измеряет, «насколько хуже станет модель без признака»." }

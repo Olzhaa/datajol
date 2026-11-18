@@ -146,7 +146,7 @@ dim_customer ── fact_orders ── dim_product
 Orders    = COUNTROWS(orders)
 Customers = DISTINCTCOUNT(orders[customer_id])
 AOV       = DIVIDE([Revenue], [Orders])</code></pre>
-<div class="tip"><code>DIVIDE(a, b)</code> при делении на ноль не выдаёт ошибку, а возвращает пустое значение. Всегда используйте его вместо <code>a / b</code>.</div>
+<div class="tip"><code>a / b</code> при делении на ноль или на пустое значение не выдаёт ошибку, но в визуале показывает <code>∞</code> (Infinity) или <code>NaN</code>. <code>DIVIDE(a, b)</code> в таком случае возвращает пустое значение (BLANK), поэтому при делении используйте его.</div>
 <p>Меры могут ссылаться друг на друга: внутри <code>AOV</code> используются <code>[Revenue]</code> и <code>[Orders]</code>. Это помогает не повторять код.</p>
 <h3>Эквивалент в SQL</h3>
 <table>
@@ -160,7 +160,7 @@ AOV       = DIVIDE([Revenue], [Orders])</code></pre>
 <ul>
 <li>Делать сумму через calculated column: она не меняется от slicer и занимает память.</li>
 <li>Считать уникальных клиентов как <code>COUNT(orders[customer_id])</code>: это даёт число заказов, а <code>COUNTROWS(customers)</code> добавляет и тех, кто ещё ничего не купил.</li>
-<li>Делить через <code>/</code>: при пустом фильтре возникает ошибка деления на ноль.</li>
+<li>Делить через <code>/</code>: если делитель равен нулю или пуст, в таблице появляется <code>∞</code> или <code>NaN</code>. <code>DIVIDE</code> в таком случае возвращает BLANK.</li>
 </ul>`,
       ex: [
         { prompt: 'Как сделать «Средний чек», который меняется при выборе города в slicer?', options: ['Calculated column', 'Measure', 'Шаг Power Query', 'Новая таблица'], explain: 'Measure вычисляется в контексте визуала и фильтров, поэтому меняется в зависимости от выбора.' },
@@ -198,7 +198,7 @@ Share %       = DIVIDE([Revenue], [Total Revenue])</code></pre>
 <h3>Частые ошибки</h3>
 <ul>
 <li>Писать в <code>ALL</code> другой столбец: строки по каналу, а <code>ALL(customers[city])</code> — фильтр по каналу остаётся, и доля в каждой строке равна 100%.</li>
-<li>Делить долю через <code>/</code>: ошибка в пустых строках. Используйте <code>DIVIDE</code>.</li>
+<li>Делить долю через <code>/</code>: в строках, где делитель пуст или равен нулю, видно <code>∞</code> или <code>NaN</code>. Используйте <code>DIVIDE</code>: он возвращает BLANK.</li>
 <li>Думать, что CALCULATE «добавляется» к внешнему фильтру: по тому же столбцу он <b>заменяет</b> внешний фильтр.</li>
 </ul>
 <div class="tip">На собеседовании часто спрашивают: «Чем row context отличается от filter context?» Row context — «текущая строка» в calculated column. Filter context — фильтры, заданные визуалом и slicer. CALCULATE превращает row context в filter context (context transition).</div>`,
@@ -231,7 +231,7 @@ Revenue YTD = TOTALYTD([Revenue], 'Date'[Date])</code></pre>
 <tr><td>2024-03</td><td>45 000</td><td>60 000</td><td>−25%</td><td>155 000</td></tr>
 <tr><td>2024-04</td><td>54 000</td><td>45 000</td><td>20%</td><td>209 000</td></tr>
 </table>
-<p>Февраль: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Март: (45 000 − 60 000) / 60 000 = −25%. В январе прошлого месяца нет, поэтому Revenue PM пусто, а <code>DIVIDE</code> даёт не ошибку, а пустое значение. YTD — накопительная сумма с начала года: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> работает точно так же, только сдвигает на год назад (YoY). Наши данные только за 2024 год, поэтому она будет пустой.</p>
+<p>Февраль: (60 000 − 50 000) / 50 000 = 0.2 = 20%. Март: (45 000 − 60 000) / 60 000 = −25%. В январе прошлого месяца нет, поэтому Revenue PM пусто, а <code>DIVIDE</code> даёт не ∞ или NaN, а пустое значение (BLANK). YTD — накопительная сумма с начала года: 50 000 + 60 000 + 45 000 = 155 000. <code>SAMEPERIODLASTYEAR</code> работает точно так же, только сдвигает на год назад (YoY). Наши данные только за 2024 год, поэтому она будет пустой.</p>
 <h3>Эквивалент в SQL</h3>
 <p>В SQL прошлый месяц даёт <code>LAG()</code>, накопительный итог с начала года — <code>SUM() OVER (ORDER BY month)</code>. Сначала считаем выручку по месяцам в CTE, затем добавляем оконные функции.</p>
 <pre><code>SELECT month, revenue,
@@ -333,11 +333,80 @@ FROM monthly;</code></pre>
       ex: [
         { prompt: 'Где правильнее заполнять пустые значения и исправлять типы данных?', options: ['В мере DAX', 'В Power Query', 'В формате визуала', 'В slicer'], explain: 'Очистка делается до модели, в Power Query.' },
         { prompt: 'Таблица в star schema, которая хранит сумму и количество продаж:', options: ['Dimension', 'Fact', 'Date table', 'Bridge'], explain: 'Таблица fact хранит события и числовые значения.' },
-        { prompt: 'Почему вместо <code>[Revenue] / [Orders]</code> пишут <code>DIVIDE([Revenue], [Orders])</code>?', options: ['Быстрее пишется', 'При делении на ноль не выдаёт ошибку, а возвращает пустое значение', 'Округляет результат', 'Разницы нет'], explain: 'DIVIDE безопасно обрабатывает деление на ноль.' },
+        { prompt: 'Почему вместо <code>[Revenue] / [Orders]</code> пишут <code>DIVIDE([Revenue], [Orders])</code>?', options: ['Быстрее пишется', 'При делении на ноль возвращает пустое значение (BLANK) вместо ∞ или NaN', 'Округляет результат', 'Разницы нет'], explain: 'DIVIDE безопасно обрабатывает деление на ноль: <code>/</code> в таком случае показывает ∞ или NaN, а DIVIDE возвращает BLANK.' },
         { prompt: 'Каким должен быть делитель, чтобы в таблице по каналам показать долю каждого канала в общей выручке?', options: ['SUM(orders[amount])', 'CALCULATE([Revenue], ALL(customers[channel]))', 'COUNTROWS(customers)', '[Revenue]'], explain: 'ALL снимает фильтр по каналу и даёт общую выручку всех каналов.' },
         { prompt: '«Средний чек», который фильтруется по городу, сделали как calculated column. Что произойдёт?', options: ['Всё будет работать правильно', 'Значение вычислится один раз на уровне строки и не будет правильно реагировать на фильтр', 'Power BI выдаст ошибку', 'Отчёт станет быстрее'], explain: 'Агрегаты должны быть мерами. Calculated column вычисляется по строкам при загрузке.' },
         { prompt: 'В апреле выручка 66 000 ₸, в марте 88 000 ₸. Каково изменение MoM в процентах? (если число отрицательное, пишите с минусом)', unit: '%', explain: '(66 000 − 88 000) / 88 000 = −0.25 = −25%.' },
         { prompt: 'Сделайте матрицу Power BI на SQL. По чистым заказам для каждого города (<code>customers.city</code>) выведите <code>city</code>, <code>revenue</code>, <code>orders</code>, <code>aov</code> (до целого) и <code>share_pct</code> (доля в общей выручке, %, 1 знак). Отсортируйте по убыванию выручки.' }
+      ]
+    },
+    'pbi-9': {
+      title: 'Итераторы DAX: SUMX, RELATED, VAR, ALLSELECTED',
+      body: `
+<p><code>SUM</code>, <code>CALCULATE</code> и <code>ALL</code> закрывают большую часть повседневной отчётности. Но и на собеседовании, и в реальной модели спрашивают следующий уровень: <b>итераторы</b>, которые считают строка за строкой, получение значения из связанной таблицы, переменные и долю с учётом slicer. Примеры — на прежней модели кофейни: <code>orders</code> (факт) и <code>customers</code> (измерение). Числа даны по чистым заказам.</p>
+<h3>Разница между SUM и SUMX</h3>
+<p><code>SUM(orders[amount])</code> складывает один <b>столбец</b>. <code>SUMX(таблица, выражение)</code> вычисляет выражение для каждой строки таблицы и складывает результаты. Если выражение сложнее столбца (умножение, условие, значение из другой таблицы), нужен итератор.</p>
+<pre><code>Revenue     = SUM(orders[amount])
+Net Revenue =
+SUMX(
+    orders,
+    orders[amount] *
+        SWITCH(RELATED(customers[channel]),
+               "referral", 0.90,     -- 10% кэшбэка другу
+               "2gis",     0.95,     -- 2GIS берёт 5% комиссии
+               1)
+)</code></pre>
+<p>Внутри итератора есть <b>контекст строки</b> (row context): <code>orders[amount]</code> означает «сумма в текущей строке». Так же работают <code>AVERAGEX</code>, <code>MINX</code>, <code>MAXX</code>, <code>COUNTX</code>, <code>RANKX</code>.</p>
+<h3>RELATED: получаем значение по связи</h3>
+<p><code>RELATED(customers[channel])</code> приносит канал клиента, соответствующего текущей строке <code>orders</code>. Функция идёт по связи в модели со стороны «многие» к стороне «один» (заказ → клиент). Аналог в SQL — <code>JOIN</code>. Для обратного направления (клиент → его заказы) используется <code>RELATEDTABLE</code>.</p>
+<p>Результат measure выше: instagram 124 050 × 1 + 2gis 133 900 × 0.95 + referral 76 900 × 0.90 = <b>320 465</b>.</p>
+<h3>Итерация по виртуальной таблице</h3>
+<p>«Средняя выручка на одного клиента» — это не средний чек. Сначала нужно посчитать выручку каждого клиента, а потом среднее этих значений:</p>
+<pre><code>Avg Revenue per Customer =
+AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code></pre>
+<p><code>VALUES(orders[customer_id])</code> — таблица из одного столбца с уникальными клиентами в текущем фильтре. <code>AVERAGEX</code> обходит её строка за строкой и для каждого клиента вычисляет <code>[Revenue]</code> (measure превращает контекст строки в контекст фильтра: context transition). Результат: 334 850 / 39 клиентов ≈ <b>8 586</b>. А средний чек <code>AVERAGE(orders[amount])</code> ≈ 2 409: это ответ на совсем другой вопрос.</p>
+<h3>VAR и RETURN</h3>
+<pre><code>Big Customers =
+VAR Threshold = 8000
+VAR PerCustomer = VALUES(orders[customer_id])
+RETURN
+    COUNTROWS(FILTER(PerCustomer, [Revenue] &gt;= Threshold))</code></pre>
+<ul>
+<li>Переменная вычисляется <b>один раз</b>, в контексте того места, где она записана. Вместо того чтобы писать одно выражение дважды, вы даёте ему имя и используете повторно: формула читается легче и работает быстрее.</li>
+<li>Переменная — это постоянное значение. Даже если потом поместить её внутрь <code>CALCULATE</code>, она не пересчитывается.</li>
+<li>Сложную measure удобно проверять по шагам: после <code>RETURN</code> временно ставите другую переменную и видите промежуточный результат.</li>
+</ul>
+<p>Здесь результат — <b>20</b>: 20 из 39 клиентов потратили 8 000 ₸ и больше.</p>
+<h3>ALL и ALLSELECTED</h3>
+<p><code>ALL</code> снимает все фильтры со столбца, включая slicer. <code>ALLSELECTED</code> снимает только фильтр строк самого визуала, а значения, которые пользователь <b>выбрал в slicer</b>, сохраняет.</p>
+<pre><code>Share of All %      = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))
+Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code></pre>
+<p>В slicer выбраны Алматы и Астана (Шымкент исключён):</p>
+<table>
+<tr><th>city</th><th>Revenue</th><th>Share of All %</th><th>Share of Selected %</th></tr>
+<tr><td>Алматы</td><td>154 400</td><td>46.1%</td><td>51.9%</td></tr>
+<tr><td>Астана</td><td>142 950</td><td>42.7%</td><td>48.1%</td></tr>
+<tr><td><b>Total</b></td><td>297 350</td><td>88.8%</td><td>100%</td></tr>
+</table>
+<p><code>ALL</code> ставит в знаменатель 334 850 ₸ по трём городам, <code>ALLSELECTED</code> — 297 350 ₸ по двум видимым городам. Пользователь обычно ждёт «долю внутри того, что я вижу», то есть <code>ALLSELECTED</code>.</p>
+<h3>Проверка через SQL</h3>
+<p>Если есть сомнения в правильности measure, посчитайте то же число отдельно в SQL и сравните. Перевод: <code>SUMX(orders, ...)</code> → <code>SUM(...)</code>, <code>RELATED</code> → <code>JOIN</code>, <code>SWITCH</code> → <code>CASE</code>, <code>AVERAGEX(VALUES(...), [Revenue])</code> → сначала подзапрос с <code>GROUP BY</code>, затем <code>AVG</code>.</p>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Писать <code>SUMX(orders, orders[amount])</code> для простой суммы: результат верный, но <code>SUM</code> короче и понятнее. Итератор нужен только там, где требуется расчёт по строкам.</li>
+<li>Вызывать <code>RELATED</code> там, где нет контекста строки (внутри обычной measure): будет ошибка. Функция работает только внутри итератора или calculated column.</li>
+<li>Путать средний чек и среднее на клиента: <code>AVERAGE(orders[amount])</code> и <code>AVERAGEX(VALUES(orders[customer_id]), [Revenue])</code> отвечают на два разных вопроса.</li>
+<li>Использовать в доле <code>ALL</code>, из-за чего при выборе в slicer сумма процентов перестаёт давать 100%.</li>
+</ul>
+<div class="tip">На вопрос «в чём разница между SUM и SUMX?» на собеседовании достаточно одной фразы: «SUM складывает один столбец, а SUMX обходит таблицу строка за строкой, вычисляет выражение в каждой строке и затем складывает».</div>`,
+      ex: [
+        { prompt: 'В таблице <code>order_items</code> есть столбцы <code>quantity</code> и <code>unit_price</code>, готового столбца с суммой нет. Какая measure правильно считает выручку?', options: ['SUM(order_items[quantity]) * SUM(order_items[unit_price])', 'SUMX(order_items, order_items[quantity] * order_items[unit_price])', 'SUM(order_items[quantity] * order_items[unit_price])', 'AVERAGE(order_items[unit_price])'], explain: 'Умножение должно выполняться отдельно в каждой строке, а затем результаты складываются: это SUMX. SUM принимает только один столбец, а произведение сумм даёт совсем другое (слишком большое) число.' },
+        { prompt: `Повторите measure <code>Net Revenue</code> на SQL. По чистым заказам (<code>status = 'paid'</code>, <code>amount</code> не пустой и меньше 20 000) сложите суммы, умножив каждую на коэффициент канала: referral × 0.90, 2gis × 0.95, остальные × 1. Одна строка: <code>net_revenue</code> (<code>ROUND</code> до целого).`, hints: ['<code>RELATED(customers[channel])</code> → <code>JOIN customers c ON c.id = o.customer_id</code>', `<code>SWITCH</code> → <code>CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END</code>`, '<code>ROUND(SUM(o.amount * CASE ... END))</code>; ответ должен совпасть с числом 320 465 из урока.'] },
+        { prompt: 'Посчитайте на SQL, что покажет measure <code>Avg Revenue per Customer</code> в матрице по городам. По чистым заказам: <code>city</code>, <code>customers</code> (число купивших клиентов), <code>avg_per_customer</code> (среднее личных выручек клиентов, <code>ROUND</code> до целого).', starter: 'WITH per AS (\n  -- чистая выручка каждого клиента\n  \n)\nSELECT ', hints: ['Шаг 1 (<code>VALUES</code> + <code>[Revenue]</code>): выручка каждого клиента, <code>GROUP BY c.id, c.city</code>.', 'Шаг 2 (<code>AVERAGEX</code>): <code>SELECT city, COUNT(*), ROUND(AVG(spent)) FROM per GROUP BY city</code>.'] },
+        { prompt: 'Чистая выручка: Алматы 154 400, Астана 142 950, Шымкент 37 500. В slicer выбраны Алматы и Шымкент. Сколько процентов покажет measure <code>Share of Selected %</code> (ALLSELECTED) в строке Шымкента? С одним знаком после запятой.', explain: 'ALLSELECTED ставит в знаменатель только выбранные города: 154 400 + 37 500 = 191 900. 37 500 / 191 900 ≈ 19.5%. С ALL получилось бы 37 500 / 334 850 ≈ 11.2%.' },
+        { prompt: `<pre><code>Test =
+VAR Total = [Revenue]
+RETURN CALCULATE(Total, customers[city] = "Астана")</code></pre>Что покажет эта measure в строке «Алматы»?`, options: ['Выручку Астаны', 'Выручку Алматы: переменная Total вычислена один раз до CALCULATE, в контексте Алматы, и потом не меняется', 'Общую выручку', 'Выдаст ошибку'], explain: 'VAR — постоянное значение. Если хотите изменить фильтр, пишите не переменную, а саму measure: <code>CALCULATE([Revenue], customers[city] = "Астана")</code>.' }
       ]
     }
   }

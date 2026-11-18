@@ -277,7 +277,7 @@ GROUP BY cohort, a.month;</code></pre>
 <ul>
 <li>Instead of <code>SELECT *</code>, take only the columns you need.</li>
 <li>Don't apply functions to an indexed column: <code>WHERE substr(order_date,1,4) = '2024'</code> "switches off" the index, while <code>WHERE order_date &gt;= '2024-01-01' AND order_date &lt; '2025-01-01'</code> uses it.</li>
-<li>Filter first, then JOIN: fewer rows, faster results.</li>
+<li>Write filters early, inside the CTE: the query is easier to read and the intermediate result gets smaller. Modern optimisers (PostgreSQL, ClickHouse) "push" the filter below the JOIN on their own (predicate pushdown), so this is mainly about readability and avoiding mistakes; check the speed with <code>EXPLAIN</code>.</li>
 </ul>`,
       ex: [
         { prompt: 'Create an index on the <code>customer_id</code> column of the <code>orders</code> table (any name).', hints: ['<code>CREATE INDEX name ON table(column);</code>'] },
@@ -296,6 +296,172 @@ GROUP BY cohort, a.month;</code></pre>
         { prompt: '<b>metrics.</b> Show the days in Almaty when revenue <b>fell</b> compared with the previous day: <code>day</code>, <code>revenue</code>, <code>prev</code> (the previous day\'s revenue).' },
         { prompt: '<b>metrics.</b> Show conversion by channel (<code>channel</code>): <code>channel</code>, <code>users</code> (number of users), <code>buyers</code> (those who reached the <code>purchase</code> step). Use <code>LEFT JOIN</code> or <code>CASE</code>.' },
         { prompt: 'Why does <code>WHERE RANK() OVER (...) = 1</code> give an error?', options: ['RANK only works in ORDER BY', 'Window functions are computed after WHERE, so you must filter outside a subquery/CTE', 'SQLite does not support RANK', 'WHERE can only contain numbers'], explain: 'The logical order: FROM → WHERE → GROUP BY → HAVING → window → SELECT → ORDER BY.' }
+      ]
+    },
+    'adv-10': {
+      title: 'Calendar table and gaps-and-islands',
+      body: `
+<p><code>GROUP BY day</code> returns only the days that <b>have</b> data. A day when nobody logged in is simply missing from the result. On a chart that hole goes unnoticed, and a moving average is computed wrongly: 7 rows are no longer 7 days. The fix is a <b>calendar table</b> (date spine): a list of every day, to which the data is attached with a <code>LEFT JOIN</code>.</p>
+<p>This lesson uses the <code>daily_active(user_id, day)</code> table of the <code>metrics</code> database: which user opened the app on which day of September 2024. Nobody logged in on 15 September.</p>
+<h3>A list of days with a recursive CTE</h3>
+<pre><code>WITH RECURSIVE cal(day) AS (
+  SELECT '2024-09-01'                 -- the starting row
+  UNION ALL
+  SELECT date(day, '+1 day') FROM cal -- builds the next row from the previous one
+  WHERE day &lt; '2024-09-30'           -- the stop condition
+)
+SELECT day FROM cal;</code></pre>
+<p>A recursive CTE has two parts: the first <code>SELECT</code> runs once, and the second is applied to its own result again and again until the stop condition becomes false. If you forget the stop condition, the query loops forever.</p>
+<p>PostgreSQL has a ready-made function: <code>generate_series('2024-09-01'::date, '2024-09-30', interval '1 day')</code>. Company warehouses usually have a ready <code>dim_date</code> table.</p>
+<h3>Zero-fill</h3>
+<pre><code>SELECT c.day, COUNT(a.user_id) AS dau
+FROM cal c
+LEFT JOIN daily_active a ON a.day = c.day
+GROUP BY c.day;</code></pre>
+<p>The calendar is on the <b>left</b>, so every day is kept. <code>COUNT(a.user_id)</code> does not count NULL, which is why an empty day gives 0. If you write <code>COUNT(*)</code>, an empty day becomes 1.</p>
+<h3>Gaps-and-islands: finding unbroken streaks</h3>
+<p>The question: "How many days in a row did the user log in?" Consecutive days are an "island", and the empty days between them are a "gap". The trick: subtract the row number from the date. Inside one island the date and the number both grow by 1 together, so the difference stays <b>constant</b>.</p>
+<table>
+<tr><th>day</th><th>rn</th><th>day − rn days</th><th>Island</th></tr>
+<tr><td>2024-09-01</td><td>1</td><td>2024-08-31</td><td>island 1</td></tr>
+<tr><td>2024-09-02</td><td>2</td><td>2024-08-31</td><td>island 1</td></tr>
+<tr><td>2024-09-04</td><td>3</td><td>2024-09-01</td><td>island 2</td></tr>
+<tr><td>2024-09-05</td><td>4</td><td>2024-09-01</td><td>island 2</td></tr>
+</table>
+<pre><code>WITH r AS (
+  SELECT day, ROW_NUMBER() OVER (ORDER BY day) AS rn
+  FROM daily_active WHERE user_id = 1
+), g AS (
+  SELECT day, date(day, '-' || rn || ' day') AS grp FROM r
+)
+SELECT MIN(day) AS start_day, MAX(day) AS end_day, COUNT(*) AS days
+FROM g GROUP BY grp;</code></pre>
+<p>The same approach answers "how many months in a row did they pay", "how long did the server run without interruption" and "how many days in a row was the product out of stock".</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Putting the calendar on the right, or filtering with <code>WHERE a.user_id = 1</code>: the LEFT JOIN turns into an INNER JOIN and the empty days disappear. Write the condition on the right table inside <code>ON</code>.</li>
+<li>If there are several rows per day (an events table, for example), first bring the data to "one user, one day" with <code>DISTINCT</code>. Otherwise <code>ROW_NUMBER</code> breaks the difference.</li>
+<li>Forgetting <code>PARTITION BY user_id</code> when there are several users.</li>
+</ul>
+<div class="tip">"Find the longest streak" is a common interview task. Start your answer with one sentence, "the date minus ROW_NUMBER stays constant": the interviewer sees at once that you know the technique.</div>`,
+      ex: [
+        { prompt: 'Using a recursive CTE, show all 30 days of September 2024. Column: <code>day</code> (<code>YYYY-MM-DD</code>), in date order.', hints: [`The second part: <code>SELECT date(day, '+1 day') FROM cal</code>`, `The stop condition: <code>WHERE day &lt; '2024-09-30'</code>`] },
+        { prompt: 'For each day of September, show DAU (the number of users who logged in that day): <code>day</code>, <code>dau</code>. A day when nobody logged in must appear with 0. 30 rows in total, in date order.', hints: ['<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>', '<code>COUNT(a.user_id)</code> gives 0 on an empty day, while <code>COUNT(*)</code> gives 1.'] },
+        { prompt: 'Show the unbroken streaks (islands) of user 1: <code>start_day</code>, <code>end_day</code>, <code>days</code> (the number of days in the streak). Sort by start date.', hints: [`The group label: <code>date(day, '-' || rn || ' day') AS grp</code>`, '<code>GROUP BY grp</code>, then <code>MIN(day)</code>, <code>MAX(day)</code>, <code>COUNT(*)</code>.'] },
+        { prompt: 'Find each user\'s longest streak in September: <code>user_id</code>, <code>longest</code> (the largest number of consecutive login days). Sort by <code>longest</code> descending, ties by <code>user_id</code>.', hints: ['<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>', 'First get the length of each streak with <code>GROUP BY user_id, grp</code>, then take the longest with <code>MAX</code>.'] },
+        { prompt: 'A daily sales table has no rows for 3 days. Without a calendar, an analyst computed a "7-day" average as <code>AVG(revenue) OVER (ORDER BY day ROWS 6 PRECEDING)</code>. What is wrong?', options: ['Nothing, it is all correct', 'The window takes 7 rows, not 7 days: the missing days are not counted as 0, so the average comes out too high and the window covers more than 7 days', 'SQLite does not support this function', 'The average will always be NULL'], explain: 'ROWS counts rows. First LEFT JOIN to a calendar and fill the missing days with 0; then 7 rows = 7 days.' }
+      ]
+    },
+    'adv-11': {
+      title: 'UNION, self-join, NTILE and FIRST_VALUE',
+      body: `
+<p>This lesson collects four tools that come up often both in interviews and at work: joining a table to itself, set operations, splitting into quartiles, and taking the first or last value of a window.</p>
+<h3>Self-join: a table with itself</h3>
+<p>In the <code>employees</code> table of the <code>staff</code> database, the <code>manager_id</code> column points to the <code>id</code> of the same table. To put the manager's name next to each employee, we take the table twice under two different aliases:</p>
+<pre><code>SELECT e.name, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;</code></pre>
+<p><code>e</code> is the employee and <code>m</code> is the manager. You need a <code>LEFT JOIN</code>: the director has no manager (<code>manager_id</code> is NULL), and an <code>INNER JOIN</code> would lose that row.</p>
+<h3>Set operations</h3>
+<table>
+<tr><th>Operator</th><th>What it returns</th></tr>
+<tr><td><code>UNION ALL</code></td><td>Stacks two results on top of each other and keeps duplicates. Fast.</td></tr>
+<tr><td><code>UNION</code></td><td>Stacks them and removes duplicate rows (this needs a sort, so it is slower).</td></tr>
+<tr><td><code>INTERSECT</code></td><td>The rows that are in both results.</td></tr>
+<tr><td><code>EXCEPT</code></td><td>The rows that are in the first result but not in the second.</td></tr>
+</table>
+<p>The two queries must have the same number of columns and compatible types. Column names come from the first query. If you know duplicates are impossible, or you need the duplicates, write <code>UNION ALL</code>.</p>
+<h3>NTILE and PERCENT_RANK</h3>
+<p><code>NTILE(4) OVER (ORDER BY salary DESC)</code> splits the rows into 4 groups of roughly equal size: 1 is the top quarter (quartile). <code>NTILE(10)</code> gives deciles. RFM segmentation uses exactly this function.</p>
+<p><code>PERCENT_RANK()</code> shows a row's position between 0 and 1: 0.9 means "above 90% of the others".</p>
+<p>When values are equal, NTILE may put them into different groups. To make the result stable, add a second column to <code>ORDER BY</code>: <code>ORDER BY salary DESC, name</code>.</p>
+<h3>FIRST_VALUE and LAST_VALUE</h3>
+<pre><code>SELECT name, department, salary,
+  FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC) AS top_name
+FROM employees;</code></pre>
+<p>Each row gets the name of the highest-paid person in its department. Uses: the channel of a customer's first order, the first page of a session.</p>
+<h3>ROWS and RANGE: the window frame</h3>
+<p>If <code>OVER</code> has an <code>ORDER BY</code> and no frame is written, the default frame is <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>. <code>RANGE</code> includes every row whose <b>value equals</b> that of the current row. The analytics department, a running total by salary:</p>
+<table>
+<tr><th>name</th><th>salary</th><th>RANGE (default)</th><th>ROWS</th></tr>
+<tr><td>Ерлан</td><td>410 000</td><td>410 000</td><td>410 000</td></tr>
+<tr><td>Ақжол</td><td>520 000</td><td>1 450 000</td><td>930 000</td></tr>
+<tr><td>Камила</td><td>520 000</td><td>1 450 000</td><td>1 450 000</td></tr>
+<tr><td>Гүлнар</td><td>750 000</td><td>2 200 000</td><td>2 200 000</td></tr>
+</table>
+<p>Ақжол and Камила have equal salaries, so RANGE gives both the same total. If you need a total accumulated row by row, write <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> explicitly.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Writing <code>LAST_VALUE</code> without a frame: the default frame ends at the current row, so it returns the current value, not the "last" one. The fix: add <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code>, or reverse the order and use <code>FIRST_VALUE</code>.</li>
+<li>Mixing up the aliases in a self-join: if you write <code>ON e.id = m.manager_id</code> instead of <code>ON m.id = e.manager_id</code>, the manager and the report swap places.</li>
+<li>Writing <code>UNION</code> out of habit: it silently removes duplicate rows, and a total may shrink.</li>
+</ul>
+<div class="tip">A quick way to compare the results of two queries: <code>SELECT ... EXCEPT SELECT ...</code>. If the result is empty, every row of the first query is in the second. Check in both directions.</div>`,
+      ex: [
+        { prompt: '<b>staff.</b> Show each employee\'s name and their manager\'s name: <code>name</code>, <code>manager</code>. An employee without a manager must appear too (<code>manager</code> is NULL).', hints: ['Take the table twice: <code>employees e</code> and <code>employees m</code>.', '<code>LEFT JOIN employees m ON m.id = e.manager_id</code>'] },
+        { prompt: '<b>staff.</b> For each manager: <code>manager</code> (name), <code>reports</code> (number of direct reports), <code>avg_salary</code> (the average salary of the reports, <code>ROUND</code> to a whole number).', hints: ['Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>', 'Group by manager: <code>GROUP BY m.id, m.name</code>. The salary comes from the report (<code>e.salary</code>).'] },
+        { prompt: '<b>shop.</b> Using <code>EXCEPT</code>, show the <code>customer_id</code> of the customers who placed orders but have no <code>delivered</code> order at all.', hints: ['The first query: every customer who placed an order. The second: those who have a delivered order.', `<code>SELECT customer_id FROM orders EXCEPT SELECT customer_id FROM orders WHERE status = 'delivered'</code>`] },
+        { prompt: '<b>staff.</b> Split the employees into 4 quartiles by salary (1 is the highest): <code>name</code>, <code>salary</code>, <code>quartile</code>. The order, both in the window and in the result: salary descending, ties by <code>name</code>.', hints: ['<code>NTILE(4) OVER (ORDER BY salary DESC, name)</code>'] },
+        { prompt: '<b>staff.</b> For each employee, show the name of the highest-paid person in their department (<code>top_name</code>) and the difference from that salary (<code>gap</code>): <code>name</code>, <code>department</code>, <code>salary</code>, <code>top_name</code>, <code>gap</code>.', hints: ['<code>FIRST_VALUE(name) OVER (PARTITION BY department ORDER BY salary DESC)</code>', '<code>gap</code>: <code>FIRST_VALUE(salary)</code> over the same window minus <code>salary</code>. <code>MAX(salary) OVER (PARTITION BY department)</code> works too.'] }
+      ]
+    },
+    'adv-12': {
+      title: 'Sessions and an ordered funnel',
+      body: `
+<p>In product analytics, data mostly arrives as an <b>event log</b>: who did what, and when. A table like that has been added to the <code>qazaq</code> database:</p>
+<table>
+<tr><th>Table</th><th>Columns</th><th>What it stores</th></tr>
+<tr><td><code>events_ts</code></td><td>user_id, event, ts</td><td>525 events of 50 users from 1–15 March 2026. <code>event</code>: view, cart, checkout, purchase. <code>ts</code>: a time such as <code>'2026-03-01 10:25:00'</code></td></tr>
+</table>
+<p>The log has no "session" column. The analyst builds it.</p>
+<h3>Step 1: how much time has passed since the previous event</h3>
+<pre><code>SELECT user_id, event, ts,
+  (julianday(ts) - julianday(LAG(ts) OVER (PARTITION BY user_id ORDER BY ts))) * 1440 AS gap_min
+FROM events_ts;</code></pre>
+<p><code>julianday</code> turns a time into a number of days. Multiply the difference by 1440 (the minutes in a day) and you get minutes. <code>ROUND</code> removes floating-point imprecision (9.9999 instead of 10). In PostgreSQL: <code>EXTRACT(EPOCH FROM ts - LAG(ts) OVER (...)) / 60</code>.</p>
+<h3>Step 2: marking the start of a session</h3>
+<p>A widely used rule: if <b>more than 30 minutes</b> pass between two events, a new session starts. A user's very first event (<code>gap_min IS NULL</code>) is the start of a session too.</p>
+<pre><code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END AS is_new</code></pre>
+<h3>Step 3: the session number</h3>
+<p>The running total of the <code>is_new</code> column gives the session number: the total grows by 1 every time a new session starts.</p>
+<pre><code>SUM(is_new) OVER (PARTITION BY user_id ORDER BY ts) AS session_no</code></pre>
+<table>
+<tr><th>ts</th><th>event</th><th>gap_min</th><th>is_new</th><th>session_no</th></tr>
+<tr><td>03-01 11:10</td><td>checkout</td><td>2</td><td>0</td><td>1</td></tr>
+<tr><td>03-01 11:20</td><td>purchase</td><td>10</td><td>0</td><td>1</td></tr>
+<tr><td>03-03 09:51</td><td>view</td><td>2791</td><td>1</td><td>2</td></tr>
+<tr><td>03-03 09:58</td><td>view</td><td>7</td><td>0</td><td>2</td></tr>
+</table>
+<p>Now <code>GROUP BY user_id, session_no</code> lets you compute a session's length, its number of events, and whether it ended in a purchase. This database has 128 sessions, and 28.9% of them ended in a purchase.</p>
+<h3>An ordered funnel</h3>
+<p>The simple funnel in Business Analytics counts "users who have this event". But the <b>order</b> of events matters: adding to the cart must come <b>after</b> a view, and a purchase <b>after</b> the cart.</p>
+<pre><code>WITH v AS (
+  SELECT user_id, MIN(ts) AS view_ts
+  FROM events_ts WHERE event = 'view' GROUP BY user_id
+), c AS (
+  SELECT e.user_id, MIN(e.ts) AS cart_ts
+  FROM events_ts e JOIN v ON v.user_id = e.user_id
+  WHERE e.event = 'cart' AND e.ts &gt; v.view_ts
+  GROUP BY e.user_id
+)
+SELECT (SELECT COUNT(*) FROM v) AS viewed, (SELECT COUNT(*) FROM c) AS carted;</code></pre>
+<p>In this database 42 users added something to the cart at least once, but only 39 of them did so after their first view. The other three landed straight in the cart from a link in a push notification. A funnel that ignores order overstates conversion.</p>
+<h3>Time to convert</h3>
+<p>The time between the first view and the first purchase (time-to-convert) tells marketing when to send a reminder. This distribution is usually heavily skewed: most people buy in the same session, and a small share buy a few days later. So report the median and shares ("bought within 1 hour"), not the mean.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>Forgetting <code>PARTITION BY user_id</code>: one user's event gets compared with another user's event.</li>
+<li>Subtracting times as text: in SQLite <code>ts - LAG(ts)</code> gives the difference of the years (0). Use <code>julianday</code> or <code>strftime('%s', ts)</code>.</li>
+<li>Leaving out the "after the first event" condition in a funnel.</li>
+<li>Treating the 30-minute threshold as a law: it is only a convention. On a video service 30 minutes of silence is normal viewing; the threshold is chosen to suit the product.</li>
+</ul>
+<div class="tip">Google Analytics and AppMetrica split sessions by this same "30 minutes of inactivity" rule. If the session count on a dashboard differs from your SQL, first check that the threshold is the same.</div>`,
+      ex: [
+        { prompt: 'Show the events of user 26 in time order: <code>ts</code>, <code>event</code>, <code>gap_min</code> (minutes since the previous event, <code>ROUND</code> to a whole number; NULL for the first event).', hints: ['<code>LAG(ts) OVER (ORDER BY ts)</code> gives the time of the previous event.', '<code>ROUND((julianday(ts) - julianday(LAG(ts) OVER (ORDER BY ts))) * 1440)</code>'] },
+        { prompt: 'How many sessions are there in the <code>events_ts</code> table in total? The rule: a user\'s first event, or a break of more than 30 minutes after the previous event, starts a new session. Column: <code>sessions</code>.', hints: ['The number of sessions = the number of events that start a session.', '<code>WHERE gap_min IS NULL OR gap_min &gt; 30</code>'] },
+        { prompt: 'Show the sessions of users 7 and 26: <code>user_id</code>, <code>session_no</code>, <code>started_at</code> (the first event of the session), <code>events</code> (number of events). Sort by <code>user_id</code>, <code>session_no</code>.', hints: ['Three steps: <code>gap_min</code> (LAG), <code>is_new</code> (CASE), <code>session_no</code> (running SUM).', '<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END) OVER (PARTITION BY user_id ORDER BY ts)</code>', 'Filter the users in the very last SELECT, then <code>GROUP BY user_id, session_no</code>.'] },
+        { prompt: 'Show the ordered funnel in one row: <code>viewed</code> (users with at least one <code>view</code>), <code>carted</code> (users with a <code>cart</code> <b>after</b> their first view), <code>purchased</code> (users with a <code>purchase</code> <b>after</b> that first cart).', hints: [`The <code>c</code> CTE: <code>events_ts e JOIN v</code>, with the condition <code>e.event = 'cart' AND e.ts &gt; v.view_ts</code> and <code>MIN(e.ts)</code> per user.`, `The <code>p</code> CTE is the same but joins to <code>c</code>: <code>e.event = 'purchase' AND e.ts &gt; c.cart_ts</code>.`, 'At the end: <code>SELECT (SELECT COUNT(*) FROM v) AS viewed, ...</code>'] },
+        { prompt: 'For each user who bought, show how many minutes passed from their first view to the first purchase after it: <code>user_id</code>, <code>minutes_to_buy</code> (<code>ROUND</code> to a whole number). Sort from the fastest.', hints: ['First the time of each user\'s first <code>view</code>, then the time of the first <code>purchase</code> after it.', '<code>ROUND((julianday(buy_ts) - julianday(view_ts)) * 1440)</code>'] }
       ]
     }
   }

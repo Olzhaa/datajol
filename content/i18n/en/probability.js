@@ -349,8 +349,70 @@ def variance(dist):
 <div class="tip"><b>Common mistakes:</b> (1) Not checking that the probabilities add up to 1. (2) Forgetting to subtract the discount from the margin. (3) Looking only at E[X] and ignoring risk (SD): if E[X] is the same, the more stable option may be better.</div>`,
       ex: [
         { prompt: 'Write the functions <code>expected_value(dist)</code> and <code>variance(dist)</code>. <code>dist</code> is a dictionary <code>{value: probability}</code>.', check: { tests: '_d = {0: 0.95, 4000: 0.05}\nassert abs(expected_value(_d) - 200) < 1e-9, "E[X] = 0.05 × 4000 = 200"\nassert abs(variance(_d) - 760000) < 1e-6, "Var(X) = 760,000: the sum of (x − E[X])² × p"\n_die = {_k: 1 / 6 for _k in range(1, 7)}\nassert abs(expected_value(_die) - 3.5) < 1e-9, "For a die, E[X] = 3.5"\nassert abs(variance(_die) - 35 / 12) < 1e-9, "For a die, Var(X) = 35/12 ≈ 2.917"' }, hints: ['<code>sum(x * p for x, p in dist.items())</code>', 'For the variance, first <code>m = expected_value(dist)</code>.'] },
-        { prompt: 'The promo decision. No promo: 5% conversion, 4,000 ₸ margin. With promo: 6.5% conversion, a 1,000 ₸ discount (3,000 ₸ margin). <code>ev_base</code>, <code>ev_promo</code> — expected profit per visitor; <code>monthly_diff</code> — the difference for 50,000 visitors (<code>ev_promo - ev_base</code> × 50,000); <code>launch</code> — <code>True</code> if the promo pays off.', check: { tests: 'assert abs(ev_base - 200) < 1e-9, "ev_base = 0.05 × 4000 = 200"\nassert abs(ev_promo - 195) < 1e-9, "ev_promo = 0.065 × 3000 = 195: subtract the discount from the margin"\nassert abs(monthly_diff + 250000) < 1e-6, "monthly_diff = (195 − 200) × 50,000 = −250,000"\nassert launch is False, "195 < 200, the promo does not pay off: launch = False"' }, hints: ['Margin with the promo: <code>4000 - 1000</code>.', '<code>launch = ev_promo &gt; ev_base</code>'] },
+        { prompt: 'The promo decision. No promo: 5% conversion, 4,000 ₸ margin. With promo: 6.5% conversion, a 1,000 ₸ discount (3,000 ₸ margin). <code>ev_base</code>, <code>ev_promo</code> — expected profit per visitor; <code>monthly_diff</code> — the difference for 50,000 visitors (<code>(ev_promo − ev_base) × 50,000</code>); <code>launch</code> — <code>True</code> if the promo pays off.', check: { tests: 'assert abs(ev_base - 200) < 1e-9, "ev_base = 0.05 × 4000 = 200"\nassert abs(ev_promo - 195) < 1e-9, "ev_promo = 0.065 × 3000 = 195: subtract the discount from the margin"\nassert abs(monthly_diff + 250000) < 1e-6, "monthly_diff = (195 − 200) × 50,000 = −250,000"\nassert launch is False, "195 < 200, the promo does not pay off: launch = False"' }, hints: ['Margin with the promo: <code>4000 - 1000</code>.', '<code>launch = ev_promo &gt; ev_base</code>'] },
         { prompt: 'A lottery ticket costs 500 ₸. With probability 1/1000 you win 100,000 ₸, with probability 1/100 you win 5,000 ₸, otherwise nothing. What is the expected <b>net</b> profit of one ticket (winnings − price) in tenge?', explain: 'E[winnings] = 0.001 × 100,000 + 0.01 × 5,000 = 100 + 50 = 150 ₸. Net: 150 − 500 = −350 ₸.' }
+      ]
+    },
+    'pr-11': {
+      title: 'The exponential distribution, covariance and total probability',
+      body: `
+<p>This lesson collects five tools that come up often in Data Scientist interviews: the law of total probability, the geometric and exponential distributions, linearity of expectation, and covariance. They all answer one question: "what happens when several random things act at the same time?"</p>
+<h3>1. The law of total probability</h3>
+<p><b>The idea:</b> an overall probability is a <b>weighted average</b> over groups. Split the customers into non-overlapping groups (A₁, A₂, …), multiply the probability within each group by the group's share, and add them up.</p>
+<pre><code>P(B) = P(B | A₁) × P(A₁) + P(B | A₂) × P(A₂) + …</code></pre>
+<p><b>Example.</b> Site visitors: 50% organic (4% conversion), 30% ads (2%), 20% email (8%).</p>
+<p>P(purchase) = 0.04 × 0.5 + 0.02 × 0.3 + 0.08 × 0.2 = 0.020 + 0.006 + 0.016 = <b>0.042</b> (4.2%).</p>
+<p>The denominator in Bayes' theorem (pr-5) is exactly this sum.</p>
+<h3>2. The geometric distribution: how many attempts until the first success?</h3>
+<p>Each attempt succeeds with probability p, and the attempts are independent. For the first success to land exactly on attempt k, you need k − 1 failures first and then one success:</p>
+<pre><code>P(X = k) = (1 − p)^(k − 1) × p        E[X] = 1 / p</code></pre>
+<p><b>Example.</b> A sales call ends in a sale 20% of the time. The probability that the first sale comes on the 3rd call: 0.8 × 0.8 × 0.2 = 0.128. On average the first sale takes 1 / 0.2 = 5 calls.</p>
+<h3>3. The exponential distribution: how long until the next event?</h3>
+<p>Poisson (pr-8) counts "how many events happen in an hour?". The exponential distribution is the other side of the same process: "<b>how much time</b> until the next event?" If the rate is λ (the average number of events per unit of time):</p>
+<pre><code>E[T] = 1 / λ          P(T &gt; t) = e^(−λt)          P(T ≤ t) = 1 − e^(−λt)</code></pre>
+<p><b>Example.</b> On average 3 orders arrive per hour (λ = 3).</p>
+<ol>
+<li>Average wait: 1 / 3 hour = 20 minutes.</li>
+<li>Waiting more than 30 minutes (0.5 hours): e^(−3 × 0.5) = e^(−1.5) ≈ 0.223.</li>
+<li>An order arriving within 10 minutes: 1 − e^(−3 × 1/6) = 1 − e^(−0.5) ≈ 0.393.</li>
+</ol>
+<p><b>Memorylessness.</b> The exponential distribution does not remember the past: even if you have already waited 30 minutes, the probability of waiting another 30 minutes is the same 0.223 as at the very start. As a formula: P(T &gt; s + t | T &gt; s) = P(T &gt; t). The reason is that events arrive independently of each other, so there is no such thing as "it must be due by now". In real life this does not always hold (equipment that wears out really does get "closer" to failing), so check the assumption against data.</p>
+<pre><code>import random
+random.seed(7)
+waits = [random.expovariate(3) for _ in range(100000)]   # λ = 3
+print(sum(waits) / len(waits))                           # ≈ 0.333 hours</code></pre>
+<h3>4. Linearity of expectation</h3>
+<p>The mean of a sum is the sum of the means. This is <b>always</b> true, even when the variables are dependent:</p>
+<pre><code>E[X + Y] = E[X] + E[Y]          E[aX + b] = a × E[X] + b</code></pre>
+<p><b>Example.</b> Average revenue per order is 5,000 ₸, there are 40 orders a day on average, and delivery costs a fixed 30,000 ₸ a day. Average daily profit ≈ 40 × 5,000 − 30,000 = 170,000 ₸.</p>
+<h3>5. Covariance and correlation</h3>
+<p><b>The idea:</b> do two variables move together? If Y tends to be above its mean when X is above its mean, the covariance is positive. If one goes up while the other goes down, it is negative.</p>
+<pre><code>Cov(X, Y) = E[(X − E[X]) × (Y − E[Y])]
+Corr(X, Y) = Cov(X, Y) / (SD(X) × SD(Y))        # between −1 and 1
+Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y)</code></pre>
+<p>Covariance comes in awkward units (₸ × items), so we divide it by both SDs and get a unitless correlation.</p>
+<p><b>Step-by-step example.</b> Advertising X = [1, 2, 3] (mln ₸), sales Y = [2, 3, 7] (mln ₸).</p>
+<table>
+<tr><th>X</th><th>Y</th><th>X − 2</th><th>Y − 4</th><th>Product</th></tr>
+<tr><td>1</td><td>2</td><td>−1</td><td>−2</td><td>2</td></tr>
+<tr><td>2</td><td>3</td><td>0</td><td>−1</td><td>0</td></tr>
+<tr><td>3</td><td>7</td><td>1</td><td>3</td><td>3</td></tr>
+</table>
+<ol>
+<li>E[X] = 2, E[Y] = 4.</li>
+<li>Cov = (2 + 0 + 3) / 3 = 5/3 ≈ 1.67.</li>
+<li>Var(X) = (1 + 0 + 1) / 3 = 2/3, Var(Y) = (4 + 1 + 9) / 3 = 14/3.</li>
+<li>Corr = (5/3) / √(2/3 × 14/3) ≈ 0.94: a strong positive relationship.</li>
+<li>Check: X + Y = [3, 5, 10], and its variance is 26/3. The formula: 2/3 + 14/3 + 2 × 5/3 = 26/3. They match.</li>
+</ol>
+<p><b>Why does it matter?</b> If the variables are independent, Cov = 0 and the variances simply add. For a sum of n independent days the SD grows only √n times: that is why the mean settles down as n grows (SE = SD / √n, M4.2). Positive correlation, on the other hand, <b>increases</b> risk: two loan portfolios that fall together are more dangerous than they look when you examine each one separately.</p>
+<div class="tip"><b>Common mistakes:</b> (1) Not checking that the group shares add up to 1 in the law of total probability. (2) Mixing up the units of λ and t: if λ is per hour, 30 minutes is 0.5. (3) Thinking "I have waited a long time, so it must be close now": not so for the exponential distribution. (4) Writing Var(X + Y) = Var(X) + Var(Y) for dependent variables: do not forget the 2 × Cov term. (5) Concluding that the variables are independent because Cov = 0: covariance measures only the <b>linear</b> relationship.</div>`,
+      ex: [
+        { prompt: 'Simulation. Orders arrive 3 times an hour on average, and <code>waits</code> holds 100,000 waiting times (in hours). Compute: <code>mean_wait</code> — the average wait; <code>p_long</code> — the share of waits longer than 0.5 hours; <code>p_memory</code> — among the waits longer than 0.5 hours, the share that were also longer than 1 hour (a check of memorylessness: it should come out close to <code>p_long</code>).', check: { tests: 'import math as _m\nassert abs(mean_wait - 1 / 3) < 0.01, f"mean_wait should be ≈ 1/λ = 0.333 hours, you have {mean_wait:.3f}"\nassert abs(p_long - _m.exp(-1.5)) < 0.01, f"p_long should be ≈ e^(−1.5) ≈ 0.223, you have {p_long:.3f}"\nassert abs(p_memory - _m.exp(-1.5)) < 0.02, f"p_memory should be ≈ 0.223, you have {p_memory:.3f}: the denominator is the number of waits longer than 0.5, not all observations"' }, hints: ['<code>mean_wait = sum(waits) / len(waits)</code>; <code>p_long = sum(w &gt; 0.5 for w in waits) / len(waits)</code>', 'First <code>long_waits = [w for w in waits if w &gt; 0.5]</code>, then the share of <code>w &gt; 1.0</code> within it.'] },
+        { prompt: 'Write the functions <code>cov(u, v)</code> (covariance divided by n) and <code>corr(u, v)</code>. Then check the formula on the simulated <code>x</code>, <code>y</code>: <code>var_sum</code> — the variance of the sums <code>x + y</code> (add each pair, then <code>cov(s, s)</code>), <code>var_formula</code> — Var(X) + Var(Y) + 2 × Cov(X, Y).', check: { tests: 'assert cov([1, 2, 3], [2, 3, 7]) is not None, "The cov function should return a value"\nassert abs(cov([1, 2, 3], [2, 3, 7]) - 5 / 3) < 1e-9, "cov([1, 2, 3], [2, 3, 7]) = 5/3: the mean of the products of deviations (divide by n)"\nassert abs(cov([1, 2, 3], [1, 2, 3]) - 2 / 3) < 1e-9, "cov(u, u) is the variance: 2/3 for [1, 2, 3]"\nassert abs(corr([1, 2, 3], [2, 3, 7]) - 0.944911) < 1e-4, "corr([1, 2, 3], [2, 3, 7]) ≈ 0.945: cov / (SD(u) × SD(v))"\nassert abs(corr([1, 2, 3], [6, 4, 2]) + 1) < 1e-9, "On a decreasing straight line corr = −1"\nassert abs(var_sum - var_formula) < 1e-6, f"var_sum and var_formula should be equal, you have {var_sum:.4f} and {var_formula:.4f}"\nassert abs(var_sum - 3.25) < 0.15, f"Var(X + Y) should be ≈ 1 + 1.25 + 2 × 0.5 = 3.25, you have {var_sum:.3f}"' }, hints: ['<code>sum((a - mu) * (b - mv) for a, b in zip(u, v)) / len(u)</code>', 'SD(u) = <code>cov(u, u) ** 0.5</code>', '<code>s = [a + b for a, b in zip(x, y)]</code>, <code>var_sum = cov(s, s)</code>'] },
+        { prompt: '30% of a bank\'s customers are new and 70% are existing. 10% of new customers and 2% of existing ones fail to repay their loan on time. What is the probability, in percent, that a random customer fails to repay on time?', unit: '%', explain: 'Total probability: 0.10 × 0.30 + 0.02 × 0.70 = 0.030 + 0.014 = 0.044, that is 4.4%.' },
+        { prompt: 'Each lead buys with probability 25% (leads are independent). What is the probability that the first purchase comes exactly on the <b>3rd lead</b>? (to 3 decimal places)', explain: 'The geometric distribution: (1 − p)² × p = 0.75 × 0.75 × 0.25 = 0.140625 ≈ 0.141.' },
+        { prompt: 'Messages arrive in a support chat as a Poisson process, with 15 minutes between messages on average. An operator has been waiting 10 minutes since the last message. How much longer, on average, will the wait for the next message be?', options: ['5 minutes: 15 − 10', '15 minutes: the exponential distribution does not "remember" the time already passed', '25 minutes: 15 + 10', '7.5 minutes: half the mean'], explain: 'Memorylessness: P(T > s + t | T > s) = P(T > t). No matter how long you have waited, the remaining wait has the same distribution as at the start, with a mean of 15 minutes.' }
       ]
     },
     'pr-gate': {

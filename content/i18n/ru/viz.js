@@ -259,6 +259,138 @@ ORDER BY day;</code></pre>
         { prompt: 'Конверсия выросла с 2.1% до 2.3%. На слайде столбчатый график с осью от 2.0% создаёт впечатление, что конверсия выросла втрое. Что вы делаете?', options: ['Оставляю так, это впечатляет', 'Начинаю ось с нуля или пишу рост числом: +0.2 п.п. (+9.5%)', 'Меняю на pie chart', 'Убираю график и пишу только «выросло»'], explain: 'Длина столбца должна быть пропорциональна значению, а изменение лучше назвать точным числом.' },
         { prompt: 'Рост на 0.2 процентного пункта (2.1% → 2.3%) — это на сколько процентов в относительном выражении? (одна цифра после запятой)', unit: '%', explain: '(2.3 − 2.1) / 2.1 ≈ 9.5%.' }
       ]
+    },
+    'viz-9': {
+      title: 'BI-инструменты: Superset, DataLens, Tableau, Looker Studio, Qlik',
+      body: `
+<p>В вакансиях аналитика в Казахстане чаще всего упоминается Power BI, но он не единственный: банки и телеком используют <b>Qlik Sense</b> и <b>Tableau</b>, IT-компании — <b>Apache Superset</b> с открытым кодом, стартапы на рынке СНГ — <b>Yandex DataLens</b>, маркетинговые команды — <b>Looker Studio</b>. Хорошая новость: логика у всех одна. Поняв один инструмент, на другой вы перейдёте за неделю.</p>
+<h3>Один путь во всех BI-инструментах</h3>
+<pre><code>Источник (connection) → Dataset → Chart → Dashboard → Фильтры</code></pre>
+<ol>
+<li><b>Подключение к источнику</b>: PostgreSQL, ClickHouse, Google Sheets, CSV.</li>
+<li><b>Dataset</b>: таблица, по которой строится диаграмма. Это может быть готовая таблица, view или написанный вами SQL-запрос.</li>
+<li><b>Chart</b>: вы выбираете измерение (dimension: город, месяц) и показатель (measure: SUM, COUNT), а агрегат инструмент считает сам.</li>
+<li><b>Dashboard</b>: несколько диаграмм на одной странице.</li>
+<li><b>Фильтры</b>: диапазон дат, город. Один фильтр действует на все диаграммы.</li>
+</ol>
+<h3>Карта терминов</h3>
+<table>
+<tr><th>Понятие</th><th>Power BI</th><th>Superset</th><th>DataLens</th><th>Tableau</th><th>Looker Studio</th></tr>
+<tr><td>Таблица данных</td><td>Semantic model (dataset)</td><td>Dataset</td><td>Датасет</td><td>Data source</td><td>Data source</td></tr>
+<tr><td>Вычисляемый показатель</td><td>Measure (DAX)</td><td>Metric (SQL-выражение)</td><td>Вычисляемое поле</td><td>Calculated field</td><td>Calculated field</td></tr>
+<tr><td>Одна диаграмма</td><td>Visual</td><td>Chart</td><td>Чарт</td><td>Worksheet</td><td>Chart</td></tr>
+<tr><td>Страница с диаграммами</td><td>Report</td><td>Dashboard</td><td>Дашборд</td><td>Dashboard</td><td>Report</td></tr>
+<tr><td>Элемент фильтра</td><td>Slicer</td><td>Native filter</td><td>Селектор</td><td>Filter, parameter</td><td>Control</td></tr>
+<tr><td>Где пишут SQL</td><td>Power Query (native query)</td><td>SQL Lab</td><td>QL-чарт</td><td>Custom SQL</td><td>Custom query</td></tr>
+</table>
+<p>Особенность Qlik Sense — <b>ассоциативная модель</b>: стоит выбрать одно значение, и связанные значения во всех таблицах сразу подсвечиваются; формулы пишутся на языке set analysis вида <code>Sum({&lt;Year={2026}&gt;} Sales)</code>.</p>
+<h3>Superset: инструмент аналитика, который знает SQL</h3>
+<p><b>SQL Lab</b> — SQL-редактор в браузере. Вы пишете запрос, смотрите результат, а затем кнопкой «Create chart» сохраняете этот запрос как dataset. Навык SQL из этого курса применяется здесь напрямую. DataLens и Looker Studio точно так же позволяют начинать с SQL.</p>
+<h3>Как сделать dataset, готовый к диаграмме</h3>
+<ul>
+<li><b>Определите гранулярность (grain)</b>: что означает одна строка? «Один заказ» или «месяц × категория». Не смешивайте в одной таблице два уровня.</li>
+<li><b>Длинный формат</b>: категории должны быть в строках, а не в названиях столбцов: <code>month, category, revenue</code>. Тогда при появлении новой категории dataset не меняется, а BI-инструмент легко превращает её в цвет или фильтр.</li>
+<li><b>Храните не отношение, а его составляющие</b>: вместо среднего чека — <code>revenue</code> и <code>orders</code>. Средний чек BI правильно посчитает как <code>SUM(revenue) / SUM(orders)</code> при любом фильтре. Повторное усреднение готовых средних даёт неверный результат.</li>
+<li><b>Дата должна быть настоящей датой</b>: не текст <code>'2026-03'</code>, а <code>2026-03-01</code>. Тогда работают ось времени и фильтр «последние 90 дней».</li>
+<li><b>Добавьте измерения, нужные для фильтров</b>: город, статус, канал. По столбцу, которого нет в dataset, отфильтровать нельзя.</li>
+</ul>
+<h3>Какой инструмент когда</h3>
+<table>
+<tr><th>Ситуация</th><th>Инструмент</th></tr>
+<tr><td>Корпоративная отчётность, среда Microsoft, пользователи, привыкшие к Excel</td><td>Power BI</td></tr>
+<tr><td>Данные в ClickHouse/PostgreSQL, команда знает SQL, бюджета на лицензии нет</td><td>Superset</td></tr>
+<tr><td>Быстрый бесплатный облачный дашборд, хорошо работает с ClickHouse</td><td>DataLens</td></tr>
+<tr><td>Маркетинг: Google Analytics, Google Ads, Sheets</td><td>Looker Studio</td></tr>
+<tr><td>Сложная интерактивная визуализация, исследование</td><td>Tableau</td></tr>
+</table>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Положить в dataset заранее посчитанные проценты и средние, а потом складывать или усреднять их в BI.</li>
+<li>Писать отдельный SQL для каждой диаграммы: числа перестают сходиться между собой. Сделайте один dataset на тему и стройте все диаграммы по нему.</li>
+<li>Подключить напрямую сырую таблицу на миллион строк: дашборд открывается медленно. Агрегируйте до уровня дня или месяца.</li>
+</ul>
+<div class="tip">В резюме пишите не только название инструмента, но и что вы сделали: «Построил в Superset дашборд продаж по данным ClickHouse: 1 dataset, 6 диаграмм, 3 фильтра». Superset и DataLens можно установить бесплатно и сделать проект для портфолио.</div>`,
+      ex: [
+        { prompt: 'Что означает понятие «dataset» в Superset?', options: ['Готовая диаграмма', 'Таблица, view или сохранённый SQL-запрос, по которым строятся диаграммы', 'PDF-копия дашборда', 'Список пользователей'], explain: 'Dataset — источник данных для диаграммы. Его можно создать и из запроса, написанного в SQL Lab. Соответствует таблице модели в Power BI и data source в Tableau.' },
+        { prompt: `<b>qazaq.</b> Подготовьте dataset в длинном формате для диаграммы «Месячная выручка по категориям»: по доставленным заказам 2026 года выведите <code>month</code> (первый день месяца, <code>date(order_date, 'start of month')</code>), <code>category</code>, <code>revenue</code>. Отсортируйте по <code>month</code>, <code>category</code>.`, hints: ['Три таблицы: <code>orders</code>, <code>order_items</code>, <code>products</code>.', `<code>WHERE o.status = 'delivered' AND o.order_date &gt;= '2026-01-01'</code>, <code>GROUP BY month, p.category</code>.`] },
+        { prompt: '<b>qazaq.</b> Создайте основной dataset дашборда с гранулярностью «один заказ»: <code>order_id</code>, <code>order_date</code>, <code>city</code> (город клиента), <code>status</code>, <code>items</code> (число товарных строк в заказе), <code>order_total</code> (сумма quantity × unit_price). Входят все статусы. Отсортируйте по <code>order_id</code>.', hints: ['Соедините <code>orders</code> с <code>customers</code> и <code>order_items</code>.', 'Гранулярность — заказ: <code>GROUP BY o.order_id, o.order_date, c.city, o.status</code>. В результате должно быть 308 строк.'] },
+        { prompt: 'В dataset для каждого города и месяца есть готовый столбец <code>avg_check</code>. Карточка «Все города» на дашборде показывает его как <code>AVG(avg_check)</code>. Что здесь неверно?', options: ['Ничего, это правильный средний чек', 'Это среднее средних: город с 5 заказами и город с 500 заказами получают одинаковый вес. В dataset нужно положить revenue и orders и считать SUM(revenue) / SUM(orders)', 'Вместо AVG нужно использовать MAX', 'В карточке нельзя показывать средний чек'], explain: 'Не считайте отношения заранее, храните числитель и знаменатель отдельно. Тогда BI сам посчитает правильное отношение при любом фильтре.' },
+        { prompt: 'Данные компании лежат в ClickHouse, аналитики знают SQL, бюджета на лицензии нет. Какой инструмент самый логичный?', options: ['Tableau', 'Apache Superset', 'Qlik Sense', 'Excel'], explain: 'Superset бесплатный и с открытым кодом, подключается к ClickHouse, а через SQL Lab из запроса можно сразу сделать диаграмму. DataLens — тоже подходящая альтернатива для такого случая.' }
+      ]
+    },
+    'viz-10': {
+      title: 'Диаграммы в Python: matplotlib и seaborn',
+      body: `
+<p>В вакансиях часто встречается «matplotlib/seaborn»: когда анализ идёт в Python, удобно тут же строить и диаграмму. В браузерном Python этого сайта matplotlib нет, поэтому в этом уроке вы учитесь <b>читать</b> код и <b>готовить данные</b> для диаграммы. Эта подготовка и есть 80% работы над диаграммой. Попробуйте запустить код у себя на компьютере или в Google Colab.</p>
+<h3>Стандартный шаблон</h3>
+<pre><code>import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('orders.csv')
+clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]
+monthly = clean.groupby(clean['order_date'].str[:7])['amount'].sum()   # 1. данные
+
+fig, ax = plt.subplots(figsize=(8, 4))            # 2. рисунок и оси
+ax.plot(monthly.index, monthly.values, marker='o')  # 3. линия
+ax.set_title('Месячная выручка, 2024')            # 4. заголовок и оси
+ax.set_ylabel('Выручка, ₸')
+ax.set_ylim(0)
+ax.spines[['top', 'right']].set_visible(False)    # убираем лишние рамки
+plt.tight_layout()
+plt.savefig('revenue.png', dpi=150)               # 5. сохранение
+plt.show()</code></pre>
+<p>Любая диаграмма состоит из этих пяти шагов: данные → <code>fig, ax</code> → построение → оформление → сохранение. <code>fig</code> — весь рисунок, <code>ax</code> — одна диаграмма внутри него (со своими осями).</p>
+<h3>Типы диаграмм</h3>
+<table>
+<tr><th>Цель</th><th>matplotlib</th><th>Какими должны быть данные</th></tr>
+<tr><td>Тренд во времени</td><td><code>ax.plot(x, y)</code></td><td>Series, отсортированная по времени</td></tr>
+<tr><td>Сравнение категорий</td><td><code>ax.barh(названия, значения)</code></td><td>Series, отсортированная по значению</td></tr>
+<tr><td>Распределение</td><td><code>ax.hist(x, bins=20)</code></td><td>Сырые значения (без агрегации)</td></tr>
+<tr><td>Связь двух переменных</td><td><code>ax.scatter(x, y)</code></td><td>Два числовых столбца</td></tr>
+</table>
+<h3>seaborn: работа напрямую с DataFrame</h3>
+<p><b>seaborn</b> построен поверх matplotlib. Ему передают DataFrame в длинном формате и названия столбцов:</p>
+<pre><code>import seaborn as sns
+
+sns.barplot(data=m, x='channel', y='amount', estimator='sum', errorbar=None)
+sns.histplot(data=clean, x='amount', bins=20)
+sns.lineplot(data=long_df, x='month', y='revenue', hue='channel')
+sns.heatmap(pivot, annot=True, fmt='.0f', cmap='Blues')</code></pre>
+<ul>
+<li><code>hue='channel'</code> рисует каждый канал своим цветом.</li>
+<li><code>sns.barplot</code> по умолчанию показывает <b>среднее</b> и черту доверительного интервала. Если нужна сумма, пишут <code>estimator='sum'</code>.</li>
+<li><code>sns.heatmap</code> ожидает таблицу в широком формате (pivot): строки — одно измерение, столбцы — другое.</li>
+</ul>
+<h3>Длинный и широкий формат</h3>
+<p>Для <code>lineplot</code> и <code>barplot</code> нужен длинный формат (<code>month, channel, revenue</code>), для <code>heatmap</code> — широкий. Из одного в другой переводит <code>pivot_table</code>:</p>
+<pre><code>pivot = m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code></pre>
+<h3>Частые ошибки</h3>
+<ul>
+<li>Вызывать <code>plt.savefig</code> после <code>plt.show()</code>: в скрипте <code>show</code> закрывает рисунок, и файл сохраняется пустым. Сначала сохраняйте.</li>
+<li>Не начинать ось с нуля на bar chart (задать в <code>set_ylim</code> нижнюю границу, отличную от нуля): разница искусственно увеличивается.</li>
+<li>Неотсортированный bar chart: <code>sort_values()</code> сразу облегчает чтение диаграммы.</li>
+<li>Оставить дату текстом: месяцы на оси могут встать по алфавиту. Используйте <code>pd.to_datetime</code> или держитесь формата <code>YYYY-MM</code>.</li>
+<li>Диаграмма без заголовка и единиц измерения. В заголовок пишите вывод: «В марте выручка была самой высокой».</li>
+</ul>
+<div class="tip">Если диаграмма получилась не такой, как вы ожидали, сначала посмотрите на сами данные: <code>print(monthly)</code>. Ошибка обычно не в графике, а в groupby и фильтре.</div>`,
+      ex: [
+        { prompt: `Подготовьте данные для line chart из урока. По чистым заказам (<code>status</code> = paid, <code>amount</code> не пустой и меньше 20 000) посчитайте месячную выручку и запишите её в Series <code>monthly</code>: индекс — месяц в виде <code>'YYYY-MM'</code> (по возрастанию), значение — сумма <code>amount</code>.`, check: { tests: `assert 'monthly' in globals(), 'Создайте переменную monthly'
+assert hasattr(monthly, 'index') and getattr(monthly, 'ndim', 0) == 1, 'monthly должна быть pandas Series'
+assert [str(i) for i in monthly.index] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], f'Индекс должен состоять из месяцев 2024-01 … 2024-06, у вас {list(monthly.index)}'
+assert [float(v) for v in monthly.values] == [31950.0, 66650.0, 89650.0, 66000.0, 48700.0, 31900.0], f'Месячная выручка неверна: проверьте правила очистки. У вас {list(monthly.values)}'` }, hints: [`<code>clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]</code>`, `Месяц: <code>clean['order_date'].str[:7]</code>`, `<code>clean.groupby(clean['order_date'].str[:7])['amount'].sum()</code>`] },
+        { prompt: 'Подготовьте данные для горизонтального bar chart (<code>ax.barh</code>): по чистым заказам посчитайте выручку каждого города и запишите её в Series <code>by_city</code>, отсортированную <b>по возрастанию</b> (индекс — город). <code>barh</code> рисует первое значение внизу, поэтому самое большое окажется наверху.', check: { tests: `assert 'by_city' in globals(), 'Создайте переменную by_city'
+assert getattr(by_city, 'ndim', 0) == 1, 'by_city должна быть pandas Series'
+assert list(by_city.index) == ['Шымкент', 'Астана', 'Алматы'], f'Города должны идти по возрастанию выручки, у вас {list(by_city.index)}'
+assert [float(v) for v in by_city.values] == [37500.0, 142950.0, 154400.0], f'Выручка по городам неверна, у вас {list(by_city.values)}'` }, hints: [`Город лежит в таблице <code>customers</code>: <code>clean.merge(customers, on='customer_id')</code>`, `<code>m.groupby('city')['amount'].sum().sort_values()</code>`] },
+        { prompt: `Подготовьте таблицу в широком формате для <code>sns.heatmap</code>: строки DataFrame <code>pivot</code> — канал (<code>channel</code>), столбцы — месяц (<code>'YYYY-MM'</code>), значения — сумма чистой выручки.`, check: { tests: `assert 'pivot' in globals(), 'Создайте переменную pivot'
+assert getattr(pivot, 'ndim', 0) == 2, 'pivot должна быть DataFrame'
+assert pivot.shape == (3, 6), f'Размер pivot должен быть 3 канала × 6 месяцев, у вас {pivot.shape}'
+assert sorted(pivot.index) == ['2gis', 'instagram', 'referral'], 'Строками должны быть каналы: index="channel"'
+assert [str(c) for c in pivot.columns] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], 'Столбцами должны быть месяцы: columns="month"'
+assert float(pivot.loc['instagram', '2024-03']) == 47750.0 and float(pivot.loc['referral', '2024-05']) == 20200.0, 'Значениями должна быть сумма amount: aggfunc="sum"'` }, hints: [`<code>m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code>`, 'Если не указать <code>aggfunc</code>, pandas посчитает не сумму, а среднее.'] },
+        { prompt: `Код: <code>sns.barplot(data=m, x='channel', y='amount')</code>. Что показывает высота столбцов?`, options: ['Общую выручку каждого канала', 'Среднюю сумму заказа в каждом канале (с чертой доверительного интервала сверху)', 'Число заказов в каждом канале', 'Самый большой заказ'], explain: `barplot в seaborn по умолчанию рисует среднее. Если нужна общая выручка: <code>estimator='sum'</code>, а чтобы убрать черту — <code>errorbar=None</code>.` },
+        { prompt: `Конец скрипта: <code>plt.show()</code>, а на следующей строке <code>plt.savefig('chart.png')</code>. Что сохранится в файле?`, options: ['Готовая диаграмма', 'Пустой рисунок: show после показа диаграммы закрывает рисунок, поэтому savefig нужно вызывать раньше show', 'Будет ошибка', 'Две диаграммы'], explain: 'Порядок важен: сначала <code>savefig</code>, потом <code>show</code>. Или сохраняйте конкретный объект рисунка: <code>fig.savefig(...)</code>.' }
+      ]
     }
   }
 });

@@ -259,6 +259,138 @@ ORDER BY day;</code></pre>
         { prompt: 'Conversion rose from 2.1% to 2.3%. On a slide, a bar chart with the axis starting at 2.0% makes it look as if conversion tripled. What do you do?', options: ['Leave it, it looks impressive', 'Start the axis at zero, or state the change as a number: +0.2 pp (+9.5%)', 'Switch to a pie chart', 'Remove the chart and just write “grew”'], explain: 'A bar’s length must be proportional to its value, and the change is better stated as an exact number.' },
         { prompt: 'A rise of 0.2 percentage points (2.1% → 2.3%) is how many percent in relative terms? (one digit after the decimal point)', unit: '%', explain: '(2.3 − 2.1) / 2.1 ≈ 9.5%.' }
       ]
+    },
+    'viz-9': {
+      title: 'BI tools: Superset, DataLens, Tableau, Looker Studio, Qlik',
+      body: `
+<p>Analyst vacancies in Kazakhstan name Power BI most often, but it is not the only one: banks and telecoms use <b>Qlik Sense</b> and <b>Tableau</b>, IT companies use the open-source <b>Apache Superset</b>, startups in the CIS market use <b>Yandex DataLens</b>, and marketing teams use <b>Looker Studio</b>. The good news: they all share the same logic. Once you understand one, you can move to another in a week.</p>
+<h3>The same path in every BI tool</h3>
+<pre><code>Source (connection) → Dataset → Chart → Dashboard → Filters</code></pre>
+<ol>
+<li><b>Connecting to a source</b>: PostgreSQL, ClickHouse, Google Sheets, CSV.</li>
+<li><b>Dataset</b>: the table a chart is built on. It can be an existing table, a view, or a SQL query you wrote.</li>
+<li><b>Chart</b>: you pick a dimension (city, month) and a measure (SUM, COUNT), and the tool computes the aggregate itself.</li>
+<li><b>Dashboard</b>: several charts on one page.</li>
+<li><b>Filters</b>: a date range, a city. One filter affects every chart.</li>
+</ol>
+<h3>A map of terms</h3>
+<table>
+<tr><th>Concept</th><th>Power BI</th><th>Superset</th><th>DataLens</th><th>Tableau</th><th>Looker Studio</th></tr>
+<tr><td>Data table</td><td>Semantic model (dataset)</td><td>Dataset</td><td>Dataset</td><td>Data source</td><td>Data source</td></tr>
+<tr><td>Calculated metric</td><td>Measure (DAX)</td><td>Metric (a SQL expression)</td><td>Calculated field</td><td>Calculated field</td><td>Calculated field</td></tr>
+<tr><td>One chart</td><td>Visual</td><td>Chart</td><td>Chart</td><td>Worksheet</td><td>Chart</td></tr>
+<tr><td>Page of charts</td><td>Report</td><td>Dashboard</td><td>Dashboard</td><td>Dashboard</td><td>Report</td></tr>
+<tr><td>Filter control</td><td>Slicer</td><td>Native filter</td><td>Selector</td><td>Filter, parameter</td><td>Control</td></tr>
+<tr><td>Where you write SQL</td><td>Power Query (native query)</td><td>SQL Lab</td><td>QL chart</td><td>Custom SQL</td><td>Custom query</td></tr>
+</table>
+<p>What sets Qlik Sense apart is its <b>associative model</b>: click one value and the related values in every table are highlighted at once; formulas are written in the set analysis language, like <code>Sum({&lt;Year={2026}&gt;} Sales)</code>.</p>
+<h3>Superset: a tool for the analyst who knows SQL</h3>
+<p><b>SQL Lab</b> is a SQL editor in the browser. You write a query, look at the result, then save that query as a dataset with the "Create chart" button. The SQL skills from this course apply here directly. DataLens and Looker Studio let you start from SQL in the same way.</p>
+<h3>How to build a chart-ready dataset</h3>
+<ul>
+<li><b>Define the grain</b>: what does one row mean? "One order" or "month × category". Do not mix two levels in one table.</li>
+<li><b>Long format</b>: categories belong in rows, not in column names: <code>month, category, revenue</code>. Then a new category does not change the dataset, and the BI tool can easily turn it into a colour or a filter.</li>
+<li><b>Store the components, not the ratio</b>: <code>revenue</code> and <code>orders</code> instead of the average order value. BI computes the average order value correctly under any filter as <code>SUM(revenue) / SUM(orders)</code>. Averaging ready-made averages again gives a wrong result.</li>
+<li><b>A date should be a real date</b>: <code>2026-03-01</code>, not the text <code>'2026-03'</code>. Then the time axis and the "last 90 days" filter work.</li>
+<li><b>Add the dimensions your filters need</b>: city, status, channel. You cannot filter by a column that is not in the dataset.</li>
+</ul>
+<h3>Which tool when</h3>
+<table>
+<tr><th>Situation</th><th>Tool</th></tr>
+<tr><td>Corporate reporting, a Microsoft environment, users who are close to Excel</td><td>Power BI</td></tr>
+<tr><td>Data in ClickHouse/PostgreSQL, the team knows SQL, no budget for licences</td><td>Superset</td></tr>
+<tr><td>A quick, free cloud dashboard that works well with ClickHouse</td><td>DataLens</td></tr>
+<tr><td>Marketing: Google Analytics, Google Ads, Sheets</td><td>Looker Studio</td></tr>
+<tr><td>Complex interactive visualization, exploration</td><td>Tableau</td></tr>
+</table>
+<h3>Common mistakes</h3>
+<ul>
+<li>Putting precomputed percentages and averages into the dataset and then summing or averaging them in BI.</li>
+<li>Writing separate SQL for every chart: the numbers stop matching each other. Build one dataset per topic and draw every chart from it.</li>
+<li>Connecting a raw million-row table directly: the dashboard opens slowly. Aggregate to the day or month level.</li>
+</ul>
+<div class="tip">On your résumé, write what you did, not just the tool's name: "Built a sales dashboard in Superset on ClickHouse data: 1 dataset, 6 charts, 3 filters". Superset and DataLens can be installed for free, so you can build a portfolio project.</div>`,
+      ex: [
+        { prompt: 'What does "dataset" mean in Superset?', options: ['A finished chart', 'A table, a view or a saved SQL query that charts are built on', 'A PDF copy of a dashboard', 'A list of users'], explain: 'A dataset is the data source of a chart. You can also create one from a query written in SQL Lab. It corresponds to a model table in Power BI and a data source in Tableau.' },
+        { prompt: `<b>qazaq.</b> Prepare a long-format dataset for a "Monthly revenue by category" chart: for the delivered orders of 2026, show <code>month</code> (the first day of the month, <code>date(order_date, 'start of month')</code>), <code>category</code>, <code>revenue</code>. Sort by <code>month</code>, <code>category</code>.`, hints: ['Three tables: <code>orders</code>, <code>order_items</code>, <code>products</code>.', `<code>WHERE o.status = 'delivered' AND o.order_date &gt;= '2026-01-01'</code>, <code>GROUP BY month, p.category</code>.`] },
+        { prompt: '<b>qazaq.</b> Build the main dataset of a dashboard, with one order as its grain: <code>order_id</code>, <code>order_date</code>, <code>city</code> (the customer\'s city), <code>status</code>, <code>items</code> (the number of order lines in the order), <code>order_total</code> (the sum of quantity × unit_price). Every status is included. Sort by <code>order_id</code>.', hints: ['Join <code>orders</code> with <code>customers</code> and <code>order_items</code>.', 'The grain is the order: <code>GROUP BY o.order_id, o.order_date, c.city, o.status</code>. The result should have 308 rows.'] },
+        { prompt: 'A dataset has a ready <code>avg_check</code> column for each city and month. On the dashboard, the "All cities" card shows it as <code>AVG(avg_check)</code>. What is wrong?', options: ['Nothing, this is the correct average order value', 'It is an average of averages: a city with 5 orders and a city with 500 orders get the same weight. Put revenue and orders into the dataset and compute SUM(revenue) / SUM(orders)', 'You should use MAX instead of AVG', 'A card cannot show an average order value'], explain: 'Do not precompute ratios; store the numerator and the denominator separately. Then BI computes the right ratio itself under any filter.' },
+        { prompt: 'A company\'s data is in ClickHouse, the analysts know SQL, and there is no budget for licences. Which tool makes the most sense?', options: ['Tableau', 'Apache Superset', 'Qlik Sense', 'Excel'], explain: 'Superset is open source and free, connects to ClickHouse, and lets you build a chart straight from a query in SQL Lab. DataLens is a fitting alternative for this case too.' }
+      ]
+    },
+    'viz-10': {
+      title: 'Charts in Python: matplotlib and seaborn',
+      body: `
+<p>"matplotlib/seaborn" appears in many vacancies: when you analyse data in Python, it is convenient to draw the chart right there. The in-browser Python on this site has no matplotlib, so in this lesson you learn to <b>read</b> the code and to <b>prepare the data</b> for a chart. That preparation is 80% of making a chart. Try running the code on your own computer or in Google Colab.</p>
+<h3>The standard pattern</h3>
+<pre><code>import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('orders.csv')
+clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]
+monthly = clean.groupby(clean['order_date'].str[:7])['amount'].sum()   # 1. data
+
+fig, ax = plt.subplots(figsize=(8, 4))            # 2. figure and axes
+ax.plot(monthly.index, monthly.values, marker='o')  # 3. line
+ax.set_title('Monthly revenue, 2024')             # 4. title and axes
+ax.set_ylabel('Revenue, ₸')
+ax.set_ylim(0)
+ax.spines[['top', 'right']].set_visible(False)    # remove the extra borders
+plt.tight_layout()
+plt.savefig('revenue.png', dpi=150)               # 5. save
+plt.show()</code></pre>
+<p>Every chart is made of these five steps: data → <code>fig, ax</code> → plot → style → save. <code>fig</code> is the whole figure, and <code>ax</code> is one chart inside it (with its axes).</p>
+<h3>Chart types</h3>
+<table>
+<tr><th>Goal</th><th>matplotlib</th><th>What the data should look like</th></tr>
+<tr><td>A trend over time</td><td><code>ax.plot(x, y)</code></td><td>A Series sorted by time</td></tr>
+<tr><td>Comparing categories</td><td><code>ax.barh(names, values)</code></td><td>A Series sorted by value</td></tr>
+<tr><td>A distribution</td><td><code>ax.hist(x, bins=20)</code></td><td>Raw values (not aggregated)</td></tr>
+<tr><td>The relationship between two variables</td><td><code>ax.scatter(x, y)</code></td><td>Two numeric columns</td></tr>
+</table>
+<h3>seaborn: working directly with a DataFrame</h3>
+<p><b>seaborn</b> is built on top of matplotlib. You give it a long-format DataFrame and column names:</p>
+<pre><code>import seaborn as sns
+
+sns.barplot(data=m, x='channel', y='amount', estimator='sum', errorbar=None)
+sns.histplot(data=clean, x='amount', bins=20)
+sns.lineplot(data=long_df, x='month', y='revenue', hue='channel')
+sns.heatmap(pivot, annot=True, fmt='.0f', cmap='Blues')</code></pre>
+<ul>
+<li><code>hue='channel'</code> draws each channel in its own colour.</li>
+<li><code>sns.barplot</code> shows the <b>mean</b> and a confidence interval line by default. If you need the sum, write <code>estimator='sum'</code>.</li>
+<li><code>sns.heatmap</code> expects a wide-format table (a pivot): the rows are one dimension, the columns another.</li>
+</ul>
+<h3>Long and wide format</h3>
+<p><code>lineplot</code> and <code>barplot</code> need long format (<code>month, channel, revenue</code>), and <code>heatmap</code> needs wide format. <code>pivot_table</code> converts one into the other:</p>
+<pre><code>pivot = m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>Calling <code>plt.savefig</code> after <code>plt.show()</code>: in a script, <code>show</code> closes the figure and the file is saved empty. Save first.</li>
+<li>Not starting the axis at zero in a bar chart (giving <code>set_ylim</code> a lower bound other than zero): the difference is inflated artificially.</li>
+<li>An unsorted bar chart: <code>sort_values()</code> makes the chart easier to read at once.</li>
+<li>Leaving dates as text: the months may end up in alphabetical order on the axis. Use <code>pd.to_datetime</code> or stick to the <code>YYYY-MM</code> format.</li>
+<li>A chart with no title and no units. Put the conclusion in the title: "Revenue peaked in March".</li>
+</ul>
+<div class="tip">If a chart does not come out as expected, look at the data itself first with <code>print(monthly)</code>. The mistake is usually in the groupby and the filter, not in the plot.</div>`,
+      ex: [
+        { prompt: `Prepare the data for the line chart from the lesson. From the clean orders (<code>status</code> = paid, <code>amount</code> not missing and below 20,000), compute monthly revenue and store it in the Series <code>monthly</code>: the index is the month as <code>'YYYY-MM'</code> (ascending), the value is the sum of <code>amount</code>.`, check: { tests: `assert 'monthly' in globals(), 'Create the variable monthly'
+assert hasattr(monthly, 'index') and getattr(monthly, 'ndim', 0) == 1, 'monthly should be a pandas Series'
+assert [str(i) for i in monthly.index] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], f'The index should be the months 2024-01 … 2024-06, you have {list(monthly.index)}'
+assert [float(v) for v in monthly.values] == [31950.0, 66650.0, 89650.0, 66000.0, 48700.0, 31900.0], f'The monthly revenue is wrong: check the cleaning rules. You have {list(monthly.values)}'` }, hints: [`<code>clean = df[(df['status'] == 'paid') &amp; df['amount'].notna() &amp; (df['amount'] &lt; 20000)]</code>`, `The month: <code>clean['order_date'].str[:7]</code>`, `<code>clean.groupby(clean['order_date'].str[:7])['amount'].sum()</code>`] },
+        { prompt: 'Prepare the data for a horizontal bar chart (<code>ax.barh</code>): from the clean orders, compute each city\'s revenue and store it in the Series <code>by_city</code>, sorted in <b>ascending order</b> (the index is the city). <code>barh</code> draws the first value at the bottom, so the largest ends up on top.', check: { tests: `assert 'by_city' in globals(), 'Create the variable by_city'
+assert getattr(by_city, 'ndim', 0) == 1, 'by_city should be a pandas Series'
+assert list(by_city.index) == ['Шымкент', 'Астана', 'Алматы'], f'The cities should be in ascending order of revenue, you have {list(by_city.index)}'
+assert [float(v) for v in by_city.values] == [37500.0, 142950.0, 154400.0], f'The city revenue is wrong, you have {list(by_city.values)}'` }, hints: [`The city is in the <code>customers</code> table: <code>clean.merge(customers, on='customer_id')</code>`, `<code>m.groupby('city')['amount'].sum().sort_values()</code>`] },
+        { prompt: `Prepare a wide-format table for <code>sns.heatmap</code>: in the DataFrame <code>pivot</code>, the rows are the channel (<code>channel</code>), the columns are the month (<code>'YYYY-MM'</code>), and the values are the sum of clean revenue.`, check: { tests: `assert 'pivot' in globals(), 'Create the variable pivot'
+assert getattr(pivot, 'ndim', 0) == 2, 'pivot should be a DataFrame'
+assert pivot.shape == (3, 6), f'pivot should be 3 channels × 6 months, you have {pivot.shape}'
+assert sorted(pivot.index) == ['2gis', 'instagram', 'referral'], 'The rows should be channels: index="channel"'
+assert [str(c) for c in pivot.columns] == ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'], 'The columns should be months: columns="month"'
+assert float(pivot.loc['instagram', '2024-03']) == 47750.0 and float(pivot.loc['referral', '2024-05']) == 20200.0, 'The values should be the sum of amount: aggfunc="sum"'` }, hints: [`<code>m.pivot_table(index='channel', columns='month', values='amount', aggfunc='sum')</code>`, 'Without <code>aggfunc</code>, pandas computes the mean, not the sum.'] },
+        { prompt: `The code: <code>sns.barplot(data=m, x='channel', y='amount')</code>. What does the height of the bars show?`, options: ['The total revenue of each channel', 'The mean order amount in each channel (with a confidence interval line on top)', 'The number of orders in each channel', 'The largest order'], explain: `seaborn's barplot draws the mean by default. If you need total revenue: <code>estimator='sum'</code>; to remove the line: <code>errorbar=None</code>.` },
+        { prompt: `The end of a script: <code>plt.show()</code>, and on the next line <code>plt.savefig('chart.png')</code>. What is saved in the file?`, options: ['The finished chart', 'An empty image: show closes the figure after displaying the chart, so savefig must be called before show', 'It raises an error', 'Two charts'], explain: 'The order matters: first <code>savefig</code>, then <code>show</code>. Or save the specific figure object: <code>fig.savefig(...)</code>.' }
+      ]
     }
   }
 });

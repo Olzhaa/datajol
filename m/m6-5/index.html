@@ -16,7 +16,7 @@
 <meta name="theme-color" content="#0F766E">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../../assets/fonts.css">
-<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M6.5 Cloud & Data Eng Basics","description":"Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake /…","url":"https://olzhaa.github.io/datajol/m/m6-5/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 6: ML инженерия","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M6.5 Cloud & Data Eng Basics","item":"https://olzhaa.github.io/datajol/m/m6-5/"}]}]</script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Course","name":"M6.5 Cloud & Data Eng Basics","description":"Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake /…","url":"https://olzhaa.github.io/datajol/m/m6-5/","inLanguage":"kk","isAccessibleForFree":true,"provider":{"@type":"EducationalOrganization","name":"Tolqyn","url":"https://olzhaa.github.io/datajol/"},"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT20H"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tolqyn","item":"https://olzhaa.github.io/datajol/"},{"@type":"ListItem","position":2,"name":"Кезең 3: Дерек аналитигі","item":"https://olzhaa.github.io/datajol/#map"},{"@type":"ListItem","position":3,"name":"M6.5 Cloud & Data Eng Basics","item":"https://olzhaa.github.io/datajol/m/m6-5/"}]}]</script>
 <style>
 /* Block theme: a dark playfield grid, bevelled square blocks in four piece colours, pixel type for the HUD. */
 [hidden] { display: none !important; }
@@ -1004,9 +1004,9 @@ textarea.stdin { display: block; width: 100%; margin-top: 4px; background: var(-
 <body>
 <header class="topbar"><div class="wrap"><a class="logo" href="../../" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);text-decoration:none"><img src="../../assets/favicon.svg" width="28" height="28" alt=""><span class="wordmark">TOLQYN</span></a></div></header>
 <main class="wrap static-page">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 6: ML инженерия / M6.5</nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Tolqyn</a> / Кезең 3: Дерек аналитигі / M6.5</nav>
 <article class="reading">
-<p class="eyebrow">M6.5 · 20–30 сағат · 9 сабақ</p>
+<p class="eyebrow">M6.5 · 20–30 сағат · 10 сабақ</p>
 <h1>M6.5 Cloud &amp; Data Eng Basics: Data engineering негіздері: warehouse, ETL, dbt, Spark</h1>
 <p class="prose">Analytics-тің астында инфрақұрылым жатыр: деректер қайда сақталады, кім тасымалдайды, қанша тұрады. Бұл модульде OLTP пен OLAP айырмасын, warehouse / lake / lakehouse, star schema, ETL vs ELT, batch vs streaming, Airflow, dbt, Spark және cloud сервистердің негізін үйренесіз.</p>
 <p class="static-cta"><a class="btn" href="../../#try/m6-5">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m6-5">Барлық тапсырмалар</a></p>
@@ -1252,11 +1252,40 @@ for chunk in pd.read_csv('big.csv', chunksize=100_000):
 <div class="tip">Data engineer-дің сұхбатында «cost» туралы сұрақ жиі қойылады. Жауапта екі нәрсені айтыңыз: партиция/баған сүзгісі және агрегат қабаты (gold кестелері).</div></div>
 <p><a href="../../#lesson/m6-5/7">Сабақты интерактивті түрде ашу →</a></p>
 </section>
+<section id="deng-ch">
+<h2>9. ClickHouse: аналитикаға арналған жылдам база</h2>
+<div class="prose">
+<p>Алматыдағы Data Analyst вакансияларында PostgreSQL-мен қатар <b>ClickHouse</b> жиі аталады. Бұл — <b>колонкалық (columnar) OLAP базасы</b>: миллиардтаған оқиғаның (кликтер, қаралымдар, тапсырыстар) үстінен <code>GROUP BY</code>-ды секундтың бөлігінде есептейді.</p>
+<h3>Неге жылдам</h3>
+<ul>
+<li><b>Бағандап сақтайды.</b> PostgreSQL жолды тұтас сақтайды, ал ClickHouse әр бағанды бөлек сақтайды. <code>SELECT city, SUM(amount)</code> сұрауы тек екі бағанды оқиды, қалған 50 бағанға тиіспейді.</li>
+<li><b>Қысады.</b> Бір бағандағы мәндер ұқсас (мысалы, бірдей қала атаулары), сондықтан олар 5–10 есе жақсы қысылады.</li>
+<li><b>Параллель есептейді</b> және деректі бөліктерге (<code>PARTITION BY</code>) бөліп, керегін ғана оқиды.</li>
+</ul>
+<h3>Аналитикке не білу керек</h3>
+<p>Синтаксис кәдімгі SQL: <code>SELECT</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>JOIN</code>, window functions бар. Айырмашылықтар негізінен функцияларда:</p>
+<table>
+<tr><th>Не керек</th><th>ClickHouse</th><th>PostgreSQL</th><th>SQLite (осы сайт)</th></tr>
+<tr><td>Айдың басы</td><td><code>toStartOfMonth(d)</code></td><td><code>DATE_TRUNC('month', d)</code></td><td><code>date(d, 'start of month')</code></td></tr>
+<tr><td>Бірегей сан (жылдам, шамамен)</td><td><code>uniq(user_id)</code></td><td>жоқ</td><td>жоқ</td></tr>
+<tr><td>Бірегей сан (дәл)</td><td><code>uniqExact(user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td></tr>
+<tr><td>Шартты санау</td><td><code>countIf(status = 'paid')</code></td><td><code>COUNT(*) FILTER (WHERE ...)</code></td><td><code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code></td></tr>
+</table>
+<h3>Әдеттер</h3>
+<ul>
+<li>Әрқашан күн бойынша сүзгі қойыңыз: <code>WHERE event_date &gt;= today() - 30</code>. Кесте күн бойынша бөлінген болса, ClickHouse ескі бөліктерді мүлде оқымайды.</li>
+<li>Үлкен кестелерді <code>JOIN</code> жасаудан сақ болыңыз: ClickHouse оң жақ кестені жадқа жүктейді. Кіші кестені оң жаққа қойыңыз.</li>
+<li><code>SELECT *</code> колонкалық базада ең қымбат сұрау: тек керек бағандарды атаңыз.</li>
+<li>ClickHouse транзакциялық жүйе емес: тапсырыс қабылдау PostgreSQL-де, ал есеп ClickHouse-та жасалады (OLTP vs OLAP сабағын еске түсіріңіз).</li>
+</ul>
+<div class="tip">ClickHouse-ты тегін көру: ресми сайттағы онлайн playground-та ашық деректер жиындарына SQL жазуға болады.</div></div>
+<p><a href="../../#lesson/m6-5/8">Сабақты интерактивті түрде ашу →</a></p>
+</section>
 <section id="deng-gate">
-<h2>9. Модуль емтиханы: Cloud &amp; Data Eng Basics</h2>
+<h2>10. Модуль емтиханы: Cloud &amp; Data Eng Basics</h2>
 <div class="prose">
 <p>Қорытынды тексеріс: star schema, ETL, DAG, dbt тестілері және cost. Кеңестер жоқ. Өту шегі — 75%.</p></div>
-<p><a href="../../#lesson/m6-5/8">Сабақты интерактивті түрде ашу →</a></p>
+<p><a href="../../#lesson/m6-5/9">Сабақты интерактивті түрде ашу →</a></p>
 </section>
 <p class="static-cta"><a class="btn" href="../../#try/m6-5">Тіркелмей бірінші сабақты бастау</a> <a class="btn ghost" href="../../#module/m6-5">Барлық тапсырмалар</a></p>
 </article>

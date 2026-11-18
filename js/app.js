@@ -244,7 +244,7 @@
       <div class="auth-hero">
         <div class="auth-owl">${G.owl('owl-lg owl-bob', 'Үкі')}<p class="bubble">Сәлем! Мен Үкімін. Бірге шыңға шығайық!</p></div>
         <h1>Бағдарламалау мен деректі ойнап үйрен</h1>
-        <p class="muted">Python, SQL, Java, C++, алгоритмдер және Data Science қазақша. Әр тапсырма браузерде бірден тексеріледі, XP береді, деңгейіңізді көтереді, ал күнделікті оқу streak отын жағады.</p>
+        <p class="muted">SQL, Excel, Python, статистика, Power BI және Data Science қазақша. Әр тапсырма браузерде бірден тексеріледі, XP береді, деңгейіңізді көтереді, ал күнделікті оқу streak отын жағады.</p>
         <p class="guest-try"><button type="button" class="btn" id="guest">Тіркелмей, бірінші тапсырманы байқау →</button><span class="muted">Тіркелу кейін, прогресс сақталады.</span></p>
         <div class="terminal" aria-label="SQL мысалы"><span class="k">SELECT</span> city, <span class="k">COUNT</span>(*) <span class="k">AS</span> clients
 <span class="k">FROM</span> customers
@@ -571,7 +571,8 @@
   function viewMap() {
     const p = S.progress();
     const nx = nextLesson(p), curMod = nx && nx.mod.id;
-    const track = (p.prefs || {}).mapTrack === 'dev' ? 'dev' : 'data';
+    const devOn = !(DJ.hiddenModules || []).includes('java-1');   // бағдарламалаушы жолы тілдер курстары жасырылғанда көрсетілмейді
+    const track = devOn && (p.prefs || {}).mapTrack === 'dev' ? 'dev' : 'data';
     const regions = track === 'dev'
       ? DJ.devTrack.map((r, i) => ({ n: i + 1, kz: r.kz, goal: r.goal, mods: r.mods }))
       : DJ.phases.filter(ph => !ph.extra).map(ph => ({ n: ph.n, kz: ph.kz, goal: `${ph.goal} · шығу деңгейі ${ph.level}`, mods: ph.modules.map(m => m.id) }));
@@ -581,10 +582,10 @@
     let k = 0;
     $('#app').innerHTML = `
       <h1 style="margin:0 0 12px">Оқу картасы</h1>
-      <div class="track-tabs" role="tablist" aria-label="Жол">
+      ${devOn ? `<div class="track-tabs" role="tablist" aria-label="Жол">
         <button role="tab" data-track="data" aria-selected="${track === 'data'}">Дата мамандығы</button>
         <button role="tab" data-track="dev" aria-selected="${track === 'dev'}">Бағдарламалаушы</button>
-      </div>
+      </div>` : ''}
       <p class="muted" style="max-width:70ch">${track === 'dev'
         ? 'Тілдерден алгоритмдерге, одан командалық инженерияға дейінгі жол. Әр аймақ бір қадам, әр нүкте бір курс.'
         : 'Нөлден Junior/Middle деңгейіне дейінгі жол. Әр аймақ бір кезең, әр нүкте бір модуль. Алғашқы төрт аймақ бәріне ортақ, одан әрі мақсатыңызға қарай жол таңдайсыз.'}</p>

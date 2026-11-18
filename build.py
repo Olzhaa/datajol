@@ -47,7 +47,7 @@ csp = '; '.join([
 page = re.sub(r'<script src="((?:js|content|vendor)/[^"?]+)"', rf'<script src="\1?v={version}"', page)
 
 title = 'Tolqyn — бағдарламалау мен дата ғылымын қазақша ойнап үйрен'
-desc = ('Python, SQL, Java, C++, алгоритмдер, дата аналитика және ML-ді қазақша тегін үйреніңіз. '
+desc = ('SQL, Excel, Python, статистика, Power BI, дата аналитика және ML-ді қазақша тегін үйреніңіз. '
         'Тапсырмалар браузерде бірден тексеріледі, XP, деңгей мен streak бар.')
 favicon = (root / 'assets/favicon.svg').read_text().strip()
 favicon_uri = 'data:image/svg+xml,' + favicon.replace('"', "'").replace('#', '%23').replace('<', '%3C').replace('>', '%3E')

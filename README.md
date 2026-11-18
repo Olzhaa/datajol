@@ -18,6 +18,16 @@ A free, Kazakh-language site for learning data analytics and data science from z
 | Тілдер мен CS | қосымша | Intermediate Python, Data Structures & Algorithms, Java, C++ |
 | Мансап | 7 | Портфолио, резюме, LinkedIn, сұхбатқа дайындық |
 
+## Data Analyst бағытына фокус (2026 жылғы қараша)
+
+Сайт қазір **Data Analyst және Data Scientist** бағыттарын ғана көрсетеді.
+
+- **Жасырылған модульдер:** ML Engineering (m6-1, m6-2, m6-3, m6-4, m6-6, GenAI, AI Engineering), Intermediate Python, Java, C++, DSA (2 модуль), Python Backend. Олардың сабақтары `content/` ішінде қалады, оқушылардың прогресі өшпейді. Модульді қайта ашу үшін `content/curriculum.js` ішіндегі `DJ.hiddenModules` тізімінен алып тастап, `python3 build.py` іске қосыңыз.
+- **M6.5 Cloud & Data Eng Basics** Data Analyst кезеңіне (3-кезең) көшірілді. Себебі ETL/DWH Алматыдағы DA вакансияларының 6/20-сында сұралады.
+- **Жаңа модуль M3.8 «SQL практикум: Qazaq Market»:** 8 сабақ, 38 SQL тапсырмасы, жаңа `qazaq` дерекқорында (80 клиент, 308 тапсырыс, 530 тауар жолы).
+- **Жаңа сабақтар:** `deng-ch` ClickHouse (M6.5), `cap-ai` «AI көмекшімен талдау: сұрау жазғызу және тексеру» (M3.7).
+- Жаңа тапсырмалар қосылғандықтан, Supabase-те `supabase/xp_catalog.sql` файлын қайта іске қосыңыз.
+
 ## Практика және есептер
 
 - Сабақ ішіндегі тапсырмалар ретімен ашылады: алдыңғысын орындамай келесісі ашылмайды.

@@ -1408,6 +1408,41 @@ print(review_query('SELECT * FROM events'))
         ]
       },
       {
+        id: 'deng-ch', title: 'ClickHouse: аналитикаға арналған жылдам база', minutes: 15,
+        body: `
+<p>Алматыдағы Data Analyst вакансияларында PostgreSQL-мен қатар <b>ClickHouse</b> жиі аталады. Бұл — <b>колонкалық (columnar) OLAP базасы</b>: миллиардтаған оқиғаның (кликтер, қаралымдар, тапсырыстар) үстінен <code>GROUP BY</code>-ды секундтың бөлігінде есептейді.</p>
+<h3>Неге жылдам</h3>
+<ul>
+<li><b>Бағандап сақтайды.</b> PostgreSQL жолды тұтас сақтайды, ал ClickHouse әр бағанды бөлек сақтайды. <code>SELECT city, SUM(amount)</code> сұрауы тек екі бағанды оқиды, қалған 50 бағанға тиіспейді.</li>
+<li><b>Қысады.</b> Бір бағандағы мәндер ұқсас (мысалы, бірдей қала атаулары), сондықтан олар 5–10 есе жақсы қысылады.</li>
+<li><b>Параллель есептейді</b> және деректі бөліктерге (<code>PARTITION BY</code>) бөліп, керегін ғана оқиды.</li>
+</ul>
+<h3>Аналитикке не білу керек</h3>
+<p>Синтаксис кәдімгі SQL: <code>SELECT</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>JOIN</code>, window functions бар. Айырмашылықтар негізінен функцияларда:</p>
+<table>
+<tr><th>Не керек</th><th>ClickHouse</th><th>PostgreSQL</th><th>SQLite (осы сайт)</th></tr>
+<tr><td>Айдың басы</td><td><code>toStartOfMonth(d)</code></td><td><code>DATE_TRUNC('month', d)</code></td><td><code>date(d, 'start of month')</code></td></tr>
+<tr><td>Бірегей сан (жылдам, шамамен)</td><td><code>uniq(user_id)</code></td><td>жоқ</td><td>жоқ</td></tr>
+<tr><td>Бірегей сан (дәл)</td><td><code>uniqExact(user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td><td><code>COUNT(DISTINCT user_id)</code></td></tr>
+<tr><td>Шартты санау</td><td><code>countIf(status = 'paid')</code></td><td><code>COUNT(*) FILTER (WHERE ...)</code></td><td><code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code></td></tr>
+</table>
+<h3>Әдеттер</h3>
+<ul>
+<li>Әрқашан күн бойынша сүзгі қойыңыз: <code>WHERE event_date &gt;= today() - 30</code>. Кесте күн бойынша бөлінген болса, ClickHouse ескі бөліктерді мүлде оқымайды.</li>
+<li>Үлкен кестелерді <code>JOIN</code> жасаудан сақ болыңыз: ClickHouse оң жақ кестені жадқа жүктейді. Кіші кестені оң жаққа қойыңыз.</li>
+<li><code>SELECT *</code> колонкалық базада ең қымбат сұрау: тек керек бағандарды атаңыз.</li>
+<li>ClickHouse транзакциялық жүйе емес: тапсырыс қабылдау PostgreSQL-де, ал есеп ClickHouse-та жасалады (OLTP vs OLAP сабағын еске түсіріңіз).</li>
+</ul>
+<div class="tip">ClickHouse-ты тегін көру: ресми сайттағы онлайн playground-та ашық деректер жиындарына SQL жазуға болады.</div>`,
+        exercises: [
+          { type: 'quiz', xp: 10, prompt: 'ClickHouse-тың <code>GROUP BY</code> сұрауларында жылдам болуының басты себебі қайсы?', options: ['Ол деректі жолдап сақтайды', 'Ол деректі бағандап сақтайды да, сұрауға керек бағандарды ғана оқиды', 'Онда индекс мүлде жоқ', 'Ол тек JSON сақтайды'], answer: 1, explain: 'Колонкалық сақтау: 50 бағанның 2-еуі ғана керек болса, база сол 2 бағанды ғана оқиды және олар жақсы қысылады.' },
+          { type: 'quiz', xp: 10, prompt: 'Дүкен тапсырыстарды қабылдауға қай жүйені, ал миллиондаған оқиға бойынша есепке қайсысын таңдауы керек?', options: ['Екеуіне де ClickHouse', 'Тапсырысқа PostgreSQL (OLTP), есепке ClickHouse (OLAP)', 'Тапсырысқа ClickHouse, есепке PostgreSQL', 'Екеуіне де Excel'], answer: 1, explain: 'ClickHouse жолдарды бір-бірлеп жаңартуға және транзакцияға арналмаған. Ол үлкен көлемді оқуға және агрегатқа мықты.' },
+          { type: 'quiz', xp: 10, prompt: 'ClickHouse-та <code>uniq(user_id)</code> мен <code>uniqExact(user_id)</code> айырмашылығы?', options: ['Айырмашылығы жоқ', 'uniq шамамен, бірақ өте жылдам санайды; uniqExact дәл, бірақ баяулау', 'uniq тек сандарды санайды', 'uniqExact NULL-ды санайды'], answer: 1, explain: 'Дашбордтағы тренд үшін uniq жеткілікті. Қаржылық есепке немесе дәл салыстыруға uniqExact қолданыңыз.' },
+          { type: 'sql', dataset: 'qazaq', xp: 25, prompt: '<b>qazaq.</b> ClickHouse-тағы <code>toStartOfMonth(order_date)</code> сияқты, SQLite-та <code>date(order_date, \'start of month\')</code> арқылы ай бойынша топтаңыз. Жеткізілген (<code>delivered</code>) тапсырыстардың айлық санын шығарыңыз: <code>month</code>, <code>orders_cnt</code>. Реті: ай бойынша.', starter: '', solution: "SELECT date(order_date, 'start of month') AS month, COUNT(*) AS orders_cnt FROM orders WHERE status = 'delivered' GROUP BY month ORDER BY month;", check: { ordered: true }, hints: ["<code>SELECT date(order_date, 'start of month') AS month, COUNT(*) ...</code>", "<code>WHERE status = 'delivered' GROUP BY month ORDER BY month</code>"] },
+          { type: 'sql', dataset: 'qazaq', xp: 25, prompt: '<b>qazaq.</b> ClickHouse-тағы <code>countIf</code>-тің баламасын жазыңыз: әр қала үшін барлық тапсырыс санын (<code>orders_cnt</code>) және бас тартылғандар санын (<code>cancelled_cnt</code>) бір сұраумен шығарыңыз. Бағандар: <code>city</code>, <code>orders_cnt</code>, <code>cancelled_cnt</code>.', starter: '', solution: "SELECT c.city, COUNT(*) AS orders_cnt, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_cnt FROM orders o JOIN customers c ON c.customer_id = o.customer_id GROUP BY c.city;", hints: ['<code>orders</code> мен <code>customers</code>-ты <code>customer_id</code> бойынша біріктіріңіз.', "<code>SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END)</code>"] }
+        ]
+      },
+      {
         id: 'deng-gate', gate: true, title: 'Модуль емтиханы: Cloud & Data Eng Basics', minutes: 30,
         body: `
 <p>Қорытынды тексеріс: star schema, ETL, DAG, dbt тестілері және cost. Кеңестер жоқ. Өту шегі — 75%.</p>`,

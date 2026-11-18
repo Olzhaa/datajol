@@ -1473,5 +1473,137 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "deng-ch": {
+  "pr": [
+   {
+    "title": "uniqExact по месяцам",
+    "prompt": "<b>qazaq.</b> В ClickHouse: <code>SELECT toStartOfMonth(order_date) AS month, uniqExact(customer_id) AS buyers ... GROUP BY month</code>. Напишите то же на SQLite: по заказам <code>delivered</code> 2026 года <code>month</code>, <code>buyers</code>. По месяцу.",
+    "hints": [
+     "<code>toStartOfMonth(d)</code> → <code>date(d, 'start of month')</code>; <code>uniqExact(x)</code> → <code>COUNT(DISTINCT x)</code>."
+    ]
+   },
+   {
+    "title": "toYear",
+    "prompt": "<b>qazaq.</b> С аналогом <code>toYear(order_date)</code> из ClickHouse посчитайте все заказы по годам: <code>year</code> (текст вида <code>'2025'</code>), <code>orders</code>. По году.",
+    "hints": [
+     "<code>strftime('%Y', order_date)</code>"
+    ]
+   },
+   {
+    "title": "avgIf",
+    "prompt": "<b>qazaq.</b> В ClickHouse: <code>SELECT avg(price) AS avg_all, avgIf(price, category = 'Спорт') AS avg_sport FROM products</code>. Напишите одним запросом на SQLite, оба значения <code>ROUND</code> до целого.",
+    "hints": [
+     "Не пишите <code>ELSE</code> в <code>CASE</code>: если условие не выполнено, будет NULL, а <code>AVG</code> NULL не учитывает.",
+     "С <code>ELSE 0</code> нули занизят среднее."
+    ]
+   },
+   {
+    "title": "toMonday: группировка по неделям",
+    "prompt": "<b>qazaq.</b> <code>toMonday(order_date)</code> в ClickHouse даёт понедельник недели. В SQLite это <code>date(order_date, 'weekday 0', '-6 days')</code>. Посчитайте заказы <code>delivered</code> за май 2026 года по неделям: <code>week_start</code>, <code>orders</code>. По неделе.",
+    "hints": [
+     "Май: <code>order_date &gt;= '2026-05-01' AND order_date &lt; '2026-06-01'</code>.",
+     "1 мая — пятница, поэтому первая неделя начинается 27 апреля. Неделя без заказов в результат не попадёт."
+    ]
+   },
+   {
+    "title": "Таблица countIf",
+    "prompt": "<b>qazaq.</b> В ClickHouse: <code>countIf(status = 'delivered')</code>, <code>countIf(status = 'cancelled')</code>, <code>countIf(status = 'returned')</code>. Для каждого месяца 2026 года одним запросом на SQLite: <code>month</code> (первый день месяца), <code>delivered</code>, <code>cancelled</code>, <code>returned</code>. По месяцу.",
+    "hints": [
+     "<code>countIf(условие)</code> → <code>SUM(CASE WHEN условие THEN 1 ELSE 0 END)</code>; три столбца — три таких выражения.",
+     "Здесь нужен <code>ELSE 0</code>: статус без заказов должен показываться как 0, а не NULL."
+    ]
+   },
+   {
+    "title": "uniqIf",
+    "prompt": "<b>qazaq.</b> В ClickHouse: <code>uniqExactIf(customer_id, status = 'delivered')</code> и <code>uniqExactIf(customer_id, status = 'returned')</code>. Для каждого города на SQLite: <code>city</code>, <code>buyers</code> (уникальные клиенты с доставленным заказом), <code>returners</code> (уникальные клиенты с возвратом). По городу.",
+    "hints": [
+     "<code>COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.customer_id END)</code>: при невыполненном условии NULL, а <code>COUNT</code> его не считает.",
+     "Здесь <code>ELSE 0</code> — ошибка: 0 посчитается как ещё один «клиент»."
+    ]
+   },
+   {
+    "title": "argMax: лучший клиент города",
+    "prompt": "<b>qazaq.</b> В ClickHouse <code>argMax(customer_id, revenue)</code> возвращает <code>customer_id</code>, соответствующий наибольшему <code>revenue</code>. Напишите на SQLite через оконную функцию: клиент, потративший больше всех в каждом городе (по заказам <code>delivered</code>): <code>city</code>, <code>top_customer</code>, <code>revenue</code> (при равенстве — меньший <code>customer_id</code>). По городу.",
+    "hints": [
+     "1-й CTE: выручка «город × клиент». 2-й CTE: <code>ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id)</code>.",
+     "В конце <code>WHERE rn = 1</code>."
+    ]
+   },
+   {
+    "title": "runningDifference → LAG",
+    "prompt": "<b>qazaq.</b> <code>runningDifference(revenue)</code> в ClickHouse (или <code>revenue - lagInFrame(revenue)</code>) даёт разницу с предыдущей строкой. На SQLite через <code>LAG</code>: месячная выручка по заказам <code>delivered</code> 2026 года и разница с прошлым месяцем: <code>month</code> (<code>'YYYY-MM'</code>), <code>revenue</code>, <code>diff</code> (в первом месяце NULL). По месяцу.",
+    "hints": [
+     "Сначала месячная выручка в CTE, затем <code>revenue - LAG(revenue) OVER (ORDER BY month)</code>."
+    ]
+   }
+  ]
+ },
+ "deng-mart": {
+  "pr": [
+   {
+    "title": "Watermark",
+    "prompt": "<b>qazaq.</b> Перед инкрементной загрузкой найдите watermark: витрина собирается из заказов <code>delivered</code>, а watermark — их самая поздняя дата. Столбец: <code>watermark</code>.",
+    "hints": [
+     "<code>MAX(order_date)</code> только по строкам <code>delivered</code>."
+    ]
+   },
+   {
+    "title": "Витрина по городам",
+    "prompt": "<b>qazaq.</b> Создайте витрину через <code>CREATE TABLE mart_city AS SELECT ...</code>. Гранулярность: одна строка — один город, только заказы <code>delivered</code>. Столбцы в таком порядке: <code>city</code>, <code>orders</code> (уникальные заказы), <code>revenue</code> (сумма quantity × unit_price).",
+    "hints": [
+     "Три таблицы: <code>orders</code>, <code>customers</code>, <code>order_items</code>; <code>GROUP BY c.city</code>.",
+     "JOIN размножает строки: <code>COUNT(DISTINCT o.order_id)</code>."
+    ]
+   },
+   {
+    "title": "Проверка ключа гранулярности",
+    "prompt": "<b>qazaq.</b> Перед сохранением витрины «месяц × категория» проверьте ключ. По результату готового CTE <code>m</code> одна строка: <code>rows_cnt</code> (число строк) и <code>keys_cnt</code> (число уникальных пар <code>(month, category)</code>). Если они равны, ключ уникален.",
+    "hints": [
+     "Склейте два столбца в один ключ: <code>month || '|' || category</code>.",
+     "<code>COUNT(*)</code> и <code>COUNT(DISTINCT month || '|' || category)</code>"
+    ]
+   },
+   {
+    "title": "JOIN по SCD 2",
+    "prompt": "<b>qazaq.</b> Клиент 7 в декабре 2025 года переехал из Караганды в Астану; это записано в SCD 2 таблице <code>dim_city</code> (в стартере). Выведите его заказы <code>delivered</code> с городом <b>на момент заказа</b>: <code>order_id</code>, <code>order_date</code>, <code>city</code>. По <code>order_date</code>, <code>order_id</code>.",
+    "hints": [
+     "Условие из урока: <code>ON d.customer_id = o.customer_id AND o.order_date BETWEEN d.valid_from AND d.valid_to</code>.",
+     "Без условия на диапазон дат каждый заказ выйдет дважды."
+    ]
+   },
+   {
+    "title": "Уникальные числа не складываются",
+    "prompt": "<b>qazaq.</b> В месячной витрине <code>customers</code> = уникальные покупатели. Покажите одной строкой за 2025 год (только <code>delivered</code>): <code>sum_monthly</code> — сумма месячных чисел уникальных покупателей, <code>year_distinct</code> — уникальные покупатели за весь год. Их разница доказывает, что годовое число клиентов из месячной витрины не получить.",
+    "hints": [
+     "CTE: месячный <code>COUNT(DISTINCT customer_id)</code>, затем его <code>SUM</code>.",
+     "Годовое число считается отдельным подзапросом по сырой таблице <code>orders</code>."
+    ]
+   },
+   {
+    "title": "Lookback для опоздавших данных",
+    "prompt": "<b>qazaq.</b> Watermark дневной витрины — <code>2026-05-31</code>. Чтобы поймать опоздавшие данные, последние 7 дней пересчитываются: <code>order_date &gt; date('2026-05-31', '-7 days')</code>. Подготовьте строки для загрузки (только <code>delivered</code>): <code>order_date</code>, <code>orders</code>, <code>revenue</code>. По <code>order_date</code>.",
+    "hints": [
+     "<code>date('2026-05-31', '-7 days')</code> = <code>'2026-05-24'</code>; берутся дни после него, включая дни после watermark.",
+     "<code>GROUP BY o.order_date</code>, <code>COUNT(DISTINCT o.order_id)</code>."
+    ]
+   },
+   {
+    "title": "Идемпотентная перезагрузка",
+    "prompt": "<b>qazaq.</b> Витрина <code>mart_daily</code> из стартера (день, <code>delivered</code>) загружена с мая, но загрузка июня запустилась дважды, и строки июня удвоились. Оставьте код стартера и допишите под ним идемпотентное исправление: удалите строки июня (<code>order_date &gt;= '2026-06-01'</code>) через <code>DELETE</code> и один раз загрузите этот период заново через <code>INSERT</code>. Проверка смотрит на итоговое состояние витрины.",
+    "hints": [
+     "Первый <code>INSERT</code> в стартере добавляет май и июнь, второй — июнь ещё раз.",
+     "<code>DELETE FROM mart_daily WHERE order_date &gt;= '2026-06-01';</code>, затем копия второго <code>INSERT</code>."
+    ]
+   },
+   {
+    "title": "SCD 2 из журнала изменений",
+    "prompt": "<b>qazaq.</b> Таблица <code>city_changes</code> из стартера хранит, в какой день менялся город клиента. Постройте из неё измерение SCD 2: <code>customer_id</code>, <code>city</code>, <code>valid_from</code> (= <code>changed_at</code>), <code>valid_to</code> (день перед следующим изменением; в последней строке <code>'9999-12-31'</code>), <code>is_current</code> (последняя строка 1, остальные 0). По <code>customer_id</code>, <code>valid_from</code>.",
+    "hints": [
+     "Следующее изменение: <code>LEAD(changed_at) OVER (PARTITION BY customer_id ORDER BY changed_at)</code>; в последней строке оно NULL.",
+     "<code>COALESCE(date(LEAD(...), '-1 day'), '9999-12-31')</code>; <code>is_current</code> — 1, если <code>LEAD(...) IS NULL</code>."
+    ]
+   }
+  ]
  }
 } });

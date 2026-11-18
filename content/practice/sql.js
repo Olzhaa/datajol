@@ -1865,5 +1865,464 @@ DJ.addPractice('m1-2', {
     ]
    }
   }
+ ],
+ "sql-15": [
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Атаулардың ортақ тізімі",
+   "prompt": "Клиенттердің аттары мен тауарлардың атауларын <code>UNION ALL</code> арқылы бір <code>name</code> бағанына жинаңыз. Барлығы 21 жол шығуы керек.",
+   "starter": "SELECT name FROM customers\n",
+   "solution": "SELECT name FROM customers UNION ALL SELECT name FROM products;",
+   "hints": [
+    "Екінші SELECT: <code>SELECT name FROM products</code>.",
+    "Екі SELECT-тің арасына <code>UNION ALL</code> қойыңыз."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "easy",
+   "xp": 10,
+   "title": "Барлық арналар",
+   "prompt": "<code>users</code> кестесіндегі және <code>ad_spend</code> кестесіндегі арналарды (<code>channel</code>) біріктіріп, әр арнаны бір рет қана шығарыңыз. <code>UNION</code> қолданыңыз.",
+   "starter": "SELECT channel FROM users\n",
+   "solution": "SELECT channel FROM users UNION SELECT channel FROM ad_spend;",
+   "hints": [
+    "<code>UNION</code> қайталануларды өзі жояды: <code>DISTINCT</code> керек емес."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "easy",
+   "xp": 10,
+   "title": "Белсенді әрі төлеген",
+   "prompt": "2024 жылғы қыркүйекте (<code>2024-09</code>) әрі белсенді болған (<code>activity</code>), әрі төлем жасаған (<code>payments</code>) пайдаланушылардың <code>user_id</code>-ін <code>INTERSECT</code> арқылы табыңыз.",
+   "starter": "SELECT user_id FROM activity WHERE month = '2024-09'\n",
+   "solution": "SELECT user_id FROM activity WHERE month = '2024-09' INTERSECT SELECT user_id FROM payments WHERE month = '2024-09';",
+   "hints": [
+    "Екінші жиын: <code>SELECT user_id FROM payments WHERE month = '2024-09'</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "INTERSECT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "medium",
+   "xp": 15,
+   "title": "Кеткен пайдаланушылар",
+   "prompt": "Тамызда (<code>2024-08</code>) белсенді болып, қыркүйекте (<code>2024-09</code>) белсенді <b>болмаған</b> пайдаланушылардың <code>user_id</code>-ін <code>EXCEPT</code> арқылы табыңыз. Бұл — кеткен (churn) пайдаланушылар.",
+   "starter": "SELECT user_id FROM activity WHERE month = '2024-08'\n",
+   "solution": "SELECT user_id FROM activity WHERE month = '2024-08' EXCEPT SELECT user_id FROM activity WHERE month = '2024-09';",
+   "hints": [
+    "Бірінші жиын — тамыздағылар, екіншісі — қыркүйектегілер.",
+    "<code>EXCEPT</code>-те рет маңызды: «A-да бар, B-да жоқ»."
+   ],
+   "check": {
+    "mustInclude": [
+     "EXCEPT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Екі айдың салыстыруы",
+   "prompt": "Екі жолдық кесте шығарыңыз: бірінші бағанда кезең атауы (<code>Тамыз</code> немесе <code>Қыркүйек</code>), екіншісінде сол айдағы тапсырыстар саны. Әр жолды бөлек SELECT-пен есептеп, <code>UNION ALL</code> арқылы біріктіріңіз.",
+   "starter": "SELECT 'Тамыз', COUNT(*) FROM orders WHERE order_date LIKE '2024-08%'\n",
+   "solution": "SELECT 'Тамыз', COUNT(*) FROM orders WHERE order_date LIKE '2024-08%' UNION ALL SELECT 'Қыркүйек', COUNT(*) FROM orders WHERE order_date LIKE '2024-09%';",
+   "hints": [
+    "Екінші SELECT-те мәтін мен ай басқа: <code>SELECT 'Қыркүйек', COUNT(*) ... LIKE '2024-09%'</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Қымбат пен арзан бір тізімде",
+   "prompt": "Бағасы 100 000 теңге және одан жоғары тауарларды <code>қымбат</code> белгісімен, ал 5 000 теңгеден төмен тауарларды <code>арзан</code> белгісімен бір тізімге жинаңыз. Үш баған: белгі, <code>name</code>, <code>price</code>. Бүкіл нәтиже бағасы бойынша кему ретімен сұрыпталсын.",
+   "starter": "SELECT 'қымбат', name, price FROM products WHERE price >= 100000\nORDER BY price DESC\n",
+   "solution": "SELECT 'қымбат', name, price FROM products WHERE price >= 100000 UNION ALL SELECT 'арзан', name, price FROM products WHERE price < 5000 ORDER BY price DESC;",
+   "hints": [
+    "<code>ORDER BY</code> тек ең соңында, бір рет жазылады.",
+    "Екінші SELECT: <code>SELECT 'арзан', name, price FROM products WHERE price &lt; 5000</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ],
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "hard",
+   "xp": 20,
+   "title": "Тек бір айда белсенді",
+   "prompt": "Тамыз (<code>2024-08</code>) бен қыркүйектің (<code>2024-09</code>) тек <b>біреуінде</b> ғана белсенді болған пайдаланушылардың <code>user_id</code>-ін табыңыз. Тәсіл: екі айдың бірігуінен (<code>UNION</code>) екі айда да белсенді болғандарды <code>EXCEPT</code> арқылы алып тастаңыз.",
+   "starter": "SELECT user_id FROM activity WHERE month = '2024-08'\nUNION\nSELECT user_id FROM activity WHERE month = '2024-09'\n",
+   "solution": "SELECT user_id FROM activity WHERE month = '2024-08' UNION SELECT user_id FROM activity WHERE month = '2024-09' EXCEPT SELECT user_id FROM activity WHERE month = '2024-08' AND user_id IN (SELECT user_id FROM activity WHERE month = '2024-09');",
+   "hints": [
+    "Жиын операторлары солдан оңға орындалады: <code>A UNION B EXCEPT C</code> = <code>(A UNION B) EXCEPT C</code>.",
+    "C — екі айда да белсенділер: тамыздағылар ішінен <code>user_id IN (SELECT user_id FROM activity WHERE month = '2024-09')</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION",
+     "EXCEPT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "hard",
+   "xp": 20,
+   "title": "Басшылар мен бағыныштылар",
+   "prompt": "Бір тізім жасаңыз: басқа біреудің басшысы болатын қызметкерлер <code>басшы</code> рөлімен, ал басшысы бар қызметкерлер <code>бағынышты</code> рөлімен. Екі баған: <code>name</code> және рөл. Бір адам екі рөлде де болуы мүмкін. Нәтижені <code>name</code>, сосын рөл бойынша сұрыптаңыз.",
+   "starter": "SELECT name, 'басшы' AS role FROM employees\nWHERE id IN (SELECT manager_id FROM employees)\n",
+   "solution": "SELECT name, 'басшы' AS role FROM employees WHERE id IN (SELECT manager_id FROM employees) UNION ALL SELECT name, 'бағынышты' FROM employees WHERE manager_id IS NOT NULL ORDER BY name, role;",
+   "hints": [
+    "Екінші SELECT: <code>WHERE manager_id IS NOT NULL</code>.",
+    "Сұрыптау соңында: <code>ORDER BY name, role</code>. Баған атауы бірінші SELECT-тен алынады."
+   ],
+   "check": {
+    "mustInclude": [
+     "UNION ALL"
+    ],
+    "ordered": true
+   }
+  }
+ ],
+ "sql-16": [
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Атау ұзындығы",
+   "prompt": "Әр тауардың атауын (<code>name</code>) және атауындағы таңбалар санын (<code>LENGTH</code>) шығарыңыз.",
+   "starter": "SELECT name\nFROM products;",
+   "solution": "SELECT name, LENGTH(name) FROM products;",
+   "hints": [
+    "<code>LENGTH(name)</code> — мәтіндегі таңбалар саны (бос орын да саналады)."
+   ],
+   "check": {
+    "mustInclude": [
+     "LENGTH"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Қаласы белгісіз",
+   "prompt": "Әр клиенттің атын және қаласын шығарыңыз. Қаласы жоқ (<code>NULL</code>) клиентте <code>белгісіз</code> деген мәтін тұрсын. <code>COALESCE</code> қолданыңыз.",
+   "starter": "SELECT name, city\nFROM customers;",
+   "solution": "SELECT name, COALESCE(city, 'белгісіз') FROM customers;",
+   "hints": [
+    "<code>COALESCE(city, 'белгісіз')</code> — NULL емес бірінші мәнді береді."
+   ],
+   "check": {
+    "mustInclude": [
+     "COALESCE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Жеткізу мерзімі",
+   "prompt": "Статусы <code>shipped</code> тапсырыстар тапсырыс күнінен бастап 7 күнде жетуі керек. Әр осындай тапсырыстың <code>id</code>-ін және жеткізу мерзімін (<code>order_date</code> + 7 күн) шығарыңыз.",
+   "starter": "SELECT id, order_date\nFROM orders\nWHERE status = 'shipped';",
+   "solution": "SELECT id, date(order_date, '+7 days') AS deadline FROM orders WHERE status = 'shipped';",
+   "hints": [
+    "Күнді жылжыту: <code>date(order_date, '+7 days')</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "date("
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Баға жапсырмасы",
+   "prompt": "Бағасы 10 000 теңгеден төмен тауарлар үшін бір бағанды жапсырма жасаңыз: <code>Термос: 9000 ₸</code> түрінде (атау, қос нүкте мен бос орын, баға, бос орын және <code>₸</code>).",
+   "starter": "SELECT name, price\nFROM products\nWHERE price < 10000;",
+   "solution": "SELECT name || ': ' || price || ' ₸' FROM products WHERE price < 10000;",
+   "hints": [
+    "Мәтіндерді <code>||</code> арқылы жалғаңыз: <code>name || ': ' || price || ' ₸'</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "||"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Апта күндері бойынша",
+   "prompt": "Тапсырыстарды апта күні бойынша санаңыз. Екі баған: апта күнінің нөмірі (<code>strftime('%w', ...)</code>, 0 — жексенбі) <b>бүтін сан</b> түрінде және тапсырыстар саны. Апта күнінің нөмірі бойынша өсу ретімен.",
+   "starter": "SELECT strftime('%w', order_date) AS wd\nFROM orders;",
+   "solution": "SELECT CAST(strftime('%w', order_date) AS INTEGER) AS wd, COUNT(*) FROM orders GROUP BY wd ORDER BY wd;",
+   "hints": [
+    "<code>strftime</code> мәтін қайтарады: <code>CAST(strftime('%w', order_date) AS INTEGER)</code>.",
+    "<code>GROUP BY wd ORDER BY wd</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "CAST",
+     "strftime"
+    ],
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бір жолдағы орташа дана",
+   "prompt": "Әр тауар үшін: атауы, сатылған жалпы дана (сатылмаса — 0) және тапсырыс жолына шаққандағы орташа дана (<code>SUM(quantity) * 1.0 / COUNT(order_id)</code>). Сатылмаған тауарда орташа мән нөлге бөлудің орнына <code>NULL</code> болсын: бөлгішті <code>NULLIF</code>-ке орап жазыңыз. Барлық тауар тізімде қалсын.",
+   "starter": "SELECT p.name, SUM(oi.quantity)\nFROM products p\nLEFT JOIN order_items oi ON oi.product_id = p.id\nGROUP BY p.id, p.name;",
+   "solution": "SELECT p.name, COALESCE(SUM(oi.quantity), 0) AS units, SUM(oi.quantity) * 1.0 / NULLIF(COUNT(oi.order_id), 0) AS per_line FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id GROUP BY p.id, p.name;",
+   "hints": [
+    "Сатылмаған тауардың <code>SUM</code>-ы NULL: <code>COALESCE(SUM(oi.quantity), 0)</code>.",
+    "Бөлгіш: <code>NULLIF(COUNT(oi.order_id), 0)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "NULLIF",
+     "COALESCE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "raw",
+   "level": "hard",
+   "xp": 20,
+   "title": "Күндерді ISO-ға келтіру",
+   "prompt": "<code>raw_customers</code> кестесінде <code>signup</code> үш түрлі форматта: <code>2024-01-15</code>, <code>15.02.2024</code>, <code>2024/03/28</code>. Екі баған шығарыңыз: <code>id</code> және <code>ЖЖЖЖ-АА-КК</code> форматына келтірілген күн. Нүктелі күнді <code>SUBSTR</code> арқылы бөліктерге бөліп, қайта жинаңыз, ал қиғаш сызықты <code>REPLACE</code> арқылы ауыстырыңыз.",
+   "starter": "SELECT id, signup\nFROM raw_customers;",
+   "solution": "SELECT id, CASE WHEN signup LIKE '__.__.____' THEN SUBSTR(signup, 7, 4) || '-' || SUBSTR(signup, 4, 2) || '-' || SUBSTR(signup, 1, 2) ELSE REPLACE(signup, '/', '-') END AS signup_iso FROM raw_customers;",
+   "hints": [
+    "Нүктелі форматты тану: <code>CASE WHEN signup LIKE '__.__.____' THEN ...</code>.",
+    "<code>SUBSTR(signup, 7, 4) || '-' || SUBSTR(signup, 4, 2) || '-' || SUBSTR(signup, 1, 2)</code>",
+    "<code>ELSE REPLACE(signup, '/', '-')</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "SUBSTR",
+     "REPLACE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "hard",
+   "xp": 20,
+   "title": "Бірінші тапсырысқа дейін",
+   "prompt": "Кемінде бір тапсырысы бар әр клиент үшін: аты және тіркелгеннен (<code>signup_date</code>) <b>бірінші</b> тапсырысына дейін өткен күндер саны (бүтін сан).",
+   "starter": "SELECT c.name, o.order_date\nFROM customers c\nJOIN orders o ON o.customer_id = c.id;",
+   "solution": "SELECT c.name, CAST(julianday(MIN(o.order_date)) - julianday(c.signup_date) AS INTEGER) AS days FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.name, c.signup_date;",
+   "hints": [
+    "Бірінші тапсырыс — <code>MIN(o.order_date)</code>, клиент бойынша топтаңыз.",
+    "<code>CAST(julianday(MIN(o.order_date)) - julianday(c.signup_date) AS INTEGER)</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "julianday",
+     "MIN"
+    ]
+   }
+  }
+ ],
+ "sql-17": [
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "easy",
+   "xp": 10,
+   "title": "Гүлнардың командасы",
+   "prompt": "Басшысы <code>Гүлнар</code> болатын қызметкерлердің атын шығарыңыз. Кестені өзімен біріктіріңіз (self join) және сүзгіні басшының аты бойынша жазыңыз.",
+   "starter": "SELECT e.name\nFROM employees e\nJOIN employees m ON m.id = e.manager_id\n",
+   "solution": "SELECT e.name FROM employees e JOIN employees m ON m.id = e.manager_id WHERE m.name = 'Гүлнар';",
+   "hints": [
+    "<code>WHERE m.name = 'Гүлнар'</code>: <code>m</code> — басшының көшірмесі."
+   ],
+   "check": {
+    "mustInclude": [
+     "JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Қала × санат қаңқасы",
+   "prompt": "Есептің қаңқасын жасаңыз: клиенттердің әр қаласы (бос қаласыз) мен тауарлардың әр санатының барлық жұбы. Екі баған: <code>city</code>, <code>category</code>. <code>CROSS JOIN</code> қолданыңыз.",
+   "starter": "SELECT c.city, p.category\nFROM (SELECT DISTINCT city FROM customers WHERE city IS NOT NULL) c\n",
+   "solution": "SELECT c.city, p.category FROM (SELECT DISTINCT city FROM customers WHERE city IS NOT NULL) c CROSS JOIN (SELECT DISTINCT category FROM products) p;",
+   "hints": [
+    "Екінші туынды кесте: <code>(SELECT DISTINCT category FROM products) p</code>.",
+    "5 қала × 4 санат = 20 жол."
+   ],
+   "check": {
+    "mustInclude": [
+     "CROSS JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "easy",
+   "xp": 10,
+   "title": "Тапсырысты дұрыс санау",
+   "prompt": "Бұл сұрау <code>order_items</code> қосылғандықтан тапсырыстарды емес, тауар жолдарын санайды. Оны түзетіңіз: JOIN-дарды қалдырып, әр клиенттің <b>тапсырыстар</b> санын <code>COUNT(DISTINCT ...)</code> арқылы есептеңіз.",
+   "starter": "SELECT c.name, COUNT(*) AS orders\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nGROUP BY c.id, c.name;",
+   "solution": "SELECT c.name, COUNT(DISTINCT o.id) AS orders FROM customers c JOIN orders o ON o.customer_id = c.id JOIN order_items oi ON oi.order_id = o.id GROUP BY c.id, c.name;",
+   "hints": [
+    "Бір тапсырыс бірнеше жолға көбейді: <code>COUNT(DISTINCT o.id)</code> әр тапсырысты бір рет санайды."
+   ],
+   "check": {
+    "mustInclude": [
+     "DISTINCT",
+     "order_items"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "medium",
+   "xp": 15,
+   "title": "Жалақысы бірдей әріптестер",
+   "prompt": "Бір бөлімде істейтін және жалақысы бірдей қызметкерлер жұптарын табыңыз. Екі баған: бірінші қызметкердің аты және екіншісінің аты. Әр жұп бір рет қана шықсын (<code>e1.id &lt; e2.id</code>).",
+   "starter": "SELECT e1.name, e2.name\nFROM employees e1\nJOIN employees e2 ON ",
+   "solution": "SELECT e1.name, e2.name FROM employees e1 JOIN employees e2 ON e1.department = e2.department AND e1.salary = e2.salary AND e1.id < e2.id;",
+   "hints": [
+    "ON ішінде үш шарт: бөлім бірдей, жалақы бірдей, <code>e1.id &lt; e2.id</code>.",
+    "Соңғы шарт адамның өзімен жұптасуын және бір жұптың екі рет шығуын болдырмайды."
+   ],
+   "check": {
+    "mustInclude": [
+     "JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "shop",
+   "level": "medium",
+   "xp": 15,
+   "title": "Тапсырыс және дана",
+   "prompt": "Әр клиент үшін: аты, тапсырыстар саны және сатып алған жалпы дана (<code>quantity</code> қосындысы). <code>orders</code> пен <code>order_items</code>-ті бір сұрауда біріктіріңіз де, тапсырыс санын fan-out-тан қорғаңыз.",
+   "starter": "SELECT c.name, COUNT(*) AS orders, SUM(oi.quantity) AS units\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nGROUP BY c.id, c.name;",
+   "solution": "SELECT c.name, COUNT(DISTINCT o.id) AS orders, SUM(oi.quantity) AS units FROM customers c JOIN orders o ON o.customer_id = c.id JOIN order_items oi ON oi.order_id = o.id GROUP BY c.id, c.name;",
+   "hints": [
+    "Бір жол — тапсырыстағы тауар. Дана осы деңгейде сақталған, сондықтан <code>SUM(oi.quantity)</code> дұрыс.",
+    "Ал тапсырыс бірнеше рет қайталанады: <code>COUNT(DISTINCT o.id)</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "DISTINCT"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "staff",
+   "level": "medium",
+   "xp": 15,
+   "title": "Басшының басшысы",
+   "prompt": "Басшысының да басшысы бар қызметкерлер үшін үш баған шығарыңыз: қызметкердің аты, басшысының аты және басшысының басшысының аты. Кестені өзімен екі рет біріктіріңіз.",
+   "starter": "SELECT e.name, m.name AS manager\nFROM employees e\nJOIN employees m ON m.id = e.manager_id\n",
+   "solution": "SELECT e.name, m.name AS manager, mm.name AS top FROM employees e JOIN employees m ON m.id = e.manager_id JOIN employees mm ON mm.id = m.manager_id;",
+   "hints": [
+    "Үшінші көшірме: <code>JOIN employees mm ON mm.id = m.manager_id</code>.",
+    "Жай <code>JOIN</code> басшысының басшысы жоқтарды өзі алып тастайды."
+   ],
+   "check": {
+    "mustInclude": [
+     "JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "hard",
+   "xp": 20,
+   "title": "Арна × ай, бос айлар 0-мен",
+   "prompt": "Әр арна (<code>channel</code>) мен әр тіркелу айының (<code>signup_month</code>) барлық жұбы үшін тіркелген пайдаланушылар санын шығарыңыз. Пайдаланушы болмаған жұп та <b>0</b>-мен көрінсін. Үш баған: арна, ай, сан. Алдымен <code>CROSS JOIN</code> арқылы қаңқа жасап, сосын <code>users</code>-ті <code>LEFT JOIN</code> жасаңыз.",
+   "starter": "SELECT ch.channel, mo.signup_month\nFROM (SELECT DISTINCT channel FROM users) ch\nCROSS JOIN (SELECT DISTINCT signup_month FROM users) mo\n",
+   "solution": "SELECT ch.channel, mo.signup_month, COUNT(u.id) AS n FROM (SELECT DISTINCT channel FROM users) ch CROSS JOIN (SELECT DISTINCT signup_month FROM users) mo LEFT JOIN users u ON u.channel = ch.channel AND u.signup_month = mo.signup_month GROUP BY ch.channel, mo.signup_month;",
+   "hints": [
+    "LEFT JOIN шарты екі бағанға: <code>ON u.channel = ch.channel AND u.signup_month = mo.signup_month</code>.",
+    "<code>COUNT(*)</code> емес, <code>COUNT(u.id)</code>: бос жұпта ол 0 береді."
+   ],
+   "check": {
+    "mustInclude": [
+     "CROSS JOIN",
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "metrics",
+   "level": "hard",
+   "xp": 20,
+   "title": "Пайдаланушы құны",
+   "prompt": "Әр жарнама арнасы үшін: <code>channel</code>, пайдаланушылар саны (<code>users</code>), жарнамаға жұмсалған жалпы сома (<code>ad_spend</code>) және бір пайдаланушының құны (сома / пайдаланушылар саны). Екі кестенің де бір арнаға бірнеше жолы бар, сондықтан тікелей JOIN fan-out береді. Әр кестені алдымен арна бойынша бөлек туынды кестеде жинап, сосын біріктіріңіз.",
+   "starter": "SELECT u.channel, COUNT(*) AS users, SUM(a.spend) AS spend\nFROM users u\nJOIN ad_spend a ON a.channel = u.channel\nGROUP BY u.channel;",
+   "solution": "SELECT u.channel, u.users, a.spend, a.spend / u.users AS cost FROM (SELECT channel, COUNT(*) AS users FROM users GROUP BY channel) u JOIN (SELECT channel, SUM(spend) AS spend FROM ad_spend GROUP BY channel) a ON a.channel = u.channel;",
+   "hints": [
+    "<code>(SELECT channel, COUNT(*) AS users FROM users GROUP BY channel) u</code>",
+    "<code>(SELECT channel, SUM(spend) AS spend FROM ad_spend GROUP BY channel) a</code>, сосын <code>ON a.channel = u.channel</code>. Сыртқы сұрауда GROUP BY керек емес."
+   ]
+  }
  ]
 });

@@ -328,5 +328,230 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "ba-9": {
+  "pr": [
+   {
+    "title": "Не покупали больше года",
+    "prompt": "Только по заказам <code>delivered</code> («сегодня» = <code>2026-07-01</code>) выведите клиентов, у которых с последней покупки прошло больше 365 дней: <code>customer_id</code>, <code>recency_days</code>. По убыванию <code>recency_days</code>, при равенстве по <code>customer_id</code>.",
+    "hints": [
+     "<code>CAST(julianday('2026-07-01') - julianday(MAX(o.order_date)) AS INTEGER)</code>",
+     "Фильтр по агрегату: <code>HAVING recency_days &gt; 365</code>. Для recency <code>order_items</code> не нужна."
+    ]
+   },
+   {
+    "title": "Распределение частоты",
+    "prompt": "Как клиенты распределены по частоте (только <code>delivered</code>)? <code>frequency</code> (число заказов клиента), <code>customers</code> (сколько таких клиентов). По <code>frequency</code>.",
+    "hints": [
+     "Сгруппируйте готовый CTE <code>rfm</code> ещё раз — по <code>frequency</code>."
+    ]
+   },
+   {
+    "title": "Пятёрка по monetary",
+    "prompt": "5 клиентов, принёсших больше всего денег (только <code>delivered</code>): <code>customer_id</code>, <code>monetary</code> (сумма quantity × unit_price). По убыванию <code>monetary</code>.",
+    "hints": [
+     "<code>ORDER BY monetary DESC LIMIT 5</code>"
+    ]
+   },
+   {
+    "title": "Клиенты «333»",
+    "prompt": "Выведите <code>customer_id</code> клиентов, получивших высший балл по всем трём измерениям (r = 3, f = 3, m = 3). Баллы как в уроке: <code>NTILE(3)</code>, recency по убыванию, frequency и monetary по возрастанию, в каждом окне второй столбец <code>customer_id</code>. Сортировка по <code>customer_id</code>.",
+    "hints": [
+     "Посчитайте баллы во втором CTE: оконную функцию нельзя использовать прямо в <code>WHERE</code>.",
+     "<code>NTILE(3) OVER (ORDER BY recency_days DESC, customer_id) AS r</code> и т. д.; затем <code>WHERE r = 3 AND f = 3 AND m = 3</code>."
+    ]
+   },
+   {
+    "title": "Итог по группам ABC",
+    "prompt": "Сведите ABC-анализ товаров (только <code>delivered</code>; накопленная доля по убыванию выручки ≤ 80 — A, ≤ 95 — B, иначе C) по группам: <code>abc</code>, <code>products</code> (число товаров), <code>revenue_pct</code> (доля группы в выручке, %, 1 знак). По <code>abc</code>.",
+    "hints": [
+     "Поместите ABC-запрос из урока в CTE (<code>name</code>, <code>revenue</code>, <code>abc</code>), затем <code>GROUP BY abc</code>.",
+     "Доля: <code>100.0 * SUM(revenue) / (SELECT SUM(revenue) FROM a)</code>. В группе A должно быть 7 товаров и 77.5%."
+    ]
+   },
+   {
+    "title": "Парето по категориям",
+    "prompt": "Сделайте анализ Парето на уровне категорий, а не товаров (только <code>delivered</code>): <code>category</code>, <code>revenue</code>, <code>cum_pct</code> (накопленная доля по убыванию выручки, %, 1 знак). По убыванию выручки.",
+    "hints": [
+     "CTE: <code>GROUP BY pr.category</code>.",
+     "<code>ROUND(100.0 * SUM(revenue) OVER (ORDER BY revenue DESC) / SUM(revenue) OVER (), 1)</code>"
+    ]
+   },
+   {
+    "title": "Вес сегментов",
+    "prompt": "Воспроизведите таблицу сегментов из урока на SQL. Баллы как в уроке: <code>NTILE(3)</code>, recency по убыванию, frequency и monetary по возрастанию, в каждом окне второй столбец <code>customer_id</code>. Сегменты: r = 3 и f = 3 — <code>'champions'</code>; r = 1 и f ≥ 2 — <code>'at_risk'</code>; r = 3 и f = 1 — <code>'new'</code>; остальные — <code>'other'</code>. Столбцы: <code>segment</code>, <code>customers</code>, <code>revenue_pct</code> (доля monetary, %, 1 знак). По убыванию <code>revenue_pct</code>.",
+    "hints": [
+     "Три слоя: <code>rfm</code> → баллы (<code>NTILE</code>) → сегмент (<code>CASE</code>).",
+     "В <code>CASE</code> важен порядок правил: берётся первая подходящая ветка.",
+     "Числа должны совпасть с таблицей урока: 41, 14, 10, 5 клиентов."
+    ]
+   },
+   {
+    "title": "ABC по выручке и по штукам",
+    "prompt": "Посчитайте ABC-группу товаров по выручке и по проданным штукам (сумма <code>quantity</code>), только <code>delivered</code>, границы 80 и 95. Накопленная доля считается построчно: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>, порядок — по убыванию значения, при равенстве <code>product_id</code>. Выведите товары, у которых группы различаются: <code>name</code>, <code>abc_revenue</code>, <code>abc_qty</code>. По <code>name</code>.",
+    "hints": [
+     "В одном CTE для каждого товара столбцы <code>revenue</code> и <code>qty</code> (<code>SUM(oi.quantity)</code>).",
+     "По штукам есть равные значения, поэтому <code>ORDER BY qty DESC, product_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>.",
+     "Два <code>CASE</code>, в конце <code>WHERE abc_revenue &lt;&gt; abc_qty</code>."
+    ]
+   }
+  ]
+ },
+ "ba-10": {
+  "pr": [
+   {
+    "title": "MAU и пользователе-дни",
+    "prompt": "<b>metrics.</b> Одна строка за сентябрь: <code>mau</code> (уникальные пользователи) и <code>user_days</code> (все записи «пользователь-день»). Разница этих чисел — ответ на вопрос, почему MAU нельзя считать как сумму DAU.",
+    "hints": [
+     "<code>COUNT(DISTINCT user_id)</code> и <code>COUNT(*)</code>."
+    ]
+   },
+   {
+    "title": "Кто сколько дней заходил",
+    "prompt": "<b>metrics.</b> Число активных дней каждого пользователя в сентябре: <code>user_id</code>, <code>active_days</code>. По убыванию <code>active_days</code>, при равенстве по <code>user_id</code>.",
+    "hints": [
+     "<code>COUNT(DISTINCT day)</code>, <code>GROUP BY user_id</code>."
+    ]
+   },
+   {
+    "title": "Самый активный день",
+    "prompt": "<b>metrics.</b> Выведите день (или дни) с самым высоким DAU: <code>day</code>, <code>dau</code>.",
+    "hints": [
+     "Дневной DAU в CTE, затем <code>WHERE dau = (SELECT MAX(dau) FROM d)</code>.",
+     "<code>ORDER BY ... LIMIT 1</code> при равенстве потеряет день."
+    ]
+   },
+   {
+    "title": "WAU по неделям",
+    "prompt": "<b>metrics.</b> WAU каждой недели: <code>week_start</code> (понедельник недели, <code>date(day, 'weekday 0', '-6 days')</code>), <code>wau</code> (уникальные пользователи, заходившие хотя бы раз за неделю). По <code>week_start</code>. Неполные недели на краях месяца тоже входят.",
+    "hints": [
+     "<code>'weekday 0'</code> сдвигает дату до воскресенья, <code>'-6 days'</code> даёт понедельник этой недели.",
+     "WAU — уникальное число: <code>COUNT(DISTINCT user_id)</code>, а не сумма DAU."
+    ]
+   },
+   {
+    "title": "Ежедневная привычка",
+    "prompt": "<b>metrics.</b> Пользователи, заходившие как минимум в половину дней месяца (≥ 50% из 30 дней): <code>user_id</code>, <code>active_days</code>, <code>pct</code> (сколько процентов от 30 дней, 1 знак). По убыванию <code>pct</code>, при равенстве по <code>user_id</code>.",
+    "hints": [
+     "Знаменатель — 30 календарных дней: <code>COUNT(*) * 100.0 / 30</code>.",
+     "<code>HAVING COUNT(*) * 100.0 / 30 &gt;= 50</code>"
+    ]
+   },
+   {
+    "title": "День появления новых",
+    "prompt": "<b>metrics.</b> Найдите первый активный день каждого пользователя в сентябре и посчитайте по дням: <code>first_day</code>, <code>new_users</code>. По <code>first_day</code>. Из этих новых и складывается MAU.",
+    "hints": [
+     "CTE: <code>SELECT user_id, MIN(day) AS first_day ... GROUP BY user_id</code>.",
+     "Затем <code>GROUP BY first_day</code>. Сумма <code>new_users</code> равна MAU."
+    ]
+   },
+   {
+    "title": "Будни и выходные",
+    "prompt": "<b>metrics.</b> Сравните средний DAU в будни и выходные: <code>day_type</code> (<code>'weekday'</code> или <code>'weekend'</code>; выходные — суббота и воскресенье, <code>strftime('%w', day)</code> 6 или 0), <code>days</code> (число дней по календарю), <code>avg_dau</code> (2 знака). День без входов тоже учитывается. По <code>day_type</code>.",
+    "hints": [
+     "Сначала дневной DAU с нулями: календарь + <code>LEFT JOIN</code>.",
+     "<code>strftime('%w', day)</code> возвращает текст: <code>IN ('0', '6')</code>.",
+     "Выходных должно быть 9, будних — 21."
+    ]
+   },
+   {
+    "title": "Stickiness внутри месяца",
+    "prompt": "<b>metrics.</b> Сравните две половины месяца: 1–15 и 16–30 сентября (по 15 дней). Столбцы: <code>half</code> (<code>'1-15'</code> или <code>'16-30'</code>), <code>avg_dau</code> (пользователе-дни / 15, 2 знака), <code>users</code> (уникальные пользователи этой половины), <code>stickiness_pct</code> (avg_dau / users, %, 1 знак). По <code>half</code>.",
+    "hints": [
+     "Метка группы: <code>CASE WHEN day &lt;= '2024-09-15' THEN '1-15' ELSE '16-30' END</code>.",
+     "Знаменатель — 15 календарных дней, а не дни с данными: <code>COUNT(*) * 1.0 / 15</code>.",
+     "<code>ROUND(COUNT(*) * 100.0 / 15 / COUNT(DISTINCT user_id), 1)</code>"
+    ]
+   }
+  ]
+ },
+ "ba-ab": {
+  "pr": [
+   {
+    "title": "Конверсия",
+    "prompt": "<p>Функция <code>conv_rate(users, conversions)</code> должна вернуть конверсию в процентах, округлённую <code>round</code> до 2 знаков. Если пользователей 0, вернуть <code>0.0</code>.</p>",
+    "hints": [
+     "<code>conversions / users * 100</code>",
+     "Чтобы не делить на ноль, сначала <code>if users == 0</code>."
+    ],
+    "check": {
+     "tests": "assert conv_rate(10000, 500) == 5.0, \"conv_rate(10000, 500) должна быть 5.0\"\nassert conv_rate(3000, 100) == 3.33, f\"conv_rate(3000, 100) должна быть 3.33, у вас {conv_rate(3000, 100)}\"\nassert conv_rate(0, 0) == 0.0, \"При 0 пользователей верните 0.0\""
+    }
+   },
+   {
+    "title": "Пункты и проценты",
+    "prompt": "<p>Функция <code>lifts(cr_a, cr_b)</code> по двум конверсиям (обе в %) должна вернуть пару <code>(abs_pp, rel_pct)</code>: абсолютный прирост в процентных пунктах и относительный прирост в процентах. Оба округлены <code>round</code> до 2 знаков.</p>",
+    "hints": [
+     "Абсолютный: <code>cr_b - cr_a</code>. Относительный: <code>(cr_b - cr_a) / cr_a * 100</code>."
+    ],
+    "check": {
+     "tests": "assert tuple(lifts(5.0, 5.6)) == (0.6, 12.0), f\"lifts(5.0, 5.6) должна быть (0.6, 12.0), у вас {lifts(5.0, 5.6)}\"\nassert tuple(lifts(4.0, 3.0)) == (-1.0, -25.0), \"Снижение даёт отрицательные числа: lifts(4.0, 3.0) = (-1.0, -25.0)\""
+    }
+   },
+   {
+    "title": "Что говорит интервал",
+    "prompt": "<p>Функция <code>ci_verdict(low, high)</code> должна вернуть вывод по доверительному интервалу разницы: <code>'positive'</code>, если интервал целиком выше нуля, <code>'negative'</code>, если целиком ниже нуля, и <code>'inconclusive'</code>, если он включает ноль.</p>",
+    "hints": [
+     "Если нижняя граница выше нуля, весь интервал выше нуля: <code>if low &gt; 0</code>."
+    ],
+    "check": {
+     "tests": "assert ci_verdict(-0.02, 1.22) == 'inconclusive', \"Интервал из урока (−0.02 … 1.22) включает ноль: 'inconclusive'\"\nassert ci_verdict(0.1, 0.9) == 'positive', \"0.1 … 0.9: должно быть 'positive'\"\nassert ci_verdict(-0.8, -0.2) == 'negative', \"-0.8 … -0.2: должно быть 'negative'\""
+    }
+   },
+   {
+    "title": "Деление не 50/50",
+    "prompt": "<p>Иногда тест делится не 50/50, а, например, 90/10. Функция <code>srm(n_a, n_b, share_a=0.5)</code> должна вернуть пару <code>(chi2, has_srm)</code>: ожидаемые размеры e_a = (n_a + n_b) × share_a, e_b = (n_a + n_b) × (1 − share_a); chi2 = (n_a − e_a)² / e_a + (n_b − e_b)² / e_b, <code>round</code> до 2 знаков; <code>has_srm</code> — chi2 &gt; 3.84.</p>",
+    "hints": [
+     "<code>e_a = total * share_a</code>, <code>e_b = total * (1 - share_a)</code>",
+     "При <code>share_a=0.5</code> получается формула из урока."
+    ],
+    "check": {
+     "tests": "_c, _f = srm(10000, 9400)\nassert abs(_c - 18.56) < 0.011 and _f is True, f\"srm(10000, 9400): должно быть (18.56, True), у вас {(_c, _f)}\"\n_c, _f = srm(9000, 1000, 0.9)\nassert abs(_c) < 0.011 and _f is False, \"План 90/10 выполнен точно: chi2 = 0, has_srm False\"\n_c, _f = srm(9100, 900, 0.9)\nassert abs(_c - 11.11) < 0.011 and _f is True, f\"srm(9100, 900, 0.9): должно быть (12.5, True), у вас {(_c, _f)}\""
+    }
+   },
+   {
+    "title": "Таблица решений",
+    "prompt": "<p>Запишите таблицу решений из урока функцией. <code>decide(srm, ci_low, ci_high, lift, mde, guardrail_ok=True)</code>: есть SRM — <code>'rerun'</code>; защитная метрика ухудшилась (<code>guardrail_ok</code> False) — <code>'investigate'</code>; CI целиком выше нуля и <code>lift &gt;= mde</code> — <code>'ship'</code>; во всех остальных случаях — <code>'no_ship'</code>. Проверять именно в таком порядке.</p>",
+    "hints": [
+     "Четыре <code>if</code>, каждый сразу делает <code>return</code>: SRM проверяется первым.",
+     "CI выше нуля: <code>ci_low &gt; 0</code>."
+    ],
+    "check": {
+     "tests": "assert decide(True, 0.5, 1.5, 1.0, 0.3) == 'rerun', \"При SRM результат не используется: 'rerun'\"\nassert decide(False, 0.5, 1.5, 1.0, 0.3, guardrail_ok=False) == 'investigate', \"Если защитная метрика ухудшилась: 'investigate'\"\nassert decide(False, 0.5, 1.5, 1.0, 0.3) == 'ship', \"CI > 0 и lift ≥ MDE: 'ship'\"\nassert decide(False, -0.02, 1.22, 0.6, 0.3) == 'no_ship', \"CI включает ноль: 'no_ship'\"\nassert decide(False, 0.05, 0.2, 0.1, 0.3) == 'no_ship', \"Эффект значим, но меньше MDE: 'no_ship'\""
+    }
+   },
+   {
+    "title": "Ловушка ранней остановки",
+    "prompt": "<p>Аналитик смотрит на тест каждый день. Функция <code>peeking_stop(pvalues, alpha=0.05)</code> по списку дневных p-value должна вернуть номер <b>первого</b> дня (с 1), когда p &lt; alpha; если такого дня нет — <code>None</code>. Остановка в этот день — peeking: как сказано в уроке, она увеличивает долю ложных побед.</p>",
+    "hints": [
+     "<code>for day, p in enumerate(pvalues, start=1):</code>"
+    ],
+    "check": {
+     "tests": "assert peeking_stop([0.4, 0.2, 0.04, 0.09, 0.06]) == 3, \"Первое p < 0.05 на третий день: 3\"\nassert peeking_stop([0.3, 0.12, 0.07]) is None, \"Если порог ни разу не пройден: None\"\nassert peeking_stop([0.02, 0.5], alpha=0.01) is None, \"Используйте параметр alpha\""
+    }
+   },
+   {
+    "title": "Один контроль, несколько вариантов",
+    "prompt": "<p>Тест A/B/C: функция <code>variants(groups)</code> принимает словарь <code>{'A': (пользователи, покупки), 'B': ..., ...}</code> и для каждого варианта, кроме контроля (<code>'A'</code>), возвращает тройку <code>(имя, cr, rel_lift)</code>: <code>cr</code> — конверсия, %; <code>rel_lift</code> — относительный прирост к A, %. Оба <code>round</code> до 2 знаков. Список отсортирован по убыванию <code>rel_lift</code>.</p>",
+    "hints": [
+     "Сначала конверсия A, затем <code>for name, (users, conv) in groups.items():</code>, пропуская <code>'A'</code>.",
+     "Прирост считайте от неокруглённой конверсии и только потом делайте <code>round</code>.",
+     "<code>sorted(out, key=lambda r: r[2], reverse=True)</code>"
+    ],
+    "check": {
+     "tests": "_r = variants({'A': (10000, 500), 'B': (10000, 560), 'C': (10000, 470)})\nassert isinstance(_r, list) and len(_r) == 2, \"Ожидался список из двух вариантов, кроме A\"\nassert [tuple(x) for x in _r] == [('B', 5.6, 12.0), ('C', 4.7, -6.0)], f\"Ожидалось [('B', 5.6, 12.0), ('C', 4.7, -6.0)], у вас {_r}\"\n_r = variants({'C': (3000, 99), 'A': (3000, 90), 'B': (3000, 120)})\nassert [x[0] for x in _r] == ['B', 'C'] and [x[2] for x in _r] == [33.33, 10.0], f\"Контроль может стоять в любом месте словаря; должно быть B 33.33, C 10.0, у вас {_r}\""
+    }
+   },
+   {
+    "title": "SRM по дням",
+    "prompt": "<p>Ошибка деления иногда бывает только в один день (например, в день релиза). Функция <code>srm_days(days)</code> принимает список дневных пар <code>(n_a, n_b)</code> теста 50/50 и возвращает список номеров дней (с 1), в которые есть SRM (chi2 &gt; 3.84). chi2 как в уроке: e = (n_a + n_b) / 2.</p>",
+    "hints": [
+     "Примените формулу chi2 из урока к каждому дню отдельно: <code>for i, (n_a, n_b) in enumerate(days, start=1):</code>."
+    ],
+    "check": {
+     "tests": "assert srm_days([(1000, 1010), (1020, 990), (1100, 900), (995, 1005)]) == [3], \"SRM есть только на 3-й день (1100 и 900): [3]\"\nassert srm_days([(500, 500), (510, 490)]) == [], \"При малом отклонении — пустой список\"\nassert srm_days([(1200, 1000), (1000, 1000), (800, 1000)]) == [1, 3], f\"Несколько дней: ожидалось [1, 3], у вас {srm_days([(1200, 1000), (1000, 1000), (800, 1000)])}\""
+    }
+   }
+  ]
  }
 } });

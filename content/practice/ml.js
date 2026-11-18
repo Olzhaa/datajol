@@ -1378,5 +1378,282 @@ DJ.addPractice('m5-1', {
     ]
    }
   }
+ ],
+ "ml-reg": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Ridge айыппұлы",
+   "prompt": "<p>Ridge айыппұлы = alpha · Σ b². <code>ridge_penalty(coefs, alpha)</code> функциясын жазыңыз: коэффициенттер тізімі мен <code>alpha</code>-ны алып, айыппұлды қайтарсын.</p><p>Мысалы, <code>ridge_penalty([1, -2], 0.1)</code> → <code>0.5</code>.</p>",
+   "starter": "def ridge_penalty(coefs, alpha):\n    pass\n",
+   "solution": "def ridge_penalty(coefs, alpha):\n    return alpha * sum(b ** 2 for b in coefs)\n\nprint(ridge_penalty([1, -2], 0.1))",
+   "hints": [
+    "<code>sum(b ** 2 for b in coefs)</code> — квадраттар қосындысы."
+   ],
+   "check": {
+    "tests": "assert ridge_penalty([1, -2], 0.1) is not None and abs(ridge_penalty([1, -2], 0.1) - 0.5) < 1e-9, \"ridge_penalty([1, -2], 0.1) = 0.1 · (1 + 4) = 0.5 болуы керек\"\nassert abs(ridge_penalty([3, -4], 0.5) - 12.5) < 1e-9, \"ridge_penalty([3, -4], 0.5) = 12.5 болуы керек\"\nassert abs(ridge_penalty([-3], 1) - 9) < 1e-9, \"Теріс коэффициент та квадратқа шығады: ridge_penalty([-3], 1) = 9\"\nassert ridge_penalty([5, 7], 0) == 0, \"alpha = 0 болса, айыппұл жоқ: 0\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Lasso айыппұлы",
+   "prompt": "<p>Lasso айыппұлы = alpha · Σ |b|. <code>lasso_penalty(coefs, alpha)</code> функциясын жазыңыз.</p><p>Мысалы, <code>lasso_penalty([3, -4], 0.5)</code> → <code>3.5</code>.</p>",
+   "starter": "def lasso_penalty(coefs, alpha):\n    pass\n",
+   "solution": "def lasso_penalty(coefs, alpha):\n    return alpha * sum(abs(b) for b in coefs)\n\nprint(lasso_penalty([3, -4], 0.5))",
+   "hints": [
+    "Модуль: <code>abs(b)</code>"
+   ],
+   "check": {
+    "tests": "assert lasso_penalty([3, -4], 0.5) is not None and abs(lasso_penalty([3, -4], 0.5) - 3.5) < 1e-9, \"lasso_penalty([3, -4], 0.5) = 0.5 · (3 + 4) = 3.5 болуы керек\"\nassert abs(lasso_penalty([1, -2], 0.1) - 0.3) < 1e-9, \"lasso_penalty([1, -2], 0.1) = 0.3 болуы керек: модуль, квадрат емес\"\nassert abs(lasso_penalty([0, 0, 2], 10) - 20) < 1e-9, \"lasso_penalty([0, 0, 2], 10) = 20 болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "C және alpha",
+   "prompt": "<p><code>LogisticRegression</code>-да <code>C = 1 / alpha</code>. Екі функция жазыңыз: <code>c_to_alpha(C)</code> alpha-ны қайтарсын; <code>stronger(c1, c2)</code> екі C мәнінің қайсысы <b>күштірек</b> регуляризация беретінін (сол C-ның өзін) қайтарсын.</p><p>Мысалы, <code>c_to_alpha(0.01)</code> → <code>100.0</code>, <code>stronger(0.1, 10)</code> → <code>0.1</code>.</p>",
+   "starter": "def c_to_alpha(C):\n    pass\n\ndef stronger(c1, c2):\n    pass\n",
+   "solution": "def c_to_alpha(C):\n    return 1 / C\n\ndef stronger(c1, c2):\n    return min(c1, c2)\n\nprint(c_to_alpha(0.01), stronger(0.1, 10))",
+   "hints": [
+    "Кіші C — үлкен alpha — күшті айыппұл.",
+    "<code>min(c1, c2)</code>"
+   ],
+   "check": {
+    "tests": "assert c_to_alpha(0.01) is not None and abs(c_to_alpha(0.01) - 100) < 1e-9, \"c_to_alpha(0.01) = 1 / 0.01 = 100 болуы керек\"\nassert abs(c_to_alpha(4) - 0.25) < 1e-9, \"c_to_alpha(4) = 0.25 болуы керек\"\nassert stronger(0.1, 10) == 0.1 and stronger(100, 1) == 1, \"Кіші C күштірек регуляризация береді: stronger(0.1, 10) = 0.1, stronger(100, 1) = 1\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "alpha коэффициенттерді кішірейтеді",
+   "prompt": "<p>Әр <code>alpha</code> ∈ <code>[0.1, 10, 1000]</code> үшін <code>make_pipeline(StandardScaler(), Ridge(alpha=a))</code>-ны барлық <code>X</code>, <code>y</code>-те үйретіп, коэффициенттер модульдерінің қосындысын <code>coef_size[a]</code>-ға жазыңыз. alpha өскен сайын бұл сан қалай өзгереді?</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\ny = flats['price_mln']\ncoef_size = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']]\ny = flats['price_mln']\ncoef_size = {}\nfor a in [0.1, 10, 1000]:\n    m = make_pipeline(StandardScaler(), Ridge(alpha=a)).fit(X, y)\n    coef_size[a] = np.abs(m[-1].coef_).sum()\nprint(coef_size)",
+   "hints": [
+    "Pipeline-ның соңғы қадамы: <code>m[-1].coef_</code>",
+    "<code>np.abs(m[-1].coef_).sum()</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.linear_model import Ridge as _Rd\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\n_s = {a: np.abs(_mp(_SS(), _Rd(alpha=a)).fit(X, y)[-1].coef_).sum() for a in [0.1, 10, 1000]}\nassert sorted(coef_size) == [0.1, 10, 1000], \"coef_size кілттері: 0.1, 10, 1000\"\nassert all(abs(coef_size[a] - _s[a]) < 1e-6 for a in _s), \"Мәндер сәйкес емес: StandardScaler + Ridge(alpha=a), барлық X, y-те; np.abs(coef_).sum()\"\nassert coef_size[0.1] > coef_size[10] > coef_size[1000], \"alpha өскен сайын коэффициенттер кішірейеді\"",
+    "mustInclude": [
+     "Ridge("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Lasso: нөлдер саны",
+   "prompt": "<p>Шу бағандары бар дерек дайын (60 жолдық train, 25 баған). Әр <code>alpha</code> ∈ <code>[0.1, 0.3, 1, 3]</code> үшін <code>make_pipeline(StandardScaler(), Lasso(alpha=a))</code>-ны train-де үйретіп, дәл 0-ге тең коэффициенттер санын <code>zeros[a]</code>-ға (int) жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']].copy()\nrng = np.random.default_rng(3)\nfor i in range(20):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = flats['price_mln']\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size=60, random_state=1)\nzeros = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']].copy()\nrng = np.random.default_rng(3)\nfor i in range(20):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = flats['price_mln']\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size=60, random_state=1)\nzeros = {}\nfor a in [0.1, 0.3, 1, 3]:\n    m = make_pipeline(StandardScaler(), Lasso(alpha=a)).fit(X_train, y_train)\n    zeros[a] = int((m[-1].coef_ == 0).sum())\nprint(zeros)",
+   "hints": [
+    "<code>(m[-1].coef_ == 0).sum()</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.linear_model import Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nassert len(X_train) == 60 and X_train.shape[1] == 25, \"X_train өзгертілмеуі керек: 60 жол, 25 баған\"\n_z = {a: int((_mp(_SS(), _Ls(alpha=a)).fit(X_train, y_train)[-1].coef_ == 0).sum()) for a in [0.1, 0.3, 1, 3]}\nassert sorted(zeros) == [0.1, 0.3, 1, 3], \"zeros кілттері: 0.1, 0.3, 1, 3\"\nassert all(zeros[a] == _z[a] for a in _z), f\"Нөлдер саны сәйкес емес, күтілгені {_z}: Lasso train-де үйретіледі, алдында StandardScaler\"\nassert zeros[3] >= zeros[0.1], \"alpha үлкен болса, нөлдер көбірек\"",
+    "mustInclude": [
+     "Lasso("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "C коэффициентке қалай әсер етеді",
+   "prompt": "<p>Әр <code>C</code> ∈ <code>[0.001, 0.01, 1, 100]</code> үшін <code>make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=1000))</code>-ды барлық <code>X</code>, <code>y</code>-те үйретіңіз. <code>tenure_months</code> коэффициентін (бірінші баған) <code>tenure_coef[C]</code>-ға жазыңыз.</p>",
+   "starter": "import pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\ntenure_coef = {}\n",
+   "solution": "import pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']]\ny = churn['churned']\ntenure_coef = {}\nfor C in [0.001, 0.01, 1, 100]:\n    m = make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=1000)).fit(X, y)\n    tenure_coef[C] = m[-1].coef_[0][0]\nprint(tenure_coef)",
+   "hints": [
+    "<code>coef_</code> екі өлшемді: <code>m[-1].coef_[0][0]</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\n_t = {c: _mp(_SS(), _LR(C=c, max_iter=1000)).fit(X, y)[-1].coef_[0][0] for c in [0.001, 0.01, 1, 100]}\nassert sorted(tenure_coef) == [0.001, 0.01, 1, 100], \"tenure_coef кілттері: 0.001, 0.01, 1, 100\"\nassert all(abs(tenure_coef[c] - _t[c]) < 1e-4 for c in _t), \"Коэффициенттер сәйкес емес: StandardScaler + LogisticRegression(C=C, max_iter=1000), coef_[0][0]\"\nassert abs(tenure_coef[0.001]) < abs(tenure_coef[1]) <= abs(tenure_coef[100]) + 1e-9, \"Кіші C — күшті айыппұл — кіші коэффициент\"",
+    "mustInclude": [
+     "C="
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "L1 логистикалық регрессия",
+   "prompt": "<p>Churn-нің 4 белгісіне 10 шу бағаны қосылған. Әр <code>C</code> ∈ <code>[0.01, 0.1, 1]</code> үшін <code>make_pipeline(StandardScaler(), LogisticRegression(penalty='l1', solver='liblinear', C=C))</code> құрыңыз:</p><ul><li>барлық <code>X</code>, <code>y</code>-те үйретіп, нөл емес коэффициенттер санын <code>n_nonzero[C]</code>-ға (int) жазыңыз;</li><li>5-fold CV ROC AUC орташасын (<code>scoring='roc_auc'</code>) <code>cv_auc[C]</code>-ға жазыңыз.</li></ul><p>CV AUC ең жоғары C → <code>best_C</code>.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']].copy()\nrng = np.random.default_rng(0)\nfor i in range(10):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = churn['churned']\nn_nonzero = {}\ncv_auc = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nX = churn[['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']].copy()\nrng = np.random.default_rng(0)\nfor i in range(10):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = churn['churned']\nn_nonzero = {}\ncv_auc = {}\nfor C in [0.01, 0.1, 1]:\n    m = make_pipeline(StandardScaler(), LogisticRegression(penalty='l1', solver='liblinear', C=C))\n    n_nonzero[C] = int((m.fit(X, y)[-1].coef_ != 0).sum())\n    cv_auc[C] = cross_val_score(m, X, y, cv=5, scoring='roc_auc').mean()\nbest_C = max(cv_auc, key=cv_auc.get)\nprint(n_nonzero, cv_auc, best_C)",
+   "hints": [
+    "Нөл емес: <code>(m[-1].coef_ != 0).sum()</code>",
+    "<code>cross_val_score(m, X, y, cv=5, scoring='roc_auc').mean()</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert X.shape == (600, 14), \"X өзгертілмеуі керек: 600 жол, 14 баған\"\n_mk = lambda c: _mp(_SS(), _LR(penalty='l1', solver='liblinear', C=c))\n_n = {c: int((_mk(c).fit(X, y)[-1].coef_ != 0).sum()) for c in [0.01, 0.1, 1]}\n_a = {c: _cvs(_mk(c), X, y, cv=5, scoring='roc_auc').mean() for c in [0.01, 0.1, 1]}\nassert sorted(n_nonzero) == [0.01, 0.1, 1] and sorted(cv_auc) == [0.01, 0.1, 1], \"Кілттер: 0.01, 0.1, 1\"\nassert all(n_nonzero[c] == _n[c] for c in _n), f\"n_nonzero = {_n} болуы керек: penalty='l1', solver='liblinear'\"\nassert all(abs(cv_auc[c] - _a[c]) < 1e-6 for c in _a), \"CV AUC сәйкес емес: cross_val_score(m, X, y, cv=5, scoring='roc_auc').mean()\"\nassert best_C == max(_a, key=_a.get), f\"best_C = {max(_a, key=_a.get)} болуы керек\"",
+    "mustInclude": [
+     "penalty='l1'"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Lasso alpha-сын CV-мен таңдау",
+   "prompt": "<p>Шу бағандары бар дерек дайын. Әр <code>alpha</code> ∈ <code>[0.1, 0.3, 1, 3]</code> үшін <code>make_pipeline(StandardScaler(), Lasso(alpha=a))</code>-ның train-дегі 5-fold CV орташа R²-ын <code>cv_r2[a]</code>-ға жазыңыз. Ең жақсы alpha → <code>best_alpha</code>. Сол alpha-мен модельді train-де үйретіп:</p><ul><li><code>n_real_kept</code> — 5 нақты белгінің (алғашқы 5 баған) қаншасының коэффициенті нөл емес;</li><li><code>n_noise_kept</code> — 20 шу бағанының қаншасы қалды;</li><li><code>test_r2</code> — test R².</li></ul>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']].copy()\nrng = np.random.default_rng(3)\nfor i in range(20):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = flats['price_mln']\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size=60, random_state=1)\ncv_r2 = {}\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nflats = pd.read_csv('flats.csv')\nX = flats[['rooms', 'area_m2', 'floor', 'floors_total', 'year_built']].copy()\nrng = np.random.default_rng(3)\nfor i in range(20):\n    X[f'noise_{i}'] = rng.normal(size=len(X))\ny = flats['price_mln']\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size=60, random_state=1)\ncv_r2 = {}\nfor a in [0.1, 0.3, 1, 3]:\n    cv_r2[a] = cross_val_score(make_pipeline(StandardScaler(), Lasso(alpha=a)), X_train, y_train, cv=5).mean()\nbest_alpha = max(cv_r2, key=cv_r2.get)\nbest = make_pipeline(StandardScaler(), Lasso(alpha=best_alpha)).fit(X_train, y_train)\ncoef = best[-1].coef_\nn_real_kept = int((coef[:5] != 0).sum())\nn_noise_kept = int((coef[5:] != 0).sum())\ntest_r2 = best.score(X_test, y_test)\nprint(best_alpha, n_real_kept, n_noise_kept, round(test_r2, 3))",
+   "hints": [
+    "Цикл ішінде: <code>cross_val_score(make_pipeline(StandardScaler(), Lasso(alpha=a)), X_train, y_train, cv=5).mean()</code>",
+    "<code>coef = best[-1].coef_</code>; нақты белгілер: <code>coef[:5]</code>, шу: <code>coef[5:]</code>"
+   ],
+   "check": {
+    "tests": "from sklearn.linear_model import Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, \"X_train өзгертілмеуі керек: 60 жол, 25 баған\"\n_s = {a: _cvs(_mp(_SS(), _Ls(alpha=a)), X_train, y_train, cv=5).mean() for a in [0.1, 0.3, 1, 3]}\n_b = max(_s, key=_s.get)\n_m = _mp(_SS(), _Ls(alpha=_b)).fit(X_train, y_train); _c = _m[-1].coef_\nassert sorted(cv_r2) == [0.1, 0.3, 1, 3] and all(abs(cv_r2[a] - _s[a]) < 1e-6 for a in _s), \"cv_r2 сәйкес емес: train-дегі 5-fold CV, кілттері 0.1, 0.3, 1, 3\"\nassert best_alpha == _b, f\"best_alpha = {_b} болуы керек: CV R² ең жоғары\"\nassert n_real_kept == int((_c[:5] != 0).sum()) and n_noise_kept == int((_c[5:] != 0).sum()), f\"n_real_kept = {int((_c[:5] != 0).sum())}, n_noise_kept = {int((_c[5:] != 0).sum())} болуы керек\"\nassert abs(test_r2 - _m.score(X_test, y_test)) < 1e-6, f\"test_r2 ≈ {_m.score(X_test, y_test):.3f} болуы керек\"",
+    "mustInclude": [
+     "Lasso(",
+     "cross_val_score("
+    ]
+   }
+  }
+ ],
+ "ml-curves": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Gini мен AUC",
+   "prompt": "<p>Екі функция жазыңыз: <code>gini_from_auc(auc)</code> Gini-ді (2 · AUC − 1), <code>auc_from_gini(g)</code> кері аударып AUC-ті қайтарсын.</p><p>Мысалы, <code>gini_from_auc(0.75)</code> → <code>0.5</code>, <code>auc_from_gini(0.6)</code> → <code>0.8</code>.</p>",
+   "starter": "def gini_from_auc(auc):\n    pass\n\ndef auc_from_gini(g):\n    pass\n",
+   "solution": "def gini_from_auc(auc):\n    return 2 * auc - 1\n\ndef auc_from_gini(g):\n    return (g + 1) / 2\n\nprint(gini_from_auc(0.75), auc_from_gini(0.6))",
+   "hints": [
+    "Gini = 2 · AUC − 1 теңдеуінен AUC-ті шығарыңыз: AUC = (Gini + 1) / 2."
+   ],
+   "check": {
+    "tests": "assert gini_from_auc(0.75) is not None and abs(gini_from_auc(0.75) - 0.5) < 1e-9, \"gini_from_auc(0.75) = 0.5 болуы керек\"\nassert abs(gini_from_auc(0.5)) < 1e-9 and abs(gini_from_auc(1.0) - 1) < 1e-9, \"AUC 0.5 → Gini 0, AUC 1 → Gini 1\"\nassert auc_from_gini(0.6) is not None and abs(auc_from_gini(0.6) - 0.8) < 1e-9, \"auc_from_gini(0.6) = 0.8 болуы керек\"\nassert abs(auc_from_gini(gini_from_auc(0.816)) - 0.816) < 1e-9, \"Екі функция бір-біріне кері болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бір болжамның log loss-ы",
+   "prompt": "<p><code>loss_one(y, p)</code> функциясын жазыңыз. <code>p</code> — «кетеді» (1) класының ықтималдығы. Шын жауап <code>y = 1</code> болса, <code>−ln(p)</code>, <code>y = 0</code> болса, <code>−ln(1 − p)</code> қайтарсын.</p><p>Мысалы, <code>loss_one(1, 0.9)</code> → <code>0.105</code>, <code>loss_one(0, 0.9)</code> → <code>2.303</code>.</p>",
+   "starter": "import math\n\ndef loss_one(y, p):\n    pass\n",
+   "solution": "import math\n\ndef loss_one(y, p):\n    if y == 1:\n        return -math.log(p)\n    return -math.log(1 - p)\n\nprint(round(loss_one(1, 0.9), 3), round(loss_one(0, 0.9), 3))",
+   "hints": [
+    "<code>math.log</code> — натурал логарифм (ln)."
+   ],
+   "check": {
+    "tests": "import math as _m\nassert loss_one(1, 0.9) is not None and abs(loss_one(1, 0.9) - 0.1053605) < 1e-6, \"loss_one(1, 0.9) = −ln(0.9) ≈ 0.105 болуы керек\"\nassert abs(loss_one(0, 0.9) - 2.3025851) < 1e-6, \"y = 0 болса, −ln(1 − p): loss_one(0, 0.9) ≈ 2.303\"\nassert abs(loss_one(1, 0.01) - 4.6051702) < 1e-6, \"Сенімді қате қатты жазаланады: loss_one(1, 0.01) ≈ 4.605\"\nassert abs(loss_one(0, 0.2) + _m.log(0.8)) < 1e-9, \"loss_one(0, 0.2) = −ln(0.8)\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "PR-AUC-тің baseline-ы",
+   "prompt": "<p>Модель мен <code>proba</code> дайын. <code>base_rate</code> — test-тегі оң кластың үлесі (PR-AUC-тің кездейсоқ baseline-ы). <code>pr_auc</code> — <code>average_precision_score</code>. <code>lift = pr_auc / base_rate</code>: модель кездейсоқтан неше есе жақсы.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.metrics import average_precision_score\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.metrics import average_precision_score\nbase_rate = y_test.mean()\npr_auc = average_precision_score(y_test, proba)\nlift = pr_auc / base_rate\nprint(round(base_rate, 3), round(pr_auc, 3), round(lift, 2))",
+   "hints": [
+    "<code>base_rate = y_test.mean()</code>",
+    "<code>average_precision_score(y_test, proba)</code> — ықтималдықпен, 0/1-мен емес"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import average_precision_score as _aps\nassert abs(base_rate - _yte.mean()) < 1e-9, f\"base_rate ≈ {_yte.mean():.3f}: y_test.mean()\"\nassert abs(pr_auc - _aps(_yte, _p)) < 1e-6, f\"pr_auc ≈ {_aps(_yte, _p):.3f} болуы керек: average_precision_score(y_test, proba)\"\nassert abs(lift - _aps(_yte, _p) / _yte.mean()) < 1e-6, \"lift = pr_auc / base_rate\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бір шектегі TPR мен FPR",
+   "prompt": "<p><code>tpr_fpr(y_true, proba, thr)</code> функциясын жазыңыз: болжам <code>proba &gt;= thr</code> болса 1. Функция <code>(TPR, FPR)</code> жұбын қайтарсын: TPR = TP / (TP + FN), FPR = FP / (FP + TN). Сосын test-те шек 0.3 үшін <code>tpr30, fpr30</code> есептеңіз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n\ndef tpr_fpr(y_true, proba, thr):\n    pass\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n\ndef tpr_fpr(y_true, proba, thr):\n    y_true = np.asarray(y_true)\n    pred = (np.asarray(proba) >= thr).astype(int)\n    tp = ((pred == 1) & (y_true == 1)).sum()\n    fn = ((pred == 0) & (y_true == 1)).sum()\n    fp = ((pred == 1) & (y_true == 0)).sum()\n    tn = ((pred == 0) & (y_true == 0)).sum()\n    return tp / (tp + fn), fp / (fp + tn)\n\ntpr30, fpr30 = tpr_fpr(y_test, proba, 0.3)\nprint(round(tpr30, 3), round(fpr30, 3))",
+   "hints": [
+    "<code>pred = (np.asarray(proba) &gt;= thr).astype(int)</code>; <code>y_true = np.asarray(y_true)</code>",
+    "TP: <code>((pred == 1) &amp; (y_true == 1)).sum()</code>, қалғандары да солай"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_r = tpr_fpr([1, 1, 0, 0, 1], [0.9, 0.2, 0.6, 0.1, 0.5], 0.5)\nassert _r is not None and abs(_r[0] - 2 / 3) < 1e-9 and abs(_r[1] - 0.5) < 1e-9, \"tpr_fpr([1, 1, 0, 0, 1], [0.9, 0.2, 0.6, 0.1, 0.5], 0.5) → (0.667, 0.5). Шек: proba >= thr\"\n_y = _yte.values; _pr = (_p >= 0.3).astype(int)\n_tp = ((_pr == 1) & (_y == 1)).sum(); _fn = ((_pr == 0) & (_y == 1)).sum(); _fp = ((_pr == 1) & (_y == 0)).sum(); _tn = ((_pr == 0) & (_y == 0)).sum()\nassert abs(tpr30 - _tp / (_tp + _fn)) < 1e-9, f\"tpr30 ≈ {_tp / (_tp + _fn):.3f} болуы керек\"\nassert abs(fpr30 - _fp / (_fp + _tn)) < 1e-9, f\"fpr30 ≈ {_fp / (_fp + _tn):.3f} болуы керек: FP / (FP + TN)\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ағаш пен логистикалық регрессия",
+   "prompt": "<p>Логистикалық регрессия (<code>clf</code>, <code>proba</code>) дайын. Сол train-де <code>DecisionTreeClassifier(max_depth=3, random_state=0)</code>-ды <code>tree</code> атымен үйретіңіз. Test-те екеуінің Gini-ін (<code>gini_lr</code>, <code>gini_tree</code>) және PR-AUC-ін (<code>pr_lr</code>, <code>pr_tree</code>) есептеңіз. Gini-і жоғары модельдің атын (<code>'lr'</code> немесе <code>'tree'</code>) <code>better</code>-ге жазыңыз.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.metrics import roc_auc_score, average_precision_score\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.metrics import roc_auc_score, average_precision_score\ntree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)\np_tree = tree.predict_proba(X_test)[:, 1]\ngini_lr = 2 * roc_auc_score(y_test, proba) - 1\ngini_tree = 2 * roc_auc_score(y_test, p_tree) - 1\npr_lr = average_precision_score(y_test, proba)\npr_tree = average_precision_score(y_test, p_tree)\nbetter = 'lr' if gini_lr > gini_tree else 'tree'\nprint(round(gini_lr, 3), round(gini_tree, 3), round(pr_lr, 3), round(pr_tree, 3), better)",
+   "hints": [
+    "Ағаштың ықтималдығы да <code>predict_proba(X_test)[:, 1]</code>",
+    "<code>gini = 2 * roc_auc_score(y_test, p) - 1</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.tree import DecisionTreeClassifier as _DT\nfrom sklearn.metrics import roc_auc_score as _ras, average_precision_score as _aps\n_pt = _DT(max_depth=3, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_gl, _gt = 2 * _ras(_yte, _p) - 1, 2 * _ras(_yte, _pt) - 1\nassert hasattr(tree, 'tree_') and tree.get_depth() <= 3, \"tree — үйретілген DecisionTreeClassifier(max_depth=3, random_state=0)\"\nassert abs(gini_lr - _gl) < 1e-6 and abs(gini_tree - _gt) < 1e-6, f\"gini_lr ≈ {_gl:.3f}, gini_tree ≈ {_gt:.3f} болуы керек: 2 * AUC - 1\"\nassert abs(pr_lr - _aps(_yte, _p)) < 1e-6 and abs(pr_tree - _aps(_yte, _pt)) < 1e-6, \"PR-AUC сәйкес емес: average_precision_score(y_test, p)\"\nassert better == ('lr' if _gl > _gt else 'tree'), f\"better = {'lr' if _gl > _gt else 'tree'} болуы керек\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Калибровка кестесі",
+   "prompt": "<p>Сабақтағы калибровка кестесін жасаңыз. <code>t = pd.DataFrame({'p': proba, 'y': y_test.values})</code>. Болжамдарды <code>pd.cut(t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0])</code> топтарына бөліп, әр топ үшін <code>n</code> (саны), <code>pred</code> (орташа болжам), <code>fact</code> (нақты churn үлесі) бағандары бар <code>calib</code> кестесін жасаңыз. <code>max_gap</code> — |pred − fact|-тің ең үлкен мәні.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nt = pd.DataFrame({'p': proba, 'y': y_test.values})\nt['bin'] = pd.cut(t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0])\ncalib = t.groupby('bin', observed=True).agg(n=('y', 'size'), pred=('p', 'mean'), fact=('y', 'mean'))\nmax_gap = (calib['pred'] - calib['fact']).abs().max()\nprint(calib.round(2), round(max_gap, 3))",
+   "hints": [
+    "<code>t['bin'] = pd.cut(t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0])</code>",
+    "<code>t.groupby('bin', observed=True).agg(n=('y', 'size'), pred=('p', 'mean'), fact=('y', 'mean'))</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_t = pd.DataFrame({'p': _p, 'y': _yte.values})\n_g = _t.groupby(pd.cut(_t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0]), observed=True)\n_n, _pm, _fm = _g['y'].size().values, _g['p'].mean().values, _g['y'].mean().values\nassert isinstance(calib, pd.DataFrame) and {'n', 'pred', 'fact'} <= set(calib.columns), \"calib — n, pred, fact бағандары бар DataFrame\"\nassert list(calib['n']) == list(_n), f\"Топ өлшемдері {list(_n)} болуы керек: pd.cut(..., bins=[0, 0.1, 0.2, 0.4, 1.0])\"\nassert _np.allclose(calib['pred'].values, _pm) and _np.allclose(calib['fact'].values, _fm), \"pred — топтағы орташа p, fact — топтағы орташа y\"\nassert abs(max_gap - _np.abs(_pm - _fm).max()) < 1e-9, f\"max_gap ≈ {_np.abs(_pm - _fm).max():.3f} болуы керек\"",
+    "mustInclude": [
+     "pd.cut("
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "AUC жұптар арқылы",
+   "prompt": "<p>ROC AUC тек ретке қарайды: ол — кездейсоқ кетушінің ықтималдығы кездейсоқ қалушыныкінен жоғары болу ықтималдығы. <code>auc_pairs(y_true, proba)</code> функциясын жазыңыз: барлық (оң, теріс) жұптарын салыстырып, оңының скоры жоғары жұптар үлесін қайтарсын (тең болса — 0.5 ұпай). Test-те <code>auc_manual</code> есептеңіз.</p><p>Мысалы, <code>auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5])</code> → <code>0.75</code>.</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n\ndef auc_pairs(y_true, proba):\n    pass\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\n\ndef auc_pairs(y_true, proba):\n    y_true = np.asarray(y_true)\n    proba = np.asarray(proba, dtype=float)\n    pos = proba[y_true == 1]\n    neg = proba[y_true == 0]\n    diff = pos[:, None] - neg[None, :]\n    return ((diff > 0).sum() + 0.5 * (diff == 0).sum()) / (len(pos) * len(neg))\n\nauc_manual = auc_pairs(y_test, proba)\nprint(round(auc_manual, 4))",
+   "hints": [
+    "Оң және теріс скорлар: <code>pos = proba[y_true == 1]</code>, <code>neg = proba[y_true == 0]</code>",
+    "Барлық жұптың айырмасы: <code>diff = pos[:, None] - neg[None, :]</code>",
+    "<code>((diff &gt; 0).sum() + 0.5 * (diff == 0).sum()) / diff.size</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras\n_r = auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5])\nassert _r is not None and abs(_r - 0.75) < 1e-9, \"auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5]) = 0.75 болуы керек: 4 жұптың 3-еуінде оңы жоғары\"\nassert abs(auc_pairs([1, 0], [0.5, 0.5]) - 0.5) < 1e-9, \"Тең скор 0.5 ұпай береді\"\nassert abs(auc_manual - _ras(_yte, _p)) < 1e-9, f\"auc_manual roc_auc_score-пен сәйкес келуі керек: {_ras(_yte, _p):.4f}\""
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "class_weight ықтималдықты бұрмалайды",
+   "prompt": "<p>Сол train-де екінші модель үйретіңіз: <code>bal = LogisticRegression(max_iter=1000, class_weight='balanced')</code>. Test-те екі модельді салыстырыңыз:</p><ul><li><code>auc_plain</code>, <code>auc_bal</code> — ROC AUC;</li><li><code>ll_plain</code>, <code>ll_bal</code> — log loss;</li><li><code>mean_plain</code>, <code>mean_bal</code> — орташа болжам ықтималдығы;</li><li><code>fact</code> — test-тегі нақты churn үлесі.</li></ul><p>Рет (AUC) өзгерді ме? Ал ықтималдықтың деңгейі ше?</p>",
+   "starter": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.metrics import roc_auc_score, log_loss\n",
+   "solution": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nchurn = pd.read_csv('churn.csv')\nfeatures = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\nX = churn[features]\ny = churn['churned']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)\nclf = LogisticRegression(max_iter=1000).fit(X_train, y_train)\nproba = clf.predict_proba(X_test)[:, 1]\nfrom sklearn.metrics import roc_auc_score, log_loss\nbal = LogisticRegression(max_iter=1000, class_weight='balanced').fit(X_train, y_train)\np_bal = bal.predict_proba(X_test)[:, 1]\nauc_plain, auc_bal = roc_auc_score(y_test, proba), roc_auc_score(y_test, p_bal)\nll_plain, ll_bal = log_loss(y_test, proba), log_loss(y_test, p_bal)\nmean_plain, mean_bal = proba.mean(), p_bal.mean()\nfact = y_test.mean()\nprint(round(auc_plain, 3), round(auc_bal, 3), round(ll_plain, 3), round(ll_bal, 3), round(mean_plain, 3), round(mean_bal, 3), round(fact, 3))",
+   "hints": [
+    "<code>p_bal = bal.predict_proba(X_test)[:, 1]</code>",
+    "<code>log_loss(y_test, p_bal)</code>, <code>p_bal.mean()</code>"
+   ],
+   "check": {
+    "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras, log_loss as _lls\n_pb = _LogR(max_iter=1000, class_weight='balanced').fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nassert abs(auc_plain - _ras(_yte, _p)) < 1e-6 and abs(auc_bal - _ras(_yte, _pb)) < 1e-6, f\"AUC: plain ≈ {_ras(_yte, _p):.3f}, balanced ≈ {_ras(_yte, _pb):.3f} болуы керек\"\nassert abs(ll_plain - _lls(_yte, _p)) < 1e-6 and abs(ll_bal - _lls(_yte, _pb)) < 1e-6, f\"log loss: plain ≈ {_lls(_yte, _p):.3f}, balanced ≈ {_lls(_yte, _pb):.3f} болуы керек\"\nassert abs(mean_plain - _p.mean()) < 1e-6 and abs(mean_bal - _pb.mean()) < 1e-6 and abs(fact - _yte.mean()) < 1e-9, \"mean_plain, mean_bal — predict_proba[:, 1] орташасы; fact = y_test.mean()\"\nassert mean_bal > fact + 0.1, \"Balanced модель тәуекелді асыра бағалайды: mean_bal нақты үлестен әлдеқайда жоғары\"",
+    "mustInclude": [
+     "class_weight='balanced'"
+    ]
+   }
+  }
  ]
 });

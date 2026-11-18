@@ -459,5 +459,73 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "cap-ai": {
+  "pr": [
+   {
+    "title": "Пустой результат",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «число доставленных заказов в каждом городе». Он не возвращает ни одной строки. Проверьте значения статуса в данных и исправьте ошибку. Столбцы: <code>city</code>, <code>orders_cnt</code>.",
+    "hints": [
+     "Посмотрите значения: <code>SELECT DISTINCT status FROM orders</code>.",
+     "Сравнение текста чувствительно к регистру: <code>'Delivered'</code> ≠ <code>'delivered'</code>."
+    ]
+   },
+   {
+    "title": "Сравнение с NULL",
+    "prompt": "<b>cafe.</b> AI выдал такой запрос: «число и сумма оплаченных заказов с известной суммой». Результат — 0 и NULL. Исправьте. Одна строка: <code>orders_cnt</code>, <code>revenue</code>.",
+    "hints": [
+     "Любое сравнение с NULL (<code>=</code>, <code>!=</code>) даёт NULL, поэтому условие никогда не выполняется.",
+     "<code>amount IS NOT NULL</code>"
+    ]
+   },
+   {
+    "title": "Текст и число",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «заказы за апрель 2026 года по статусам». Он даёт пустой результат: <code>strftime</code> возвращает текст. Исправьте. Столбцы: <code>status</code>, <code>orders</code>.",
+    "hints": [
+     "В SQLite <code>'04' = 4</code> ложно: текст не равен числу.",
+     "Надёжнее всего диапазон дат: <code>order_date &gt;= '2026-04-01' AND order_date &lt; '2026-05-01'</code>. <code>strftime(...) = '04'</code> тоже подойдёт."
+    ]
+   },
+   {
+    "title": "Пропавшие клиенты",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «число заказов каждого клиента, у не заказывавших — 0». Но в результате 72 строки, а не 80, а наполовину исправленный вариант даёт 1 вместо 0. Исправьте обе ошибки. Столбцы: <code>customer_id</code>, <code>orders_cnt</code>; по <code>customer_id</code>.",
+    "hints": [
+     "<code>JOIN</code> отбрасывает клиентов без заказов: нужен <code>LEFT JOIN</code>.",
+     "<code>COUNT(*)</code> считает и строку с NULL; <code>COUNT(o.order_id)</code> даёт 0 для клиента без заказов."
+    ]
+   },
+   {
+    "title": "Среднее по строкам товаров",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «средний чек доставленных заказов». Но он считает среднюю сумму строки товара, а не заказа. Исправьте: сначала сумма каждого заказа, затем их среднее. Одна строка: <code>avg_check</code> (<code>ROUND</code> до целого).",
+    "hints": [
+     "После JOIN одна строка = одна строка товара. Для среднего чека одна строка должна быть = один заказ.",
+     "CTE: <code>GROUP BY o.order_id</code> и <code>SUM(...) AS total</code>, затем <code>ROUND(AVG(total))</code>."
+    ]
+   },
+   {
+    "title": "WHERE сломал LEFT JOIN",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «число доставленных заказов каждого клиента из Тараза, 0 если нет». Но клиента без доставленных заказов в результате не видно. Исправьте. Столбцы: <code>customer_id</code>, <code>delivered_cnt</code>; по <code>customer_id</code>.",
+    "hints": [
+     "Если условие на правую таблицу стоит в <code>WHERE</code>, строки с NULL отсеиваются и LEFT JOIN превращается в INNER JOIN.",
+     "Перенесите <code>o.status = 'delivered'</code> в <code>ON</code>; условие на город остаётся в <code>WHERE</code>."
+    ]
+   },
+   {
+    "title": "Две ошибки в доле",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «доля каждой категории в выручке по доставленным заказам 2026 года». Доли получаются целыми, и в сумме не дают 100. Найдите и исправьте две ошибки. Столбцы: <code>category</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 знак); по убыванию выручки.",
+    "hints": [
+     "Ошибка 1: знаменатель — выручка за все годы и все статусы. Он должен считаться с тем же фильтром: <code>SUM(SUM(...)) OVER ()</code> или подзапрос с тем же фильтром.",
+     "Ошибка 2: <code>100 * целое / целое</code> — целочисленное деление. Напишите <code>100.0</code> и добавьте <code>ROUND(..., 1)</code>."
+    ]
+   },
+   {
+    "title": "Лидер каждой категории",
+    "prompt": "<b>qazaq.</b> AI выдал такой запрос: «товар с наибольшей выручкой по доставленным заказам в каждой категории». Он даёт всего одну строку, а в числах есть отменённые и возвращённые заказы. Исправьте обе ошибки. Столбцы: <code>category</code>, <code>name</code>, <code>revenue</code>; по <code>category</code>.",
+    "hints": [
+     "Рейтинг должен считаться внутри каждой категории: <code>RANK() OVER (PARTITION BY category ORDER BY revenue DESC)</code>.",
+     "Статус хранится в <code>orders</code>: <code>JOIN orders o ON o.order_id = oi.order_id</code> и <code>WHERE o.status = 'delivered'</code>."
+    ]
+   }
+  ]
  }
 } });

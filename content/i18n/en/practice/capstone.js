@@ -459,5 +459,73 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "cap-ai": {
+  "pr": [
+   {
+    "title": "An empty result",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"number of delivered orders in each city\". It returns no rows at all. Check the status values in the data and fix the bug. Columns: <code>city</code>, <code>orders_cnt</code>.",
+    "hints": [
+     "Look at the values: <code>SELECT DISTINCT status FROM orders</code>.",
+     "Text comparison is case-sensitive: <code>'Delivered'</code> ≠ <code>'delivered'</code>."
+    ]
+   },
+   {
+    "title": "Comparing with NULL",
+    "prompt": "<b>cafe.</b> An AI assistant wrote this query: \"the number and total of paid orders with a known amount\". The result is 0 and NULL. Fix it. One row: <code>orders_cnt</code>, <code>revenue</code>.",
+    "hints": [
+     "Any comparison with NULL (<code>=</code>, <code>!=</code>) yields NULL, so the condition is never true.",
+     "<code>amount IS NOT NULL</code>"
+    ]
+   },
+   {
+    "title": "Text vs number",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"orders in April 2026 by status\". It returns nothing: <code>strftime</code> returns text. Fix it. Columns: <code>status</code>, <code>orders</code>.",
+    "hints": [
+     "In SQLite <code>'04' = 4</code> is false: text is not equal to a number.",
+     "The safest is a date range: <code>order_date &gt;= '2026-04-01' AND order_date &lt; '2026-05-01'</code>. <code>strftime(...) = '04'</code> also works."
+    ]
+   },
+   {
+    "title": "Missing customers",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"each customer's number of orders, with 0 for those who never ordered\". The result has 72 rows instead of 80, and a half fix shows 1 instead of 0. Fix both bugs. Columns: <code>customer_id</code>, <code>orders_cnt</code>; by <code>customer_id</code>.",
+    "hints": [
+     "<code>JOIN</code> drops customers without orders: you need <code>LEFT JOIN</code>.",
+     "<code>COUNT(*)</code> counts the NULL row too; <code>COUNT(o.order_id)</code> gives 0 for a customer with no orders."
+    ]
+   },
+   {
+    "title": "An average of item lines",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"average order value of delivered orders\". It averages item lines, not orders. Fix it: first each order's total, then their average. One row: <code>avg_check</code> (<code>ROUND</code> to a whole number).",
+    "hints": [
+     "After the JOIN, one row = one item line. For an average order value, one row must be one order.",
+     "CTE: <code>GROUP BY o.order_id</code> with <code>SUM(...) AS total</code>, then <code>ROUND(AVG(total))</code>."
+    ]
+   },
+   {
+    "title": "WHERE broke the LEFT JOIN",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"each Тараз customer's number of delivered orders, 0 if none\". But a customer with no delivered orders is missing from the result. Fix it. Columns: <code>customer_id</code>, <code>delivered_cnt</code>; by <code>customer_id</code>.",
+    "hints": [
+     "With the right-hand table's condition in <code>WHERE</code>, NULL rows are filtered out and the LEFT JOIN becomes an INNER JOIN.",
+     "Move <code>o.status = 'delivered'</code> into <code>ON</code>; the city condition stays in <code>WHERE</code>."
+    ]
+   },
+   {
+    "title": "Two bugs in a share",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"each category's share of revenue for delivered orders in 2026\". The shares come out as whole numbers and do not add up to 100. Find and fix both bugs. Columns: <code>category</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 decimal); by revenue descending.",
+    "hints": [
+     "Bug 1: the denominator is revenue over all years and statuses. It must use the same filter: <code>SUM(SUM(...)) OVER ()</code> or a subquery with the same filter.",
+     "Bug 2: <code>100 * integer / integer</code> is integer division. Write <code>100.0</code> and add <code>ROUND(..., 1)</code>."
+    ]
+   },
+   {
+    "title": "The leader of each category",
+    "prompt": "<b>qazaq.</b> An AI assistant wrote this query: \"the top-revenue product in each category, delivered orders only\". It returns a single row, and the numbers include cancelled and returned orders. Fix both bugs. Columns: <code>category</code>, <code>name</code>, <code>revenue</code>; by <code>category</code>.",
+    "hints": [
+     "The ranking must restart within each category: <code>RANK() OVER (PARTITION BY category ORDER BY revenue DESC)</code>.",
+     "The status lives in <code>orders</code>: <code>JOIN orders o ON o.order_id = oi.order_id</code> and <code>WHERE o.status = 'delivered'</code>."
+    ]
+   }
+  ]
  }
 } });

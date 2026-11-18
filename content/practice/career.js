@@ -539,5 +539,163 @@ DJ.addPractice('m7-1', {
     ]
    }
   }
+ ],
+ "cr-ds": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "AUC мен Gini",
+   "prompt": "<p>Банктерде модель сапасын Gini-мен айтады. Екі функция жазыңыз:</p><ul><li><code>gini_from_auc(auc)</code> — Gini = 2 × AUC − 1;</li><li><code>auc_from_gini(gini)</code> — кері түрлендіру.</li></ul><p>Мысалы, <code>gini_from_auc(0.75)</code> → <code>0.5</code>, <code>auc_from_gini(0.52)</code> → <code>0.76</code>.</p>",
+   "starter": "def gini_from_auc(auc):\n    pass\n\ndef auc_from_gini(gini):\n    pass\n",
+   "solution": "def gini_from_auc(auc):\n    return 2 * auc - 1\n\ndef auc_from_gini(gini):\n    return (gini + 1) / 2\n",
+   "hints": [
+    "Gini = 2 × AUC − 1 теңдеуінен AUC-ті табыңыз: AUC = (Gini + 1) / 2."
+   ],
+   "check": {
+    "tests": "assert gini_from_auc(0.75) is not None and abs(gini_from_auc(0.75) - 0.5) < 1e-12, \"AUC 0.75 → Gini 0.50\"\nassert abs(gini_from_auc(0.5)) < 1e-12, \"Кездейсоқ модель: AUC 0.5 → Gini 0\"\nassert abs(gini_from_auc(1.0) - 1) < 1e-12, \"Мінсіз модель: Gini 1\"\nassert auc_from_gini(0.52) is not None and abs(auc_from_gini(0.52) - 0.76) < 1e-12, \"Gini 0.52 → AUC 0.76\"\nassert abs(auc_from_gini(gini_from_auc(0.81)) - 0.81) < 1e-12, \"Екі функция бір-біріне кері\"",
+    "mustInclude": [
+     "def gini_from_auc",
+     "def auc_from_gini"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "«Бәрі таза» моделінің accuracy-і",
+   "prompt": "<p>Теңгерімсіз деректе accuracy алдайды. <code>majority_accuracy(y)</code> функциясын жазыңыз: әрқашан көп класты болжайтын модельдің accuracy-ін қайтарсын (<code>y</code> — 0/1 тізімі).</p><p>Мысалы, 1 000 транзакцияның 5-еуі фрод болса, <code>majority_accuracy(y)</code> → <code>0.995</code>: ештеңе таппайтын модель 99.5% «дұрыс».</p>",
+   "starter": "def majority_accuracy(y):\n    pass\n",
+   "solution": "def majority_accuracy(y):\n    share = sum(y) / len(y)\n    return max(share, 1 - share)\n",
+   "hints": [
+    "1-лер үлесі <code>share = sum(y) / len(y)</code>; көп класс — <code>max(share, 1 - share)</code>."
+   ],
+   "check": {
+    "tests": "assert majority_accuracy([0] * 995 + [1] * 5) is not None, \"majority_accuracy мән қайтаруы керек\"\nassert abs(majority_accuracy([0] * 995 + [1] * 5) - 0.995) < 1e-12, \"995 / 1000 = 0.995: accuracy жоғары, бірақ бірде-бір фрод табылмады\"\nassert abs(majority_accuracy([1, 1, 0]) - 2 / 3) < 1e-12, \"Көп класс 1 болса да жұмыс істеуі керек: 2/3\"\nassert abs(majority_accuracy([0, 1]) - 0.5) < 1e-12, \"Класстар тең: 0.5\"",
+    "mustInclude": [
+     "def majority_accuracy"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Precision мен recall",
+   "prompt": "<p><code>precision_recall(y_true, y_pred)</code> функциясын жазыңыз: 0/1 тізімдері бойынша <code>(precision, recall)</code> қайтарсын.</p><ul><li>precision = TP / (TP + FP) — «фрод» дегендердің ішінде шын фрод үлесі;</li><li>recall = TP / (TP + FN) — барлық фродтың ішінде табылғаны.</li></ul><p>Бөлгіш 0 болса, сол метрика <code>0.0</code>.</p>",
+   "starter": "def precision_recall(y_true, y_pred):\n    pass\n",
+   "solution": "def precision_recall(y_true, y_pred):\n    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)\n    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)\n    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)\n    precision = tp / (tp + fp) if tp + fp else 0.0\n    recall = tp / (tp + fn) if tp + fn else 0.0\n    return precision, recall\n",
+   "hints": [
+    "TP: <code>t == 1 and p == 1</code>; FP: <code>t == 0 and p == 1</code>; FN: <code>t == 1 and p == 0</code>.",
+    "Нөлге бөлмеу үшін: <code>tp / (tp + fp) if tp + fp else 0.0</code>."
+   ],
+   "check": {
+    "tests": "_r = precision_recall([1, 0, 1, 1, 0, 0], [1, 1, 0, 1, 0, 0])\nassert _r is not None and len(_r) == 2, \"(precision, recall) жұбын қайтарыңыз\"\nassert abs(_r[0] - 2 / 3) < 1e-12 and abs(_r[1] - 2 / 3) < 1e-12, f\"TP = 2, FP = 1, FN = 1: (2/3, 2/3) болуы керек, сізде {_r}\"\n_r2 = precision_recall([1, 1, 1, 0], [1, 0, 0, 0])\nassert abs(_r2[0] - 1) < 1e-12 and abs(_r2[1] - 1 / 3) < 1e-12, \"Сақ модель: precision 1, recall 1/3\"\nassert tuple(precision_recall([1, 0], [0, 0])) == (0.0, 0.0), \"Ешкімге «фрод» демесе: precision 0.0 (бөлгіш 0), recall 0.0\"",
+    "mustInclude": [
+     "def precision_recall"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "KS статистикасы",
+   "prompt": "<p>KS — «жаман» және «жақсы» клиенттердің жинақталған үлестері арасындағы ең үлкен алшақтық. <code>ks_stat(y, scores)</code> функциясын жазыңыз: әр бірегей score-ды табалдырық t ретінде алып, TPR = (score ≥ t болған оң мысалдар үлесі) және FPR = (score ≥ t болған теріс мысалдар үлесі) есептеп, max |TPR − FPR| қайтарсын.</p><p>Мысалы, <code>ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1])</code> → <code>0.5</code>.</p>",
+   "starter": "def ks_stat(y, scores):\n    pass\n",
+   "solution": "def ks_stat(y, scores):\n    pos = [s for t, s in zip(y, scores) if t == 1]\n    neg = [s for t, s in zip(y, scores) if t == 0]\n    best = 0.0\n    for thr in set(scores):\n        tpr = sum(s >= thr for s in pos) / len(pos)\n        fpr = sum(s >= thr for s in neg) / len(neg)\n        best = max(best, abs(tpr - fpr))\n    return best\n",
+   "hints": [
+    "Score-ларды екі тізімге бөліңіз: <code>pos</code> (y = 1) және <code>neg</code> (y = 0).",
+    "<code>for thr in set(scores)</code>: <code>tpr = sum(s &gt;= thr for s in pos) / len(pos)</code>, FPR дәл солай."
+   ],
+   "check": {
+    "tests": "import numpy as _np\nassert ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1]) is not None, \"ks_stat мән қайтаруы керек\"\nassert abs(ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1]) - 0.5) < 1e-12, f\"KS = 0.5 болуы керек (t = 0.9 және t = 0.7 табалдырықтарында), сізде {ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1])}\"\nassert abs(ks_stat([1, 1, 0, 0], [0.9, 0.8, 0.3, 0.1]) - 1) < 1e-12, \"Мінсіз бөлу: KS = 1\"\nassert abs(ks_stat([0, 0, 1, 1], [0.9, 0.8, 0.3, 0.1]) - 1) < 1e-12, \"Кері реттеуде де |TPR − FPR| = 1: модуль алыңыз\"\n_g = _np.random.default_rng(6)\n_y = (_g.random(300) < 0.3).astype(int)\n_s = _np.round(_g.normal(0, 1, 300) + 1.2 * _y, 2)\n_e = max(abs((_s[_y == 1] >= _t).mean() - (_s[_y == 0] >= _t).mean()) for _t in set(_s.tolist()))\nassert abs(ks_stat(_y.tolist(), _s.tolist()) - _e) < 1e-9, f\"300 клиентте KS ≈ {_e:.3f} болуы керек, сізде {ks_stat(_y.tolist(), _s.tolist()):.3f}\"",
+    "mustInclude": [
+     "def ks_stat"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "PSI: модель ескірді ме",
+   "prompt": "<p>Score-дың интервалдар бойынша үлестері: <code>expected</code> — үйрету кезеңінде, <code>actual</code> — қазір. Екі функция жазыңыз:</p><ul><li><code>psi(expected, actual)</code> — PSI = Σ (a − e) × ln(a / e);</li><li><code>needs_retrain(expected, actual)</code> — PSI &gt; 0.25 болса <code>True</code> (елеулі ығысу).</li></ul><p>Мысалы, <code>psi([0.25] * 4, [0.1, 0.2, 0.3, 0.4])</code> ≈ <code>0.228</code>: бақылау аймағы, бірақ қайта үйрету әлі керек емес.</p>",
+   "starter": "import math\n\ndef psi(expected, actual):\n    pass\n\ndef needs_retrain(expected, actual):\n    pass\n",
+   "solution": "import math\n\ndef psi(expected, actual):\n    return sum((a - e) * math.log(a / e) for e, a in zip(expected, actual))\n\ndef needs_retrain(expected, actual):\n    return psi(expected, actual) > 0.25\n",
+   "hints": [
+    "<code>sum((a - e) * math.log(a / e) for e, a in zip(expected, actual))</code>",
+    "Әр мүше теріс емес: a &gt; e болса, ln(a / e) &gt; 0; a &lt; e болса, екеуі де теріс."
+   ],
+   "check": {
+    "tests": "assert psi([0.25] * 4, [0.25] * 4) is not None and abs(psi([0.25] * 4, [0.25] * 4)) < 1e-12, \"Таралу өзгермесе, PSI = 0\"\n_p = psi([0.25] * 4, [0.1, 0.2, 0.3, 0.4])\nassert abs(_p - 0.228217) < 1e-4, f\"PSI ≈ 0.228 болуы керек, сізде {_p:.4f}\"\nassert abs(psi([0.5, 0.3, 0.2], [0.2, 0.3, 0.5]) - 0.549774) < 1e-4, \"Шеткі интервалдар орын ауыстырды: PSI ≈ 0.550\"\nassert needs_retrain([0.25] * 4, [0.1, 0.2, 0.3, 0.4]) is False, \"0.228 ≤ 0.25: қайта үйрету әлі керек емес (False)\"\nassert needs_retrain([0.5, 0.3, 0.2], [0.2, 0.3, 0.5]) is True, \"0.55 > 0.25: елеулі ығысу (True)\"\nassert abs(psi([0.1, 0.9], [0.2, 0.8]) - psi([0.2, 0.8], [0.1, 0.9])) < 1e-12, \"PSI симметриялы: expected пен actual-ды ауыстырсақ, мәні өзгермейді\"",
+    "mustInclude": [
+     "def psi",
+     "def needs_retrain"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ең тәуекелді 20%-дағы дефолттар",
+   "prompt": "<p>Write-up-та нәтижені бизнес тілімен айтамыз: «модель дефолттың 60%-ын ең тәуекелді 20% өтінімнен табады». <code>capture_rate(y, scores, top=0.2)</code> функциясын жазыңыз: score бойынша кему ретімен сұрыптап, алғашқы <code>k = round(top × n)</code> өтінімге барлық дефолттың қанша үлесі түсетінін қайтарсын.</p><p>Кездейсоқ модельде бұл шамамен <code>top</code>-қа тең.</p>",
+   "starter": "def capture_rate(y, scores, top=0.2):\n    pass\n",
+   "solution": "def capture_rate(y, scores, top=0.2):\n    k = round(top * len(y))\n    order = sorted(range(len(y)), key=lambda i: scores[i], reverse=True)\n    caught = sum(y[i] for i in order[:k])\n    return caught / sum(y)\n",
+   "hints": [
+    "Индекстерді score бойынша сұрыптаңыз: <code>sorted(range(len(y)), key=lambda i: scores[i], reverse=True)</code>.",
+    "Алғашқы k индекстегі y қосындысын <code>sum(y)</code>-ке бөліңіз."
+   ],
+   "check": {
+    "tests": "_y = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0]\n_s = [0.9, 0.8, 0.1, 0.7, 0.2, 0.3, 0.4, 0.05, 0.6, 0.5]\nassert capture_rate(_y, _s) is not None, \"capture_rate мән қайтаруы керек\"\nassert abs(capture_rate(_y, _s) - 1 / 3) < 1e-12, f\"Ең тәуекелді 2 өтінімде (0.9, 0.8) 3 дефолттың 1-еуі: 1/3, сізде {capture_rate(_y, _s)}\"\nassert abs(capture_rate(_y, _s, top=0.3) - 2 / 3) < 1e-12, \"top = 0.3: алғашқы 3 өтінім (0.9, 0.8, 0.7), 2/3\"\nassert abs(capture_rate(_y, _s, top=1.0) - 1) < 1e-12, \"top = 1: барлық дефолт ұсталады\"\nassert abs(capture_rate([1, 1, 0, 0, 0], [0.2, 0.1, 0.9, 0.8, 0.7], top=0.4)) < 1e-12, \"Кері реттейтін модель алғашқы 40%-да ешкімді таппайды\"",
+    "mustInclude": [
+     "def capture_rate"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Leakage аудиті",
+   "prompt": "<p>Take-home: <code>df</code>-та несие өтінімдері мен <code>default</code> бағаны бар. Әр белгінің жеке өзі target-ті қаншалық реттейтінін тексеріңіз. <code>suspicious(df, target, thr=0.9)</code> функциясын жазыңыз: target-тен басқа әр баған үшін <code>roc_auc_score(df[target], df[col])</code> есептеп, max(AUC, 1 − AUC) ≥ thr болған бағандардың <b>сұрыпталған</b> тізімін қайтарсын.</p><p>1 − AUC те керек: белгі target-пен кері байланысты болса (мысалы, уақытында төлеу үлесі), AUC 0-ге жақын. Бір белгінің AUC-ы 0.95 болса, бұл әдетте «болжам сәтінде белгісіз» ақпарат.</p>",
+   "starter": "import numpy as np\nimport pandas as pd\nrng = np.random.default_rng(13)\nn = 800\ny = (rng.random(n) < 0.12).astype(int)\ndf = pd.DataFrame({\n    \"client_id\": rng.permutation(n),\n    \"age\": rng.integers(21, 65, n),\n    \"income\": rng.normal(320, 90, n) - 40 * y,\n    \"collection_calls\": np.where(y == 1, 1 + rng.poisson(4, n), rng.poisson(0.05, n)),\n    \"on_time_share\": np.where(y == 1, rng.uniform(0, 0.45, n), rng.uniform(0.5, 1, n)),\n    \"default\": y,\n})\nfrom sklearn.metrics import roc_auc_score\n\ndef suspicious(df, target, thr=0.9):\n    pass\n",
+   "solution": "import numpy as np\nimport pandas as pd\nrng = np.random.default_rng(13)\nn = 800\ny = (rng.random(n) < 0.12).astype(int)\ndf = pd.DataFrame({\n    \"client_id\": rng.permutation(n),\n    \"age\": rng.integers(21, 65, n),\n    \"income\": rng.normal(320, 90, n) - 40 * y,\n    \"collection_calls\": np.where(y == 1, 1 + rng.poisson(4, n), rng.poisson(0.05, n)),\n    \"on_time_share\": np.where(y == 1, rng.uniform(0, 0.45, n), rng.uniform(0.5, 1, n)),\n    \"default\": y,\n})\nfrom sklearn.metrics import roc_auc_score\n\ndef suspicious(df, target, thr=0.9):\n    out = []\n    for col in df.columns:\n        if col == target:\n            continue\n        auc = roc_auc_score(df[target], df[col])\n        if max(auc, 1 - auc) >= thr:\n            out.append(col)\n    return sorted(out)\n\nprint(suspicious(df, \"default\"))\n",
+   "hints": [
+    "<code>for col in df.columns</code>, target-ті <code>continue</code> арқылы өткізіп жіберіңіз.",
+    "<code>auc = roc_auc_score(df[target], df[col])</code>; шарт: <code>max(auc, 1 - auc) &gt;= thr</code>.",
+    "Соңында <code>sorted(...)</code>."
+   ],
+   "check": {
+    "tests": "from sklearn.metrics import roc_auc_score as _auc\n_r = suspicious(df, \"default\")\nassert _r is not None, \"suspicious мән қайтаруы керек\"\nassert list(_r) == [\"collection_calls\", \"on_time_share\"], f\"Күдікті белгілер ['collection_calls', 'on_time_share'] болуы керек, сізде {_r}. on_time_share-дің AUC-ы 0-ге жақын: 1 − AUC-ты да тексеріңіз\"\nassert \"default\" not in suspicious(df, \"default\", thr=0.5), \"target бағанының өзін тексермеңіз\"\n_m = {c: max(_auc(df[\"default\"], df[c]), 1 - _auc(df[\"default\"], df[c])) for c in df.columns if c != \"default\"}\n_e = sorted(c for c, v in _m.items() if v >= 0.6)\nassert list(suspicious(df, \"default\", thr=0.6)) == _e, f\"thr = 0.6 болса, {_e} болуы керек: thr параметрін қолданыңыз\"\n_d2 = df.rename(columns={\"default\": \"bad\"})\nassert list(suspicious(_d2, \"bad\")) == [\"collection_calls\", \"on_time_share\"], \"target атауы параметрден алынуы керек, default деп жазып қоймаңыз\"",
+    "mustInclude": [
+     "def suspicious",
+     "roc_auc_score"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Out-of-time Gini және Pipeline",
+   "prompt": "<p>2024 жылғы өтінімдер: <code>month</code> (1–12), белгілер және <code>default</code>. <code>oot_gini(df, cutoff)</code> функциясын жазыңыз:</p><ol><li>train — <code>month &lt; cutoff</code>, test — <code>month &gt;= cutoff</code> (уақыт бойынша split);</li><li>белгілер — <code>month</code> пен <code>default</code>-тан басқа барлық баған;</li><li><code>Pipeline([(\"scaler\", StandardScaler()), (\"model\", LogisticRegression(max_iter=1000))])</code> тек train-де fit;</li><li><code>(gini_train, gini_test)</code> қайтарсын: Gini = 2 × ROC-AUC − 1, <code>predict_proba(...)[:, 1]</code> бойынша.</li></ol><p>Деректе соңғы айларда заңдылық әлсіреген (drift), сондықтан out-of-time Gini train-нен төмен шығады.</p>",
+   "starter": "import numpy as np\nimport pandas as pd\nrng = np.random.default_rng(24)\nn = 3000\nmonth = rng.integers(1, 13, n)\nincome = rng.normal(320, 90, n)\ndebt_ratio = rng.uniform(0, 1, n)\nage = rng.integers(21, 65, n)\ndrift = np.where(month > 9, 0.6, 1.0)\nz = -2.2 + drift * (-0.006 * (income - 320) + 2.0 * (debt_ratio - 0.5)) - 0.02 * (age - 40)\ndefault = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\ndf = pd.DataFrame({\"month\": month, \"income\": income, \"debt_ratio\": debt_ratio, \"age\": age, \"default\": default})\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\n\ndef oot_gini(df, cutoff):\n    pass\n",
+   "solution": "import numpy as np\nimport pandas as pd\nrng = np.random.default_rng(24)\nn = 3000\nmonth = rng.integers(1, 13, n)\nincome = rng.normal(320, 90, n)\ndebt_ratio = rng.uniform(0, 1, n)\nage = rng.integers(21, 65, n)\ndrift = np.where(month > 9, 0.6, 1.0)\nz = -2.2 + drift * (-0.006 * (income - 320) + 2.0 * (debt_ratio - 0.5)) - 0.02 * (age - 40)\ndefault = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\ndf = pd.DataFrame({\"month\": month, \"income\": income, \"debt_ratio\": debt_ratio, \"age\": age, \"default\": default})\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\n\ndef oot_gini(df, cutoff):\n    train, test = df[df[\"month\"] < cutoff], df[df[\"month\"] >= cutoff]\n    features = [c for c in df.columns if c not in (\"month\", \"default\")]\n    pipe = Pipeline([(\"scaler\", StandardScaler()), (\"model\", LogisticRegression(max_iter=1000))])\n    pipe.fit(train[features], train[\"default\"])\n    g_train = 2 * roc_auc_score(train[\"default\"], pipe.predict_proba(train[features])[:, 1]) - 1\n    g_test = 2 * roc_auc_score(test[\"default\"], pipe.predict_proba(test[features])[:, 1]) - 1\n    return g_train, g_test\n\nprint(oot_gini(df, 10))\n",
+   "hints": [
+    "Split: <code>train, test = df[df[\"month\"] &lt; cutoff], df[df[\"month\"] &gt;= cutoff]</code>.",
+    "Белгілер: <code>[c for c in df.columns if c not in (\"month\", \"default\")]</code>.",
+    "<code>pipe.fit(train[features], train[\"default\"])</code>, сосын әр бөлікте <code>2 * roc_auc_score(...) - 1</code>."
+   ],
+   "check": {
+    "tests": "from sklearn.pipeline import Pipeline as _P\nfrom sklearn.preprocessing import StandardScaler as _S\nfrom sklearn.linear_model import LogisticRegression as _L\nfrom sklearn.metrics import roc_auc_score as _auc\ndef _ref(d, cut):\n    tr, te = d[d[\"month\"] < cut], d[d[\"month\"] >= cut]\n    f = [c for c in d.columns if c not in (\"month\", \"default\")]\n    p = _P([(\"s\", _S()), (\"m\", _L(max_iter=1000))]).fit(tr[f], tr[\"default\"])\n    return 2 * _auc(tr[\"default\"], p.predict_proba(tr[f])[:, 1]) - 1, 2 * _auc(te[\"default\"], p.predict_proba(te[f])[:, 1]) - 1\n_r = oot_gini(df, 10)\nassert _r is not None and len(_r) == 2, \"(gini_train, gini_test) жұбын қайтарыңыз\"\n_e = _ref(df, 10)\nassert abs(float(_r[0]) - _e[0]) < 1e-6, f\"gini_train ≈ {_e[0]:.4f} болуы керек, сізде {float(_r[0]):.4f}. month мен default белгілерге кірмейді, scaler тек train-де fit\"\nassert abs(float(_r[1]) - _e[1]) < 1e-6, f\"gini_test ≈ {_e[1]:.4f} болуы керек, сізде {float(_r[1]):.4f}. test — month >= cutoff\"\nassert float(_r[1]) < float(_r[0]) - 0.05, \"Drift кесірінен out-of-time Gini train-нен төмен\"\n_e7 = _ref(df, 7)\nassert abs(float(oot_gini(df, 7)[1]) - _e7[1]) < 1e-6, \"cutoff параметрін қолданыңыз\"",
+    "mustInclude": [
+     "def oot_gini",
+     "Pipeline"
+    ]
+   }
+  }
  ]
 });

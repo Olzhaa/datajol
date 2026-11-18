@@ -833,6 +833,96 @@ DJ.i18n.patch({
      ]
     }
    ]
+  },
+  "mm-log": {
+   "pr": [
+    {
+     "title": "Logit: from probability to log-odds",
+     "prompt": "<p>The inverse of the sigmoid is the logit: z = ln(p / (1 − p)). Write the function <code>logit(p)</code> (<code>math.log</code> is the natural logarithm).</p><p>For example, <code>logit(0.5)</code> → <code>0.0</code>, <code>logit(0.8)</code> = ln(4) ≈ <code>1.386</code>.</p>",
+     "hints": [
+      "Odds = <code>p / (1 - p)</code>, then <code>math.log</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert logit(0.5) is not None and abs(logit(0.5)) < 1e-12, \"logit(0.5) = ln(1) = 0\"\nassert abs(logit(0.8) - _m.log(4)) < 1e-9, f\"logit(0.8) should be ln(0.8 / 0.2) = ln(4) ≈ 1.386, you got {logit(0.8)}\"\nassert abs(logit(0.2) + logit(0.8)) < 1e-9, \"symmetry: logit(1 − p) = −logit(p)\"\nfor _p in (0.01, 0.3, 0.77, 0.999):\n    assert abs(_sg(logit(_p)) - _p) < 1e-9, f\"sigmoid(logit({_p})) should be {_p}: the logit is the inverse of the sigmoid\""
+     }
+    },
+    {
+     "title": "Log returns",
+     "prompt": "<p>You have a list of monthly revenue <code>values</code>. Write the function <code>log_returns(values)</code>: it returns the list ln(vᵢ / vᵢ₋₁) for neighbouring months (one element shorter).</p><p>A log difference ≈ a relative change, and the sum of all log returns gives ln(last / first). For example, <code>log_returns([100, 110, 121])</code> → <code>[0.0953, 0.0953]</code>.</p>",
+     "hints": [
+      "<code>for i in range(1, len(values))</code> and <code>math.log(values[i] / values[i - 1])</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_r = log_returns([100, 110, 121])\nassert _r is not None and len(_r) == 2, \"3 values should give 2 log returns\"\nassert all(abs(_x - _m.log(1.1)) < 1e-9 for _x in _r), f\"each return should be ln(1.1) ≈ 0.0953, you got {_r}\"\n_v = [250, 300, 270, 400, 380]\nassert abs(sum(log_returns(_v)) - _m.log(380 / 250)) < 1e-9, \"the sum of log returns = ln(last / first)\"\nassert log_returns([5]) == [], \"with one value, an empty list\"\nassert log_returns([200, 100])[0] < 0, \"a drop gives a negative log return\""
+     }
+    },
+    {
+     "title": "Log-likelihood",
+     "prompt": "<p>Write the function <code>log_likelihood(probs)</code>: you get the probabilities <code>probs</code> of independent observations; return the logarithm of their product ln(p₁ × p₂ × …) = Σ ln(pᵢ).</p><p>Do not compute the product directly: multiplying 0.3 by itself 2 000 times rounds to 0 (underflow), and ln(0) raises an error.</p>",
+     "hints": [
+      "The log of a product is the sum of the logs: <code>sum(math.log(p) for p in probs)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert log_likelihood([0.5, 0.5]) is not None, \"log_likelihood must return a value\"\nassert abs(log_likelihood([0.5, 0.5]) - 2 * _m.log(0.5)) < 1e-12, \"ln(0.5 × 0.5) = 2 × ln(0.5) ≈ −1.386\"\nassert abs(log_likelihood([0.2, 0.5, 0.9]) - _m.log(0.09)) < 1e-12, \"ln(0.2 × 0.5 × 0.9) = ln(0.09)\"\n_ll = log_likelihood([0.3] * 2000)\nassert abs(_ll - 2000 * _m.log(0.3)) < 1e-6, f\"it should be 2000 × ln(0.3) ≈ −2408, you got {_ll}\"\nassert log_likelihood([1.0, 1.0]) == 0, \"if the probabilities are 1, the log-likelihood is 0\""
+     }
+    },
+    {
+     "title": "Safe log-loss",
+     "prompt": "<p>A model sometimes outputs a probability of exactly 0 or 1, and then <code>math.log(0)</code> fails with an error. Write the function <code>safe_log_loss(y, p, eps=1e-15)</code>: clip each pᵢ to the range [eps, 1 − eps] (<code>min</code>/<code>max</code>) and return the mean log-loss.</p><pre><code>loss = −[ y × ln(p) + (1 − y) × ln(1 − p) ]</code></pre><p>For example, <code>safe_log_loss([1], [0.0])</code> = −ln(1e-15) ≈ <code>34.54</code>.</p>",
+     "hints": [
+      "Clipping: <code>pi = min(max(pi, eps), 1 - eps)</code>.",
+      "The rest is <code>log_loss</code> from the lesson: the sum, then divide by <code>len(y)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert safe_log_loss([1], [0.0]) is not None, \"safe_log_loss must return a value\"\nassert abs(safe_log_loss([1], [0.0]) + _m.log(1e-15)) < 1e-6, f\"y = 1, p = 0: it should be −ln(1e-15) ≈ 34.54, you got {safe_log_loss([1], [0.0])}\"\nassert abs(safe_log_loss([0], [1.0]) + _m.log(1e-15)) < 1e-3, \"y = 0, p = 1: clip p to 1 − eps\"\nassert safe_log_loss([1, 0], [1.0, 0.0]) < 1e-12, \"for confident and correct predictions loss ≈ 0\"\nassert abs(safe_log_loss([1, 0, 1], [0.9, 0.2, 0.6]) - 0.2797765635793423) < 1e-9, \"for normal probabilities the result is the same as in the lesson ≈ 0.280\"\nassert abs(safe_log_loss([1], [0.0], eps=0.01) + _m.log(0.01)) < 1e-9, \"use the eps parameter: with eps = 0.01 it is −ln(0.01) ≈ 4.605\""
+     }
+    },
+    {
+     "title": "Chain rule: two functions",
+     "prompt": "<p>Write the derivatives with the chain rule:</p><ul><li><code>d_power(a, b, n, x)</code> — the derivative of y = (a × x + b)ⁿ at the point x: n × (a × x + b)^(n − 1) × a;</li><li><code>d_log_sq(x)</code> — the derivative of y = ln(x² + 1): the outer ln(g) has the derivative 1 / g, the inner g = x² + 1 has 2x.</li></ul><p>For example, <code>d_power(3, 1, 2, 1)</code> → <code>24</code>, <code>d_log_sq(1)</code> → <code>1.0</code>.</p>",
+     "hints": [
+      "Do not forget the derivative of the inner function: <code>* a</code>.",
+      "<code>d_log_sq</code>: (1 / g) × g′ = <code>2 * x / (x ** 2 + 1)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert d_power(3, 1, 2, 1) is not None and abs(d_power(3, 1, 2, 1) - 24) < 1e-9, \"d_power(3, 1, 2, 1) = 2 × 4 × 3 = 24\"\nassert abs(d_power(2, -1, 4, 2) - 216) < 1e-9, f\"d_power(2, −1, 4, 2) should be 4 × 3³ × 2 = 216, you got {d_power(2, -1, 4, 2)}\"\nfor _a, _b, _n, _x in [(0.5, 2, 3, 1.5), (-1, 4, 2, 0.3), (1.2, 0.1, 5, 0.7)]:\n    _f = lambda t: (_a * t + _b) ** _n\n    _num = (_f(_x + 1e-6) - _f(_x - 1e-6)) / 2e-6\n    assert abs(d_power(_a, _b, _n, _x) - _num) < 1e-4 * max(1, abs(_num)), f\"a={_a}, b={_b}, n={_n}, x={_x}: the numerical derivative ≈ {_num:.4f}, you got {d_power(_a, _b, _n, _x):.4f}\"\nassert d_log_sq(1) is not None and abs(d_log_sq(1) - 1) < 1e-12, \"d_log_sq(1) = 2 / 2 = 1\"\nfor _x in (-2.0, 0.0, 0.5, 3.0):\n    _num = (_m.log((_x + 1e-6) ** 2 + 1) - _m.log((_x - 1e-6) ** 2 + 1)) / 2e-6\n    assert abs(d_log_sq(_x) - _num) < 1e-6, f\"x = {_x}: the numerical derivative ≈ {_num:.4f}, you got {d_log_sq(_x):.4f}\""
+     }
+    },
+    {
+     "title": "The derivative of the sigmoid",
+     "prompt": "<p>σ′(z) = σ(z) × (1 − σ(z)). Write two functions:</p><ul><li><code>sigmoid_prime(z)</code> — σ′(z);</li><li><code>d_sigmoid_w(w, x)</code> — the derivative of p = σ(w × x) with respect to <b>w</b> (chain rule: σ′(w × x) × x).</li></ul><p>For example, <code>sigmoid_prime(0)</code> → <code>0.25</code>: this is the largest value of the derivative.</p>",
+     "hints": [
+      "<code>s = sigmoid(z)</code>, then <code>s * (1 - s)</code>.",
+      "The inner function is z = w × x, its derivative with respect to w is x."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert sigmoid_prime(0) is not None and abs(sigmoid_prime(0) - 0.25) < 1e-12, \"σ′(0) = 0.5 × 0.5 = 0.25\"\nassert abs(sigmoid_prime(3) - sigmoid_prime(-3)) < 1e-12, \"σ′ is symmetric: σ′(3) = σ′(−3)\"\nassert all(sigmoid_prime(_z) < 0.25 for _z in (-2, -0.5, 0.5, 4)), \"0.25 is the largest value, it is smaller at other points\"\nfor _z in (-3.0, -0.4, 1.7):\n    _num = (_sg(_z + 1e-6) - _sg(_z - 1e-6)) / 2e-6\n    assert abs(sigmoid_prime(_z) - _num) < 1e-8, f\"z = {_z}: the numerical derivative ≈ {_num:.6f}, you got {sigmoid_prime(_z):.6f}\"\nassert d_sigmoid_w(0.5, 2) is not None, \"d_sigmoid_w must return a value\"\nfor _w, _x in [(0.5, 2), (-1.0, 3), (0.2, -1.5)]:\n    _num = (_sg((_w + 1e-6) * _x) - _sg((_w - 1e-6) * _x)) / 2e-6\n    assert abs(d_sigmoid_w(_w, _x) - _num) < 1e-8, f\"w = {_w}, x = {_x}: the numerical derivative ≈ {_num:.6f}, you got {d_sigmoid_w(_w, _x):.6f}. Do not forget the inner derivative x\""
+     }
+    },
+    {
+     "title": "Logistic regression from scratch",
+     "prompt": "<p>Train logistic regression with gradient descent in NumPy. Three functions:</p><ul><li><code>mean_log_loss(X, y, w, b)</code> — p = σ(X @ w + b), the mean log-loss;</li><li><code>gradients(X, y, w, b)</code> — <code>(grad_w, grad_b)</code>: by the chain rule grad_w = Xᵀ(p − y) / n, grad_b = mean(p − y);</li><li><code>fit(X, y, lr=0.5, steps=500)</code> — starting from w = 0, b = 0, take <code>steps</code> steps and return <code>(w, b)</code>.</li></ul><p>For one example the formula was (p − y) × x (the lesson); here it is averaged over all examples.</p>",
+     "hints": [
+      "Probabilities for all examples at once: <code>p = sigmoid(X @ w + b)</code>.",
+      "<code>grad_w = X.T @ (p - y) / len(y)</code>, <code>grad_b = np.mean(p - y)</code>.",
+      "<code>fit</code>: <code>w = np.zeros(X.shape[1])</code>, in the loop <code>w = w - lr * gw</code>, <code>b = b - lr * gb</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(9)\n_X = _g.normal(0, 1, (400, 2))\n_y = (_g.random(400) < 1 / (1 + _np.exp(-(1.5 * _X[:, 0] - 2.0 * _X[:, 1] + 0.5)))).astype(float)\nassert mean_log_loss(_X, _y, _np.zeros(2), 0.0) is not None, \"mean_log_loss must return a value\"\nassert abs(mean_log_loss(_X, _y, _np.zeros(2), 0.0) - _np.log(2)) < 1e-9, \"with w = 0, b = 0, p = 0.5 and loss = ln(2) ≈ 0.693\"\n_w0 = _np.array([0.3, -0.2]); _b0 = 0.1\n_gw, _gb = gradients(_X, _y, _w0, _b0)\nfor _j in range(2):\n    _e = _np.zeros(2); _e[_j] = 1e-6\n    _num = (mean_log_loss(_X, _y, _w0 + _e, _b0) - mean_log_loss(_X, _y, _w0 - _e, _b0)) / 2e-6\n    assert abs(float(_gw[_j]) - _num) < 1e-6, f\"grad_w[{_j}] should be ≈ {_num:.5f} (numerical derivative), you got {float(_gw[_j]):.5f}. X.T @ (p − y) / n\"\n_numb = (mean_log_loss(_X, _y, _w0, _b0 + 1e-6) - mean_log_loss(_X, _y, _w0, _b0 - 1e-6)) / 2e-6\nassert abs(float(_gb) - _numb) < 1e-6, f\"grad_b should be ≈ {_numb:.5f}, you got {float(_gb):.5f}: mean(p − y)\"\n_w, _b = fit(_X, _y)\n_l = mean_log_loss(_X, _y, _w, _b)\nassert _l < 0.5, f\"after training the loss should be below 0.5, you got {_l:.3f}\"\nassert float(_w[0]) > 0.8 and float(_w[1]) < -1.0, f\"the weights should approach the true values (1.5, −2.0), you got {_w}\"\n_w2, _b2 = fit(_X, _y, lr=0.1, steps=10)\nassert abs(float(_w2[0]) - float(_w[0])) > 0.3, \"use the lr and steps parameters\""
+     }
+    },
+    {
+     "title": "Log-loss straight from the logit",
+     "prompt": "<p>The model outputs z (the logit). The usual path p = σ(z), then −ln(1 − p) breaks at z = 40: σ(40) is exactly 1.0 in float, and ln(0) is an error. Write the function <code>loss_from_logit(y, z)</code>: it computes the log-loss of one example without σ, directly from z.</p><p>It follows from the lesson's rules: −ln σ(z) = ln(1 + e^(−z)) and 1 − σ(z) = σ(−z), so −ln(1 − σ(z)) = ln(1 + e^z). Use <code>math.log1p</code>. The values of z lie in [−50, 50].</p><p>Then <code>mean_loss_from_logits(y, z)</code> — the mean over the lists.</p>",
+     "hints": [
+      "If y = 1, loss = ln(1 + e^(−z)) = <code>math.log1p(math.exp(-z))</code>.",
+      "If y = 0, loss = ln(1 + e^z). Combine both with the weights y and (1 − y)."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert loss_from_logit(1, 0) is not None, \"loss_from_logit must return a value\"\nassert abs(loss_from_logit(1, 0) - _m.log(2)) < 1e-12 and abs(loss_from_logit(0, 0) - _m.log(2)) < 1e-12, \"with z = 0, p = 0.5 and loss = ln(2) for both classes\"\nfor _y, _z in [(1, 2.0), (0, 2.0), (1, -1.3), (0, 0.7)]:\n    _naive = -(_y * _m.log(_sg(_z)) + (1 - _y) * _m.log(1 - _sg(_z)))\n    assert abs(loss_from_logit(_y, _z) - _naive) < 1e-9, f\"y = {_y}, z = {_z}: it must match the calculation via σ {_naive:.6f}, you got {loss_from_logit(_y, _z):.6f}\"\n_big = loss_from_logit(0, 40)\nassert abs(_big - 40) < 1e-9, f\"y = 0, z = 40: loss should be ln(1 + e^40) ≈ 40, you got {_big}\"\nassert abs(loss_from_logit(1, -40) - 40) < 1e-9, \"y = 1, z = −40: a confident mistake, loss ≈ 40\"\nassert loss_from_logit(1, 40) < 1e-15, \"y = 1, z = 40: confident and correct, loss ≈ 0\"\nassert abs(mean_loss_from_logits([1, 0, 1], [0.0, 40.0, -40.0]) - (_m.log(2) + 80) / 3) < 1e-9, \"the mean: (ln 2 + 40 + 40) / 3\""
+     }
+    }
+   ]
   }
  }
 });

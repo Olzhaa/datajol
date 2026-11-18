@@ -833,6 +833,96 @@ DJ.i18n.patch({
      ]
     }
    ]
+  },
+  "mm-log": {
+   "pr": [
+    {
+     "title": "Логит: от вероятности к log-odds",
+     "prompt": "<p>Функция, обратная сигмоиде, — логит: z = ln(p / (1 − p)). Напишите функцию <code>logit(p)</code> (<code>math.log</code> — натуральный логарифм).</p><p>Например, <code>logit(0.5)</code> → <code>0.0</code>, <code>logit(0.8)</code> = ln(4) ≈ <code>1.386</code>.</p>",
+     "hints": [
+      "Odds = <code>p / (1 - p)</code>, затем <code>math.log</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert logit(0.5) is not None and abs(logit(0.5)) < 1e-12, \"logit(0.5) = ln(1) = 0\"\nassert abs(logit(0.8) - _m.log(4)) < 1e-9, f\"должно быть logit(0.8) = ln(0.8 / 0.2) = ln(4) ≈ 1.386, у вас {logit(0.8)}\"\nassert abs(logit(0.2) + logit(0.8)) < 1e-9, \"симметрия: logit(1 − p) = −logit(p)\"\nfor _p in (0.01, 0.3, 0.77, 0.999):\n    assert abs(_sg(logit(_p)) - _p) < 1e-9, f\"должно быть sigmoid(logit({_p})) = {_p}: логит обратен сигмоиде\""
+     }
+    },
+    {
+     "title": "Лог-доходности",
+     "prompt": "<p>Дан список месячной выручки <code>values</code>. Напишите функцию <code>log_returns(values)</code>: она возвращает список ln(vᵢ / vᵢ₋₁) для соседних месяцев (длина на один меньше).</p><p>Разность логарифмов ≈ относительное изменение, а сумма всех лог-доходностей даёт ln(последний / первый). Например, <code>log_returns([100, 110, 121])</code> → <code>[0.0953, 0.0953]</code>.</p>",
+     "hints": [
+      "<code>for i in range(1, len(values))</code> и <code>math.log(values[i] / values[i - 1])</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_r = log_returns([100, 110, 121])\nassert _r is not None and len(_r) == 2, \"из 3 значений должно получиться 2 лог-доходности\"\nassert all(abs(_x - _m.log(1.1)) < 1e-9 for _x in _r), f\"каждая доходность должна быть ln(1.1) ≈ 0.0953, у вас {_r}\"\n_v = [250, 300, 270, 400, 380]\nassert abs(sum(log_returns(_v)) - _m.log(380 / 250)) < 1e-9, \"сумма лог-доходностей = ln(последний / первый)\"\nassert log_returns([5]) == [], \"если значение одно, пустой список\"\nassert log_returns([200, 100])[0] < 0, \"падение даёт отрицательную лог-доходность\""
+     }
+    },
+    {
+     "title": "Log-likelihood",
+     "prompt": "<p>Напишите функцию <code>log_likelihood(probs)</code>: даны вероятности <code>probs</code> независимых наблюдений; верните логарифм их произведения ln(p₁ × p₂ × …) = Σ ln(pᵢ).</p><p>Не считайте произведение напрямую: если перемножить 0.3 2 000 раз, результат округлится до 0 (underflow), а ln(0) даёт ошибку.</p>",
+     "hints": [
+      "Логарифм произведения — сумма логарифмов: <code>sum(math.log(p) for p in probs)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert log_likelihood([0.5, 0.5]) is not None, \"log_likelihood должна возвращать значение\"\nassert abs(log_likelihood([0.5, 0.5]) - 2 * _m.log(0.5)) < 1e-12, \"ln(0.5 × 0.5) = 2 × ln(0.5) ≈ −1.386\"\nassert abs(log_likelihood([0.2, 0.5, 0.9]) - _m.log(0.09)) < 1e-12, \"ln(0.2 × 0.5 × 0.9) = ln(0.09)\"\n_ll = log_likelihood([0.3] * 2000)\nassert abs(_ll - 2000 * _m.log(0.3)) < 1e-6, f\"должно быть 2000 × ln(0.3) ≈ −2408, у вас {_ll}\"\nassert log_likelihood([1.0, 1.0]) == 0, \"если вероятности равны 1, log-likelihood равен 0\""
+     }
+    },
+    {
+     "title": "Безопасный log-loss",
+     "prompt": "<p>Модель иногда выдаёт вероятность ровно 0 или 1, и тогда <code>math.log(0)</code> падает с ошибкой. Напишите функцию <code>safe_log_loss(y, p, eps=1e-15)</code>: зажмите каждое pᵢ в отрезок [eps, 1 − eps] (<code>min</code>/<code>max</code>) и верните средний log-loss.</p><pre><code>loss = −[ y × ln(p) + (1 − y) × ln(1 − p) ]</code></pre><p>Например, <code>safe_log_loss([1], [0.0])</code> = −ln(1e-15) ≈ <code>34.54</code>.</p>",
+     "hints": [
+      "Зажатие: <code>pi = min(max(pi, eps), 1 - eps)</code>.",
+      "Остальное — <code>log_loss</code> из урока: сумма, затем деление на <code>len(y)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert safe_log_loss([1], [0.0]) is not None, \"safe_log_loss должна возвращать значение\"\nassert abs(safe_log_loss([1], [0.0]) + _m.log(1e-15)) < 1e-6, f\"y = 1, p = 0: должно быть −ln(1e-15) ≈ 34.54, у вас {safe_log_loss([1], [0.0])}\"\nassert abs(safe_log_loss([0], [1.0]) + _m.log(1e-15)) < 1e-3, \"y = 0, p = 1: зажмите p до 1 − eps\"\nassert safe_log_loss([1, 0], [1.0, 0.0]) < 1e-12, \"при уверенных и верных прогнозах loss ≈ 0\"\nassert abs(safe_log_loss([1, 0, 1], [0.9, 0.2, 0.6]) - 0.2797765635793423) < 1e-9, \"при обычных вероятностях результат как в уроке ≈ 0.280\"\nassert abs(safe_log_loss([1], [0.0], eps=0.01) + _m.log(0.01)) < 1e-9, \"используйте параметр eps: при eps = 0.01 получится −ln(0.01) ≈ 4.605\""
+     }
+    },
+    {
+     "title": "Цепное правило: две функции",
+     "prompt": "<p>Запишите производные по цепному правилу:</p><ul><li><code>d_power(a, b, n, x)</code> — производная функции y = (a × x + b)ⁿ в точке x: n × (a × x + b)^(n − 1) × a;</li><li><code>d_log_sq(x)</code> — производная y = ln(x² + 1): производная внешней ln(g) равна 1 / g, внутренней g = x² + 1 — 2x.</li></ul><p>Например, <code>d_power(3, 1, 2, 1)</code> → <code>24</code>, <code>d_log_sq(1)</code> → <code>1.0</code>.</p>",
+     "hints": [
+      "Не забудьте производную внутренней функции: <code>* a</code>.",
+      "<code>d_log_sq</code>: (1 / g) × g′ = <code>2 * x / (x ** 2 + 1)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert d_power(3, 1, 2, 1) is not None and abs(d_power(3, 1, 2, 1) - 24) < 1e-9, \"d_power(3, 1, 2, 1) = 2 × 4 × 3 = 24\"\nassert abs(d_power(2, -1, 4, 2) - 216) < 1e-9, f\"должно быть d_power(2, −1, 4, 2) = 4 × 3³ × 2 = 216, у вас {d_power(2, -1, 4, 2)}\"\nfor _a, _b, _n, _x in [(0.5, 2, 3, 1.5), (-1, 4, 2, 0.3), (1.2, 0.1, 5, 0.7)]:\n    _f = lambda t: (_a * t + _b) ** _n\n    _num = (_f(_x + 1e-6) - _f(_x - 1e-6)) / 2e-6\n    assert abs(d_power(_a, _b, _n, _x) - _num) < 1e-4 * max(1, abs(_num)), f\"a={_a}, b={_b}, n={_n}, x={_x}: численная производная ≈ {_num:.4f}, у вас {d_power(_a, _b, _n, _x):.4f}\"\nassert d_log_sq(1) is not None and abs(d_log_sq(1) - 1) < 1e-12, \"d_log_sq(1) = 2 / 2 = 1\"\nfor _x in (-2.0, 0.0, 0.5, 3.0):\n    _num = (_m.log((_x + 1e-6) ** 2 + 1) - _m.log((_x - 1e-6) ** 2 + 1)) / 2e-6\n    assert abs(d_log_sq(_x) - _num) < 1e-6, f\"x = {_x}: численная производная ≈ {_num:.4f}, у вас {d_log_sq(_x):.4f}\""
+     }
+    },
+    {
+     "title": "Производная сигмоиды",
+     "prompt": "<p>σ′(z) = σ(z) × (1 − σ(z)). Напишите две функции:</p><ul><li><code>sigmoid_prime(z)</code> — σ′(z);</li><li><code>d_sigmoid_w(w, x)</code> — производная p = σ(w × x) по <b>w</b> (цепное правило: σ′(w × x) × x).</li></ul><p>Например, <code>sigmoid_prime(0)</code> → <code>0.25</code>: это наибольшее значение производной.</p>",
+     "hints": [
+      "<code>s = sigmoid(z)</code>, затем <code>s * (1 - s)</code>.",
+      "Внутренняя функция z = w × x, её производная по w — x."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert sigmoid_prime(0) is not None and abs(sigmoid_prime(0) - 0.25) < 1e-12, \"σ′(0) = 0.5 × 0.5 = 0.25\"\nassert abs(sigmoid_prime(3) - sigmoid_prime(-3)) < 1e-12, \"σ′ симметрична: σ′(3) = σ′(−3)\"\nassert all(sigmoid_prime(_z) < 0.25 for _z in (-2, -0.5, 0.5, 4)), \"0.25 — наибольшее значение, в других точках меньше\"\nfor _z in (-3.0, -0.4, 1.7):\n    _num = (_sg(_z + 1e-6) - _sg(_z - 1e-6)) / 2e-6\n    assert abs(sigmoid_prime(_z) - _num) < 1e-8, f\"z = {_z}: численная производная ≈ {_num:.6f}, у вас {sigmoid_prime(_z):.6f}\"\nassert d_sigmoid_w(0.5, 2) is not None, \"d_sigmoid_w должна возвращать значение\"\nfor _w, _x in [(0.5, 2), (-1.0, 3), (0.2, -1.5)]:\n    _num = (_sg((_w + 1e-6) * _x) - _sg((_w - 1e-6) * _x)) / 2e-6\n    assert abs(d_sigmoid_w(_w, _x) - _num) < 1e-8, f\"w = {_w}, x = {_x}: численная производная ≈ {_num:.6f}, у вас {d_sigmoid_w(_w, _x):.6f}. Не забудьте внутреннюю производную x\""
+     }
+    },
+    {
+     "title": "Логистическая регрессия с нуля",
+     "prompt": "<p>Обучите логистическую регрессию градиентным спуском на NumPy. Три функции:</p><ul><li><code>mean_log_loss(X, y, w, b)</code> — p = σ(X @ w + b), средний log-loss;</li><li><code>gradients(X, y, w, b)</code> — <code>(grad_w, grad_b)</code>: по цепному правилу grad_w = Xᵀ(p − y) / n, grad_b = mean(p − y);</li><li><code>fit(X, y, lr=0.5, steps=500)</code> — начиная с w = 0, b = 0, сделайте <code>steps</code> шагов и верните <code>(w, b)</code>.</li></ul><p>Для одного примера формула была (p − y) × x (урок), здесь она усредняется по всем примерам.</p>",
+     "hints": [
+      "Вероятности сразу для всех примеров: <code>p = sigmoid(X @ w + b)</code>.",
+      "<code>grad_w = X.T @ (p - y) / len(y)</code>, <code>grad_b = np.mean(p - y)</code>.",
+      "<code>fit</code>: <code>w = np.zeros(X.shape[1])</code>, в цикле <code>w = w - lr * gw</code>, <code>b = b - lr * gb</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(9)\n_X = _g.normal(0, 1, (400, 2))\n_y = (_g.random(400) < 1 / (1 + _np.exp(-(1.5 * _X[:, 0] - 2.0 * _X[:, 1] + 0.5)))).astype(float)\nassert mean_log_loss(_X, _y, _np.zeros(2), 0.0) is not None, \"mean_log_loss должна возвращать значение\"\nassert abs(mean_log_loss(_X, _y, _np.zeros(2), 0.0) - _np.log(2)) < 1e-9, \"при w = 0, b = 0 p = 0.5 и loss = ln(2) ≈ 0.693\"\n_w0 = _np.array([0.3, -0.2]); _b0 = 0.1\n_gw, _gb = gradients(_X, _y, _w0, _b0)\nfor _j in range(2):\n    _e = _np.zeros(2); _e[_j] = 1e-6\n    _num = (mean_log_loss(_X, _y, _w0 + _e, _b0) - mean_log_loss(_X, _y, _w0 - _e, _b0)) / 2e-6\n    assert abs(float(_gw[_j]) - _num) < 1e-6, f\"должно быть grad_w[{_j}] ≈ {_num:.5f} (численная производная), у вас {float(_gw[_j]):.5f}. X.T @ (p − y) / n\"\n_numb = (mean_log_loss(_X, _y, _w0, _b0 + 1e-6) - mean_log_loss(_X, _y, _w0, _b0 - 1e-6)) / 2e-6\nassert abs(float(_gb) - _numb) < 1e-6, f\"должно быть grad_b ≈ {_numb:.5f}, у вас {float(_gb):.5f}: mean(p − y)\"\n_w, _b = fit(_X, _y)\n_l = mean_log_loss(_X, _y, _w, _b)\nassert _l < 0.5, f\"после обучения loss должен быть меньше 0.5, у вас {_l:.3f}\"\nassert float(_w[0]) > 0.8 and float(_w[1]) < -1.0, f\"веса должны приблизиться к истинным (1.5, −2.0), у вас {_w}\"\n_w2, _b2 = fit(_X, _y, lr=0.1, steps=10)\nassert abs(float(_w2[0]) - float(_w[0])) > 0.3, \"используйте параметры lr и steps\""
+     }
+    },
+    {
+     "title": "Log-loss прямо из логита",
+     "prompt": "<p>Модель выдаёт z (логит). Обычный путь p = σ(z), затем −ln(1 − p) ломается при z = 40: σ(40) во float равно ровно 1.0, а ln(0) — ошибка. Напишите функцию <code>loss_from_logit(y, z)</code>: она считает log-loss одного примера без σ, прямо через z.</p><p>Это следует из правил урока: −ln σ(z) = ln(1 + e^(−z)) и 1 − σ(z) = σ(−z), поэтому −ln(1 − σ(z)) = ln(1 + e^z). Используйте <code>math.log1p</code>. Значения z лежат в [−50, 50].</p><p>Затем <code>mean_loss_from_logits(y, z)</code> — среднее по спискам.</p>",
+     "hints": [
+      "Если y = 1, loss = ln(1 + e^(−z)) = <code>math.log1p(math.exp(-z))</code>.",
+      "Если y = 0, loss = ln(1 + e^z). Объедините оба с весами y и (1 − y)."
+     ],
+     "check": {
+      "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert loss_from_logit(1, 0) is not None, \"loss_from_logit должна возвращать значение\"\nassert abs(loss_from_logit(1, 0) - _m.log(2)) < 1e-12 and abs(loss_from_logit(0, 0) - _m.log(2)) < 1e-12, \"при z = 0 p = 0.5 и loss = ln(2) для обоих классов\"\nfor _y, _z in [(1, 2.0), (0, 2.0), (1, -1.3), (0, 0.7)]:\n    _naive = -(_y * _m.log(_sg(_z)) + (1 - _y) * _m.log(1 - _sg(_z)))\n    assert abs(loss_from_logit(_y, _z) - _naive) < 1e-9, f\"y = {_y}, z = {_z}: должно совпадать с расчётом через σ {_naive:.6f}, у вас {loss_from_logit(_y, _z):.6f}\"\n_big = loss_from_logit(0, 40)\nassert abs(_big - 40) < 1e-9, f\"y = 0, z = 40: должно быть loss = ln(1 + e^40) ≈ 40, у вас {_big}\"\nassert abs(loss_from_logit(1, -40) - 40) < 1e-9, \"y = 1, z = −40: уверенная ошибка, loss ≈ 40\"\nassert loss_from_logit(1, 40) < 1e-15, \"y = 1, z = 40: уверенно и верно, loss ≈ 0\"\nassert abs(mean_loss_from_logits([1, 0, 1], [0.0, 40.0, -40.0]) - (_m.log(2) + 80) / 3) < 1e-9, \"среднее: (ln 2 + 40 + 40) / 3\""
+     }
+    }
+   ]
   }
  }
 });

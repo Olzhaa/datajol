@@ -700,6 +700,285 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "pd-9": {
+   "pr": [
+    {
+     "title": "The most common channel",
+     "prompt": "<p>Using <code>value_counts</code>, store in <code>counts</code> how many times each value of the <code>channel</code> column of the <code>customers</code> table occurs. Store the name of the most common channel in <code>top_channel</code>.</p>",
+     "hints": [
+      "<code>customers['channel'].value_counts()</code>",
+      "The result is sorted in descending order: the first label is <code>counts.index[0]</code>."
+     ],
+     "check": {
+      "tests": "assert int(counts['instagram']) == 17 and int(counts['2gis']) == 15 and int(counts['referral']) == 8, 'counts is wrong: customers[\\'channel\\'].value_counts()'\nassert top_channel == 'instagram', 'top_channel is the name of the most common channel (text)'"
+     }
+    },
+    {
+     "title": "Алматы's share",
+     "prompt": "<p>Store the <b>share</b> of each city in the <code>city</code> column in <code>share</code> (<code>normalize=True</code>). Store the share of the clients from Алматы as a percentage, rounded to one decimal place, in <code>almaty_pct</code>.</p>",
+     "hints": [
+      "<code>customers['city'].value_counts(normalize=True)</code>",
+      "<code>round(share['Алматы'] * 100, 1)</code>"
+     ],
+     "check": {
+      "tests": "assert abs(float(share.sum()) - 1) < 1e-9, 'share must hold shares: normalize=True'\nassert abs(float(share['Астана']) - 0.45) < 1e-9, 'The share of Астана must be 0.45'\nassert abs(float(almaty_pct) - 42.5) < 1e-9, 'almaty_pct must be 42.5'"
+     }
+    },
+    {
+     "title": "A dash and an empty string",
+     "prompt": "<p><code>s</code> holds amounts typed by hand. Turn them into numbers with <code>pd.to_numeric</code>: whatever cannot become a number must be NaN. The result is <code>nums</code>. Store the sum of the numbers in <code>total</code> and the number of NaN values in <code>n_bad</code>.</p>",
+     "hints": [
+      "<code>pd.to_numeric(s, errors='coerce')</code>",
+      "<code>nums.sum()</code> skips NaN. The NaN count: <code>nums.isna().sum()</code>."
+     ],
+     "check": {
+      "tests": "assert len(nums) == 6, 'nums must hold 6 values'\nassert float(total) == 6400, 'total must be 6400'\nassert int(n_bad) == 3, 'n_bad must be 3: the dash, the empty string and «жоқ»'"
+     }
+    },
+    {
+     "title": "Adding new orders",
+     "prompt": "<p>Two more orders came in the evening (<code>new</code>). Add them below the <code>orders</code> table with <code>pd.concat</code> and store the result in <code>all_orders</code>. The index must run from 0 without repeats.</p>",
+     "hints": [
+      "The tables go in a list: <code>pd.concat([orders, new])</code>.",
+      "Add <code>ignore_index=True</code>."
+     ],
+     "check": {
+      "tests": "assert len(all_orders) == 152, 'all_orders must have 150 + 2 = 152 rows'\nassert list(all_orders.columns) == list(orders.columns), 'The columns must not change'\nassert list(all_orders.index) == list(range(152)), 'The index must be renumbered from 0: ignore_index=True'\nassert all_orders['id'].iloc[-1] == 1152 and all_orders['id'].iloc[0] == 1001, 'First orders, then new'"
+     }
+    },
+    {
+     "title": "Saving the city report",
+     "prompt": "<p>Collect the number of clients in each city into the table <code>report</code>: the columns <code>city</code> and <code>n</code> (<code>groupby('city').size().reset_index(name='n')</code>). Save it to the file <code>city_report.csv</code> <b>without the index</b> and read the file back into <code>back</code>.</p>",
+     "hints": [
+      "<code>report.to_csv('city_report.csv', index=False)</code>",
+      "<code>back = pd.read_csv('city_report.csv')</code>"
+     ],
+     "check": {
+      "tests": "import os as _os, pandas as _pd\ntry:\n    assert _os.path.exists('city_report.csv'), 'There is no city_report.csv file: use to_csv'\n    _f = _pd.read_csv('city_report.csv')\n    assert list(_f.columns) == ['city', 'n'], 'The file must have only the columns city and n: index=False'\n    assert sorted(_f['n'].tolist()) == [5, 17, 18], 'The client counts are wrong'\n    assert list(back.columns) == ['city', 'n'] and len(back) == 3, 'back is the table read back from the file: pd.read_csv'\nfinally:\n    if _os.path.exists('city_report.csv'):\n        _os.remove('city_report.csv')"
+     }
+    },
+    {
+     "title": "Counting empty answers too",
+     "prompt": "<p><code>answers</code> holds survey answers, some of them empty (<code>None</code>). Count them including the empty answers and store the result in <code>counts</code> (<code>value_counts</code>). Store the number of non-empty answers in <code>n_answered</code>.</p>",
+     "hints": [
+      "Empty values are not counted by default: <code>value_counts(dropna=False)</code>.",
+      "<code>answers.notna().sum()</code> or <code>answers.value_counts().sum()</code>."
+     ],
+     "check": {
+      "tests": "assert len(counts) == 3 and int(counts.sum()) == 7, 'counts must hold 3 values (иә, жоқ, empty) with a total of 7: dropna=False'\nassert int(counts['иә']) == 3, 'иә occurs 3 times'\nassert int(n_answered) == 5, 'n_answered must be 5'"
+     }
+    },
+    {
+     "title": "Two branch tables",
+     "prompt": "<p>Two branches sent their sales separately, and <code>amount</code> is text (with spaces, an empty string, «жоқ»). Combine the tables with <code>pd.concat</code> into <code>both</code>, renumbering the index. Add the column <code>amount_num</code>: the amount with the spaces removed, turned into a number with <code>errors='coerce'</code>. Then store each branch's total in <code>by_branch</code> (<code>groupby</code>) and the number of NaN values in <code>n_bad</code>.</p>",
+     "hints": [
+      "<code>pd.concat([a, b], ignore_index=True)</code>",
+      "<code>pd.to_numeric(both['amount'].str.replace(' ', ''), errors='coerce')</code>",
+      "<code>both.groupby('branch')['amount_num'].sum()</code>"
+     ],
+     "check": {
+      "tests": "assert len(both) == 6 and list(both.index) == list(range(6)), 'both must have 6 rows with the index from 0 to 5'\nassert 'amount_num' in both.columns and str(both['amount_num'].dtype).startswith('float'), 'amount_num must be a numeric (float) column'\nassert float(by_branch['Алматы']) == 4000 and float(by_branch['Астана']) == 5500, 'by_branch is wrong: did you remove the spaces?'\nassert int(n_bad) == 2, 'n_bad must be 2'"
+     }
+    },
+    {
+     "title": "A file for Excel",
+     "prompt": "<p>Filter the orders with the status <code>paid</code> and an amount of 3000 or more into the table <code>big</code>. Save it to the file <code>big.csv</code> so that it opens correctly in Excel: no index, a semicolon separator (<code>sep=';'</code>), the <code>utf-8-sig</code> encoding. Then read the file back into <code>check</code> with the same separator.</p>",
+     "hints": [
+      "The filter: <code>(orders['status'] == 'paid') &amp; (orders['amount'] &gt;= 3000)</code>.",
+      "<code>big.to_csv('big.csv', index=False, sep=';', encoding='utf-8-sig')</code>",
+      "Give the separator when reading too: <code>pd.read_csv('big.csv', sep=';', encoding='utf-8-sig')</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nimport os as _os\ntry:\n    assert _os.path.exists('big.csv'), 'There is no big.csv file: use to_csv'\n    _raw = open('big.csv', 'rb').read()\n    assert _raw[:3] == b'\\xef\\xbb\\xbf', 'The file must be saved in the utf-8-sig encoding: encoding=\\'utf-8-sig\\''\n    assert _raw[3:].decode('utf-8').split('\\n')[0].strip() == 'id;customer_id;order_date;amount;status', 'The header line must be id;customer_id;order_date;amount;status: sep=\\';\\' and index=False'\n    _b = _o[(_o['status'] == 'paid') & (_o['amount'] >= 3000)]\n    assert len(big) == len(_b) == 26, 'big must have 26 rows'\n    assert list(check.columns) == list(_o.columns) and len(check) == 26, 'check is the table read back from the file with sep=\\';\\''\nfinally:\n    if _os.path.exists('big.csv'):\n        _os.remove('big.csv')"
+     }
+    }
+   ]
+  },
+  "pd-10": {
+   "pr": [
+    {
+     "title": "Day of the month",
+     "prompt": "<p>Add the column <code>dd</code> to the <code>orders</code> table: split <code>order_date</code> on <code>-</code> (<code>.str.split</code>) and take the third part (the day, as text). Store the number of orders placed on the first day of a month (<code>'01'</code>) in <code>n_first</code>.</p>",
+     "hints": [
+      "<code>orders['order_date'].str.split('-').str[2]</code>",
+      "<code>(orders['dd'] == '01').sum()</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'dd' in orders.columns, 'There is no dd column'\nassert orders['dd'].tolist() == [d[8:10] for d in _o['order_date']], 'dd is the third part of the date: str.split(\\'-\\').str[2]'\nassert int(n_first) == 4, 'n_first must be 4'"
+     }
+    },
+    {
+     "title": "Channel groups",
+     "prompt": "<p>Add the column <code>source</code> to the <code>customers</code> table: replace the channel name with its group from the <code>groups</code> dictionary, using <code>map</code>. Store the number of clients in the <code>карта</code> group in <code>n_map</code>.</p>",
+     "hints": [
+      "<code>customers['channel'].map(groups)</code>",
+      "<code>(customers['source'] == 'карта').sum()</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\nassert 'source' in customers.columns, 'There is no source column'\nassert customers['source'].tolist() == _c['channel'].map(groups).tolist(), 'source = the map of the channel column by groups'\nassert int(n_map) == 15, 'n_map must be 15'"
+     }
+    },
+    {
+     "title": "High and low days",
+     "prompt": "<p>Add the column <code>level</code> to the <code>daily</code> table: <code>'жоғары'</code> if the revenue (<code>revenue</code>) is 130 or more, otherwise <code>'төмен'</code> (<code>np.where</code>). Store the number of <code>жоғары</code> days in <code>n_high</code>.</p>",
+     "hints": [
+      "<code>np.where(daily['revenue'] &gt;= 130, 'жоғары', 'төмен')</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv')\nassert 'level' in daily.columns, 'There is no level column'\nassert list(daily['level']) == ['жоғары' if r >= 130 else 'төмен' for r in _d['revenue']], 'level: жоғары if revenue >= 130, otherwise төмен'\nassert int(n_high) == 11, 'n_high must be 11'"
+     }
+    },
+    {
+     "title": "Revenue bands",
+     "prompt": "<p>Add the column <code>band</code> to the <code>daily</code> table: split the revenue with <code>pd.cut</code> into intervals with the edges <code>[0, 100, 150, 200]</code> and the labels <code>low</code>, <code>mid</code>, <code>high</code>. Store the number of days in each label in <code>counts</code> (<code>value_counts</code>).</p>",
+     "hints": [
+      "<code>pd.cut(daily['revenue'], bins=[0, 100, 150, 200], labels=['low', 'mid', 'high'])</code>",
+      "The right edge belongs to the interval: 100 → <code>low</code>, 150 → <code>mid</code>."
+     ],
+     "check": {
+      "tests": "assert 'band' in daily.columns, 'There is no band column'\nassert [str(v) for v in daily['band']] == [('low' if r <= 100 else 'mid' if r <= 150 else 'high') for r in daily['revenue']], 'band: edges [0, 100, 150, 200], labels low, mid, high'\nassert int(counts['low']) == 3 and int(counts['mid']) == 12 and int(counts['high']) == 5, 'counts = daily[\\'band\\'].value_counts()'"
+     }
+    },
+    {
+     "title": "Days when revenue fell",
+     "prompt": "<p><code>ast</code> is the daily revenue of Астана, sorted by day. Add the column <code>diff</code>: the day's revenue minus the previous day's revenue (<code>shift</code>). Store the number of days when revenue fell compared with the previous day in <code>n_drop</code>.</p>",
+     "hints": [
+      "<code>ast['revenue'] - ast['revenue'].shift(1)</code>",
+      "A day of decline has a negative <code>diff</code>: <code>(ast['diff'] &lt; 0).sum()</code>. The first day's NaN is not counted."
+     ],
+     "check": {
+      "tests": "assert 'diff' in ast.columns and len(ast) == 10, 'ast must have 10 days and a diff column'\nassert ast['diff'].isna().sum() == 1 and ast['diff'].iloc[1:].tolist() == [5, 10, -20, 35, 10, -5, -15, 30, 10], 'diff = revenue - revenue.shift(1)'\nassert int(n_drop) == 3, 'n_drop must be 3'"
+     }
+    },
+    {
+     "title": "Growth within a region",
+     "prompt": "<p>The <code>daily</code> table has two regions. Sort it by region, then by day. Add the column <code>growth</code>: the change from the previous day in percent (<code>pct_change() * 100</code>), but separately within each region (<code>groupby('region')</code>). The first day of Астана must not be compared with the last day of Алматы.</p>",
+     "hints": [
+      "<code>daily.sort_values(['region', 'day'])</code>",
+      "<code>daily.groupby('region')['revenue'].pct_change() * 100</code>"
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_d = _pd.read_csv('daily_sales.csv').sort_values(['region', 'day'])\n_g = _d.groupby('region')['revenue'].pct_change() * 100\nassert 'growth' in daily.columns, 'There is no growth column'\nassert daily['growth'].isna().sum() == 2, 'The first day of each region must be NaN (2 in total): groupby(\\'region\\')'\nassert daily['region'].tolist() == _d['region'].tolist() and daily['day'].tolist() == _d['day'].tolist(), 'Sort the table by region, then by day'\nassert [round(float(v), 4) for v in daily['growth'].dropna()] == [round(float(v), 4) for v in _g.dropna()], 'growth = pct_change() * 100 within each region'"
+     }
+    },
+    {
+     "title": "Weekly orders",
+     "prompt": "<p>You are given the clean orders (<code>clean</code>). Turn <code>order_date</code> into a date type, put it in the index, and with <code>resample('W')</code> store the <b>number</b> of orders in each week in the Series <code>weekly</code>. Store the date of the week with the most orders (the index value) in <code>best_week</code>, and the number of weeks without orders in <code>n_empty</code>.</p>",
+     "hints": [
+      "<code>clean.set_index('order_date').resample('W')['id'].count()</code>",
+      "<code>weekly.idxmax()</code> returns the index of the largest value.",
+      "resample shows empty weeks as 0: <code>(weekly == 0).sum()</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_w = _clean.assign(order_date=_pd.to_datetime(_clean['order_date'])).set_index('order_date').resample('W')['id'].count()\nassert len(weekly) == len(_w), 'The number of weeks in weekly is wrong: resample(\\'W\\')'\nassert [int(v) for v in weekly.values] == [int(v) for v in _w.values], 'The weekly numbers are wrong: use count()'\nassert str(best_week)[:10] == str(_w.idxmax())[:10], 'best_week = weekly.idxmax()'\nassert int(n_empty) == int((_w == 0).sum()), 'n_empty: the number of weeks with the value 0'"
+     }
+    },
+    {
+     "title": "Client lifetime",
+     "prompt": "<p>From the clean orders, find each client's first and last order dates (<code>groupby('customer_id')['order_date'].agg(['min', 'max'])</code>, then <code>reset_index()</code>) and store them in the table <code>life</code>. Add the column <code>days</code> to it: the number of days between the last and the first order. Then merge it with <code>customers</code> and store the mean <code>days</code> of each city, rounded to one decimal place, in <code>by_city</code>.</p>",
+     "hints": [
+      "<code>clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()</code>",
+      "You cannot subtract text: <code>(pd.to_datetime(life['max']) - pd.to_datetime(life['min'])).dt.days</code>.",
+      "<code>life.merge(customers, left_on='customer_id', right_on='id')</code>, then <code>groupby('city')['days'].mean().round(1)</code>."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv')\n_clean = _o[(_o['status'] == 'paid') & _o['amount'].notna() & (_o['amount'] < 20000)]\n_l = _clean.groupby('customer_id')['order_date'].agg(['min', 'max']).reset_index()\n_l['days'] = (_pd.to_datetime(_l['max']) - _pd.to_datetime(_l['min'])).dt.days\nassert len(life) == 39 and 'days' in life.columns, 'life has one row per client (39 rows) and a days column'\nassert sorted(int(v) for v in life['days']) == sorted(int(v) for v in _l['days']), 'days = (max - min).dt.days; pd.to_datetime first'\nassert {k: float(v) for k, v in by_city.items()} == {'Алматы': 36.8, 'Астана': 48.2, 'Шымкент': 48.8}, 'by_city is wrong, yours: ' + str(dict(by_city))"
+     }
+    }
+   ]
+  },
+  "pd-11": {
+   "pr": [
+    {
+     "title": "A matrix from 1 to 12",
+     "prompt": "<p>Create the numbers from 1 to 12 with <code>np.arange</code> and reshape them into the array <code>m</code> of 3 rows × 4 columns (<code>reshape</code>). Store the bottom-right element in <code>corner</code> and the second column (index 1) in <code>col</code>.</p>",
+     "hints": [
+      "<code>np.arange(1, 13)</code>: the end is not included.",
+      "<code>m[2, 3]</code> and <code>m[:, 1]</code>"
+     ],
+     "check": {
+      "tests": "assert m.shape == (3, 4) and m.tolist()[0] == [1, 2, 3, 4], 'm: np.arange(1, 13).reshape(3, 4)'\nassert int(corner) == 12, 'corner = m[2, 3], it must be 12'\nassert list(col) == [2, 6, 10], 'col = m[:, 1]'"
+     }
+    },
+    {
+     "title": "Evenly spaced prices",
+     "prompt": "<p>The price of a new drink must be tested in 5 options from 1000 to 2000 tenge. Store 5 evenly spaced prices in <code>prices</code> with <code>np.linspace</code> (both ends included). Store the difference between two neighbouring prices in <code>step</code>.</p>",
+     "hints": [
+      "<code>np.linspace(1000, 2000, 5)</code>: the third argument is the number of points.",
+      "<code>prices[1] - prices[0]</code>"
+     ],
+     "check": {
+      "tests": "assert len(prices) == 5 and list(prices) == [1000, 1250, 1500, 1750, 2000], 'prices: np.linspace(1000, 2000, 5)'\nassert float(step) == 250, 'step must be 250'"
+     }
+    },
+    {
+     "title": "Mean by subject and by student",
+     "prompt": "<p><code>scores</code> holds the scores of three students (rows) in three subjects (columns). Store the mean of each subject in <code>by_subject</code> and the mean of each student in <code>by_student</code> (<code>mean</code> and <code>axis</code>).</p>",
+     "hints": [
+      "A subject is a column: <code>scores.mean(axis=0)</code>.",
+      "A student is a row: <code>scores.mean(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\nassert _np.allclose(by_subject, [80, 260 / 3, 245 / 3]), 'by_subject: the mean of each column, axis=0'\nassert _np.allclose(by_student, [80, 220 / 3, 95]), 'by_student: the mean of each row, axis=1'"
+     }
+    },
+    {
+     "title": "Quantity × price",
+     "prompt": "<p><code>qty</code> holds the units sold of four drinks (columns) over three days (rows), and <code>price</code> holds the prices of the four drinks. Without a loop, using broadcasting, store the revenue of each cell in the array <code>revenue</code> (shape 3 × 4). Store each day's total revenue in <code>by_day</code>.</p>",
+     "hints": [
+      "<code>(3, 4) * (4,)</code>: the last dimensions match, so <code>qty * price</code> works.",
+      "A day is a row: <code>revenue.sum(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "assert revenue.shape == (3, 4), 'The shape of revenue must be (3, 4)'\nassert revenue[0].tolist() == [17400, 33000, 13600, 20250], 'revenue = qty * price: the first row is wrong'\nassert by_day.tolist() == [84250, 79200, 98400], 'by_day: the sum of each row, axis=1, yours: ' + str(by_day.tolist())"
+     }
+    },
+    {
+     "title": "Reproducible randomness",
+     "prompt": "<p>With a generator seeded with 7 (<code>np.random.default_rng(7)</code>), create 500 check amounts with a mean of 2500 and a spread of 300 and store them in <code>checks</code> (<code>rng.normal</code>). Store the number of checks above 3000 in <code>n_big</code>.</p>",
+     "hints": [
+      "<code>rng = np.random.default_rng(7)</code>",
+      "<code>rng.normal(2500, 300, size=500)</code>, then <code>(checks &gt; 3000).sum()</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_x = _np.random.default_rng(7).normal(2500, 300, size=500)\nassert len(checks) == 500, 'checks must hold 500 numbers: size=500'\nassert _np.allclose(checks, _x), 'checks: the first call of the seed-7 generator, rng.normal(2500, 300, size=500)'\nassert int(n_big) == int((_x > 3000).sum()), 'n_big = (checks > 3000).sum()'"
+     }
+    },
+    {
+     "title": "Column spread",
+     "prompt": "<p><code>m</code> holds the revenue of three coffee shops (columns) over five days (rows). Store the standard deviation of each coffee shop as a sample (<code>ddof=1</code>) in <code>std_np</code> (NumPy, <code>axis=0</code>). Then compute the same in pandas: store the result of <code>pd.DataFrame(m).std()</code> in <code>std_pd</code>. The two must match.</p>",
+     "hints": [
+      "<code>m.std(axis=0, ddof=1)</code>",
+      "pandas uses <code>ddof=1</code> by default."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_m = _np.array([[120, 90, 60], [135, 95, 70], [110, 105, 65], [160, 85, 80], [150, 120, 75]])\nassert len(std_np) == 3, 'std_np must hold 3 values: axis=0'\nassert _np.allclose(std_np, _m.std(axis=0, ddof=1)), 'std_np = m.std(axis=0, ddof=1)'\nassert _np.allclose(_np.array(std_pd, dtype=float), std_np), 'std_pd = pd.DataFrame(m).std(); it must equal std_np'"
+     }
+    },
+    {
+     "title": "Deviation from its own mean",
+     "prompt": "<p><code>m</code> holds the sales of three cities (rows) over four weeks (columns). Subtract from each value the mean of <b>its own row</b> to get the array <code>centered</code> (shape 3 × 4, each row sums to 0). Then store in <code>above</code> the number of weeks in which each city was above its own mean (shape (3,)).</p>",
+     "hints": [
+      "The row means have shape (3,): make it (3, 1). <code>m.mean(axis=1, keepdims=True)</code>",
+      "<code>(centered &gt; 0)</code> is a True/False array; add it up per row: <code>.sum(axis=1)</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_m = _np.array([[120, 135, 110, 160], [90, 95, 105, 85], [60, 70, 65, 80]])\nassert centered.shape == (3, 4), 'The shape of centered must be (3, 4)'\nassert _np.allclose(centered, _m - _m.mean(axis=1, keepdims=True)), 'centered: subtract each row\\'s own mean from it (keepdims=True)'\nassert list(above) == [2, 2, 2], 'above: the number of positive values in each row, axis=1, yours: ' + str(list(above))"
+     }
+    },
+    {
+     "title": "Z-scores by column",
+     "prompt": "<p><code>X</code> holds six orders (rows) and two features (columns): the amount and the number of items. Standardise each column: <code>z = (X - column mean) / column standard deviation</code>, with the sample deviation (<code>ddof=1</code>). The result is <code>z</code> (shape 6 × 2). Store the number of values whose absolute value is above 1.5 (<code>(z &gt; 1.5) | (z &lt; -1.5)</code>) in <code>n_extreme</code>.</p>",
+     "hints": [
+      "The column mean and deviation: <code>X.mean(axis=0)</code>, <code>X.std(axis=0, ddof=1)</code>. Both have shape (2,), so they stretch to (6, 2) directly.",
+      "<code>((z &gt; 1.5) | (z &lt; -1.5)).sum()</code>"
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_X = _np.array([[2150, 2], [2250, 3], [2550, 3], [2050, 1], [3100, 5], [1850, 2]])\n_z = (_X - _X.mean(axis=0)) / _X.std(axis=0, ddof=1)\nassert z.shape == (6, 2), 'The shape of z must be (6, 2)'\nassert _np.allclose(z.mean(axis=0), 0), 'Each column mean must be 0: subtract X.mean(axis=0)'\nassert _np.allclose(z, _z), 'z is wrong: the deviation uses ddof=1 along axis=0'\nassert int(n_extreme) == int(((_z > 1.5) | (_z < -1.5)).sum()), 'n_extreme is wrong'"
+     }
+    }
+   ]
   }
  }
 });

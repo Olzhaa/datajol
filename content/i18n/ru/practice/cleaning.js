@@ -585,5 +585,96 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "cl-9": {
+  "pr": [
+   {
+    "title": "Доля пропусков",
+    "prompt": "<p>Функция <code>missing_pct(df)</code> должна вернуть словарь <code>{столбец: процент_пропусков}</code> только для столбцов с пропусками (процент округлён <code>round</code> до 1 знака). Для <code>orders.csv</code> результат <code>{'amount': 4.0}</code>.</p>",
+    "hints": [
+     "<code>df.isna().sum()</code> даёт число пропусков в каждом столбце; разделите его на <code>len(df)</code>.",
+     "Пройдите по <code>.items()</code> и оставьте только значения больше нуля."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\nassert missing_pct(_pd.read_csv('orders.csv')) == {'amount': 4.0}, f\"orders.csv: должно быть {'amount': 4.0}, у вас {missing_pct(_pd.read_csv('orders.csv'))}\"\n_d = _pd.DataFrame({'a': [1, None, None, 4], 'b': [1, 2, 3, 4], 'c': ['x', None, 'y', 'z']})\nassert missing_pct(_d) == {'a': 50.0, 'c': 25.0}, \"Столбец без пропусков в словарь не входит: ожидалось {'a': 50.0, 'c': 25.0}\""
+    }
+   },
+   {
+    "title": "Самое частое значение",
+    "prompt": "<p>Функция <code>top_value(df, col)</code> должна вернуть самое частое значение столбца и его количество парой <code>(значение, число)</code>. Для столбца <code>status</code> в <code>orders.csv</code>: <code>('paid', 146)</code>.</p>",
+    "hints": [
+     "<code>value_counts()</code> сортирует частоты по убыванию: первая строка — самое частое значение.",
+     "<code>vc.index[0]</code> и <code>int(vc.iloc[0])</code>"
+    ],
+    "check": {
+     "tests": "import pandas as _pd\nassert tuple(top_value(_pd.read_csv('orders.csv'), 'status')) == ('paid', 146), \"orders.csv, status: должно быть ('paid', 146)\"\nassert tuple(top_value(_pd.read_csv('customers.csv'), 'channel')) == ('instagram', 17), \"customers.csv, channel: должно быть ('instagram', 17)\""
+    }
+   },
+   {
+    "title": "Годится ли в ключи",
+    "prompt": "<p>Функция <code>is_key(df, col)</code> должна вернуть <code>True</code>, если столбец может быть ключом: значения уникальны и нет ни одного пропуска. В <code>orders.csv</code> <code>id</code> — ключ, а <code>customer_id</code> — нет.</p>",
+    "hints": [
+     "<code>df[col].is_unique</code> и <code>df[col].notna().all()</code>"
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\nassert is_key(_o, 'id') is True, \"В orders.csv id — ключ: ожидалось True\"\nassert is_key(_o, 'customer_id') is False, \"customer_id повторяется: ожидалось False\"\nassert is_key(_pd.DataFrame({'k': [1, 2, None]}), 'k') is False, \"Столбец с пропуском не может быть ключом\""
+    }
+   },
+   {
+    "title": "До какой даты данные",
+    "prompt": "<p>Проверка актуальности: функция <code>freshness(df, col)</code> должна вернуть словарь <code>{'first': ..., 'last': ..., 'days': ...}</code>. <code>first</code> и <code>last</code> — самая ранняя и самая поздняя дата текстом <code>'YYYY-MM-DD'</code>; <code>days</code> — число дней между ними (<code>last − first</code>). Преобразуйте столбец через <code>pd.to_datetime</code>.</p>",
+    "hints": [
+     "<code>d = pd.to_datetime(df[col])</code>, затем <code>d.min()</code>, <code>d.max()</code>.",
+     "В текст: <code>.strftime('%Y-%m-%d')</code>. Разница: <code>(d.max() - d.min()).days</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_r = freshness(_pd.read_csv('orders.csv'), 'order_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}, f\"orders.csv: ожидалось {{'first': '2024-01-01', 'last': '2024-06-30', 'days': 181}}, у вас {_r}\"\n_r = freshness(_pd.read_csv('customers.csv'), 'signup_date')\nassert _r == {'first': '2024-01-01', 'last': '2024-05-23', 'days': 143}, f\"customers.csv, signup_date: 2024-01-01 … 2024-05-23, 143 дня; у вас {_r}\""
+    }
+   },
+   {
+    "title": "Проверки столбца суммы",
+    "prompt": "<p>Проверка допустимости: функция <code>amount_checks(df)</code> должна вернуть словарь по столбцу <code>amount</code>: <code>missing</code> (пропуски), <code>non_positive</code> (≤ 0), <code>outliers</code> (значения больше медианы более чем в 10 раз), <code>refunds</code> (строки со <code>status</code> = <code>'refund'</code>). Все значения — <code>int</code>.</p>",
+    "hints": [
+     "Результат условия — Series из True/False; <code>.sum()</code> считает True: <code>(a &lt;= 0).sum()</code>.",
+     "<code>a.median()</code> сам пропускает пустые значения. Оберните каждое число в <code>int(...)</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_r = amount_checks(_pd.read_csv('orders.csv'))\nassert _r == {'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}, f\"orders.csv: ожидалось {{'missing': 6, 'non_positive': 0, 'outliers': 1, 'refunds': 4}}, у вас {_r}\"\n_d = _pd.DataFrame({'amount': [100.0, -5.0, 0.0, None, 100.0, 5000.0], 'status': ['paid', 'paid', 'refund', 'paid', 'refund', 'paid']})\nassert amount_checks(_d) == {'missing': 1, 'non_positive': 2, 'outliers': 1, 'refunds': 2}, \"На маленькой таблице: missing 1, non_positive 2, outliers 1, refunds 2\""
+    }
+   },
+   {
+    "title": "Клиенты без заказов",
+    "prompt": "<p>Проверьте согласованность в обратную сторону: сделайте left join <code>customers</code> с уникальными <code>customer_id</code> из <code>orders</code> и добавьте <code>indicator=True</code> (результат — <code>check</code>). Запишите <code>customer_id</code> клиентов без единого заказа по возрастанию в список <code>no_orders</code>.</p>",
+    "hints": [
+     "Сначала уникальные ключи: <code>orders[['customer_id']].drop_duplicates()</code>, иначе строк станет больше.",
+     "<code>customers.merge(buyers, on='customer_id', how='left', indicator=True)</code>, затем <code>_merge == 'left_only'</code>."
+    ],
+    "check": {
+     "tests": "assert 'check' in globals() and '_merge' in check.columns, \"Создайте таблицу check с indicator=True\"\nassert len(check) == 42, f\"Left join должен сохранить число клиентов: 42 строки, у вас {len(check)}\"\nassert 'no_orders' in globals() and [int(x) for x in no_orders] == [41, 42], \"Должно быть no_orders = [41, 42]\""
+    }
+   },
+   {
+    "title": "Пошаговая сверка",
+    "prompt": "<p>Функция <code>reconcile(orders, customers)</code> должна вернуть список троек <code>(шаг, число_строк, сумма_amount)</code> после каждого шага: <code>'raw'</code> — исходная таблица; <code>'merged'</code> — после left join по <code>customer_id</code>; <code>'paid'</code> — <code>status == 'paid'</code> и <code>amount</code> не пустой; <code>'clean'</code> — дополнительно <code>amount &lt; 20000</code>. Сумма — <code>float</code>.</p>",
+    "hints": [
+     "После каждого шага <code>log.append((имя, len(df), float(df['amount'].sum())))</code>.",
+     "<code>sum()</code> пропускает пустые значения, поэтому сумма <code>'raw'</code> равна 394 950. На последнем шаге должно выйти 334 850, как в уроке."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\n_r = reconcile(_o, _c)\nassert isinstance(_r, list) and len(_r) == 4, \"Верните список из четырёх шагов\"\nassert [s for s, _, _ in _r] == ['raw', 'merged', 'paid', 'clean'], \"Названия и порядок шагов: raw, merged, paid, clean\"\nassert [int(n) for _, n, _ in _r] == [150, 150, 140, 139], f\"Числа строк должны быть 150, 150, 140, 139, у вас {[n for _, n, _ in _r]}\"\nassert [round(float(s)) for _, _, s in _r] == [394950, 394950, 382850, 334850], f\"Суммы должны быть 394950, 394950, 382850, 334850, у вас {[s for _, _, s in _r]}\""
+    }
+   },
+   {
+    "title": "Проверка перед JOIN",
+    "prompt": "<p>Функция <code>join_check(left, right, key)</code> должна вернуть словарь: <code>ok</code> — <code>True</code>, если left join с <code>validate='many_to_one'</code> прошёл без ошибки, и <code>False</code>, если возник <code>MergeError</code>; <code>orphans</code> — число строк слева без пары справа; <code>extra_rows</code> — сколько лишних строк появилось после left join без validate (<code>len(m) - len(left)</code>).</p>",
+    "hints": [
+     "<code>try: left.merge(..., validate='many_to_one')</code>, <code>except pd.errors.MergeError: ok = False</code>.",
+     "Для подсчёта соедините ещё раз — без validate, но с <code>indicator=True</code>."
+    ],
+    "check": {
+     "tests": "import pandas as _pd\n_o = _pd.read_csv('orders.csv')\n_c = _pd.read_csv('customers.csv').rename(columns={'id': 'customer_id'})\nassert join_check(_o, _c, 'customer_id') == {'ok': True, 'orphans': 0, 'extra_rows': 0}, \"На чистых таблицах: ok True, orphans 0, extra_rows 0\"\n_r = join_check(_o, _pd.concat([_c, _c.head(2)], ignore_index=True), 'customer_id')\nassert _r == {'ok': False, 'orphans': 0, 'extra_rows': 8}, f\"Если клиенты 1 и 2 повторяются: ok False, extra_rows 8 (их заказы удваиваются); у вас {_r}\"\n_x = _pd.concat([_o, _pd.DataFrame({'id': [1151, 1152], 'customer_id': [98, 99], 'order_date': ['2024-06-20', '2024-06-21'], 'amount': [2500.0, 1900.0], 'status': ['paid', 'paid']})], ignore_index=True)\nassert join_check(_x, _c, 'customer_id') == {'ok': True, 'orphans': 2, 'extra_rows': 0}, \"Два «осиротевших» заказа: ok True, orphans 2, extra_rows 0\""
+    }
+   }
+  ]
  }
 } });

@@ -864,6 +864,97 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "pr-11": {
+   "pr": [
+    {
+     "title": "Conversion by channel",
+     "prompt": "<p>The law of total probability. Write the function <code>total_prob(groups)</code>: <code>groups</code> is a dictionary <code>{channel: (share, conversion)}</code>. Return the overall conversion P(B) = Σ P(B | Aᵢ) × P(Aᵢ).</p><p>For example, <code>{\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}</code> → <code>0.046</code>.</p>",
+     "hints": [
+      "The dictionary values are pairs: <code>for share, rate in groups.values()</code>.",
+      "For each group <code>share * rate</code>, then the sum."
+     ],
+     "check": {
+      "tests": "_g = {\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}\nassert total_prob(_g) is not None, \"total_prob must return a value\"\nassert abs(total_prob(_g) - 0.046) < 1e-12, \"it should be 0.6 × 0.05 + 0.3 × 0.02 + 0.1 × 0.1 = 0.046\"\nassert abs(total_prob({\"a\": (1.0, 0.3)}) - 0.3) < 1e-12, \"with a single group P(B) = P(B | A) = 0.3\"\nassert abs(total_prob({\"new\": (0.25, 0.12), \"old\": (0.75, 0.04)}) - 0.06) < 1e-12, \"0.25 × 0.12 + 0.75 × 0.04 = 0.06\""
+     }
+    },
+    {
+     "title": "First sale on call k",
+     "prompt": "<p>The geometric distribution. Write two functions:</p><ul><li><code>geom_pmf(k, p)</code> — the probability that the first success happens exactly on attempt <code>k</code>: (1 − p)^(k − 1) × p;</li><li><code>geom_mean(p)</code> — the mean number of attempts until the first success: 1 / p.</li></ul><p>For example, <code>geom_pmf(4, 0.5)</code> → <code>0.0625</code>, <code>geom_mean(0.25)</code> → <code>4.0</code>.</p>",
+     "hints": [
+      "First k − 1 failures: <code>(1 - p) ** (k - 1)</code>, then one success: <code>* p</code>."
+     ],
+     "check": {
+      "tests": "assert geom_pmf(1, 0.3) is not None, \"geom_pmf must return a value\"\nassert abs(geom_pmf(1, 0.3) - 0.3) < 1e-12, \"success on the first attempt: P = p = 0.3\"\nassert abs(geom_pmf(4, 0.5) - 0.0625) < 1e-12, \"geom_pmf(4, 0.5) = 0.5³ × 0.5 = 0.0625\"\nassert abs(geom_pmf(2, 0.1) - 0.09) < 1e-12, \"geom_pmf(2, 0.1) = 0.9 × 0.1 = 0.09\"\nassert abs(sum(geom_pmf(_k, 0.1) for _k in range(1, 301)) - 1) < 1e-9, \"the probabilities over all k must sum to 1\"\nassert geom_mean(0.25) is not None and abs(geom_mean(0.25) - 4) < 1e-12, \"geom_mean(0.25) = 1 / 0.25 = 4\""
+     }
+    },
+    {
+     "title": "Until the next order",
+     "prompt": "<p>Orders arrive on average <code>lam</code> times per hour (exponential waiting). The waiting time is given in <b>minutes</b>. Write two functions:</p><ul><li><code>p_more(lam, minutes)</code> — the probability of waiting for the next order longer than <code>minutes</code> minutes: e^(−λt), where t is in hours;</li><li><code>mean_minutes(lam)</code> — the mean waiting time in minutes.</li></ul><p>For example, <code>p_more(3, 30)</code> ≈ <code>0.223</code>, <code>mean_minutes(3)</code> → <code>20.0</code>.</p>",
+     "hints": [
+      "λ is per hour, so convert minutes to hours: <code>minutes / 60</code>.",
+      "The mean wait is 1 / λ hours, that is <code>60 / lam</code> minutes."
+     ],
+     "check": {
+      "tests": "import math as _m\nassert p_more(3, 30) is not None, \"p_more must return a value\"\nassert abs(p_more(3, 30) - _m.exp(-1.5)) < 1e-9, f\"p_more(3, 30) should be e^(−3 × 0.5) ≈ 0.223, you got {p_more(3, 30):.4f}. 30 minutes = 0.5 hours\"\nassert abs(p_more(6, 10) - _m.exp(-1)) < 1e-9, \"p_more(6, 10) = e^(−6 × 1/6) = e^(−1) ≈ 0.368\"\nassert abs(p_more(2, 0) - 1) < 1e-12, \"the probability of waiting longer than 0 minutes is 1\"\nassert mean_minutes(4) is not None and abs(mean_minutes(4) - 15) < 1e-9, \"mean_minutes(4) = 60 / 4 = 15 minutes\""
+     }
+    },
+    {
+     "title": "At least one sale",
+     "prompt": "<p>Each call ends with a sale with probability <code>p</code>; calls are independent. Write two functions:</p><ul><li><code>p_within(k, p)</code> — the probability of at least one sale among the first <code>k</code> calls (complement: 1 − all fail);</li><li><code>min_calls(p, target)</code> — the smallest <code>k</code> for which <code>p_within(k, p) &gt;= target</code>.</li></ul><p>For example, <code>p_within(3, 0.2)</code> → <code>0.488</code>, <code>min_calls(0.2, 0.9)</code> → <code>11</code>.</p>",
+     "hints": [
+      "All k calls fail: <code>(1 - p) ** k</code>.",
+      "Start from <code>k = 1</code> and increase k in the loop <code>while p_within(k, p) &lt; target</code>."
+     ],
+     "check": {
+      "tests": "assert p_within(1, 0.2) is not None, \"p_within must return a value\"\nassert abs(p_within(1, 0.2) - 0.2) < 1e-12, \"one call: P = p = 0.2\"\nassert abs(p_within(3, 0.2) - 0.488) < 1e-12, \"p_within(3, 0.2) = 1 − 0.8³ = 0.488\"\nassert min_calls(0.2, 0.9) == 11, f\"min_calls(0.2, 0.9) should be 11 (0.8^10 ≈ 0.107 > 0.1, 0.8^11 ≈ 0.086), you got {min_calls(0.2, 0.9)}\"\nassert min_calls(0.5, 0.75) == 2, \"min_calls(0.5, 0.75) = 2: 1 − 0.5² = 0.75, the boundary counts too (>=)\"\nassert min_calls(1.0, 0.99) == 1, \"if p = 1, one call is enough\"\n_k = min_calls(0.05, 0.95)\nassert p_within(_k, 0.05) >= 0.95 and p_within(_k - 1, 0.05) < 0.95, f\"for p = 0.05, target = 0.95 the smallest k is needed, you got {_k}\""
+     }
+    },
+    {
+     "title": "Covariance from a joint distribution",
+     "prompt": "<p>The joint distribution of two random variables is given as a dictionary <code>{(x, y): probability}</code>. Write two functions:</p><ul><li><code>cov_joint(joint)</code> — Cov(X, Y) = E[(X − E[X]) × (Y − E[Y])];</li><li><code>corr_joint(joint)</code> — Corr(X, Y) = Cov(X, Y) / (SD(X) × SD(Y)).</li></ul><p>For example, for <code>{(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}</code> Cov = 0.15, Corr = 0.6.</p>",
+     "hints": [
+      "Unpack the key: <code>for (x, y), p in joint.items()</code>. E[X] = Σ x × p.",
+      "Var(X) = Σ (x − E[X])² × p, SD is its square root."
+     ],
+     "check": {
+      "tests": "_j = {(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}\nassert cov_joint(_j) is not None, \"cov_joint must return a value\"\nassert abs(cov_joint(_j) - 0.15) < 1e-9, f\"Cov should be E[XY] − E[X]E[Y] = 0.4 − 0.25 = 0.15, you got {cov_joint(_j):.4f}\"\nassert abs(corr_joint(_j) - 0.6) < 1e-9, \"Corr = 0.15 / (0.5 × 0.5) = 0.6\"\n_ind = {(1, 1): 0.25, (1, 2): 0.25, (2, 1): 0.25, (2, 2): 0.25}\nassert abs(cov_joint(_ind)) < 1e-12, \"for independent variables Cov = 0\"\nassert abs(corr_joint({(0, 1): 0.5, (1, 0): 0.5}) + 1) < 1e-9, \"when X = 1, Y = 0 and vice versa: Corr = −1\"\n_sq = {(-1, 1): 1 / 3, (0, 0): 1 / 3, (1, 1): 1 / 3}\nassert abs(cov_joint(_sq)) < 1e-12, \"Y = X²: the variables are dependent, but Cov = 0 (covariance measures only linear dependence)\"\nassert abs(cov_joint({(2, 10): 0.5, (4, 20): 0.5}) - 5) < 1e-9, \"for {(2, 10): 0.5, (4, 20): 0.5} Cov = 1 × 5 = 5\""
+     }
+    },
+    {
+     "title": "Risk of two loan portfolios",
+     "prompt": "<p>The monthly losses of two portfolios are X and Y: standard deviations <code>sd_x</code> and <code>sd_y</code> (million ₸), correlation <code>rho</code>. Write the function <code>sd_total(sd_x, sd_y, rho)</code>: it returns the SD of the total loss X + Y.</p><p>Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y), where Cov = rho × sd_x × sd_y.</p><p>For example, <code>sd_total(3, 4, 0)</code> → <code>5.0</code>, <code>sd_total(3, 4, 1)</code> → <code>7.0</code>.</p>",
+     "hints": [
+      "Get the covariance from the correlation: <code>cov = rho * sd_x * sd_y</code>.",
+      "Variances add up, not SDs: take <code>** 0.5</code> at the end."
+     ],
+     "check": {
+      "tests": "assert sd_total(3, 4, 0) is not None, \"sd_total must return a value\"\nassert abs(sd_total(3, 4, 0) - 5) < 1e-9, \"independent: √(9 + 16) = 5\"\nassert abs(sd_total(3, 4, 1) - 7) < 1e-9, \"rho = 1: √(9 + 16 + 24) = 7, the SDs add up\"\nassert abs(sd_total(3, 4, -1) - 1) < 1e-9, \"rho = −1: √(9 + 16 − 24) = 1, the risks offset each other\"\nassert abs(sd_total(10, 10, 0.5) - 300 ** 0.5) < 1e-9, f\"sd_total(10, 10, 0.5) should be √300 ≈ 17.32, you got {sd_total(10, 10, 0.5):.2f}\"\nassert sd_total(5, 5, 0.8) > sd_total(5, 5, 0), \"positive correlation increases the risk\""
+     }
+    },
+    {
+     "title": "Two kinds of couriers",
+     "prompt": "<p>An order is taken by one of two groups of couriers. <code>groups</code> is a dictionary <code>{group: (share, λ)}</code>: the share is the probability that the order goes to this group, λ is the group's rate per hour (the wait is exponential). Write three functions (t and s are in hours):</p><ul><li><code>p_wait_mix(groups, t)</code> — the probability that the customer waits longer than t (total probability: Σ share × e^(−λt));</li><li><code>mean_wait_mix(groups)</code> — the mean wait: Σ share / λ;</li><li><code>cond_wait(groups, s, t)</code> — the probability that a customer who has already waited s hours waits more than another t hours: P(T &gt; s + t) / P(T &gt; s).</li></ul><p>For a single group <code>cond_wait</code> equals e^(−λt) because of memorylessness. For a mix of two groups it does not: those who wait long are mostly the ones who got the slow group.</p>",
+     "hints": [
+      "For each group P(T &gt; t | group) = e^(−λt), then add them up weighted by the shares.",
+      "Conditional probability: <code>p_wait_mix(groups, s + t) / p_wait_mix(groups, s)</code>."
+     ],
+     "check": {
+      "tests": "import math as _m\n_g = {\"A\": (0.6, 4), \"B\": (0.4, 2)}\nassert p_wait_mix(_g, 0.5) is not None, \"p_wait_mix must return a value\"\n_p = 0.6 * _m.exp(-2) + 0.4 * _m.exp(-1)\nassert abs(p_wait_mix(_g, 0.5) - _p) < 1e-9, f\"it should be 0.6 × e^(−2) + 0.4 × e^(−1) ≈ 0.2284, you got {p_wait_mix(_g, 0.5):.4f}\"\nassert abs(p_wait_mix(_g, 0) - 1) < 1e-12, \"for t = 0 the probability is 1 (the sum of the shares)\"\nassert mean_wait_mix(_g) is not None and abs(mean_wait_mix(_g) - 0.35) < 1e-9, \"mean wait: 0.6 / 4 + 0.4 / 2 = 0.35 hours\"\nassert abs(cond_wait({\"A\": (1.0, 3)}, 0.7, 0.5) - _m.exp(-1.5)) < 1e-9, \"one group is memoryless: cond_wait = e^(−3 × 0.5)\"\n_c = cond_wait(_g, 0.5, 0.5)\nassert _c is not None and abs(_c - (0.6 * _m.exp(-4) + 0.4 * _m.exp(-2)) / _p) < 1e-9, f\"cond_wait(_g, 0.5, 0.5) should be P(T > 1) / P(T > 0.5) ≈ 0.285, you got {_c:.4f}\"\nassert _c > p_wait_mix(_g, 0.5), \"in a mix, long waiters are more often in the slow group: the conditional probability is larger\""
+     }
+    },
+    {
+     "title": "Sum of many variables",
+     "prompt": "<p>The formula Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y) extends to many variables: the variance of a sum is the sum of the covariances of all pairs.</p><pre><code>Var(X₁ + … + Xₙ) = Σᵢ Σⱼ corr[i][j] × sd[i] × sd[j]</code></pre><p>Write the function <code>var_of_sum(sds, corr)</code>: <code>sds</code> is a list of SDs, <code>corr</code> is the correlation matrix (a list of lists, 1 on the diagonal). Return the variance of the sum.</p><p>For example, <code>var_of_sum([2, 3], [[1, 0.5], [0.5, 1]])</code> → 4 + 9 + 2 × 0.5 × 6 = <code>19.0</code>.</p>",
+     "hints": [
+      "Two loops: <code>for i in range(n)</code> and <code>for j in range(n)</code>. When i = j the term is the variance sd[i]².",
+      "Each pair (i, j) and (j, i) appears twice: that is the 2 × Cov term."
+     ],
+     "check": {
+      "tests": "def _eye(n, r=0.0):\n    return [[1.0 if i == j else r for j in range(n)] for i in range(n)]\nassert var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) is not None, \"var_of_sum must return a value\"\nassert abs(var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) - 19) < 1e-9, \"4 + 9 + 2 × 0.5 × 2 × 3 = 19\"\nassert abs(var_of_sum([1, 2, 3], _eye(3)) - 14) < 1e-9, \"for independent variables the variances simply add up: 1 + 4 + 9 = 14\"\nassert abs(var_of_sum([1, 2, 3], _eye(3, 1.0)) - 36) < 1e-9, \"with full correlation the SDs add up: (1 + 2 + 3)² = 36\"\n_sd = var_of_sum([10000] * 30, _eye(30)) ** 0.5\nassert abs(_sd - 10000 * 30 ** 0.5) < 1e-6, f\"30 independent days: SD should be 10 000 × √30 ≈ 54 772, you got {_sd:.0f}\"\n_sd3 = var_of_sum([10000] * 30, _eye(30, 0.3)) ** 0.5\nassert abs(_sd3 - (291e8) ** 0.5) < 1e-3, f\"with correlation 0.3 between days SD ≈ 170 587: the risk grows almost threefold, you got {_sd3:.0f}\""
+     }
+    }
+   ]
   }
  }
 });

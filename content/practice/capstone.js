@@ -927,5 +927,150 @@ DJ.addPractice('m3-7', {
     ]
    }
   }
+ ],
+ "cap-ai": [
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Бос нәтиже",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «әр қаладағы жеткізілген тапсырыстар саны». Ол ешбір жол қайтармайды. Деректегі статус мәндерін тексеріп, қатені түзетіңіз. Бағандар: <code>city</code>, <code>orders_cnt</code>.",
+   "starter": "SELECT c.city, COUNT(*) AS orders_cnt\nFROM orders o\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE o.status = 'Delivered'\nGROUP BY c.city;",
+   "solution": "SELECT c.city, COUNT(*) AS orders_cnt FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.city;",
+   "hints": [
+    "Мәндерді көріңіз: <code>SELECT DISTINCT status FROM orders</code>.",
+    "Мәтінді салыстыру әріптің регистріне сезімтал: <code>'Delivered'</code> ≠ <code>'delivered'</code>."
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "easy",
+   "xp": 10,
+   "title": "NULL-мен салыстыру",
+   "prompt": "<b>cafe.</b> AI мына сұрауды берді: «сомасы белгілі төленген тапсырыстар саны мен сомасы». Нәтижесі 0 және NULL. Түзетіңіз. Бір жол: <code>orders_cnt</code>, <code>revenue</code>.",
+   "starter": "SELECT COUNT(*) AS orders_cnt, SUM(amount) AS revenue\nFROM orders\nWHERE status = 'paid' AND amount != NULL;",
+   "solution": "SELECT COUNT(*) AS orders_cnt, SUM(amount) AS revenue FROM orders WHERE status = 'paid' AND amount IS NOT NULL;",
+   "hints": [
+    "NULL-мен кез келген салыстыру (<code>=</code>, <code>!=</code>) NULL береді, сондықтан шарт ешқашан орындалмайды.",
+    "<code>amount IS NOT NULL</code>"
+   ],
+   "check": {
+    "mustInclude": [
+     "IS NOT NULL"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "easy",
+   "xp": 10,
+   "title": "Мәтін мен сан",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «2026 жылғы сәуірдегі тапсырыстар статус бойынша». Ол бос нәтиже береді: <code>strftime</code> мәтін қайтарады. Түзетіңіз. Бағандар: <code>status</code>, <code>orders</code>.",
+   "starter": "SELECT status, COUNT(*) AS orders\nFROM orders\nWHERE strftime('%Y', order_date) = 2026\n  AND strftime('%m', order_date) = 4\nGROUP BY status;",
+   "solution": "SELECT status, COUNT(*) AS orders FROM orders WHERE order_date >= '2026-04-01' AND order_date < '2026-05-01' GROUP BY status;",
+   "hints": [
+    "SQLite-та <code>'04' = 4</code> жалған: мәтін санға тең емес.",
+    "Ең сенімдісі — күн аралығы: <code>order_date &gt;= '2026-04-01' AND order_date &lt; '2026-05-01'</code>. <code>strftime(...) = '04'</code> де жарайды."
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Жоғалған клиенттер",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «әр клиенттің тапсырыс саны, тапсырыс бермегендер 0-мен». Бірақ нәтижеде 80 емес, 72 жол бар, ал түзетудің жартысы 0 орнына 1 береді. Екі қатені де түзетіңіз. Бағандар: <code>customer_id</code>, <code>orders_cnt</code>; <code>customer_id</code> бойынша.",
+   "starter": "SELECT c.customer_id, COUNT(*) AS orders_cnt\nFROM customers c\nJOIN orders o ON o.customer_id = c.customer_id\nGROUP BY c.customer_id\nORDER BY c.customer_id;",
+   "solution": "SELECT c.customer_id, COUNT(o.order_id) AS orders_cnt FROM customers c LEFT JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id ORDER BY c.customer_id;",
+   "hints": [
+    "<code>JOIN</code> тапсырысы жоқ клиенттерді тастап кетеді: <code>LEFT JOIN</code> керек.",
+    "<code>COUNT(*)</code> NULL жолды да санайды; <code>COUNT(o.order_id)</code> бос клиентке 0 береді."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "Тауар жолының орташасы",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «жеткізілген тапсырыстардың орташа чегі». Бірақ ол тапсырыстың емес, тауар жолының орташа сомасын береді. Түзетіңіз: алдымен әр тапсырыстың сомасы, сосын солардың орташасы. Бір жол: <code>avg_check</code> (бүтінге дейін <code>ROUND</code>).",
+   "starter": "SELECT ROUND(AVG(oi.quantity * oi.unit_price)) AS avg_check\nFROM orders o\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.status = 'delivered';",
+   "solution": "WITH t AS (SELECT o.order_id, SUM(oi.quantity * oi.unit_price) AS total FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.status = 'delivered' GROUP BY o.order_id) SELECT ROUND(AVG(total)) AS avg_check FROM t;",
+   "hints": [
+    "JOIN-нан кейін бір жол = бір тауар жолы. Орташа чек үшін бір жол = бір тапсырыс болуы керек.",
+    "CTE: <code>GROUP BY o.order_id</code> және <code>SUM(...) AS total</code>, сосын <code>ROUND(AVG(total))</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "GROUP BY"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "medium",
+   "xp": 15,
+   "title": "LEFT JOIN-ды WHERE бұзды",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «Тараздағы әр клиенттің жеткізілген тапсырыс саны, жоқ болса 0». Бірақ жеткізілген тапсырысы жоқ клиент нәтижеде көрінбейді. Түзетіңіз. Бағандар: <code>customer_id</code>, <code>delivered_cnt</code>; <code>customer_id</code> бойынша.",
+   "starter": "SELECT c.customer_id, COUNT(o.order_id) AS delivered_cnt\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.customer_id\nWHERE c.city = 'Тараз' AND o.status = 'delivered'\nGROUP BY c.customer_id\nORDER BY c.customer_id;",
+   "solution": "SELECT c.customer_id, COUNT(o.order_id) AS delivered_cnt FROM customers c LEFT JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'delivered' WHERE c.city = 'Тараз' GROUP BY c.customer_id ORDER BY c.customer_id;",
+   "hints": [
+    "Оң жақ кестенің шарты <code>WHERE</code>-де тұрса, NULL жолдар сүзіліп, LEFT JOIN INNER JOIN-ға айналады.",
+    "<code>o.status = 'delivered'</code> шартын <code>ON</code> ішіне көшіріңіз; қала шарты <code>WHERE</code>-де қалады."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "LEFT JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Үлестің екі қатесі",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «2026 жылы жеткізілген тапсырыстар бойынша әр санаттың табыстағы үлесі». Үлестер бүтін сан болып шығады және олардың қосындысы 100-ге жетпейді. Екі қатені тауып түзетіңіз. Бағандар: <code>category</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 таңба); табыс кемуімен.",
+   "starter": "SELECT p.category,\n       SUM(oi.quantity * oi.unit_price) AS revenue,\n       100 * SUM(oi.quantity * oi.unit_price) / (SELECT SUM(quantity * unit_price) FROM order_items) AS share_pct\nFROM orders o\nJOIN order_items oi ON oi.order_id = o.order_id\nJOIN products p ON p.product_id = oi.product_id\nWHERE o.status = 'delivered' AND o.order_date >= '2026-01-01'\nGROUP BY p.category\nORDER BY revenue DESC;",
+   "solution": "SELECT p.category, SUM(oi.quantity * oi.unit_price) AS revenue, ROUND(100.0 * SUM(oi.quantity * oi.unit_price) / SUM(SUM(oi.quantity * oi.unit_price)) OVER (), 1) AS share_pct FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.status = 'delivered' AND o.order_date >= '2026-01-01' GROUP BY p.category ORDER BY revenue DESC;",
+   "hints": [
+    "1-қате: бөлгіш барлық жылдың, барлық статустың табысы. Ол дәл сол сүзгімен есептелуі керек: <code>SUM(SUM(...)) OVER ()</code> немесе сүзгісі бірдей subquery.",
+    "2-қате: <code>100 * бүтін / бүтін</code> — бүтін бөлу. <code>100.0</code> жазып, <code>ROUND(..., 1)</code> қосыңыз."
+   ],
+   "check": {
+    "ordered": true
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "qazaq",
+   "level": "hard",
+   "xp": 20,
+   "title": "Әр санаттың көшбасшысы",
+   "prompt": "<b>qazaq.</b> AI мына сұрауды берді: «әр санатта жеткізілген тапсырыстар бойынша ең көп табыс әкелген тауар». Ол бір ғана жол береді, әрі сандарда бас тартылған мен қайтарылған тапсырыстар бар. Екі қатені түзетіңіз. Бағандар: <code>category</code>, <code>name</code>, <code>revenue</code>; <code>category</code> бойынша.",
+   "starter": "WITH r AS (\n  SELECT p.category, p.name, SUM(oi.quantity * oi.unit_price) AS revenue\n  FROM order_items oi\n  JOIN products p ON p.product_id = oi.product_id\n  GROUP BY p.category, p.name\n), t AS (\n  SELECT category, name, revenue,\n         RANK() OVER (ORDER BY revenue DESC) AS rnk\n  FROM r\n)\nSELECT category, name, revenue FROM t WHERE rnk = 1 ORDER BY category;",
+   "solution": "WITH r AS (SELECT p.category, p.name, SUM(oi.quantity * oi.unit_price) AS revenue FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.status = 'delivered' GROUP BY p.category, p.name), t AS (SELECT category, name, revenue, RANK() OVER (PARTITION BY category ORDER BY revenue DESC) AS rnk FROM r) SELECT category, name, revenue FROM t WHERE rnk = 1 ORDER BY category;",
+   "hints": [
+    "Рейтинг әр санат ішінде бөлек болуы керек: <code>RANK() OVER (PARTITION BY category ORDER BY revenue DESC)</code>.",
+    "Статус <code>orders</code> кестесінде: <code>JOIN orders o ON o.order_id = oi.order_id</code> және <code>WHERE o.status = 'delivered'</code>."
+   ],
+   "check": {
+    "ordered": true,
+    "mustInclude": [
+     "PARTITION BY"
+    ]
+   }
+  }
  ]
 });

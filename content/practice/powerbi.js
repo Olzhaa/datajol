@@ -566,5 +566,138 @@ DJ.addPractice('m3-5', {
     ]
    }
   }
+ ],
+ "pbi-9": [
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "easy",
+   "xp": 10,
+   "title": "SUM және AVERAGE",
+   "prompt": "<code>Revenue = SUM(orders[amount])</code> және <code>Avg Check = AVERAGE(orders[amount])</code> өлшемдерін SQL-де қайталаңыз. Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша бір жол: <code>revenue</code>, <code>avg_check</code> (бүтінге дейін <code>ROUND</code>).",
+   "starter": "SELECT \nFROM orders o\nWHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000;",
+   "solution": "SELECT SUM(o.amount) AS revenue, ROUND(AVG(o.amount)) AS avg_check FROM orders o WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000;",
+   "hints": [
+    "<code>SUM(o.amount)</code> және <code>ROUND(AVG(o.amount))</code>. Жауап: 334 850 және 2 409."
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "easy",
+   "xp": 10,
+   "title": "COUNTROWS(FILTER(...))",
+   "prompt": "<code>Big Orders = COUNTROWS(FILTER(orders, orders[amount] &gt;= 3000))</code> өлшемін SQL-де есептеңіз: Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша сомасы 3 000 және одан көп тапсырыстар саны. Баған: <code>big_orders</code>.",
+   "starter": "",
+   "solution": "SELECT COUNT(*) AS big_orders FROM orders o WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 AND o.amount >= 3000;",
+   "hints": [
+    "<code>FILTER</code> → <code>WHERE</code>, <code>COUNTROWS</code> → <code>COUNT(*)</code>.",
+    "Тазалау шартына <code>AND o.amount &gt;= 3000</code> қосыңыз."
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "easy",
+   "xp": 10,
+   "title": "MAXX пен MINX арна бойынша",
+   "prompt": "Матрицада арна (<code>customers[channel]</code>) жолдарында <code>MAXX(orders, orders[amount])</code> және <code>MINX(orders, orders[amount])</code> не көрсетеді? Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша: <code>channel</code>, <code>max_amount</code>, <code>min_amount</code>.",
+   "starter": "SELECT \nFROM orders o\nJOIN customers c ON c.id = o.customer_id\nWHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000\n",
+   "solution": "SELECT c.channel, MAX(o.amount) AS max_amount, MIN(o.amount) AS min_amount FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 GROUP BY c.channel;",
+   "hints": [
+    "Арна <code>customers</code>-та, сондықтан <code>JOIN</code> керек (<code>RELATED</code> сияқты).",
+    "<code>MAX(o.amount)</code>, <code>MIN(o.amount)</code>, <code>GROUP BY c.channel</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "JOIN"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "medium",
+   "xp": 15,
+   "title": "Net Revenue арна бойынша",
+   "prompt": "Сабақтағы <code>Net Revenue</code> өлшемі (referral × 0.90, 2gis × 0.95, қалғаны × 1) арна бойынша матрицада қандай сан көрсетеді? Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша: <code>channel</code>, <code>revenue</code>, <code>net_revenue</code> (бүтінге дейін <code>ROUND</code>).",
+   "starter": "SELECT \nFROM orders o\nJOIN customers c ON c.id = o.customer_id\nWHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000\n",
+   "solution": "SELECT c.channel, SUM(o.amount) AS revenue, ROUND(SUM(o.amount * CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END)) AS net_revenue FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 GROUP BY c.channel;",
+   "hints": [
+    "<code>SWITCH</code> → <code>CASE c.channel WHEN 'referral' THEN 0.90 WHEN '2gis' THEN 0.95 ELSE 1 END</code>",
+    "Матрица жолы = <code>GROUP BY c.channel</code>. Үш жолдың <code>net_revenue</code> қосындысы 320 465 болуы керек."
+   ],
+   "check": {
+    "mustInclude": [
+     "CASE"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "medium",
+   "xp": 15,
+   "title": "Ірі клиенттер қала бойынша",
+   "prompt": "<pre><code>Big Customers =\nVAR Threshold = 10000\nRETURN COUNTROWS(FILTER(VALUES(orders[customer_id]), [Revenue] &gt;= Threshold))</code></pre>Бұл өлшем қала бойынша матрицада не көрсетеді? Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша: <code>city</code>, <code>big_customers</code> (таза табысы 10 000 ₸ және одан көп клиенттер саны).",
+   "starter": "WITH per AS (\n  -- әр клиенттің [Revenue]-і\n  \n)\nSELECT ",
+   "solution": "WITH per AS (SELECT c.id, c.city, SUM(o.amount) AS spent FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 GROUP BY c.id, c.city) SELECT city, SUM(CASE WHEN spent >= 10000 THEN 1 ELSE 0 END) AS big_customers FROM per GROUP BY city;",
+   "hints": [
+    "<code>VALUES(orders[customer_id])</code> + <code>[Revenue]</code> → CTE-де <code>GROUP BY c.id, c.city</code>.",
+    "<code>COUNTROWS(FILTER(...))</code> → <code>SUM(CASE WHEN spent &gt;= 10000 THEN 1 ELSE 0 END)</code>, <code>GROUP BY city</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "WITH"
+    ]
+   }
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "medium",
+   "xp": 15,
+   "title": "Share of All %",
+   "prompt": "<code>Share of All % = DIVIDE([Revenue], CALCULATE([Revenue], ALL(customers[city])))</code> өлшемін slicer жоқ кездегі қала матрицасы үшін есептеңіз. Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша: <code>city</code>, <code>revenue</code>, <code>share_pct</code> (%, 1 таңба).",
+   "starter": "SELECT \nFROM orders o\nJOIN customers c ON c.id = o.customer_id\nWHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000\n",
+   "solution": "SELECT c.city, SUM(o.amount) AS revenue, ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1) AS share_pct FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 GROUP BY c.city;",
+   "hints": [
+    "<code>ALL</code>-дың бөлгіші — барлық қаланың табысы: <code>SUM(SUM(o.amount)) OVER ()</code> немесе subquery.",
+    "<code>ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1)</code>"
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "hard",
+   "xp": 20,
+   "title": "ALLSELECTED: slicer-де екі қала",
+   "prompt": "Slicer-де Астана мен Шымкент таңдалған. <code>Share of Selected % = DIVIDE([Revenue], CALCULATE([Revenue], ALLSELECTED(customers[city])))</code> матрицада не көрсетеді? Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша, тек таңдалған қалалар: <code>city</code>, <code>revenue</code>, <code>share_selected</code> (%, 1 таңба).",
+   "starter": "",
+   "solution": "SELECT c.city, SUM(o.amount) AS revenue, ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1) AS share_selected FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 AND c.city IN ('Астана', 'Шымкент') GROUP BY c.city;",
+   "hints": [
+    "Slicer — бұл <code>WHERE c.city IN ('Астана', 'Шымкент')</code>: ол бөлгішке де әсер етеді.",
+    "Сүзгіден кейін <code>SUM(SUM(o.amount)) OVER ()</code> тек көрініп тұрған екі қаланы қосады. Пайыздардың қосындысы 100 болуы керек."
+   ]
+  },
+  {
+   "type": "sql",
+   "dataset": "cafe",
+   "level": "hard",
+   "xp": 20,
+   "title": "Айлық орташа: AVERAGEX(VALUES(month))",
+   "prompt": "<pre><code>Avg Monthly Revenue =\nAVERAGEX(VALUES('Date'[Month]), [Revenue])</code></pre>Бұл өлшем қала бойынша матрицада не көрсетеді? Таза тапсырыстар (<code>status = 'paid'</code>, <code>amount</code> бос емес және 20 000-нан кіші) бойынша: <code>city</code>, <code>months</code> (сатылымы бар айлар саны), <code>avg_monthly</code> (айлық табыстардың орташасы, бүтінге дейін <code>ROUND</code>). Ай: <code>substr(order_date, 1, 7)</code>.",
+   "starter": "",
+   "solution": "WITH m AS (SELECT c.city, substr(o.order_date, 1, 7) AS month, SUM(o.amount) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid' AND o.amount IS NOT NULL AND o.amount < 20000 GROUP BY c.city, month) SELECT city, COUNT(*) AS months, ROUND(AVG(revenue)) AS avg_monthly FROM m GROUP BY city;",
+   "hints": [
+    "1-қадам (<code>VALUES</code> + <code>[Revenue]</code>): әр «қала × ай» табысы, <code>GROUP BY c.city, month</code>.",
+    "2-қадам (<code>AVERAGEX</code>): <code>SELECT city, COUNT(*), ROUND(AVG(revenue)) FROM m GROUP BY city</code>."
+   ],
+   "check": {
+    "mustInclude": [
+     "AVG"
+    ]
+   }
+  }
  ]
 });

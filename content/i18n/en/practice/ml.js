@@ -892,5 +892,184 @@ DJ.i18n.patch({ lessons: {
     }
    }
   ]
+ },
+ "ml-reg": {
+  "pr": [
+   {
+    "title": "Ridge penalty",
+    "prompt": "<p>The Ridge penalty = alpha · Σ b². Write a function <code>ridge_penalty(coefs, alpha)</code>: it takes a list of coefficients and <code>alpha</code> and returns the penalty.</p><p>For example, <code>ridge_penalty([1, -2], 0.1)</code> → <code>0.5</code>.</p>",
+    "hints": [
+     "<code>sum(b ** 2 for b in coefs)</code> is the sum of squares."
+    ],
+    "check": {
+     "tests": "assert ridge_penalty([1, -2], 0.1) is not None and abs(ridge_penalty([1, -2], 0.1) - 0.5) < 1e-9, \"ridge_penalty([1, -2], 0.1) must be 0.1 · (1 + 4) = 0.5\"\nassert abs(ridge_penalty([3, -4], 0.5) - 12.5) < 1e-9, \"ridge_penalty([3, -4], 0.5) must be 12.5\"\nassert abs(ridge_penalty([-3], 1) - 9) < 1e-9, \"A negative coefficient is squared too: ridge_penalty([-3], 1) = 9\"\nassert ridge_penalty([5, 7], 0) == 0, \"With alpha = 0 there is no penalty: 0\""
+    }
+   },
+   {
+    "title": "Lasso penalty",
+    "prompt": "<p>The Lasso penalty = alpha · Σ |b|. Write a function <code>lasso_penalty(coefs, alpha)</code>.</p><p>For example, <code>lasso_penalty([3, -4], 0.5)</code> → <code>3.5</code>.</p>",
+    "hints": [
+     "Absolute value: <code>abs(b)</code>"
+    ],
+    "check": {
+     "tests": "assert lasso_penalty([3, -4], 0.5) is not None and abs(lasso_penalty([3, -4], 0.5) - 3.5) < 1e-9, \"lasso_penalty([3, -4], 0.5) must be 0.5 · (3 + 4) = 3.5\"\nassert abs(lasso_penalty([1, -2], 0.1) - 0.3) < 1e-9, \"lasso_penalty([1, -2], 0.1) must be 0.3: absolute value, not square\"\nassert abs(lasso_penalty([0, 0, 2], 10) - 20) < 1e-9, \"lasso_penalty([0, 0, 2], 10) must be 20\""
+    }
+   },
+   {
+    "title": "C and alpha",
+    "prompt": "<p>In <code>LogisticRegression</code>, <code>C = 1 / alpha</code>. Write two functions: <code>c_to_alpha(C)</code> returns alpha; <code>stronger(c1, c2)</code> returns the C value that gives the <b>stronger</b> regularization.</p><p>For example, <code>c_to_alpha(0.01)</code> → <code>100.0</code>, <code>stronger(0.1, 10)</code> → <code>0.1</code>.</p>",
+    "hints": [
+     "Smaller C means larger alpha, which means a stronger penalty.",
+     "<code>min(c1, c2)</code>"
+    ],
+    "check": {
+     "tests": "assert c_to_alpha(0.01) is not None and abs(c_to_alpha(0.01) - 100) < 1e-9, \"c_to_alpha(0.01) must be 1 / 0.01 = 100\"\nassert abs(c_to_alpha(4) - 0.25) < 1e-9, \"c_to_alpha(4) must be 0.25\"\nassert stronger(0.1, 10) == 0.1 and stronger(100, 1) == 1, \"A smaller C gives stronger regularization: stronger(0.1, 10) = 0.1, stronger(100, 1) = 1\""
+    }
+   },
+   {
+    "title": "alpha shrinks the coefficients",
+    "prompt": "<p>For each <code>alpha</code> ∈ <code>[0.1, 10, 1000]</code>, train <code>make_pipeline(StandardScaler(), Ridge(alpha=a))</code> on all of <code>X</code>, <code>y</code> and write the sum of the absolute coefficients to <code>coef_size[a]</code>. How does this number change as alpha grows?</p>",
+    "hints": [
+     "The last step of the Pipeline: <code>m[-1].coef_</code>",
+     "<code>np.abs(m[-1].coef_).sum()</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.linear_model import Ridge as _Rd\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\n_s = {a: np.abs(_mp(_SS(), _Rd(alpha=a)).fit(X, y)[-1].coef_).sum() for a in [0.1, 10, 1000]}\nassert sorted(coef_size) == [0.1, 10, 1000], \"The keys of coef_size: 0.1, 10, 1000\"\nassert all(abs(coef_size[a] - _s[a]) < 1e-6 for a in _s), \"The values do not match: StandardScaler + Ridge(alpha=a) on all of X, y; np.abs(coef_).sum()\"\nassert coef_size[0.1] > coef_size[10] > coef_size[1000], \"As alpha grows, the coefficients shrink\""
+    }
+   },
+   {
+    "title": "Lasso: number of zeros",
+    "prompt": "<p>Data with noise columns is ready (a 60-row train set, 25 columns). For each <code>alpha</code> ∈ <code>[0.1, 0.3, 1, 3]</code>, train <code>make_pipeline(StandardScaler(), Lasso(alpha=a))</code> on train and write the number of coefficients equal to exactly 0 to <code>zeros[a]</code> (int).</p>",
+    "hints": [
+     "<code>(m[-1].coef_ == 0).sum()</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.linear_model import Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nassert len(X_train) == 60 and X_train.shape[1] == 25, \"Do not change X_train: 60 rows, 25 columns\"\n_z = {a: int((_mp(_SS(), _Ls(alpha=a)).fit(X_train, y_train)[-1].coef_ == 0).sum()) for a in [0.1, 0.3, 1, 3]}\nassert sorted(zeros) == [0.1, 0.3, 1, 3], \"The keys of zeros: 0.1, 0.3, 1, 3\"\nassert all(zeros[a] == _z[a] for a in _z), f\"The zero counts do not match, expected {_z}: Lasso is trained on train with StandardScaler before it\"\nassert zeros[3] >= zeros[0.1], \"The larger alpha, the more zeros\""
+    }
+   },
+   {
+    "title": "How C affects a coefficient",
+    "prompt": "<p>For each <code>C</code> ∈ <code>[0.001, 0.01, 1, 100]</code>, train <code>make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=1000))</code> on all of <code>X</code>, <code>y</code>. Write the <code>tenure_months</code> coefficient (the first column) to <code>tenure_coef[C]</code>.</p>",
+    "hints": [
+     "<code>coef_</code> is two-dimensional: <code>m[-1].coef_[0][0]</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\n_t = {c: _mp(_SS(), _LR(C=c, max_iter=1000)).fit(X, y)[-1].coef_[0][0] for c in [0.001, 0.01, 1, 100]}\nassert sorted(tenure_coef) == [0.001, 0.01, 1, 100], \"The keys of tenure_coef: 0.001, 0.01, 1, 100\"\nassert all(abs(tenure_coef[c] - _t[c]) < 1e-4 for c in _t), \"The coefficients do not match: StandardScaler + LogisticRegression(C=C, max_iter=1000), coef_[0][0]\"\nassert abs(tenure_coef[0.001]) < abs(tenure_coef[1]) <= abs(tenure_coef[100]) + 1e-9, \"Smaller C means a stronger penalty and a smaller coefficient\""
+    }
+   },
+   {
+    "title": "L1 logistic regression",
+    "prompt": "<p>10 noise columns were added to the 4 churn features. For each <code>C</code> ∈ <code>[0.01, 0.1, 1]</code>, build <code>make_pipeline(StandardScaler(), LogisticRegression(penalty='l1', solver='liblinear', C=C))</code>:</p><ul><li>train it on all of <code>X</code>, <code>y</code> and write the number of non-zero coefficients to <code>n_nonzero[C]</code> (int);</li><li>write the mean 5-fold CV ROC AUC (<code>scoring='roc_auc'</code>) to <code>cv_auc[C]</code>.</li></ul><p>The C with the highest CV AUC → <code>best_C</code>.</p>",
+    "hints": [
+     "Non-zero: <code>(m[-1].coef_ != 0).sum()</code>",
+     "<code>cross_val_score(m, X, y, cv=5, scoring='roc_auc').mean()</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.linear_model import LogisticRegression as _LR\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert X.shape == (600, 14), \"Do not change X: 600 rows, 14 columns\"\n_mk = lambda c: _mp(_SS(), _LR(penalty='l1', solver='liblinear', C=c))\n_n = {c: int((_mk(c).fit(X, y)[-1].coef_ != 0).sum()) for c in [0.01, 0.1, 1]}\n_a = {c: _cvs(_mk(c), X, y, cv=5, scoring='roc_auc').mean() for c in [0.01, 0.1, 1]}\nassert sorted(n_nonzero) == [0.01, 0.1, 1] and sorted(cv_auc) == [0.01, 0.1, 1], \"Keys: 0.01, 0.1, 1\"\nassert all(n_nonzero[c] == _n[c] for c in _n), f\"n_nonzero must be {_n}: penalty='l1', solver='liblinear'\"\nassert all(abs(cv_auc[c] - _a[c]) < 1e-6 for c in _a), \"CV AUC does not match: cross_val_score(m, X, y, cv=5, scoring='roc_auc').mean()\"\nassert best_C == max(_a, key=_a.get), f\"best_C must be {max(_a, key=_a.get)}\""
+    }
+   },
+   {
+    "title": "Choosing the Lasso alpha with CV",
+    "prompt": "<p>Data with noise columns is ready. For each <code>alpha</code> ∈ <code>[0.1, 0.3, 1, 3]</code>, write the mean 5-fold CV R² on train of <code>make_pipeline(StandardScaler(), Lasso(alpha=a))</code> to <code>cv_r2[a]</code>. The best alpha → <code>best_alpha</code>. Train the model with that alpha on train and find:</p><ul><li><code>n_real_kept</code> — how many of the 5 real features (the first 5 columns) have a non-zero coefficient;</li><li><code>n_noise_kept</code> — how many of the 20 noise columns are left;</li><li><code>test_r2</code> — the test R².</li></ul>",
+    "hints": [
+     "In the loop: <code>cross_val_score(make_pipeline(StandardScaler(), Lasso(alpha=a)), X_train, y_train, cv=5).mean()</code>",
+     "<code>coef = best[-1].coef_</code>; real features: <code>coef[:5]</code>, noise: <code>coef[5:]</code>"
+    ],
+    "check": {
+     "tests": "from sklearn.linear_model import Lasso as _Ls\nfrom sklearn.pipeline import make_pipeline as _mp\nfrom sklearn.preprocessing import StandardScaler as _SS\nfrom sklearn.model_selection import cross_val_score as _cvs\nassert len(X_train) == 60 and X_train.shape[1] == 25, \"Do not change X_train: 60 rows, 25 columns\"\n_s = {a: _cvs(_mp(_SS(), _Ls(alpha=a)), X_train, y_train, cv=5).mean() for a in [0.1, 0.3, 1, 3]}\n_b = max(_s, key=_s.get)\n_m = _mp(_SS(), _Ls(alpha=_b)).fit(X_train, y_train); _c = _m[-1].coef_\nassert sorted(cv_r2) == [0.1, 0.3, 1, 3] and all(abs(cv_r2[a] - _s[a]) < 1e-6 for a in _s), \"cv_r2 does not match: 5-fold CV on train, keys 0.1, 0.3, 1, 3\"\nassert best_alpha == _b, f\"best_alpha must be {_b}: the highest CV R²\"\nassert n_real_kept == int((_c[:5] != 0).sum()) and n_noise_kept == int((_c[5:] != 0).sum()), f\"Expected n_real_kept = {int((_c[:5] != 0).sum())}, n_noise_kept = {int((_c[5:] != 0).sum())}\"\nassert abs(test_r2 - _m.score(X_test, y_test)) < 1e-6, f\"test_r2 must be ≈ {_m.score(X_test, y_test):.3f}\""
+    }
+   }
+  ]
+ },
+ "ml-curves": {
+  "pr": [
+   {
+    "title": "Gini and AUC",
+    "prompt": "<p>Write two functions: <code>gini_from_auc(auc)</code> returns Gini (2 · AUC − 1), and <code>auc_from_gini(g)</code> converts back and returns AUC.</p><p>For example, <code>gini_from_auc(0.75)</code> → <code>0.5</code>, <code>auc_from_gini(0.6)</code> → <code>0.8</code>.</p>",
+    "hints": [
+     "Solve Gini = 2 · AUC − 1 for AUC: AUC = (Gini + 1) / 2."
+    ],
+    "check": {
+     "tests": "assert gini_from_auc(0.75) is not None and abs(gini_from_auc(0.75) - 0.5) < 1e-9, \"gini_from_auc(0.75) must be 0.5\"\nassert abs(gini_from_auc(0.5)) < 1e-9 and abs(gini_from_auc(1.0) - 1) < 1e-9, \"AUC 0.5 → Gini 0, AUC 1 → Gini 1\"\nassert auc_from_gini(0.6) is not None and abs(auc_from_gini(0.6) - 0.8) < 1e-9, \"auc_from_gini(0.6) must be 0.8\"\nassert abs(auc_from_gini(gini_from_auc(0.816)) - 0.816) < 1e-9, \"The two functions must be inverses of each other\""
+    }
+   },
+   {
+    "title": "Log loss of one prediction",
+    "prompt": "<p>Write a function <code>loss_one(y, p)</code>. <code>p</code> is the probability of the “will leave” class (1). If the true answer is <code>y = 1</code>, return <code>−ln(p)</code>; if <code>y = 0</code>, return <code>−ln(1 − p)</code>.</p><p>For example, <code>loss_one(1, 0.9)</code> → <code>0.105</code>, <code>loss_one(0, 0.9)</code> → <code>2.303</code>.</p>",
+    "hints": [
+     "<code>math.log</code> is the natural logarithm (ln)."
+    ],
+    "check": {
+     "tests": "import math as _m\nassert loss_one(1, 0.9) is not None and abs(loss_one(1, 0.9) - 0.1053605) < 1e-6, \"loss_one(1, 0.9) must be −ln(0.9) ≈ 0.105\"\nassert abs(loss_one(0, 0.9) - 2.3025851) < 1e-6, \"For y = 0 use −ln(1 − p): loss_one(0, 0.9) ≈ 2.303\"\nassert abs(loss_one(1, 0.01) - 4.6051702) < 1e-6, \"A confident mistake is punished hard: loss_one(1, 0.01) ≈ 4.605\"\nassert abs(loss_one(0, 0.2) + _m.log(0.8)) < 1e-9, \"loss_one(0, 0.2) = −ln(0.8)\""
+    }
+   },
+   {
+    "title": "The PR-AUC baseline",
+    "prompt": "<p>The model and <code>proba</code> are ready. <code>base_rate</code> is the share of the positive class in test (the random baseline for PR-AUC). <code>pr_auc</code> is <code>average_precision_score</code>. <code>lift = pr_auc / base_rate</code>: how many times better than random the model is.</p>",
+    "hints": [
+     "<code>base_rate = y_test.mean()</code>",
+     "<code>average_precision_score(y_test, proba)</code> — with probabilities, not 0/1"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import average_precision_score as _aps\nassert abs(base_rate - _yte.mean()) < 1e-9, f\"base_rate ≈ {_yte.mean():.3f}: y_test.mean()\"\nassert abs(pr_auc - _aps(_yte, _p)) < 1e-6, f\"pr_auc must be ≈ {_aps(_yte, _p):.3f}: average_precision_score(y_test, proba)\"\nassert abs(lift - _aps(_yte, _p) / _yte.mean()) < 1e-6, \"lift = pr_auc / base_rate\""
+    }
+   },
+   {
+    "title": "TPR and FPR at one threshold",
+    "prompt": "<p>Write a function <code>tpr_fpr(y_true, proba, thr)</code>: the prediction is 1 if <code>proba &gt;= thr</code>. The function returns the pair <code>(TPR, FPR)</code>: TPR = TP / (TP + FN), FPR = FP / (FP + TN). Then compute <code>tpr30, fpr30</code> on test for the threshold 0.3.</p>",
+    "hints": [
+     "<code>pred = (np.asarray(proba) &gt;= thr).astype(int)</code>; <code>y_true = np.asarray(y_true)</code>",
+     "TP: <code>((pred == 1) &amp; (y_true == 1)).sum()</code>, the others in the same way"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_r = tpr_fpr([1, 1, 0, 0, 1], [0.9, 0.2, 0.6, 0.1, 0.5], 0.5)\nassert _r is not None and abs(_r[0] - 2 / 3) < 1e-9 and abs(_r[1] - 0.5) < 1e-9, \"tpr_fpr([1, 1, 0, 0, 1], [0.9, 0.2, 0.6, 0.1, 0.5], 0.5) → (0.667, 0.5). Threshold: proba >= thr\"\n_y = _yte.values; _pr = (_p >= 0.3).astype(int)\n_tp = ((_pr == 1) & (_y == 1)).sum(); _fn = ((_pr == 0) & (_y == 1)).sum(); _fp = ((_pr == 1) & (_y == 0)).sum(); _tn = ((_pr == 0) & (_y == 0)).sum()\nassert abs(tpr30 - _tp / (_tp + _fn)) < 1e-9, f\"tpr30 must be ≈ {_tp / (_tp + _fn):.3f}\"\nassert abs(fpr30 - _fp / (_fp + _tn)) < 1e-9, f\"fpr30 must be ≈ {_fp / (_fp + _tn):.3f}: FP / (FP + TN)\""
+    }
+   },
+   {
+    "title": "A tree versus logistic regression",
+    "prompt": "<p>The logistic regression (<code>clf</code>, <code>proba</code>) is ready. Train <code>DecisionTreeClassifier(max_depth=3, random_state=0)</code> named <code>tree</code> on the same train set. On test, compute the Gini of both models (<code>gini_lr</code>, <code>gini_tree</code>) and their PR-AUC (<code>pr_lr</code>, <code>pr_tree</code>). Write the name of the model with the higher Gini (<code>'lr'</code> or <code>'tree'</code>) to <code>better</code>.</p>",
+    "hints": [
+     "The tree probability is also <code>predict_proba(X_test)[:, 1]</code>",
+     "<code>gini = 2 * roc_auc_score(y_test, p) - 1</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.tree import DecisionTreeClassifier as _DT\nfrom sklearn.metrics import roc_auc_score as _ras, average_precision_score as _aps\n_pt = _DT(max_depth=3, random_state=0).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_gl, _gt = 2 * _ras(_yte, _p) - 1, 2 * _ras(_yte, _pt) - 1\nassert hasattr(tree, 'tree_') and tree.get_depth() <= 3, \"tree is a trained DecisionTreeClassifier(max_depth=3, random_state=0)\"\nassert abs(gini_lr - _gl) < 1e-6 and abs(gini_tree - _gt) < 1e-6, f\"Expected gini_lr ≈ {_gl:.3f}, gini_tree ≈ {_gt:.3f}: 2 * AUC - 1\"\nassert abs(pr_lr - _aps(_yte, _p)) < 1e-6 and abs(pr_tree - _aps(_yte, _pt)) < 1e-6, \"PR-AUC does not match: average_precision_score(y_test, p)\"\nassert better == ('lr' if _gl > _gt else 'tree'), f\"better must be {'lr' if _gl > _gt else 'tree'}\""
+    }
+   },
+   {
+    "title": "A calibration table",
+    "prompt": "<p>Build the calibration table from the lesson. <code>t = pd.DataFrame({'p': proba, 'y': y_test.values})</code>. Split the predictions into groups with <code>pd.cut(t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0])</code> and, for each group, build a table <code>calib</code> with the columns <code>n</code> (count), <code>pred</code> (mean prediction) and <code>fact</code> (actual churn share). <code>max_gap</code> is the largest value of |pred − fact|.</p>",
+    "hints": [
+     "<code>t['bin'] = pd.cut(t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0])</code>",
+     "<code>t.groupby('bin', observed=True).agg(n=('y', 'size'), pred=('p', 'mean'), fact=('y', 'mean'))</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\n_t = pd.DataFrame({'p': _p, 'y': _yte.values})\n_g = _t.groupby(pd.cut(_t['p'], bins=[0, 0.1, 0.2, 0.4, 1.0]), observed=True)\n_n, _pm, _fm = _g['y'].size().values, _g['p'].mean().values, _g['y'].mean().values\nassert isinstance(calib, pd.DataFrame) and {'n', 'pred', 'fact'} <= set(calib.columns), \"calib is a DataFrame with the columns n, pred, fact\"\nassert list(calib['n']) == list(_n), f\"The group sizes must be {list(_n)}: pd.cut(..., bins=[0, 0.1, 0.2, 0.4, 1.0])\"\nassert _np.allclose(calib['pred'].values, _pm) and _np.allclose(calib['fact'].values, _fm), \"pred is the mean p in the group, fact is the mean y in the group\"\nassert abs(max_gap - _np.abs(_pm - _fm).max()) < 1e-9, f\"max_gap must be ≈ {_np.abs(_pm - _fm).max():.3f}\""
+    }
+   },
+   {
+    "title": "AUC through pairs",
+    "prompt": "<p>ROC AUC looks only at the order: it is the probability that a random churner gets a higher probability than a random stayer. Write a function <code>auc_pairs(y_true, proba)</code>: compare all (positive, negative) pairs and return the share of pairs where the positive score is higher (a tie counts 0.5). Compute <code>auc_manual</code> on test.</p><p>For example, <code>auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5])</code> → <code>0.75</code>.</p>",
+    "hints": [
+     "Positive and negative scores: <code>pos = proba[y_true == 1]</code>, <code>neg = proba[y_true == 0]</code>",
+     "Differences of all pairs: <code>diff = pos[:, None] - neg[None, :]</code>",
+     "<code>((diff &gt; 0).sum() + 0.5 * (diff == 0).sum()) / diff.size</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras\n_r = auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5])\nassert _r is not None and abs(_r - 0.75) < 1e-9, \"auc_pairs([1, 0, 1, 0], [0.8, 0.3, 0.4, 0.5]) must be 0.75: in 3 of 4 pairs the positive is higher\"\nassert abs(auc_pairs([1, 0], [0.5, 0.5]) - 0.5) < 1e-9, \"Equal scores give 0.5 points\"\nassert abs(auc_manual - _ras(_yte, _p)) < 1e-9, f\"auc_manual must match roc_auc_score: {_ras(_yte, _p):.4f}\""
+    }
+   },
+   {
+    "title": "class_weight distorts probabilities",
+    "prompt": "<p>Train a second model on the same train set: <code>bal = LogisticRegression(max_iter=1000, class_weight='balanced')</code>. Compare the two models on test:</p><ul><li><code>auc_plain</code>, <code>auc_bal</code> — ROC AUC;</li><li><code>ll_plain</code>, <code>ll_bal</code> — log loss;</li><li><code>mean_plain</code>, <code>mean_bal</code> — the mean predicted probability;</li><li><code>fact</code> — the actual churn share in test.</li></ul><p>Did the order (AUC) change? And the level of the probabilities?</p>",
+    "hints": [
+     "<code>p_bal = bal.predict_proba(X_test)[:, 1]</code>",
+     "<code>log_loss(y_test, p_bal)</code>, <code>p_bal.mean()</code>"
+    ],
+    "check": {
+     "tests": "import numpy as _np\nfrom sklearn.model_selection import train_test_split as _tts\nfrom sklearn.linear_model import LogisticRegression as _LogR\n_c = pd.read_csv('churn.csv')\n_F = ['tenure_months', 'monthly_fee', 'support_calls', 'has_contract']\n_Xtr, _Xte, _ytr, _yte = _tts(_c[_F], _c['churned'], test_size=0.25, random_state=42, stratify=_c['churned'])\n_p = _LogR(max_iter=1000).fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nfrom sklearn.metrics import roc_auc_score as _ras, log_loss as _lls\n_pb = _LogR(max_iter=1000, class_weight='balanced').fit(_Xtr, _ytr).predict_proba(_Xte)[:, 1]\nassert abs(auc_plain - _ras(_yte, _p)) < 1e-6 and abs(auc_bal - _ras(_yte, _pb)) < 1e-6, f\"AUC must be: plain ≈ {_ras(_yte, _p):.3f}, balanced ≈ {_ras(_yte, _pb):.3f}\"\nassert abs(ll_plain - _lls(_yte, _p)) < 1e-6 and abs(ll_bal - _lls(_yte, _pb)) < 1e-6, f\"log loss must be: plain ≈ {_lls(_yte, _p):.3f}, balanced ≈ {_lls(_yte, _pb):.3f}\"\nassert abs(mean_plain - _p.mean()) < 1e-6 and abs(mean_bal - _pb.mean()) < 1e-6 and abs(fact - _yte.mean()) < 1e-9, \"mean_plain, mean_bal are the means of predict_proba[:, 1]; fact = y_test.mean()\"\nassert mean_bal > fact + 0.1, \"The balanced model overstates the risk: mean_bal is much higher than the actual share\""
+    }
+   }
+  ]
  }
 } });

@@ -328,5 +328,230 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "ba-9": {
+  "pr": [
+   {
+    "title": "Gone for over a year",
+    "prompt": "Using <code>delivered</code> orders only (\"today\" = <code>2026-07-01</code>), list the customers whose last purchase was more than 365 days ago: <code>customer_id</code>, <code>recency_days</code>. Sort by <code>recency_days</code> descending, then <code>customer_id</code>.",
+    "hints": [
+     "<code>CAST(julianday('2026-07-01') - julianday(MAX(o.order_date)) AS INTEGER)</code>",
+     "Filter on the aggregate: <code>HAVING recency_days &gt; 365</code>. Recency does not need <code>order_items</code>."
+    ]
+   },
+   {
+    "title": "Frequency distribution",
+    "prompt": "How are customers spread by frequency (<code>delivered</code> orders only)? <code>frequency</code> (a customer's number of orders), <code>customers</code> (how many such customers). By <code>frequency</code>.",
+    "hints": [
+     "Group the ready <code>rfm</code> CTE once more, by <code>frequency</code>."
+    ]
+   },
+   {
+    "title": "Top five by monetary",
+    "prompt": "The 5 customers who brought in the most money (<code>delivered</code> only): <code>customer_id</code>, <code>monetary</code> (sum of quantity × unit_price). Sort by <code>monetary</code> descending.",
+    "hints": [
+     "<code>ORDER BY monetary DESC LIMIT 5</code>"
+    ]
+   },
+   {
+    "title": "The \"333\" customers",
+    "prompt": "List the <code>customer_id</code> of customers with the top score on all three dimensions (r = 3, f = 3, m = 3). Scores as in the lesson: <code>NTILE(3)</code>, recency descending, frequency and monetary ascending, with <code>customer_id</code> as the second column in every window. Sort by <code>customer_id</code>.",
+    "hints": [
+     "Compute the scores in a second CTE: a window function cannot be used directly in <code>WHERE</code>.",
+     "<code>NTILE(3) OVER (ORDER BY recency_days DESC, customer_id) AS r</code> and so on; then <code>WHERE r = 3 AND f = 3 AND m = 3</code>."
+    ]
+   },
+   {
+    "title": "ABC group summary",
+    "prompt": "Summarise the product ABC analysis (<code>delivered</code> only; cumulative share by descending revenue ≤ 80 is A, ≤ 95 is B, otherwise C) by group: <code>abc</code>, <code>products</code> (number of products), <code>revenue_pct</code> (the group's share of revenue, %, 1 decimal). By <code>abc</code>.",
+    "hints": [
+     "Put the lesson's ABC query into a CTE (<code>name</code>, <code>revenue</code>, <code>abc</code>), then <code>GROUP BY abc</code>.",
+     "Share: <code>100.0 * SUM(revenue) / (SELECT SUM(revenue) FROM a)</code>. Group A should have 7 products and 77.5%."
+    ]
+   },
+   {
+    "title": "Pareto by category",
+    "prompt": "Run the Pareto analysis at category level instead of products (<code>delivered</code> only): <code>category</code>, <code>revenue</code>, <code>cum_pct</code> (cumulative share by descending revenue, %, 1 decimal). Sort by revenue descending.",
+    "hints": [
+     "CTE: <code>GROUP BY pr.category</code>.",
+     "<code>ROUND(100.0 * SUM(revenue) OVER (ORDER BY revenue DESC) / SUM(revenue) OVER (), 1)</code>"
+    ]
+   },
+   {
+    "title": "How much each segment weighs",
+    "prompt": "Rebuild the lesson's segment table in SQL. Scores as in the lesson: <code>NTILE(3)</code>, recency descending, frequency and monetary ascending, with <code>customer_id</code> as the second column in every window. Segments: r = 3 and f = 3 is <code>'champions'</code>; r = 1 and f ≥ 2 is <code>'at_risk'</code>; r = 3 and f = 1 is <code>'new'</code>; everyone else is <code>'other'</code>. Columns: <code>segment</code>, <code>customers</code>, <code>revenue_pct</code> (share of monetary, %, 1 decimal). Sort by <code>revenue_pct</code> descending.",
+    "hints": [
+     "Three layers: <code>rfm</code> → scores (<code>NTILE</code>) → segment (<code>CASE</code>).",
+     "Order matters in the <code>CASE</code>: the first matching branch wins.",
+     "The numbers should match the lesson's table: 41, 14, 10, 5 customers."
+    ]
+   },
+   {
+    "title": "ABC by revenue and by units",
+    "prompt": "Compute each product's ABC group by revenue and by units sold (sum of <code>quantity</code>), <code>delivered</code> only, cut-offs 80 and 95. The cumulative share is row by row: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>, ordered by value descending, then <code>product_id</code>. Return the products whose two groups differ: <code>name</code>, <code>abc_revenue</code>, <code>abc_qty</code>. By <code>name</code>.",
+    "hints": [
+     "One CTE with each product's <code>revenue</code> and <code>qty</code> (<code>SUM(oi.quantity)</code>).",
+     "Unit counts have ties, hence <code>ORDER BY qty DESC, product_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>.",
+     "Two <code>CASE</code> expressions, then <code>WHERE abc_revenue &lt;&gt; abc_qty</code>."
+    ]
+   }
+  ]
+ },
+ "ba-10": {
+  "pr": [
+   {
+    "title": "MAU and user-days",
+    "prompt": "<b>metrics.</b> One row for September: <code>mau</code> (distinct users) and <code>user_days</code> (all \"user-day\" records). The gap between the two numbers is why MAU cannot be computed as a sum of DAUs.",
+    "hints": [
+     "<code>COUNT(DISTINCT user_id)</code> and <code>COUNT(*)</code>."
+    ]
+   },
+   {
+    "title": "Who came how many days",
+    "prompt": "<b>metrics.</b> Each user's number of active days in September: <code>user_id</code>, <code>active_days</code>. Sort by <code>active_days</code> descending, then <code>user_id</code>.",
+    "hints": [
+     "<code>COUNT(DISTINCT day)</code>, <code>GROUP BY user_id</code>."
+    ]
+   },
+   {
+    "title": "The busiest day",
+    "prompt": "<b>metrics.</b> Return the day (or days) with the highest DAU: <code>day</code>, <code>dau</code>.",
+    "hints": [
+     "Daily DAU in a CTE, then <code>WHERE dau = (SELECT MAX(dau) FROM d)</code>.",
+     "<code>ORDER BY ... LIMIT 1</code> would drop a day if there were a tie."
+    ]
+   },
+   {
+    "title": "Weekly WAU",
+    "prompt": "<b>metrics.</b> WAU per week: <code>week_start</code> (the Monday of the week, <code>date(day, 'weekday 0', '-6 days')</code>), <code>wau</code> (distinct users active at least once that week). By <code>week_start</code>. Partial weeks at the edges of the month are included.",
+    "hints": [
+     "<code>'weekday 0'</code> moves the date forward to Sunday, and <code>'-6 days'</code> gives that week's Monday.",
+     "WAU is a distinct count: <code>COUNT(DISTINCT user_id)</code>, not a sum of DAUs."
+    ]
+   },
+   {
+    "title": "A daily habit",
+    "prompt": "<b>metrics.</b> Users who were active on at least half the days of the month (≥ 50% of 30 days): <code>user_id</code>, <code>active_days</code>, <code>pct</code> (percent of 30 days, 1 decimal). Sort by <code>pct</code> descending, then <code>user_id</code>.",
+    "hints": [
+     "The denominator is the 30 calendar days: <code>COUNT(*) * 100.0 / 30</code>.",
+     "<code>HAVING COUNT(*) * 100.0 / 30 &gt;= 50</code>"
+    ]
+   },
+   {
+    "title": "When new users arrive",
+    "prompt": "<b>metrics.</b> Find each user's first active day in September and count by day: <code>first_day</code>, <code>new_users</code>. By <code>first_day</code>. MAU is built from these newcomers.",
+    "hints": [
+     "CTE: <code>SELECT user_id, MIN(day) AS first_day ... GROUP BY user_id</code>.",
+     "Then <code>GROUP BY first_day</code>. The <code>new_users</code> values add up to MAU."
+    ]
+   },
+   {
+    "title": "Weekdays vs weekends",
+    "prompt": "<b>metrics.</b> Compare the average DAU on weekdays and weekends: <code>day_type</code> (<code>'weekday'</code> or <code>'weekend'</code>; the weekend is Saturday and Sunday, <code>strftime('%w', day)</code> 6 or 0), <code>days</code> (calendar days), <code>avg_dau</code> (2 decimals). Days with no activity count too. By <code>day_type</code>.",
+    "hints": [
+     "First the zero-filled daily DAU: calendar + <code>LEFT JOIN</code>.",
+     "<code>strftime('%w', day)</code> returns text: <code>IN ('0', '6')</code>.",
+     "There should be 9 weekend days and 21 weekdays."
+    ]
+   },
+   {
+    "title": "Stickiness within the month",
+    "prompt": "<b>metrics.</b> Compare the two halves of the month: 1–15 and 16–30 September (15 days each). Columns: <code>half</code> (<code>'1-15'</code> or <code>'16-30'</code>), <code>avg_dau</code> (user-days / 15, 2 decimals), <code>users</code> (distinct users in that half), <code>stickiness_pct</code> (avg_dau / users, %, 1 decimal). By <code>half</code>.",
+    "hints": [
+     "Group label: <code>CASE WHEN day &lt;= '2024-09-15' THEN '1-15' ELSE '16-30' END</code>.",
+     "The denominator is 15 calendar days, not the days with data: <code>COUNT(*) * 1.0 / 15</code>.",
+     "<code>ROUND(COUNT(*) * 100.0 / 15 / COUNT(DISTINCT user_id), 1)</code>"
+    ]
+   }
+  ]
+ },
+ "ba-ab": {
+  "pr": [
+   {
+    "title": "Conversion rate",
+    "prompt": "<p>The function <code>conv_rate(users, conversions)</code> should return the conversion rate in percent, rounded with <code>round</code> to 2 decimals. If there are 0 users, return <code>0.0</code>.</p>",
+    "hints": [
+     "<code>conversions / users * 100</code>",
+     "To avoid dividing by zero, check <code>if users == 0</code> first."
+    ],
+    "check": {
+     "tests": "assert conv_rate(10000, 500) == 5.0, \"conv_rate(10000, 500) should be 5.0\"\nassert conv_rate(3000, 100) == 3.33, f\"conv_rate(3000, 100) should be 3.33, got {conv_rate(3000, 100)}\"\nassert conv_rate(0, 0) == 0.0, \"With 0 users return 0.0\""
+    }
+   },
+   {
+    "title": "Points vs percent",
+    "prompt": "<p>The function <code>lifts(cr_a, cr_b)</code> takes two conversion rates (both in %) and returns the pair <code>(abs_pp, rel_pct)</code>: the absolute lift in percentage points and the relative lift in percent. Round both with <code>round</code> to 2 decimals.</p>",
+    "hints": [
+     "Absolute: <code>cr_b - cr_a</code>. Relative: <code>(cr_b - cr_a) / cr_a * 100</code>."
+    ],
+    "check": {
+     "tests": "assert tuple(lifts(5.0, 5.6)) == (0.6, 12.0), f\"lifts(5.0, 5.6) should be (0.6, 12.0), got {lifts(5.0, 5.6)}\"\nassert tuple(lifts(4.0, 3.0)) == (-1.0, -25.0), \"A drop gives negative numbers: lifts(4.0, 3.0) = (-1.0, -25.0)\""
+    }
+   },
+   {
+    "title": "What the interval says",
+    "prompt": "<p>The function <code>ci_verdict(low, high)</code> should return a verdict from the confidence interval of the difference: <code>'positive'</code> if the interval is entirely above zero, <code>'negative'</code> if entirely below zero, and <code>'inconclusive'</code> if it contains zero.</p>",
+    "hints": [
+     "If the lower bound is above zero, the whole interval is: <code>if low &gt; 0</code>."
+    ],
+    "check": {
+     "tests": "assert ci_verdict(-0.02, 1.22) == 'inconclusive', \"The lesson's interval (−0.02 … 1.22) contains zero: 'inconclusive'\"\nassert ci_verdict(0.1, 0.9) == 'positive', \"0.1 … 0.9 should be 'positive'\"\nassert ci_verdict(-0.8, -0.2) == 'negative', \"-0.8 … -0.2 should be 'negative'\""
+    }
+   },
+   {
+    "title": "A split that is not 50/50",
+    "prompt": "<p>Sometimes a test is split 90/10 rather than 50/50. The function <code>srm(n_a, n_b, share_a=0.5)</code> should return the pair <code>(chi2, has_srm)</code>: expected sizes e_a = (n_a + n_b) × share_a and e_b = (n_a + n_b) × (1 − share_a); chi2 = (n_a − e_a)² / e_a + (n_b − e_b)² / e_b, rounded with <code>round</code> to 2 decimals; <code>has_srm</code> is chi2 &gt; 3.84.</p>",
+    "hints": [
+     "<code>e_a = total * share_a</code>, <code>e_b = total * (1 - share_a)</code>",
+     "With <code>share_a=0.5</code> you get the lesson's formula."
+    ],
+    "check": {
+     "tests": "_c, _f = srm(10000, 9400)\nassert abs(_c - 18.56) < 0.011 and _f is True, f\"srm(10000, 9400) should be (18.56, True), got {(_c, _f)}\"\n_c, _f = srm(9000, 1000, 0.9)\nassert abs(_c) < 0.011 and _f is False, \"The 90/10 plan was met exactly: chi2 = 0, has_srm False\"\n_c, _f = srm(9100, 900, 0.9)\nassert abs(_c - 11.11) < 0.011 and _f is True, f\"srm(9100, 900, 0.9) should be (11.11, True), got {(_c, _f)}\""
+    }
+   },
+   {
+    "title": "The decision table",
+    "prompt": "<p>Write the lesson's decision table as a function. <code>decide(srm, ci_low, ci_high, lift, mde, guardrail_ok=True)</code>: SRM present → <code>'rerun'</code>; a guardrail metric got worse (<code>guardrail_ok</code> False) → <code>'investigate'</code>; CI entirely above zero and <code>lift &gt;= mde</code> → <code>'ship'</code>; anything else → <code>'no_ship'</code>. Check in exactly this order.</p>",
+    "hints": [
+     "Four <code>if</code> checks, each returning immediately; SRM is checked first.",
+     "CI above zero: <code>ci_low &gt; 0</code>."
+    ],
+    "check": {
+     "tests": "assert decide(True, 0.5, 1.5, 1.0, 0.3) == 'rerun', \"With SRM the result is not used: 'rerun'\"\nassert decide(False, 0.5, 1.5, 1.0, 0.3, guardrail_ok=False) == 'investigate', \"If a guardrail metric got worse: 'investigate'\"\nassert decide(False, 0.5, 1.5, 1.0, 0.3) == 'ship', \"CI > 0 and lift ≥ MDE: 'ship'\"\nassert decide(False, -0.02, 1.22, 0.6, 0.3) == 'no_ship', \"CI contains zero: 'no_ship'\"\nassert decide(False, 0.05, 0.2, 0.1, 0.3) == 'no_ship', \"Significant but below the MDE: 'no_ship'\""
+    }
+   },
+   {
+    "title": "The early-stopping trap",
+    "prompt": "<p>An analyst checks the test every day. The function <code>peeking_stop(pvalues, alpha=0.05)</code> takes the list of daily p-values and returns the number of the <b>first</b> day (counting from 1) with p &lt; alpha, or <code>None</code> if there is none. Stopping on that day is peeking: as the lesson says, it inflates the share of false wins.</p>",
+    "hints": [
+     "<code>for day, p in enumerate(pvalues, start=1):</code>"
+    ],
+    "check": {
+     "tests": "assert peeking_stop([0.4, 0.2, 0.04, 0.09, 0.06]) == 3, \"The first p < 0.05 is on day 3: 3\"\nassert peeking_stop([0.3, 0.12, 0.07]) is None, \"If the threshold is never crossed: None\"\nassert peeking_stop([0.02, 0.5], alpha=0.01) is None, \"Use the alpha parameter\""
+    }
+   },
+   {
+    "title": "One control, several variants",
+    "prompt": "<p>An A/B/C test: the function <code>variants(groups)</code> takes a dictionary <code>{'A': (users, purchases), 'B': ..., ...}</code> and, for every variant except the control (<code>'A'</code>), returns a triple <code>(name, cr, rel_lift)</code>: <code>cr</code> is the conversion rate in %; <code>rel_lift</code> is the relative lift over A in %. Round both with <code>round</code> to 2 decimals. Sort the list by <code>rel_lift</code> descending.</p>",
+    "hints": [
+     "First A's conversion rate, then <code>for name, (users, conv) in groups.items():</code>, skipping <code>'A'</code>.",
+     "Compute the lift from the unrounded rates, and round only at the end.",
+     "<code>sorted(out, key=lambda r: r[2], reverse=True)</code>"
+    ],
+    "check": {
+     "tests": "_r = variants({'A': (10000, 500), 'B': (10000, 560), 'C': (10000, 470)})\nassert isinstance(_r, list) and len(_r) == 2, \"Expected a list of the two variants other than A\"\nassert [tuple(x) for x in _r] == [('B', 5.6, 12.0), ('C', 4.7, -6.0)], f\"Expected [('B', 5.6, 12.0), ('C', 4.7, -6.0)], got {_r}\"\n_r = variants({'C': (3000, 99), 'A': (3000, 90), 'B': (3000, 120)})\nassert [x[0] for x in _r] == ['B', 'C'] and [x[2] for x in _r] == [33.33, 10.0], f\"The control can be anywhere in the dict; expected B 33.33, C 10.0, got {_r}\""
+    }
+   },
+   {
+    "title": "Daily SRM",
+    "prompt": "<p>An assignment bug sometimes shows up on one day only (say, release day). The function <code>srm_days(days)</code> takes the list of daily <code>(n_a, n_b)</code> pairs of a 50/50 test and returns the list of day numbers (from 1) that have SRM (chi2 &gt; 3.84). chi2 as in the lesson: e = (n_a + n_b) / 2.</p>",
+    "hints": [
+     "Apply the lesson's chi2 formula to each day separately: <code>for i, (n_a, n_b) in enumerate(days, start=1):</code>."
+    ],
+    "check": {
+     "tests": "assert srm_days([(1000, 1010), (1020, 990), (1100, 900), (995, 1005)]) == [3], \"Only day 3 has SRM (1100 vs 900): [3]\"\nassert srm_days([(500, 500), (510, 490)]) == [], \"Small deviations give an empty list\"\nassert srm_days([(1200, 1000), (1000, 1000), (800, 1000)]) == [1, 3], f\"Several days: expected [1, 3], got {srm_days([(1200, 1000), (1000, 1000), (800, 1000)])}\""
+    }
+   }
+  ]
  }
 } });

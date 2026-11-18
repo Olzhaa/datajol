@@ -274,5 +274,97 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "cr-ds": {
+  "pr": [
+   {
+    "title": "AUC и Gini",
+    "prompt": "<p>В банках качество модели называют через Gini. Напишите две функции:</p><ul><li><code>gini_from_auc(auc)</code> — Gini = 2 × AUC − 1;</li><li><code>auc_from_gini(gini)</code> — обратное преобразование.</li></ul><p>Например, <code>gini_from_auc(0.75)</code> → <code>0.5</code>, <code>auc_from_gini(0.52)</code> → <code>0.76</code>.</p>",
+    "hints": [
+     "Выразите AUC из Gini = 2 × AUC − 1: AUC = (Gini + 1) / 2."
+    ],
+    "check": {
+     "tests": "assert gini_from_auc(0.75) is not None and abs(gini_from_auc(0.75) - 0.5) < 1e-12, \"AUC 0.75 → Gini 0.50\"\nassert abs(gini_from_auc(0.5)) < 1e-12, \"случайная модель: AUC 0.5 → Gini 0\"\nassert abs(gini_from_auc(1.0) - 1) < 1e-12, \"идеальная модель: Gini 1\"\nassert auc_from_gini(0.52) is not None and abs(auc_from_gini(0.52) - 0.76) < 1e-12, \"Gini 0.52 → AUC 0.76\"\nassert abs(auc_from_gini(gini_from_auc(0.81)) - 0.81) < 1e-12, \"две функции обратны друг другу\""
+    }
+   },
+   {
+    "title": "Accuracy модели «всё чисто»",
+    "prompt": "<p>На несбалансированных данных accuracy обманывает. Напишите функцию <code>majority_accuracy(y)</code>: она возвращает accuracy модели, которая всегда предсказывает большинство (<code>y</code> — список 0/1).</p><p>Например, если из 1 000 транзакций 5 — фрод, <code>majority_accuracy(y)</code> → <code>0.995</code>: модель, которая ничего не находит, «права» на 99.5%.</p>",
+    "hints": [
+     "Доля единиц <code>share = sum(y) / len(y)</code>; большинство — <code>max(share, 1 - share)</code>."
+    ],
+    "check": {
+     "tests": "assert majority_accuracy([0] * 995 + [1] * 5) is not None, \"majority_accuracy должна возвращать значение\"\nassert abs(majority_accuracy([0] * 995 + [1] * 5) - 0.995) < 1e-12, \"995 / 1000 = 0.995: accuracy высокая, но не найдено ни одного фрода\"\nassert abs(majority_accuracy([1, 1, 0]) - 2 / 3) < 1e-12, \"должно работать и когда большинство — 1: 2/3\"\nassert abs(majority_accuracy([0, 1]) - 0.5) < 1e-12, \"классы поровну: 0.5\""
+    }
+   },
+   {
+    "title": "Precision и recall",
+    "prompt": "<p>Напишите функцию <code>precision_recall(y_true, y_pred)</code>: по спискам 0/1 она возвращает <code>(precision, recall)</code>.</p><ul><li>precision = TP / (TP + FP) — доля настоящего фрода среди помеченных как «фрод»;</li><li>recall = TP / (TP + FN) — какая часть всего фрода найдена.</li></ul><p>Если знаменатель равен 0, эта метрика равна <code>0.0</code>.</p>",
+    "hints": [
+     "TP: <code>t == 1 and p == 1</code>; FP: <code>t == 0 and p == 1</code>; FN: <code>t == 1 and p == 0</code>.",
+     "Чтобы не делить на ноль: <code>tp / (tp + fp) if tp + fp else 0.0</code>."
+    ],
+    "check": {
+     "tests": "_r = precision_recall([1, 0, 1, 1, 0, 0], [1, 1, 0, 1, 0, 0])\nassert _r is not None and len(_r) == 2, \"верните пару (precision, recall)\"\nassert abs(_r[0] - 2 / 3) < 1e-12 and abs(_r[1] - 2 / 3) < 1e-12, f\"TP = 2, FP = 1, FN = 1: должно быть (2/3, 2/3), у вас {_r}\"\n_r2 = precision_recall([1, 1, 1, 0], [1, 0, 0, 0])\nassert abs(_r2[0] - 1) < 1e-12 and abs(_r2[1] - 1 / 3) < 1e-12, \"осторожная модель: precision 1, recall 1/3\"\nassert tuple(precision_recall([1, 0], [0, 0])) == (0.0, 0.0), \"если никого не пометили «фродом»: precision 0.0 (знаменатель 0), recall 0.0\""
+    }
+   },
+   {
+    "title": "Статистика KS",
+    "prompt": "<p>KS — наибольший разрыв между накопленными долями «плохих» и «хороших» клиентов. Напишите функцию <code>ks_stat(y, scores)</code>: берите каждый уникальный score как порог t, считайте TPR = (доля положительных примеров со score ≥ t) и FPR = (доля отрицательных со score ≥ t) и верните max |TPR − FPR|.</p><p>Например, <code>ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1])</code> → <code>0.5</code>.</p>",
+    "hints": [
+     "Разделите score на два списка: <code>pos</code> (y = 1) и <code>neg</code> (y = 0).",
+     "<code>for thr in set(scores)</code>: <code>tpr = sum(s &gt;= thr for s in pos) / len(pos)</code>, FPR так же."
+    ],
+    "check": {
+     "tests": "import numpy as _np\nassert ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1]) is not None, \"ks_stat должна возвращать значение\"\nassert abs(ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1]) - 0.5) < 1e-12, f\"должно быть KS = 0.5 (на порогах t = 0.9 и t = 0.7), у вас {ks_stat([1, 0, 1, 0], [0.9, 0.8, 0.7, 0.1])}\"\nassert abs(ks_stat([1, 1, 0, 0], [0.9, 0.8, 0.3, 0.1]) - 1) < 1e-12, \"идеальное разделение: KS = 1\"\nassert abs(ks_stat([0, 0, 1, 1], [0.9, 0.8, 0.3, 0.1]) - 1) < 1e-12, \"при обратном порядке тоже |TPR − FPR| = 1: берите модуль\"\n_g = _np.random.default_rng(6)\n_y = (_g.random(300) < 0.3).astype(int)\n_s = _np.round(_g.normal(0, 1, 300) + 1.2 * _y, 2)\n_e = max(abs((_s[_y == 1] >= _t).mean() - (_s[_y == 0] >= _t).mean()) for _t in set(_s.tolist()))\nassert abs(ks_stat(_y.tolist(), _s.tolist()) - _e) < 1e-9, f\"на 300 клиентах должно быть KS ≈ {_e:.3f}, у вас {ks_stat(_y.tolist(), _s.tolist()):.3f}\""
+    }
+   },
+   {
+    "title": "PSI: устарела ли модель",
+    "prompt": "<p>Доли score по интервалам: <code>expected</code> — в период обучения, <code>actual</code> — сейчас. Напишите две функции:</p><ul><li><code>psi(expected, actual)</code> — PSI = Σ (a − e) × ln(a / e);</li><li><code>needs_retrain(expected, actual)</code> — <code>True</code>, если PSI &gt; 0.25 (существенный сдвиг).</li></ul><p>Например, <code>psi([0.25] * 4, [0.1, 0.2, 0.3, 0.4])</code> ≈ <code>0.228</code>: зона наблюдения, но переобучать пока не нужно.</p>",
+    "hints": [
+     "<code>sum((a - e) * math.log(a / e) for e, a in zip(expected, actual))</code>",
+     "Каждое слагаемое неотрицательно: если a &gt; e, то ln(a / e) &gt; 0; если a &lt; e, оба множителя отрицательны."
+    ],
+    "check": {
+     "tests": "assert psi([0.25] * 4, [0.25] * 4) is not None and abs(psi([0.25] * 4, [0.25] * 4)) < 1e-12, \"если распределение не изменилось, PSI = 0\"\n_p = psi([0.25] * 4, [0.1, 0.2, 0.3, 0.4])\nassert abs(_p - 0.228217) < 1e-4, f\"должно быть PSI ≈ 0.228, у вас {_p:.4f}\"\nassert abs(psi([0.5, 0.3, 0.2], [0.2, 0.3, 0.5]) - 0.549774) < 1e-4, \"крайние интервалы поменялись местами: PSI ≈ 0.550\"\nassert needs_retrain([0.25] * 4, [0.1, 0.2, 0.3, 0.4]) is False, \"0.228 ≤ 0.25: переобучать пока не нужно (False)\"\nassert needs_retrain([0.5, 0.3, 0.2], [0.2, 0.3, 0.5]) is True, \"0.55 > 0.25: существенный сдвиг (True)\"\nassert abs(psi([0.1, 0.9], [0.2, 0.8]) - psi([0.2, 0.8], [0.1, 0.9])) < 1e-12, \"PSI симметричен: если поменять expected и actual, значение не изменится\""
+    }
+   },
+   {
+    "title": "Дефолты в 20% самых рискованных",
+    "prompt": "<p>В write-up результат формулируют на языке бизнеса: «модель находит 60% дефолтов в 20% самых рискованных заявок». Напишите функцию <code>capture_rate(y, scores, top=0.2)</code>: отсортируйте по score по убыванию и верните долю всех дефолтов, попавших в первые <code>k = round(top × n)</code> заявок.</p><p>У случайной модели это примерно равно <code>top</code>.</p>",
+    "hints": [
+     "Отсортируйте индексы по score: <code>sorted(range(len(y)), key=lambda i: scores[i], reverse=True)</code>.",
+     "Разделите сумму y по первым k индексам на <code>sum(y)</code>."
+    ],
+    "check": {
+     "tests": "_y = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0]\n_s = [0.9, 0.8, 0.1, 0.7, 0.2, 0.3, 0.4, 0.05, 0.6, 0.5]\nassert capture_rate(_y, _s) is not None, \"capture_rate должна возвращать значение\"\nassert abs(capture_rate(_y, _s) - 1 / 3) < 1e-12, f\"в 2 самых рискованных заявках (0.9, 0.8) 1 из 3 дефолтов: 1/3, у вас {capture_rate(_y, _s)}\"\nassert abs(capture_rate(_y, _s, top=0.3) - 2 / 3) < 1e-12, \"top = 0.3: первые 3 заявки (0.9, 0.8, 0.7), 2/3\"\nassert abs(capture_rate(_y, _s, top=1.0) - 1) < 1e-12, \"top = 1: пойманы все дефолты\"\nassert abs(capture_rate([1, 1, 0, 0, 0], [0.2, 0.1, 0.9, 0.8, 0.7], top=0.4)) < 1e-12, \"модель с обратным порядком не находит никого в первых 40%\""
+    }
+   },
+   {
+    "title": "Аудит утечки",
+    "prompt": "<p>Take-home: в <code>df</code> — кредитные заявки и столбец <code>default</code>. Проверьте, насколько каждый признак сам по себе упорядочивает target. Напишите функцию <code>suspicious(df, target, thr=0.9)</code>: для каждого столбца, кроме target, посчитайте <code>roc_auc_score(df[target], df[col])</code> и верните <b>отсортированный</b> список столбцов, у которых max(AUC, 1 − AUC) ≥ thr.</p><p>1 − AUC тоже нужен: если признак связан с target обратно (например, доля своевременных платежей), AUC близок к 0. Если у одного признака AUC 0.95, это обычно информация, «неизвестная в момент прогноза».</p>",
+    "hints": [
+     "<code>for col in df.columns</code>, target пропустите через <code>continue</code>.",
+     "<code>auc = roc_auc_score(df[target], df[col])</code>; условие: <code>max(auc, 1 - auc) &gt;= thr</code>.",
+     "В конце <code>sorted(...)</code>."
+    ],
+    "check": {
+     "tests": "from sklearn.metrics import roc_auc_score as _auc\n_r = suspicious(df, \"default\")\nassert _r is not None, \"suspicious должна возвращать значение\"\nassert list(_r) == [\"collection_calls\", \"on_time_share\"], f\"подозрительные признаки должны быть ['collection_calls', 'on_time_share'], у вас {_r}. У on_time_share AUC близок к 0: проверяйте и 1 − AUC\"\nassert \"default\" not in suspicious(df, \"default\", thr=0.5), \"не проверяйте сам столбец target\"\n_m = {c: max(_auc(df[\"default\"], df[c]), 1 - _auc(df[\"default\"], df[c])) for c in df.columns if c != \"default\"}\n_e = sorted(c for c, v in _m.items() if v >= 0.6)\nassert list(suspicious(df, \"default\", thr=0.6)) == _e, f\"при thr = 0.6 должно быть {_e}: используйте параметр thr\"\n_d2 = df.rename(columns={\"default\": \"bad\"})\nassert list(suspicious(_d2, \"bad\")) == [\"collection_calls\", \"on_time_share\"], \"имя target должно браться из параметра, не пишите default напрямую\""
+    }
+   },
+   {
+    "title": "Out-of-time Gini и Pipeline",
+    "prompt": "<p>Заявки 2024 года: <code>month</code> (1–12), признаки и <code>default</code>. Напишите функцию <code>oot_gini(df, cutoff)</code>:</p><ol><li>train — <code>month &lt; cutoff</code>, test — <code>month &gt;= cutoff</code> (split по времени);</li><li>признаки — все столбцы, кроме <code>month</code> и <code>default</code>;</li><li><code>Pipeline([(\"scaler\", StandardScaler()), (\"model\", LogisticRegression(max_iter=1000))])</code> обучается (fit) только на train;</li><li>верните <code>(gini_train, gini_test)</code>: Gini = 2 × ROC-AUC − 1 по <code>predict_proba(...)[:, 1]</code>.</li></ol><p>В данных в последние месяцы закономерность ослабла (drift), поэтому out-of-time Gini ниже, чем на train.</p>",
+    "hints": [
+     "Split: <code>train, test = df[df[\"month\"] &lt; cutoff], df[df[\"month\"] &gt;= cutoff]</code>.",
+     "Признаки: <code>[c for c in df.columns if c not in (\"month\", \"default\")]</code>.",
+     "<code>pipe.fit(train[features], train[\"default\"])</code>, затем на каждой части <code>2 * roc_auc_score(...) - 1</code>."
+    ],
+    "check": {
+     "tests": "from sklearn.pipeline import Pipeline as _P\nfrom sklearn.preprocessing import StandardScaler as _S\nfrom sklearn.linear_model import LogisticRegression as _L\nfrom sklearn.metrics import roc_auc_score as _auc\ndef _ref(d, cut):\n    tr, te = d[d[\"month\"] < cut], d[d[\"month\"] >= cut]\n    f = [c for c in d.columns if c not in (\"month\", \"default\")]\n    p = _P([(\"s\", _S()), (\"m\", _L(max_iter=1000))]).fit(tr[f], tr[\"default\"])\n    return 2 * _auc(tr[\"default\"], p.predict_proba(tr[f])[:, 1]) - 1, 2 * _auc(te[\"default\"], p.predict_proba(te[f])[:, 1]) - 1\n_r = oot_gini(df, 10)\nassert _r is not None and len(_r) == 2, \"верните пару (gini_train, gini_test)\"\n_e = _ref(df, 10)\nassert abs(float(_r[0]) - _e[0]) < 1e-6, f\"должно быть gini_train ≈ {_e[0]:.4f}, у вас {float(_r[0]):.4f}. month и default не входят в признаки, scaler обучается только на train\"\nassert abs(float(_r[1]) - _e[1]) < 1e-6, f\"должно быть gini_test ≈ {_e[1]:.4f}, у вас {float(_r[1]):.4f}. test — month >= cutoff\"\nassert float(_r[1]) < float(_r[0]) - 0.05, \"из-за drift out-of-time Gini ниже, чем на train\"\n_e7 = _ref(df, 7)\nassert abs(float(oot_gini(df, 7)[1]) - _e7[1]) < 1e-6, \"используйте параметр cutoff\""
+    }
+   }
+  ]
  }
 } });

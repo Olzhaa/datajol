@@ -823,6 +823,278 @@ DJ.i18n.patch({
      }
     }
    ]
+  },
+  "ab-chi": {
+   "pr": [
+    {
+     "title": "Expected table",
+     "prompt": "<p>Write the function <code>expected_table(table)</code> without libraries: <code>table</code> is a table of counts (a list of lists). Return the table expected under H0: each cell E = row total × column total / grand total.</p><p>For example, <code>expected_table([[30, 70], [45, 55]])</code> → <code>[[37.5, 62.5], [37.5, 62.5]]</code>.</p>",
+     "hints": [
+      "Row totals: <code>[sum(r) for r in table]</code>; column totals: <code>[sum(c) for c in zip(*table)]</code>.",
+      "A two-level list comprehension: <code>[[r * c / total for c in cols] for r in rows]</code>."
+     ],
+     "check": {
+      "tests": "_e = expected_table([[30, 70], [45, 55]])\nassert _e is not None, \"expected_table must return a value\"\nassert len(_e) == 2 and all(abs(_a - _b) < 1e-9 for _ra, _rb in zip(_e, [[37.5, 62.5], [37.5, 62.5]]) for _a, _b in zip(_ra, _rb)), f\"it should be [[37.5, 62.5], [37.5, 62.5]], you got {_e}\"\n_e2 = expected_table([[10, 20, 30], [20, 20, 20]])\nassert all(abs(_a - _b) < 1e-9 for _a, _b in zip(_e2[0], [15, 20, 25])), f\"in the 2 × 3 table the first row should be [15, 20, 25], you got {_e2[0]}\"\n_t = [[90, 1410], [95, 905], [30, 470]]\n_e3 = expected_table(_t)\nassert all(abs(sum(_r) - sum(_o)) < 1e-9 for _r, _o in zip(_e3, _t)), \"the row totals of the expected table match the observed table\"\nassert abs(_e3[1][0] - 1000 * 215 / 3000) < 1e-9, \"desktop buyers: 1000 × 215 / 3000 ≈ 71.67\""
+     }
+    },
+    {
+     "title": "Bonferroni correction",
+     "prompt": "<p>The χ² test said “there is a difference somewhere”, and you compared several pairs. Write the function <code>bonferroni(pvalues, alpha=0.05)</code>: for each p-value return <code>True</code> if <code>p &lt; alpha / m</code>, otherwise <code>False</code> (m is the number of comparisons).</p><p>For example, <code>bonferroni([0.01, 0.02, 0.04])</code> → <code>[True, False, False]</code>: the threshold is 0.05 / 3 ≈ 0.0167.</p>",
+     "hints": [
+      "The threshold: <code>alpha / len(pvalues)</code>."
+     ],
+     "check": {
+      "tests": "assert bonferroni([0.01, 0.02, 0.04]) == [True, False, False], \"[0.01, 0.02, 0.04]: the threshold is 0.0167, only the first is significant\"\nassert bonferroni([0.001] * 5) == [True] * 5, \"0.001 < 0.05 / 5 = 0.01: all are significant\"\nassert bonferroni([0.03, 0.2]) == [False, False], \"two comparisons: the threshold is 0.025, 0.03 does not pass\"\nassert bonferroni([0.03, 0.2], alpha=0.1) == [True, False], \"with alpha = 0.1 the threshold is 0.05\""
+     }
+    },
+    {
+     "title": "Before and after the promo",
+     "prompt": "<p>You have the monthly spending (₸) of the same 8 customers before and after a promo. Compute:</p><ul><li><code>mean_diff</code> — the mean of the differences (after − before);</li><li><code>p_paired</code> — the p-value of <code>stats.ttest_rel(after, before)</code>;</li><li><code>p_welch</code> — the p-value of <code>stats.ttest_ind(after, before, equal_var=False)</code>, which ignores the pairing.</li></ul><p>Compare the two p-values: the large spread between customers hides the effect in the independent-groups test.</p>",
+     "hints": [
+      "Differences: <code>[a - b for a, b in zip(after, before)]</code>.",
+      "Take <code>.pvalue</code> from the result of each test."
+     ],
+     "check": {
+      "tests": "from scipy import stats as _st\n_b = [5200, 8100, 3900, 12000, 6500, 7300, 4800, 9900]\n_a = [5500, 8550, 4020, 12600, 6700, 7680, 4950, 10410]\nassert mean_diff is not None and abs(float(mean_diff) - 338.75) < 1e-9, \"mean_diff = 2710 / 8 = 338.75 ₸\"\nassert p_paired is not None and abs(float(p_paired) - _st.ttest_rel(_a, _b).pvalue) < 1e-12, \"p_paired: stats.ttest_rel(after, before).pvalue\"\nassert p_welch is not None and abs(float(p_welch) - _st.ttest_ind(_a, _b, equal_var=False).pvalue) < 1e-12, \"p_welch: stats.ttest_ind(after, before, equal_var=False).pvalue\"\nassert float(p_paired) < 0.01 < 0.5 < float(p_welch), \"the paired test sees the effect (p < 0.01), the independent test does not (p > 0.5)\""
+     }
+    },
+    {
+     "title": "χ² by hand",
+     "prompt": "<p>Write the function <code>chi2_by_hand(table)</code>: for a table of any size it returns <code>(chi2, dof)</code>.</p><pre><code>χ² = Σ (O − E)² / E        df = (rows − 1) × (columns − 1)</code></pre><p>The test compares the result with <code>stats.chi2_contingency(table, correction=False)</code> (without the Yates correction).</p>",
+     "hints": [
+      "First the expected cell: <code>e = rows[i] * cols[j] / total</code>.",
+      "Two loops: <code>for i, r in enumerate(table)</code> and <code>for j, o in enumerate(r)</code>."
+     ],
+     "check": {
+      "tests": "from scipy import stats as _st\nassert chi2_by_hand([[30, 70], [45, 55]]) is not None, \"chi2_by_hand must return a value\"\nfor _t in ([[30, 70], [45, 55]], [[90, 1410], [95, 905], [30, 470]], [[12, 30, 18], [20, 25, 35], [8, 15, 37]]):\n    _c, _p, _d, _e = _st.chi2_contingency(_t, correction=False)\n    _r = chi2_by_hand(_t)\n    assert abs(float(_r[0]) - _c) < 1e-6, f\"for {_t} χ² should be ≈ {_c:.3f}, you got {float(_r[0]):.3f}\"\n    assert int(_r[1]) == _d, f\"for {_t} df should be {_d}, you got {_r[1]}\""
+     }
+    },
+    {
+     "title": "2 × 2 table: χ² = z²",
+     "prompt": "<p>A: 200 of 2 000 users bought, B: 250 of 2 000. Compute:</p><ul><li><code>z</code> — the z-statistic for two proportions (pooled SE, ab-5) in the direction B − A;</li><li><code>chi2_nc</code>, <code>p_nc</code> — the result of <code>stats.chi2_contingency(table, correction=False)</code>;</li><li><code>p_yates</code> — the p-value of the default <code>chi2_contingency(table)</code> (with the Yates correction).</li></ul><p><code>table</code> is a 2 × 2 table: rows A, B; columns “bought”, “did not buy”.</p>",
+     "hints": [
+      "The table: <code>[[x_a, n_a - x_a], [x_b, n_b - x_b]]</code> — do not forget the “did not buy” column.",
+      "The pooled share: <code>p = (x_a + x_b) / (n_a + n_b)</code>, SE = √(p(1 − p)(1/n_a + 1/n_b))."
+     ],
+     "check": {
+      "tests": "from statistics import NormalDist as _N\nassert table is not None and [list(_r) for _r in table] == [[200, 1800], [250, 1750]], \"table should be [[200, 1800], [250, 1750]]\"\nassert z is not None and abs(float(z) - 2.50196) < 1e-4, f\"z should be ≈ 2.50 (pooled SE), you got {z}\"\nassert chi2_nc is not None and abs(float(chi2_nc) - float(z) ** 2) < 1e-6, \"in a 2 × 2 table without Yates χ² = z²\"\nassert p_nc is not None and abs(float(p_nc) - 2 * (1 - _N().cdf(abs(float(z))))) < 1e-6, \"p_nc equals the two-sided p-value of the z-test: 2 × (1 − Φ(|z|))\"\nassert p_yates is not None and float(p_yates) > float(p_nc), \"the Yates correction makes p a bit larger: p_yates > p_nc\""
+     }
+    },
+    {
+     "title": "Direction: greater, less, two-sided",
+     "prompt": "<p>It looks like the average check dropped in the new design (B). Compute three versions of the Welch t-test, in each call first <code>b</code>, then <code>a</code>:</p><ul><li><code>p_two</code> — <code>alternative='two-sided'</code>;</li><li><code>p_greater</code> — “the mean of B is larger”;</li><li><code>p_less</code> — “the mean of B is smaller”.</li></ul><p>Notice: <code>p_greater + p_less = 1</code>, and <code>p_two</code> is twice the smaller of them. That is why the direction is chosen before looking at the data.</p>",
+     "hints": [
+      "<code>stats.ttest_ind(b, a, equal_var=False, alternative='less').pvalue</code>",
+      "<code>equal_var=False</code> is needed in every call."
+     ],
+     "check": {
+      "tests": "from scipy import stats as _st\n_t = _st.ttest_ind(b, a, equal_var=False, alternative='two-sided').pvalue\n_g = _st.ttest_ind(b, a, equal_var=False, alternative='greater').pvalue\n_l = _st.ttest_ind(b, a, equal_var=False, alternative='less').pvalue\nassert p_two is not None and abs(float(p_two) - _t) < 1e-9, f\"p_two should be ≈ {_t:.4f}: Welch, first b, then a\"\nassert p_greater is not None and abs(float(p_greater) - _g) < 1e-9, f\"p_greater should be ≈ {_g:.4f}: alternative='greater'\"\nassert p_less is not None and abs(float(p_less) - _l) < 1e-9, f\"p_less should be ≈ {_l:.4f}: alternative='less'\"\nassert abs(float(p_greater) + float(p_less) - 1) < 1e-9, \"the two one-sided p-values add up to 1\"\nassert abs(float(p_two) - 2 * min(float(p_greater), float(p_less))) < 1e-9, \"two-sided p = 2 × min(one-sided p)\""
+     }
+    },
+    {
+     "title": "Pairwise comparisons",
+     "prompt": "<p>The χ² test said there is a difference between the variants. Now let us find which pairs differ. Write the function <code>pairwise(table, alpha=0.05)</code>: in <code>table</code> the rows are variants and the columns are [bought, did not buy]. The function returns <code>(pvals, significant)</code>:</p><ul><li><code>pvals</code> — a dictionary <code>{(i, j): p}</code> for all pairs (i &lt; j), p is the p-value of <code>stats.chi2_contingency([table[i], table[j]], correction=False)</code>;</li><li><code>significant</code> — the sorted list of pairs significant by Bonferroni: p &lt; alpha / number of pairs.</li></ul><p>The pairs come from <code>itertools.combinations(range(len(table)), 2)</code>.</p>",
+     "hints": [
+      "One pair: <code>stats.chi2_contingency([table[i], table[j]], correction=False)[1]</code> — the second value is the p-value.",
+      "The threshold: <code>alpha / len(pvals)</code>; sort the list with <code>sorted(...)</code>."
+     ],
+     "check": {
+      "tests": "from scipy import stats as _st\n_t = [[80, 920], [95, 905], [130, 870], [90, 910]]\n_r = pairwise(_t)\nassert _r is not None and len(_r) == 2, \"return the pair (pvals, significant)\"\n_pv, _sig = _r\nassert len(_pv) == 6, f\"there should be 6 pairs for 4 variants, you got {len(_pv)}\"\nassert abs(_pv[(1, 2)] - _st.chi2_contingency([_t[1], _t[2]], correction=False)[1]) < 1e-9, \"the p-value of the pair (1, 2): chi2_contingency([table[1], table[2]], correction=False)\"\nassert _pv[(1, 2)] < 0.05 and (1, 2) not in _sig, \"(1, 2): p ≈ 0.013 < 0.05, but the Bonferroni threshold is 0.05 / 6 ≈ 0.0083, so it is not significant\"\nassert list(_sig) == [(0, 2), (2, 3)], f\"the significant pairs should be [(0, 2), (2, 3)], you got {_sig}\"\nassert list(pairwise(_t, alpha=0.2)[1]) == [(0, 2), (1, 2), (2, 3)], \"with alpha = 0.2 the threshold is 0.033: (1, 2) is added too\"\nassert list(pairwise([[100, 900], [120, 880], [150, 850]])[1]) == [(0, 2)], \"in the lesson table only A and C differ: [(0, 2)]\""
+     }
+    },
+    {
+     "title": "The U statistic by hand",
+     "prompt": "<p>The Mann–Whitney test asks: “is a value drawn at random from B larger than one from A?” Its statistic U is the number of pairs in which the value of B is larger than the value of A (0.5 for a tie). Write two functions:</p><ul><li><code>u_stat(b, a)</code> — U over all pairs (b, a);</li><li><code>superiority(b, a)</code> — U / (len(a) × len(b)): the probability that a random value of B is larger than a random value of A.</li></ul><p>The result must match <code>stats.mannwhitneyu(b, a).statistic</code>. The test also checks how an outlier affects U.</p>",
+     "hints": [
+      "Two loops: <code>for x in b</code>, <code>for y in a</code>; +1 if <code>x &gt; y</code>, +0.5 for a tie.",
+      "The denominator is the number of pairs: <code>len(a) * len(b)</code>."
+     ],
+     "check": {
+      "tests": "from scipy import stats as _st\n_a = [5, 7, 6, 8, 4]\n_b = [9, 7, 8, 10, 6]\nassert u_stat(_b, _a) is not None, \"u_stat must return a value\"\nassert abs(u_stat(_b, _a) - _st.mannwhitneyu(_b, _a).statistic) < 1e-9, f\"U should be ≈ {_st.mannwhitneyu(_b, _a).statistic}, you got {u_stat(_b, _a)}. Ties give 0.5\"\nassert abs(u_stat([3, 4], [1, 2]) - 4) < 1e-9 and abs(u_stat([1, 2], [3, 4])) < 1e-9, \"[3, 4] and [1, 2]: B is larger in all 4 pairs, in the reverse order 0\"\nassert abs(superiority([5, 5], [5, 5]) - 0.5) < 1e-9, \"if all values are equal, the probability is 0.5\"\nassert abs(superiority(_b, _a) + superiority(_a, _b) - 1) < 1e-9, \"superiority(b, a) + superiority(a, b) = 1\"\n_w = [9, 7, 8, 1000000, 6]\nassert abs(u_stat(_w, _a) - u_stat(_b, _a)) < 1e-9, \"replacing the largest value with 1 000 000 does not change U: the test looks at ranks\"\nimport numpy as _np\n_g = _np.random.default_rng(2)\n_x = _np.round(_g.lognormal(8, 1, 40), -2)\n_y = _np.round(_g.lognormal(8.3, 1, 30), -2)\nassert abs(u_stat(list(_y), list(_x)) - _st.mannwhitneyu(_y, _x).statistic) < 1e-6, \"on larger data with ties U must also match scipy\""
+     }
+    }
+   ]
+  },
+  "ab-boot": {
+   "pr": [
+    {
+     "title": "One bootstrap sample",
+     "prompt": "<p>Write the function <code>resample(x, seed=0)</code>: create <code>rng = np.random.default_rng(seed)</code> and return one sample of size <code>len(x)</code> drawn from <code>x</code> with replacement.</p><p>For example, <code>resample([2, 4, 4, 10])</code> is an array of four values, some of which may repeat.</p>",
+     "hints": [
+      "<code>rng.choice(x, size=len(x), replace=True)</code>"
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_x = _np.arange(1, 51)\n_s = resample(_x)\nassert _s is not None and len(_s) == 50, \"the sample size must be len(x) = 50\"\nassert all(_v in set(_x.tolist()) for _v in _np.asarray(_s).tolist()), \"all values must come from x\"\nassert len(set(_np.asarray(_s).tolist())) < 50, \"with replacement some values repeat: replace=True\"\n_ref = _np.random.default_rng(0).choice(_x, size=50, replace=True)\nassert _np.array_equal(_np.asarray(_s), _ref), \"use np.random.default_rng(seed) and rng.choice(x, size=len(x), replace=True)\"\nassert not _np.array_equal(_np.asarray(resample(_x, seed=1)), _ref), \"a different seed must give a different sample\""
+     }
+    },
+    {
+     "title": "Percentile interval",
+     "prompt": "<p>The bootstrap values <code>vals</code> are ready. Write the function <code>percentile_ci(vals, level=0.95)</code>: it returns <code>(low, high)</code> by the percentile method — the quantiles <code>(1 − level) / 2</code> and <code>1 − (1 − level) / 2</code>.</p><p>For example, <code>percentile_ci(np.arange(1001))</code> → <code>(25.0, 975.0)</code>.</p>",
+     "hints": [
+      "<code>a = (1 - level) / 2</code>; <code>np.quantile(vals, a)</code> and <code>np.quantile(vals, 1 - a)</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_r = percentile_ci(_np.arange(1001))\nassert _r is not None and len(_r) == 2, \"return the pair (low, high)\"\nassert abs(_r[0] - 25) < 1e-9 and abs(_r[1] - 975) < 1e-9, f\"for 0..1000 the 95% interval should be (25, 975), you got {_r}\"\n_r9 = percentile_ci(_np.arange(1001), level=0.9)\nassert abs(_r9[0] - 50) < 1e-9 and abs(_r9[1] - 950) < 1e-9, \"level = 0.9: (50, 950), use the level parameter\"\n_r5 = percentile_ci([3, 1, 2], level=0.0)\nassert abs(_r5[0] - 2) < 1e-9 and abs(_r5[1] - 2) < 1e-9, \"with level = 0 both bounds are the median\""
+     }
+    },
+    {
+     "title": "Bootstrap means",
+     "prompt": "<p>Write the function <code>boot_means(x, n_boot=2000, seed=0)</code>: draw <code>n_boot</code> samples from <code>x</code> with replacement and return the mean of each as a NumPy array.</p><p>The test checks that the SD of the bootstrap means is close to the formula SE = SD / √n.</p>",
+     "hints": [
+      "One repetition: <code>rng.choice(x, size=len(x), replace=True).mean()</code>.",
+      "Turn the list into an array with <code>np.array([...])</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_x = _np.random.default_rng(4).exponential(5000, 400)\n_m = boot_means(_x)\nassert _m is not None and len(_m) == 2000, \"there should be n_boot = 2000 means\"\n_se = _x.std(ddof=1) / len(_x) ** 0.5\nassert abs(float(_np.mean(_m)) - _x.mean()) < 0.2 * _se, \"the mean of the bootstrap means is close to the sample mean\"\nassert abs(float(_np.std(_m)) - _se) < 0.1 * _se, f\"SD(bootstrap means) should be ≈ SE = {_se:.0f}, you got {float(_np.std(_m)):.0f}. Each sample has size len(x)\"\nassert len(boot_means(_x, n_boot=300)) == 300, \"use the n_boot parameter\""
+     }
+    },
+    {
+     "title": "CI for the difference of medians",
+     "prompt": "<p>An A/B test: the checks are heavily skewed, so we compare medians. Write the function <code>diff_ci(a, b, stat, n_boot=2000, level=0.95, seed=0)</code>: on each repetition take a resample <b>from each group separately</b>, compute <code>stat(b*) − stat(a*)</code> and return <code>(low, high)</code> by the percentile method. One <code>rng</code> is enough.</p><p>If the interval does not contain 0, the difference is significant at the level α = 1 − level.</p>",
+     "hints": [
+      "Each group keeps its own size: <code>rng.choice(a, size=len(a), replace=True)</code>, the same for b.",
+      "Collect the differences in a list, then <code>np.quantile</code> at the end."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(8)\n_a = _g.lognormal(8.0, 0.9, 250)\n_b = _g.lognormal(8.3, 0.9, 200)\n_r = diff_ci(_a, _b, _np.median)\nassert _r is not None and len(_r) == 2, \"return the pair (low, high)\"\n_lo, _hi = float(_r[0]), float(_r[1])\n_obs = _np.median(_b) - _np.median(_a)\nassert _lo < _obs < _hi, \"the interval must contain the observed difference\"\nassert _lo > 0, f\"the median of B is clearly higher: the lower bound must be above 0, you got {_lo:.0f}\"\n_rr = _np.random.default_rng(0); _v = []\nfor _ in range(2000):\n    _ra = _rr.choice(_a, size=len(_a), replace=True); _rb = _rr.choice(_b, size=len(_b), replace=True); _v.append(_np.median(_rb) - _np.median(_ra))\n_e = (_np.quantile(_v, 0.025), _np.quantile(_v, 0.975)); _w = _e[1] - _e[0]\nassert abs(_lo - _e[0]) < 0.25 * _w and abs(_hi - _e[1]) < 0.25 * _w, f\"the interval should be about ({_e[0]:.0f}, {_e[1]:.0f}), you got ({_lo:.0f}, {_hi:.0f}). Resample each group separately with its own size\"\n_z = diff_ci(_a, _g.permutation(_a), _np.median)\nassert float(_z[0]) < 0 < float(_z[1]), \"for identical groups the interval must contain 0\"\n_r8 = diff_ci(_a, _b, _np.median, level=0.8)\nassert float(_r8[1]) - float(_r8[0]) < 0.85 * (_hi - _lo), \"the 80% interval is narrower than the 95% one: use the level parameter\""
+     }
+    },
+    {
+     "title": "Exact permutation test",
+     "prompt": "<p>On small data there is no need to shuffle: you can list all splits. Write the function <code>exact_perm_p(a, b)</code>: go over all ways to pick <code>len(a)</code> elements of the pooled data as “A” (<code>itertools.combinations</code> over the indices) and return the share of splits where |mean(B) − mean(A)| ≥ |obs| (two-sided).</p><p>For example, A = [1, 2, 3], B = [4, 5, 9]: 2 of the 20 splits are extreme, p = 0.1. When comparing numbers, leave a <code>1e-12</code> margin for float error.</p>",
+     "hints": [
+      "Over indices: <code>for idx in combinations(range(len(pooled)), len(a))</code>.",
+      "If the sum of A is <code>sa</code>, the sum of B is <code>total - sa</code>.",
+      "The condition: <code>abs(d) &gt;= abs(obs) - 1e-12</code>; the denominator is the number of splits."
+     ],
+     "check": {
+      "tests": "assert exact_perm_p([1, 2, 3], [4, 5, 9]) is not None, \"exact_perm_p must return a value\"\nassert abs(exact_perm_p([1, 2, 3], [4, 5, 9]) - 0.1) < 1e-9, f\"A = [1, 2, 3], B = [4, 5, 9]: p should be 2 / 20 = 0.1, you got {exact_perm_p([1, 2, 3], [4, 5, 9])}\"\nassert abs(exact_perm_p([1, 2], [3, 4]) - 1 / 3) < 1e-9, \"[1, 2] and [3, 4]: 2 of the 6 splits are extreme, p = 1/3\"\nassert abs(exact_perm_p([1, 2, 3, 4], [10, 11, 12, 13]) - 2 / 70) < 1e-9, \"70 ways to split 8 numbers into 4 + 4, only 2 are extreme: p = 2/70\"\nassert abs(exact_perm_p([5, 5, 5], [5, 5, 5]) - 1) < 1e-9, \"the groups are identical: p = 1\"\nassert abs(exact_perm_p([0.1, 0.2], [0.3, 0.4]) - 1 / 3) < 1e-9, \"float error with decimals: abs(d) >= abs(obs) - 1e-12\""
+     }
+    },
+    {
+     "title": "One-sided permutation test",
+     "prompt": "<p>Before the test the direction “is the mean of B <b>larger</b>?” was chosen. Write the function <code>perm_greater(a, b, n_perm=3000, seed=0)</code>: shuffle the pooled data <code>n_perm</code> times with <code>rng.permutation</code> and return the share of cases where the fake difference (mean(B*) − mean(A*)) is <b>not smaller</b> than the actual one. No absolute value.</p>",
+     "hints": [
+      "Like <code>perm_test</code> from the lesson, but the condition is <code>d &gt;= obs</code>, without <code>abs</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(12)\n_a = _g.normal(100, 15, 50)\n_b = _g.normal(106, 15, 50)\n_p = perm_greater(_a, _b)\nassert _p is not None, \"perm_greater must return a value\"\ndef _ref(a, b, n, seed):\n    r = _np.random.default_rng(seed); obs = b.mean() - a.mean(); pool = _np.concatenate([a, b]); c = 0\n    for _ in range(n):\n        s = r.permutation(pool); c += (s[len(a):].mean() - s[:len(a)].mean()) >= obs\n    return c / n\n_e = _ref(_a, _b, 3000, 1)\nassert abs(float(_p) - _e) < 0.03, f\"p should be ≈ {_e:.3f}, you got {float(_p):.3f}. The condition is d >= obs, without abs\"\n_q = perm_greater(_b, _a)\nassert abs(float(_p) + float(_q) - 1) < 0.05, f\"if we swap the groups, the one-sided p-values add up to ≈ 1, you got {float(_p):.3f} + {float(_q):.3f}\"\nassert float(perm_greater(_a, _a + 50, n_perm=500)) < 0.01, \"if B is clearly larger, p ≈ 0\""
+     }
+    },
+    {
+     "title": "Ratio metric: bootstrap by user",
+     "prompt": "<p>Average check = Σ revenue / Σ orders. One user has several orders, and the randomization unit is the user. Write the function <code>ratio_ci(revenue, orders, n_boot=2000, level=0.95, seed=0)</code>: <code>revenue[i]</code> and <code>orders[i]</code> are the total revenue and the number of orders of user i. The function returns <code>(ratio, low, high)</code>:</p><ul><li><code>ratio</code> — Σ revenue / Σ orders over all data;</li><li><code>low</code>, <code>high</code> — the percentile CI: on each repetition pick <b>user indices</b> with replacement (<code>rng.integers(0, n, n)</code>) and compute Σ revenue / Σ orders of those users.</li></ul>",
+     "hints": [
+      "One set of indices is applied to both arrays: <code>revenue[idx].sum() / orders[idx].sum()</code>. A user's revenue and orders stay together.",
+      "This is not the mean of the ratios: first the sums, then the division."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(21)\n_o = 1 + _g.poisson(2, 600)\n_rev = _np.array([_g.lognormal(8, 0.8, _k).sum() for _k in _o])\n_r = ratio_ci(_rev, _o)\nassert _r is not None and len(_r) == 3, \"return the triple (ratio, low, high)\"\n_ratio, _lo, _hi = (float(_v) for _v in _r)\nassert abs(_ratio - _rev.sum() / _o.sum()) < 1e-6, \"ratio = Σ revenue / Σ orders (not the mean of the ratios)\"\nassert _lo < _ratio < _hi, \"the CI must contain ratio\"\n_rr = _np.random.default_rng(0); _v = []\nfor _ in range(2000):\n    _i = _rr.integers(0, 600, 600); _v.append(_rev[_i].sum() / _o[_i].sum())\n_e = (_np.quantile(_v, 0.025), _np.quantile(_v, 0.975)); _w = _e[1] - _e[0]\nassert abs(_lo - _e[0]) < 0.25 * _w and abs(_hi - _e[1]) < 0.25 * _w, f\"the CI should be about ({_e[0]:.0f}, {_e[1]:.0f}), you got ({_lo:.0f}, {_hi:.0f}). Resample the user indices\"\nassert abs((_hi - _lo) - _w) < 0.2 * _w, f\"the interval width should be about {_w:.0f}, you got {_hi - _lo:.0f}\"\n_r9 = ratio_ci(_rev, _o, level=0.8)\nassert float(_r9[2]) - float(_r9[1]) < 0.85 * (_hi - _lo), \"the 80% interval is narrower than the 95% one: use the level parameter\""
+     }
+    },
+    {
+     "title": "A/B decision: bootstrap and permutation",
+     "prompt": "<p>A full report on the revenue-per-user (RPU) metric. Write the function <code>ab_resampling(a, b, n=2000, seed=0)</code>: it returns a dictionary:</p><ul><li><code>\"diff\"</code> — mean(b) − mean(a);</li><li><code>\"low\"</code>, <code>\"high\"</code> — the 95% bootstrap CI of the difference (resample each group separately, <code>n</code> repetitions);</li><li><code>\"p\"</code> — the two-sided permutation p-value (<code>n</code> shuffles);</li><li><code>\"significant\"</code> — <code>p &lt; 0.05</code>.</li></ul><p>One <code>rng = np.random.default_rng(seed)</code> is enough for both methods.</p>",
+     "hints": [
+      "The bootstrap part is <code>diff_ci</code> from the previous tasks, just with <code>stat = mean</code>.",
+      "The permutation part is <code>perm_test</code> from the lesson: <code>abs(d) &gt;= abs(diff)</code>.",
+      "Dictionary keys: <code>\"diff\"</code>, <code>\"low\"</code>, <code>\"high\"</code>, <code>\"p\"</code>, <code>\"significant\"</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(31)\n_a = _np.where(_g.random(1000) < 0.1, _g.lognormal(8, 0.7, 1000), 0.0)\n_b = _np.where(_g.random(1000) < 0.16, _g.lognormal(8, 0.7, 1000), 0.0)\n_r = ab_resampling(_a, _b)\nassert isinstance(_r, dict), \"return a dictionary\"\nassert abs(float(_r[\"diff\"]) - (_b.mean() - _a.mean())) < 1e-9, \"diff = mean(b) − mean(a)\"\nassert float(_r[\"low\"]) < float(_r[\"diff\"]) < float(_r[\"high\"]), \"the CI must contain diff\"\n_se = (_a.var(ddof=1) / 1000 + _b.var(ddof=1) / 1000) ** 0.5\n_w = float(_r[\"high\"]) - float(_r[\"low\"])\nassert abs(_w - 2 * 1.96 * _se) < 0.2 * 2 * 1.96 * _se, f\"the CI width should be ≈ 2 × 1.96 × SE ≈ {2 * 1.96 * _se:.0f}, you got {_w:.0f}. Resample each group with its own size\"\nassert float(_r[\"p\"]) < 0.05 and bool(_r[\"significant\"]) is True, f\"on this data p < 0.05 and significant = True are expected, you got p = {_r['p']}\"\n_c = _g.permutation(_a)\n_r0 = ab_resampling(_a, _c, n=1000)\nassert float(_r0[\"p\"]) > 0.5 and not bool(_r0[\"significant\"]), f\"for identical groups p should be large and significant = False, you got p = {_r0['p']}\"\nassert float(_r0[\"low\"]) < 0 < float(_r0[\"high\"]), \"for identical groups the CI must contain 0\""
+     }
+    }
+   ]
+  },
+  "ab-cuped": {
+   "pr": [
+    {
+     "title": "Difference-in-Differences",
+     "prompt": "<p>Write the function <code>did(treat_before, treat_after, ctrl_before, ctrl_after)</code>: it returns the DiD estimate — subtract the change in the control group from the change in the treatment group.</p><p>For example, a new tariff was launched in Kostanay (200 → 230), and nothing changed in Pavlodar (150 → 150): <code>did(200, 230, 150, 150)</code> → <code>30</code>.</p>",
+     "hints": [
+      "<code>(treat_after - treat_before) - (ctrl_after - ctrl_before)</code>"
+     ],
+     "check": {
+      "tests": "assert did(200, 230, 150, 150) == 30, \"did(200, 230, 150, 150) = 30 − 0 = 30\"\nassert did(80, 70, 100, 85) == 5, \"both fell: (−10) − (−15) = 5, the tariff softened the drop\"\nassert did(50, 60, 40, 50) == 0, \"the changes are equal: the effect is 0\"\nassert did(10, 12, 20, 30) == -8, \"did(10, 12, 20, 30) = 2 − 10 = −8\""
+     }
+    },
+    {
+     "title": "How much CUPED saves",
+     "prompt": "<p>After CUPED the variance becomes Var(Y) × (1 − ρ²), and the sample size is proportional to the variance. Write two functions:</p><ul><li><code>var_factor(rho)</code> — 1 − ρ²;</li><li><code>n_needed(n, rho)</code> — if <code>n</code> users are needed without CUPED, how many are needed with CUPED for the same power: n × (1 − ρ²), rounded to an integer with <code>round</code>.</li></ul><p>For example, <code>n_needed(10000, 0.7)</code> → <code>5100</code>.</p>",
+     "hints": [
+      "<code>round(n * (1 - rho ** 2))</code>"
+     ],
+     "check": {
+      "tests": "assert var_factor(0.7) is not None and abs(var_factor(0.7) - 0.51) < 1e-12, \"var_factor(0.7) = 1 − 0.49 = 0.51\"\nassert abs(var_factor(-0.5) - 0.75) < 1e-12, \"a negative correlation helps too: 1 − 0.25 = 0.75\"\nassert n_needed(10000, 0.7) == 5100, \"ρ = 0.7: 10 000 × 0.51 = 5 100\"\nassert n_needed(10000, 0.3) == 9100, \"ρ = 0.3: the gain is only 9%, 9 100\"\nassert n_needed(8000, 0) == 8000, \"ρ = 0: CUPED does not help\""
+     }
+    },
+    {
+     "title": "False alarms in an A/A test",
+     "prompt": "<p>The list holds the p-values of several A/A tests. Write the function <code>false_positive_rate(pvalues, alpha=0.05)</code>: it returns the share of tests with <code>p &lt; alpha</code>. In a healthy system it is close to alpha.</p><p>For example, <code>false_positive_rate([0.01, 0.2, 0.5, 0.03])</code> → <code>0.5</code>.</p>",
+     "hints": [
+      "<code>sum(p &lt; alpha for p in pvalues) / len(pvalues)</code>"
+     ],
+     "check": {
+      "tests": "assert false_positive_rate([0.01, 0.2, 0.5, 0.03]) == 0.5, \"p < 0.05 in 2 of 4 tests: 0.5\"\nassert abs(false_positive_rate([_i / 100 for _i in range(100)]) - 0.05) < 1e-12, \"with uniform p-values the share is ≈ alpha = 0.05\"\nassert false_positive_rate([0.01, 0.2, 0.5, 0.03], alpha=0.02) == 0.25, \"alpha = 0.02: only 0.01 passes, 1/4\"\nassert false_positive_rate([0.05, 0.6]) == 0, \"p = 0.05 is not significant: the condition is strict p < alpha\""
+     }
+    },
+    {
+     "title": "DiD from a table",
+     "prompt": "<p>The table <code>df</code> holds daily orders: <code>city</code>, <code>period</code> (<code>\"before\"</code> or <code>\"after\"</code>), <code>orders</code>. Write the function <code>did_from_df(df, treat, ctrl)</code>: compute the mean for each city and period (<code>groupby</code>) and return the DiD estimate.</p><p>For example, if the mean in Taraz is 100 → 130 and in Shymkent 90 → 105, then <code>did_from_df(df, \"Taraz\", \"Shymkent\")</code> → <code>15.0</code>.</p>",
+     "hints": [
+      "<code>m = df.groupby([\"city\", \"period\"])[\"orders\"].mean()</code>, then <code>m[(treat, \"after\")]</code>.",
+      "The number of rows per period may differ: take the mean, not the sum."
+     ],
+     "check": {
+      "tests": "import pandas as _pd\n_rows = [(\"Taraz\", \"before\", _v) for _v in (98, 102, 100)] + [(\"Taraz\", \"after\", _v) for _v in (128, 132)] + [(\"Shymkent\", \"before\", _v) for _v in (88, 92, 90, 90)] + [(\"Shymkent\", \"after\", _v) for _v in (100, 110, 105)]\n_df = _pd.DataFrame(_rows, columns=[\"city\", \"period\", \"orders\"])\n_r = did_from_df(_df, \"Taraz\", \"Shymkent\")\nassert _r is not None, \"did_from_df must return a value\"\nassert abs(float(_r) - 15) < 1e-9, f\"DiD should be (130 − 100) − (105 − 90) = 15, you got {_r}. Take the mean, not the sum\"\nassert abs(float(did_from_df(_df, \"Shymkent\", \"Taraz\")) + 15) < 1e-9, \"swapping the cities flips the sign\"\n_df2 = _pd.DataFrame([(\"A\", \"before\", 10), (\"A\", \"after\", 10), (\"B\", \"before\", 5), (\"B\", \"after\", 8), (\"C\", \"before\", 1), (\"C\", \"after\", 100)], columns=[\"city\", \"period\", \"orders\"])\nassert abs(float(did_from_df(_df2, \"A\", \"B\")) + 3) < 1e-9, \"only the treat and ctrl cities are used: for A and B 0 − 3 = −3\""
+     }
+    },
+    {
+     "title": "SE after CUPED",
+     "prompt": "<p>Write the function <code>cuped_se(x_a, y_a, x_b, y_b)</code>: it returns <code>(effect, se_raw, se_cuped)</code>.</p><ul><li>θ = Cov(x, y) / Var(x) — computed on the pooled groups; the adjustment uses one common mean(x): c = y − θ × (x − mean(x));</li><li><code>effect</code> — mean(c_b) − mean(c_a);</li><li><code>se_raw</code> — √(Var(y_a)/n_a + Var(y_b)/n_b), <code>se_cuped</code> — the same formula for c_a and c_b (<code>ddof=1</code>).</li></ul><p>The test checks that se_cuped / se_raw ≈ √(1 − ρ²).</p>",
+     "hints": [
+      "θ: <code>np.cov(x, y)[0, 1] / x.var(ddof=1)</code>, where x, y are joined with <code>np.concatenate</code>.",
+      "Write a helper for the SE: <code>np.sqrt(np.var(u, ddof=1) / len(u) + np.var(v, ddof=1) / len(v))</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(5)\n_n = 2500\n_xa = _g.gamma(2.0, 3000, _n); _xb = _g.gamma(2.0, 3000, _n)\n_ya = 0.8 * _xa + _g.normal(0, 3000, _n); _yb = 0.8 * _xb + _g.normal(0, 3000, _n) + 250\n_r = cuped_se(_xa, _ya, _xb, _yb)\nassert _r is not None and len(_r) == 3, \"return the triple (effect, se_raw, se_cuped)\"\n_eff, _sr, _sc = (float(_v) for _v in _r)\n_x = _np.concatenate([_xa, _xb]); _y = _np.concatenate([_ya, _yb])\n_th = _np.cov(_x, _y)[0, 1] / _x.var(ddof=1)\n_ca = _ya - _th * (_xa - _x.mean()); _cb = _yb - _th * (_xb - _x.mean())\nassert abs(_eff - (_cb.mean() - _ca.mean())) < 1e-6, f\"effect should be ≈ {_cb.mean() - _ca.mean():.1f}, you got {_eff:.1f}. Use one θ and one common mean(x)\"\n_e_sr = (_ya.var(ddof=1) / _n + _yb.var(ddof=1) / _n) ** 0.5\nassert abs(_sr - _e_sr) < 1e-6 * _e_sr, f\"se_raw should be ≈ {_e_sr:.1f}, you got {_sr:.1f}: ddof=1\"\n_rho = _np.corrcoef(_x, _y)[0, 1]\nassert _sc < _sr, \"after CUPED the SE must be smaller\"\nassert abs(_sc / _sr - (1 - _rho ** 2) ** 0.5) < 0.02, f\"se_cuped / se_raw should be ≈ √(1 − ρ²) = {(1 - _rho ** 2) ** 0.5:.3f}, you got {_sc / _sr:.3f}\""
+     }
+    },
+    {
+     "title": "Two different CTRs",
+     "prompt": "<p>You have the clicks and views of each user. Write two functions:</p><ul><li><code>global_ctr(clicks, views)</code> — the ratio metric: Σ clicks / Σ views;</li><li><code>mean_user_ctr(clicks, views)</code> — the mean of the users' own CTRs: mean(clicks / views).</li></ul><p>They answer different questions: in the first one active users weigh more. Both lists and arrays may be passed: use <code>np.asarray</code>.</p>",
+     "hints": [
+      "Ratio: first the sums, then the division.",
+      "User CTR: <code>clicks / views</code> (arrays), then <code>.mean()</code>."
+     ],
+     "check": {
+      "tests": "import numpy as _np\nassert global_ctr([1, 50], [10, 1000]) is not None, \"global_ctr must return a value\"\nassert abs(float(global_ctr([1, 50], [10, 1000])) - 51 / 1010) < 1e-12, \"global_ctr = 51 / 1010 ≈ 0.0505\"\nassert abs(float(mean_user_ctr([1, 50], [10, 1000])) - 0.075) < 1e-12, \"mean_user_ctr = (0.1 + 0.05) / 2 = 0.075\"\n_c = _np.array([2, 2, 2]); _v = _np.array([20, 20, 20])\nassert abs(float(global_ctr(_c, _v)) - float(mean_user_ctr(_c, _v))) < 1e-12, \"with equal views both CTRs are the same\"\nassert abs(float(mean_user_ctr([0, 3], [5, 3])) - 0.5) < 1e-12, \"mean_user_ctr([0, 3], [5, 3]) = (0 + 1) / 2 = 0.5\""
+     }
+    },
+    {
+     "title": "A/A simulation: the ratio-metric trap",
+     "prompt": "<p>Write the function <code>aa_test(n_sims=300, seed=0)</code>. In each simulation create two <b>identical</b> groups (A/A) with <code>make_group</code> and run two tests:</p><ul><li><b>naive</b>: treating each view as independent, the two-proportion z-test for Σ clicks / Σ views (pooled SE, two-sided);</li><li><b>user</b>: the Welch t-test on each user's CTR (clicks / views) (<code>stats.ttest_ind(..., equal_var=False)</code>).</li></ul><p>The function returns <code>(fpr_naive, fpr_user)</code> — the shares of simulations with p &lt; 0.05. The views of one user are dependent, so the naive test says “significant” far more often than 5%.</p>",
+     "hints": [
+      "Naive: the number of views instead of n: SE = √(p(1 − p)(1/ΣV_a + 1/ΣV_b)), p-value = 2 × (1 − Φ(|z|)).",
+      "User: <code>stats.ttest_ind(c_b / v_b, c_a / v_a, equal_var=False).pvalue</code>.",
+      "Keep two counters and divide by <code>n_sims</code> at the end."
+     ],
+     "check": {
+      "tests": "_r = aa_test(300, 1)\nassert _r is not None and len(_r) == 2, \"return the pair (fpr_naive, fpr_user)\"\n_fn, _fu = float(_r[0]), float(_r[1])\nassert 0.09 < _fn < 0.3, f\"the naive test says “significant” in about 15% of A/A cases, you got {_fn:.3f}. The denominator should be the number of views\"\nassert 0.015 < _fu < 0.095, f\"the user-level test should give ≈ 5%, you got {_fu:.3f}\"\nassert _fn > _fu, \"the naive test has more false alarms\"\nassert aa_test(40, 2) == aa_test(40, 2), \"the result must repeat for the same seed: create rng inside the function with seed\""
+     }
+    },
+    {
+     "title": "CUPED: the right and the wrong covariate",
+     "prompt": "<p>Write the function <code>cuped_effect(x_a, y_a, x_b, y_b)</code>: it returns the CUPED-adjusted effect mean(c_b) − mean(c_a) (one θ over both groups, one common mean(x)).</p><p>The test calls it with two covariates:</p><ul><li>spending <b>before the experiment</b> — the effect stays close to the true value (+300 ₸), and the noise goes down;</li><li>the number of sessions <b>during the experiment</b> — the variant also increased sessions, so CUPED “subtracts” part of the effect.</li></ul><p>The test also catches the mistake of centering each group on its own mean: if the groups' past spending differs by chance, a common mean(x) is needed.</p>",
+     "hints": [
+      "Turn the lesson's CUPED code into a function: <code>np.concatenate</code>, θ, then one <code>x.mean()</code> for both groups.",
+      "If you use each group's own mean, the average adjustment in each group becomes 0, and the effect equals the raw difference."
+     ],
+     "check": {
+      "tests": "import numpy as _np\n_g = _np.random.default_rng(17)\n_n = 3000\n_xa = _g.gamma(2.0, 3000, _n); _xb = _g.gamma(2.0, 3000, _n)\n_sa = _g.poisson(10, _n).astype(float); _sb = (_g.poisson(10, _n) + _g.poisson(2, _n)).astype(float)\n_ya = 0.8 * _xa + 150 * _sa + _g.normal(0, 2500, _n)\n_yb = 0.8 * _xb + 150 * _sb + _g.normal(0, 2500, _n)\n_e = cuped_effect(_xa, _ya, _xb, _yb)\nassert _e is not None, \"cuped_effect must return a value\"\n_x = _np.concatenate([_xa, _xb]); _y = _np.concatenate([_ya, _yb]); _th = _np.cov(_x, _y)[0, 1] / _x.var(ddof=1)\n_ref = (_yb - _th * (_xb - _x.mean())).mean() - (_ya - _th * (_xa - _x.mean())).mean()\nassert abs(float(_e) - _ref) < 1e-6, f\"the effect should be ≈ {_ref:.1f}, you got {float(_e):.1f}: one θ and one common mean(x)\"\n_t = cuped_effect(_np.array([1., 2, 3]), _np.array([2., 4, 6]), _np.array([3., 4, 5]), _np.array([7., 9, 11]))\nassert _t is not None and abs(float(_t) - 0.4) < 1e-9, f\"for x_a = [1, 2, 3], x_b = [3, 4, 5] the effect should be 0.4, you got {float(_t)}. Centering each group on its own mean gives the raw difference 5: use a common mean(x)\"\nassert abs(float(_e) - 300) < 150, f\"with past spending the effect should be close to the true +300, you got {float(_e):.1f}\"\n_s = cuped_effect(_sa, _ya, _sb, _yb)\n_x2 = _np.concatenate([_sa, _sb]); _th2 = _np.cov(_x2, _y)[0, 1] / _x2.var(ddof=1)\n_ref2 = (_yb - _th2 * (_sb - _x2.mean())).mean() - (_ya - _th2 * (_sa - _x2.mean())).mean()\nassert abs(float(_s) - _ref2) < 1e-6, \"the same formula with the sessions covariate: one θ, a common mean(x)\"\nassert float(_s) < float(_e) - 150, f\"a covariate from the experiment period eats the effect: {float(_s):.1f}. The covariate must be measured before the experiment\""
+     }
+    }
+   ]
   }
  }
 });

@@ -565,5 +565,204 @@ DJ.i18n.patch({ lessons: {
     ]
    }
   ]
+ },
+ "adv-10": {
+  "pr": [
+   {
+    "title": "Дни недели",
+    "prompt": "С помощью рекурсивного CTE выведите дни с 1 по 14 сентября 2024 года: <code>day</code> и <code>dow</code> — номер дня недели (<code>strftime('%w', day)</code>, 0 — воскресенье). По порядку дат.",
+    "hints": [
+     "Условие остановки: <code>WHERE day &lt; '2024-09-14'</code>.",
+     "<code>SELECT day, strftime('%w', day) AS dow FROM cal ORDER BY day</code>"
+    ]
+   },
+   {
+    "title": "Пустые дни",
+    "prompt": "В какие дни сентября никто не заходил в приложение? Сделайте <code>LEFT JOIN</code> календаря с <code>daily_active</code> и выведите дни, для которых пара не нашлась. Столбец: <code>day</code>.",
+    "hints": [
+     "<code>FROM cal c LEFT JOIN daily_active a ON a.day = c.day</code>",
+     "В строке без пары столбцы правой таблицы равны NULL: <code>WHERE a.user_id IS NULL</code>."
+    ]
+   },
+   {
+    "title": "Конец месяца одного пользователя",
+    "prompt": "Для каждого дня с 2024-09-25 по 2024-09-30 покажите, заходил ли пользователь 9: <code>day</code>, <code>active</code> (1 — заходил, 0 — нет). Должны быть видны все 6 дней, по порядку дат.",
+    "hints": [
+     "Условие на пользователя пишите не в <code>WHERE</code>, а внутри <code>ON</code>: <code>ON a.day = c.day AND a.user_id = 9</code>.",
+     "<code>COUNT(a.user_id)</code> даёт 0 в пустой день."
+    ]
+   },
+   {
+    "title": "Среднее с нулями",
+    "prompt": "Заполните дневной DAU сентября нулями и выведите одной строкой: <code>days</code> (число дней в календаре), <code>zero_days</code> (дни с DAU = 0), <code>avg_dau</code> (средний DAU за 30 дней, 2 знака).",
+    "hints": [
+     "Сначала во втором CTE посчитайте <code>dau</code> каждого дня (<code>LEFT JOIN</code>, <code>COUNT(a.user_id)</code>).",
+     "<code>SUM(CASE WHEN dau = 0 THEN 1 ELSE 0 END)</code> и <code>ROUND(AVG(dau), 2)</code>. Ответ должен быть 3.27, а не 3.38."
+    ]
+   },
+   {
+    "title": "Найти пропуски",
+    "prompt": "Выведите периоды, когда пользователь 1 не заходил (пропуски): <code>gap_start</code> (первый день пропуска), <code>gap_end</code> (последний день), <code>missing</code> (число дней в пропуске). Предыдущий активный день возьмите через <code>LAG</code>. Сортировка по <code>gap_start</code>.",
+    "hints": [
+     "Если между двумя активными днями больше 1 дня, между ними пропуск: <code>WHERE julianday(day) - julianday(prev) &gt; 1</code>.",
+     "<code>date(prev, '+1 day')</code>, <code>date(day, '-1 day')</code>, <code>CAST(julianday(day) - julianday(prev) - 1 AS INTEGER)</code>"
+    ]
+   },
+   {
+    "title": "Число серий",
+    "prompt": "Посчитайте, сколько непрерывных серий (островов) было у каждого пользователя в сентябре: <code>user_id</code>, <code>streaks</code>. Сортировка по <code>user_id</code>.",
+    "hints": [
+     "Во всех днях одного острова <code>date(day, '-' || rn || ' day')</code> одинаков.",
+     "Число островов = число разных меток группы: <code>COUNT(DISTINCT ...)</code>."
+    ]
+   },
+   {
+    "title": "Длинные серии",
+    "prompt": "Выведите все серии длиной не меньше 5 дней: <code>user_id</code>, <code>start_day</code>, <code>end_day</code>, <code>days</code>. Сортировка по <code>user_id</code>, <code>start_day</code>.",
+    "hints": [
+     "<code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)</code>, затем <code>GROUP BY user_id, date(day, '-' || rn || ' day')</code>.",
+     "Посчитайте длину серии в CTE и во внешнем запросе поставьте <code>WHERE days &gt;= 5</code> (или <code>HAVING COUNT(*) &gt;= 5</code>)."
+    ]
+   },
+   {
+    "title": "Честное среднее за 7 дней",
+    "prompt": "Для каждого дня сентября: <code>day</code>, <code>dau</code> (пустой день — 0) и <code>avg7</code> — средний DAU за последние 7 дней включая текущий (<code>ROWS BETWEEN 6 PRECEDING AND CURRENT ROW</code>, 2 знака). В первые дни месяца берётся среднее по дням, которые есть в окне. 30 строк, по порядку дат.",
+    "hints": [
+     "Сначала дневной DAU с нулями (календарь + <code>LEFT JOIN</code>), затем окно: тогда 7 строк = 7 дней.",
+     "<code>ROUND(AVG(dau) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2)</code>"
+    ]
+   }
+  ]
+ },
+ "adv-11": {
+  "pr": [
+   {
+    "title": "Один общий список",
+    "prompt": "<b>shop.</b> С помощью <code>UNION ALL</code> соберите в один список имена клиентов и названия товаров: <code>name</code>, <code>kind</code> (<code>'customer'</code> для клиента, <code>'product'</code> для товара).",
+    "hints": [
+     "У двух запросов должно быть одинаковое число столбцов: <code>SELECT name, 'customer' AS kind FROM customers</code>.",
+     "Второй: <code>UNION ALL SELECT name, 'product' FROM products</code>."
+    ]
+   },
+   {
+    "title": "Руководители через INTERSECT",
+    "prompt": "<b>staff.</b> С помощью <code>INTERSECT</code> выведите <code>id</code> сотрудников, у которых есть хотя бы один подчинённый: это значения, которые встречаются и в столбце <code>id</code>, и в столбце <code>manager_id</code>.",
+    "hints": [
+     "<code>SELECT id FROM employees INTERSECT SELECT manager_id FROM employees</code>"
+    ]
+   },
+   {
+    "title": "Место по зарплате",
+    "prompt": "<b>staff.</b> Покажите место каждого сотрудника по зарплате в диапазоне от 0 до 1: <code>name</code>, <code>salary</code>, <code>pr</code> = <code>PERCENT_RANK()</code> по возрастанию зарплаты, <code>ROUND</code> до 2 знаков.",
+    "hints": [
+     "<code>PERCENT_RANK() OVER (ORDER BY salary)</code>: самая низкая зарплата 0, самая высокая 1."
+    ]
+   },
+   {
+    "title": "Доля от зарплаты руководителя",
+    "prompt": "<b>staff.</b> Для каждого сотрудника, у которого есть руководитель: <code>name</code>, <code>manager</code> (имя руководителя), <code>pct</code> — сколько процентов от зарплаты руководителя составляет зарплата сотрудника (1 знак).",
+    "hints": [
+     "Self-join: <code>employees e JOIN employees m ON m.id = e.manager_id</code>. Директор не нужен, поэтому достаточно <code>JOIN</code>.",
+     "<code>ROUND(100.0 * e.salary / m.salary, 1)</code>"
+    ]
+   },
+   {
+    "title": "Минимальная зарплата отдела",
+    "prompt": "<b>staff.</b> С помощью <code>LAST_VALUE</code> найдите в каждом отделе сотрудника с самой низкой зарплатой: <code>department</code>, <code>lowest</code>. Порядок в окне — по убыванию зарплаты. Одна строка на отдел.",
+    "hints": [
+     "Исходный код ставит каждой строке её же имя: граница по умолчанию заканчивается на текущей строке.",
+     "Добавьте <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code>, затем <code>DISTINCT</code> оставит одну строку на отдел."
+    ]
+   },
+   {
+    "title": "Итоговая строка",
+    "prompt": "<b>staff.</b> Сделайте отчёт: фонд зарплаты каждого отдела (<code>department</code>, <code>total</code>), а под ним через <code>UNION ALL</code> итоговая строка по всей компании: <code>'TOTAL'</code> вместо <code>department</code>.",
+    "hints": [
+     "Первый запрос: <code>GROUP BY department</code>. Второй без группировки: <code>SELECT 'TOTAL', SUM(salary) FROM employees</code>."
+    ]
+   },
+   {
+    "title": "Руководитель руководителя",
+    "prompt": "<b>staff.</b> Для каждого сотрудника: <code>name</code>, <code>manager</code> (непосредственный руководитель) и <code>skip_manager</code> (руководитель руководителя). Должны быть видны все 12 сотрудников; отсутствующее значение — NULL.",
+    "hints": [
+     "Возьмите таблицу три раза: <code>e</code> (сотрудник), <code>m</code> (руководитель), <code>g</code> (руководитель руководителя).",
+     "<code>LEFT JOIN employees g ON g.id = m.manager_id</code>. Оба JOIN должны быть <code>LEFT</code>, иначе верхние уровни пропадут."
+    ]
+   },
+   {
+    "title": "Три уровня клиентов",
+    "prompt": "<b>shop.</b> Разбейте клиентов, делавших заказы, на три уровня через <code>NTILE(3)</code> по общей сумме покупок (<code>quantity × price</code>, все статусы): 1 — потратившие больше всех; порядок в окне: по убыванию суммы, при равенстве <code>customer_id</code>. Для каждого уровня: <code>tier</code>, <code>customers</code>, <code>revenue</code>. Сортировка по <code>tier</code>.",
+    "hints": [
+     "1-й CTE: сумма каждого клиента. 2-й CTE: <code>NTILE(3) OVER (ORDER BY total DESC, customer_id) AS tier</code>.",
+     "В конце: <code>GROUP BY tier</code>, <code>COUNT(*)</code>, <code>SUM(total)</code>."
+    ]
+   }
+  ]
+ },
+ "adv-12": {
+  "pr": [
+   {
+    "title": "Предыдущее событие",
+    "prompt": "Выведите события пользователя 7 по времени: <code>ts</code>, <code>event</code>, <code>prev_event</code> (предыдущее событие этого пользователя; у первого — NULL).",
+    "hints": [
+     "<code>LAG(event) OVER (ORDER BY ts)</code>"
+    ]
+   },
+   {
+    "title": "Воронка без порядка",
+    "prompt": "Для сравнения сначала посчитайте воронку без учёта порядка: для каждого типа события <code>event</code>, <code>users</code> (уникальные пользователи с этим событием), <code>events</code> (число событий). По убыванию <code>events</code>.",
+    "hints": [
+     "<code>COUNT(DISTINCT user_id)</code> и <code>COUNT(*)</code>, <code>GROUP BY event</code>."
+    ]
+   },
+   {
+    "title": "Начало сессии",
+    "prompt": "Для событий пользователя 15 выведите <code>ts</code>, <code>event</code> и <code>is_new</code>: 1, если событие первое у пользователя или с предыдущего прошло больше 30 минут, иначе 0. По времени.",
+    "hints": [
+     "<code>CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END</code>",
+     "Для первого события <code>LAG</code> даёт NULL — его тоже считайте началом сессии."
+    ]
+   },
+   {
+    "title": "Сессии пользователя",
+    "prompt": "Выведите число сессий каждого пользователя (правило: первое событие или перерыв больше 30 минут начинает новую сессию): <code>user_id</code>, <code>sessions</code>. По убыванию <code>sessions</code>, при равенстве по <code>user_id</code>.",
+    "hints": [
+     "Число сессий пользователя = число его событий, начинающих сессию.",
+     "<code>SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 30 THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id</code>."
+    ]
+   },
+   {
+    "title": "Средняя сессия",
+    "prompt": "Выведите одну строку по всем сессиям: <code>sessions</code> (число), <code>avg_events</code> (среднее число событий в сессии, 2 знака), <code>avg_minutes</code> (среднее число минут между первым и последним событием, 1 знак).",
+    "hints": [
+     "Третий CTE: <code>GROUP BY user_id, session_no</code>, внутри <code>COUNT(*)</code> и <code>(julianday(MAX(ts)) - julianday(MIN(ts))) * 1440</code>.",
+     "Затем поверх неё <code>COUNT(*)</code>, <code>AVG</code>. Сессий должно быть 128."
+    ]
+   },
+   {
+    "title": "Сессии с покупкой",
+    "prompt": "В скольких сессиях есть хотя бы одна <code>purchase</code>? Одна строка: <code>sessions</code>, <code>with_purchase</code>, <code>pct</code> (%, 1 знак).",
+    "hints": [
+     "Метка для каждой сессии: <code>MAX(CASE WHEN event = 'purchase' THEN 1 ELSE 0 END)</code>, <code>GROUP BY user_id, session_no</code>.",
+     "<code>ROUND(100.0 * SUM(bought) / COUNT(*), 1)</code>"
+    ]
+   },
+   {
+    "title": "Корзина без просмотра",
+    "prompt": "Найдите пользователей из push-уведомления, о которых говорилось в уроке: тех, кто сделал <code>cart</code>, но до первой корзины не сделал ни одного <code>view</code> (включая тех, кто вообще не смотрел). Столбцы: <code>user_id</code>, <code>first_cart</code>, <code>first_view</code> (NULL, если нет). По <code>user_id</code>.",
+    "hints": [
+     "Два CTE: время первой <code>cart</code> и первого <code>view</code> каждого пользователя.",
+     "<code>c LEFT JOIN v</code>, условие: <code>v.first_view IS NULL OR v.first_view &gt; c.first_cart</code>. Должно получиться три пользователя."
+    ]
+   },
+   {
+    "title": "Купили за час",
+    "prompt": "Сколько из пользователей, купивших после первого просмотра, сделали первую покупку в течение 60 минут после него? Одна строка: <code>buyers</code>, <code>within_hour</code>, <code>pct</code> (%, 1 знак). Такую метрику понять проще, чем медиану.",
+    "hints": [
+     "CTE <code>p</code>: <code>events_ts e JOIN v</code>, <code>e.event = 'purchase' AND e.ts &gt; v.view_ts</code>, <code>MIN(e.ts)</code> на пользователя.",
+     "Минуты: <code>(julianday(MIN(e.ts)) - julianday(v.view_ts)) * 1440</code>; затем <code>SUM(CASE WHEN minutes &lt;= 60 THEN 1 ELSE 0 END)</code>."
+    ]
+   }
+  ]
  }
 } });

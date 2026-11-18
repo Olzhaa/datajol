@@ -1482,5 +1482,164 @@ DJ.addPractice('m4-1', {
     ]
    }
   }
+ ],
+ "pr-11": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Арналар бойынша конверсия",
+   "prompt": "<p>Толық ықтималдық заңы. <code>total_prob(groups)</code> функциясын жазыңыз: <code>groups</code> — <code>{арна: (үлес, конверсия)}</code> сөздігі. Жалпы конверсияны P(B) = Σ P(B | Aᵢ) × P(Aᵢ) қайтарсын.</p><p>Мысалы, <code>{\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}</code> → <code>0.046</code>.</p>",
+   "starter": "def total_prob(groups):\n    pass\n",
+   "solution": "def total_prob(groups):\n    return sum(share * rate for share, rate in groups.values())\n",
+   "hints": [
+    "Сөздік мәндері — жұптар: <code>for share, rate in groups.values()</code>.",
+    "Әр топ үшін <code>share * rate</code>, сосын қосынды."
+   ],
+   "check": {
+    "tests": "_g = {\"kaspi\": (0.6, 0.05), \"instagram\": (0.3, 0.02), \"email\": (0.1, 0.1)}\nassert total_prob(_g) is not None, \"total_prob мән қайтаруы керек\"\nassert abs(total_prob(_g) - 0.046) < 1e-12, \"0.6 × 0.05 + 0.3 × 0.02 + 0.1 × 0.1 = 0.046 болуы керек\"\nassert abs(total_prob({\"a\": (1.0, 0.3)}) - 0.3) < 1e-12, \"Бір ғана топ болса, P(B) = P(B | A) = 0.3\"\nassert abs(total_prob({\"new\": (0.25, 0.12), \"old\": (0.75, 0.04)}) - 0.06) < 1e-12, \"0.25 × 0.12 + 0.75 × 0.04 = 0.06\"",
+    "mustInclude": [
+     "def total_prob"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Алғашқы сату k-қоңырауда",
+   "prompt": "<p>Геометриялық таралу. Екі функция жазыңыз:</p><ul><li><code>geom_pmf(k, p)</code> — алғашқы сәттілік дәл <code>k</code>-әрекетте болу ықтималдығы: (1 − p)^(k − 1) × p;</li><li><code>geom_mean(p)</code> — алғашқы сәттілікке дейінгі әрекеттер санының орташасы: 1 / p.</li></ul><p>Мысалы, <code>geom_pmf(4, 0.5)</code> → <code>0.0625</code>, <code>geom_mean(0.25)</code> → <code>4.0</code>.</p>",
+   "starter": "def geom_pmf(k, p):\n    pass\n\ndef geom_mean(p):\n    pass\n",
+   "solution": "def geom_pmf(k, p):\n    return (1 - p) ** (k - 1) * p\n\ndef geom_mean(p):\n    return 1 / p\n",
+   "hints": [
+    "Алдымен k − 1 сәтсіздік: <code>(1 - p) ** (k - 1)</code>, сосын бір сәттілік: <code>* p</code>."
+   ],
+   "check": {
+    "tests": "assert geom_pmf(1, 0.3) is not None, \"geom_pmf мән қайтаруы керек\"\nassert abs(geom_pmf(1, 0.3) - 0.3) < 1e-12, \"Бірінші әрекетте сәттілік: P = p = 0.3\"\nassert abs(geom_pmf(4, 0.5) - 0.0625) < 1e-12, \"geom_pmf(4, 0.5) = 0.5³ × 0.5 = 0.0625\"\nassert abs(geom_pmf(2, 0.1) - 0.09) < 1e-12, \"geom_pmf(2, 0.1) = 0.9 × 0.1 = 0.09\"\nassert abs(sum(geom_pmf(_k, 0.1) for _k in range(1, 301)) - 1) < 1e-9, \"Барлық k бойынша ықтималдықтар қосындысы 1 болуы керек\"\nassert geom_mean(0.25) is not None and abs(geom_mean(0.25) - 4) < 1e-12, \"geom_mean(0.25) = 1 / 0.25 = 4\"",
+    "mustInclude": [
+     "def geom_pmf",
+     "def geom_mean"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Келесі тапсырысқа дейін",
+   "prompt": "<p>Тапсырыстар сағатына орташа <code>lam</code> рет келеді (экспоненциал күту). Күту уақыты <b>минутпен</b> берілген. Екі функция жазыңыз:</p><ul><li><code>p_more(lam, minutes)</code> — келесі тапсырысты <code>minutes</code> минуттан артық күту ықтималдығы: e^(−λt), мұнда t — сағатпен;</li><li><code>mean_minutes(lam)</code> — орташа күту уақыты минутпен.</li></ul><p>Мысалы, <code>p_more(3, 30)</code> ≈ <code>0.223</code>, <code>mean_minutes(3)</code> → <code>20.0</code>.</p>",
+   "starter": "import math\n\ndef p_more(lam, minutes):\n    pass\n\ndef mean_minutes(lam):\n    pass\n",
+   "solution": "import math\n\ndef p_more(lam, minutes):\n    return math.exp(-lam * minutes / 60)\n\ndef mean_minutes(lam):\n    return 60 / lam\n",
+   "hints": [
+    "λ сағатқа берілген, сондықтан минутты сағатқа айналдырыңыз: <code>minutes / 60</code>.",
+    "Орташа күту 1 / λ сағат, яғни <code>60 / lam</code> минут."
+   ],
+   "check": {
+    "tests": "import math as _m\nassert p_more(3, 30) is not None, \"p_more мән қайтаруы керек\"\nassert abs(p_more(3, 30) - _m.exp(-1.5)) < 1e-9, f\"p_more(3, 30) = e^(−3 × 0.5) ≈ 0.223 болуы керек, сізде {p_more(3, 30):.4f}. 30 минут = 0.5 сағат\"\nassert abs(p_more(6, 10) - _m.exp(-1)) < 1e-9, \"p_more(6, 10) = e^(−6 × 1/6) = e^(−1) ≈ 0.368\"\nassert abs(p_more(2, 0) - 1) < 1e-12, \"0 минуттан артық күту ықтималдығы 1\"\nassert mean_minutes(4) is not None and abs(mean_minutes(4) - 15) < 1e-9, \"mean_minutes(4) = 60 / 4 = 15 минут\"",
+    "mustInclude": [
+     "def p_more",
+     "def mean_minutes"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Кемінде бір сату",
+   "prompt": "<p>Әр қоңырау <code>p</code> ықтималдықпен сатумен аяқталады, қоңыраулар тәуелсіз. Екі функция жазыңыз:</p><ul><li><code>p_within(k, p)</code> — алғашқы <code>k</code> қоңыраудың ішінде кемінде бір сату болу ықтималдығы (толықтауыш: 1 − барлығы сәтсіз);</li><li><code>min_calls(p, target)</code> — <code>p_within(k, p) &gt;= target</code> болатын ең кіші <code>k</code>.</li></ul><p>Мысалы, <code>p_within(3, 0.2)</code> → <code>0.488</code>, <code>min_calls(0.2, 0.9)</code> → <code>11</code>.</p>",
+   "starter": "def p_within(k, p):\n    pass\n\ndef min_calls(p, target):\n    pass\n",
+   "solution": "def p_within(k, p):\n    return 1 - (1 - p) ** k\n\ndef min_calls(p, target):\n    k = 1\n    while p_within(k, p) < target:\n        k += 1\n    return k\n",
+   "hints": [
+    "Барлық k қоңырау сәтсіз: <code>(1 - p) ** k</code>.",
+    "<code>k = 1</code>-ден бастап, <code>while p_within(k, p) &lt; target</code> циклында k-ны арттырыңыз."
+   ],
+   "check": {
+    "tests": "assert p_within(1, 0.2) is not None, \"p_within мән қайтаруы керек\"\nassert abs(p_within(1, 0.2) - 0.2) < 1e-12, \"Бір қоңырау: P = p = 0.2\"\nassert abs(p_within(3, 0.2) - 0.488) < 1e-12, \"p_within(3, 0.2) = 1 − 0.8³ = 0.488\"\nassert min_calls(0.2, 0.9) == 11, f\"min_calls(0.2, 0.9) = 11 болуы керек (0.8^10 ≈ 0.107 > 0.1, 0.8^11 ≈ 0.086), сізде {min_calls(0.2, 0.9)}\"\nassert min_calls(0.5, 0.75) == 2, \"min_calls(0.5, 0.75) = 2: 1 − 0.5² = 0.75, шекара да есептеледі (>=)\"\nassert min_calls(1.0, 0.99) == 1, \"p = 1 болса, бір қоңырау жеткілікті\"\n_k = min_calls(0.05, 0.95)\nassert p_within(_k, 0.05) >= 0.95 and p_within(_k - 1, 0.05) < 0.95, f\"p = 0.05, target = 0.95 үшін ең кіші k керек, сізде {_k}\"",
+    "mustInclude": [
+     "def p_within",
+     "def min_calls"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Бірлескен таралудан ковариация",
+   "prompt": "<p>Екі кездейсоқ шаманың бірлескен таралуы <code>{(x, y): ықтималдық}</code> сөздігімен берілген. Екі функция жазыңыз:</p><ul><li><code>cov_joint(joint)</code> — Cov(X, Y) = E[(X − E[X]) × (Y − E[Y])];</li><li><code>corr_joint(joint)</code> — Corr(X, Y) = Cov(X, Y) / (SD(X) × SD(Y)).</li></ul><p>Мысалы, <code>{(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}</code> үшін Cov = 0.15, Corr = 0.6.</p>",
+   "starter": "def cov_joint(joint):\n    pass\n\ndef corr_joint(joint):\n    pass\n",
+   "solution": "def cov_joint(joint):\n    ex = sum(x * p for (x, y), p in joint.items())\n    ey = sum(y * p for (x, y), p in joint.items())\n    return sum((x - ex) * (y - ey) * p for (x, y), p in joint.items())\n\ndef corr_joint(joint):\n    ex = sum(x * p for (x, y), p in joint.items())\n    ey = sum(y * p for (x, y), p in joint.items())\n    vx = sum((x - ex) ** 2 * p for (x, y), p in joint.items())\n    vy = sum((y - ey) ** 2 * p for (x, y), p in joint.items())\n    return cov_joint(joint) / (vx * vy) ** 0.5\n",
+   "hints": [
+    "Кілтті ашып алыңыз: <code>for (x, y), p in joint.items()</code>. E[X] = Σ x × p.",
+    "Var(X) = Σ (x − E[X])² × p, SD — оның түбірі."
+   ],
+   "check": {
+    "tests": "_j = {(0, 0): 0.4, (0, 1): 0.1, (1, 0): 0.1, (1, 1): 0.4}\nassert cov_joint(_j) is not None, \"cov_joint мән қайтаруы керек\"\nassert abs(cov_joint(_j) - 0.15) < 1e-9, f\"Cov = E[XY] − E[X]E[Y] = 0.4 − 0.25 = 0.15 болуы керек, сізде {cov_joint(_j):.4f}\"\nassert abs(corr_joint(_j) - 0.6) < 1e-9, \"Corr = 0.15 / (0.5 × 0.5) = 0.6\"\n_ind = {(1, 1): 0.25, (1, 2): 0.25, (2, 1): 0.25, (2, 2): 0.25}\nassert abs(cov_joint(_ind)) < 1e-12, \"Тәуелсіз шамаларда Cov = 0\"\nassert abs(corr_joint({(0, 1): 0.5, (1, 0): 0.5}) + 1) < 1e-9, \"X = 1 болғанда Y = 0 және керісінше: Corr = −1\"\n_sq = {(-1, 1): 1 / 3, (0, 0): 1 / 3, (1, 1): 1 / 3}\nassert abs(cov_joint(_sq)) < 1e-12, \"Y = X²: шамалар тәуелді, бірақ Cov = 0 (ковариация тек сызықтық байланысты өлшейді)\"\nassert abs(cov_joint({(2, 10): 0.5, (4, 20): 0.5}) - 5) < 1e-9, \"{(2, 10): 0.5, (4, 20): 0.5} үшін Cov = 1 × 5 = 5\"",
+    "mustInclude": [
+     "def cov_joint",
+     "def corr_joint"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Екі несие портфелінің тәуекелі",
+   "prompt": "<p>Екі портфельдің айлық шығыны X және Y: стандартты ауытқулары <code>sd_x</code> және <code>sd_y</code> (млн ₸), корреляциясы <code>rho</code>. <code>sd_total(sd_x, sd_y, rho)</code> функциясын жазыңыз: жалпы шығын X + Y-тің SD-ын қайтарсын.</p><p>Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y), мұнда Cov = rho × sd_x × sd_y.</p><p>Мысалы, <code>sd_total(3, 4, 0)</code> → <code>5.0</code>, <code>sd_total(3, 4, 1)</code> → <code>7.0</code>.</p>",
+   "starter": "def sd_total(sd_x, sd_y, rho):\n    pass\n",
+   "solution": "def sd_total(sd_x, sd_y, rho):\n    cov = rho * sd_x * sd_y\n    return (sd_x ** 2 + sd_y ** 2 + 2 * cov) ** 0.5\n",
+   "hints": [
+    "Ковариацияны корреляциядан шығарыңыз: <code>cov = rho * sd_x * sd_y</code>.",
+    "Дисперсиялар қосылады, SD-лар емес: соңында <code>** 0.5</code>."
+   ],
+   "check": {
+    "tests": "assert sd_total(3, 4, 0) is not None, \"sd_total мән қайтаруы керек\"\nassert abs(sd_total(3, 4, 0) - 5) < 1e-9, \"Тәуелсіз: √(9 + 16) = 5\"\nassert abs(sd_total(3, 4, 1) - 7) < 1e-9, \"rho = 1: √(9 + 16 + 24) = 7, SD-лар қосылады\"\nassert abs(sd_total(3, 4, -1) - 1) < 1e-9, \"rho = −1: √(9 + 16 − 24) = 1, тәуекелдер бірін-бірі жабады\"\nassert abs(sd_total(10, 10, 0.5) - 300 ** 0.5) < 1e-9, f\"sd_total(10, 10, 0.5) = √300 ≈ 17.32 болуы керек, сізде {sd_total(10, 10, 0.5):.2f}\"\nassert sd_total(5, 5, 0.8) > sd_total(5, 5, 0), \"Оң корреляция тәуекелді көбейтеді\"",
+    "mustInclude": [
+     "def sd_total"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Екі түрлі курьер",
+   "prompt": "<p>Тапсырысты курьерлердің екі тобының бірі алады. <code>groups</code> — <code>{топ: (үлес, λ)}</code> сөздігі: үлес — тапсырыстың осы топқа түсу ықтималдығы, λ — топтың сағаттағы қарқыны (күту экспоненциал). Үш функция жазыңыз (t пен s — сағатпен):</p><ul><li><code>p_wait_mix(groups, t)</code> — клиенттің t-дан артық күту ықтималдығы (толық ықтималдық: Σ үлес × e^(−λt));</li><li><code>mean_wait_mix(groups)</code> — орташа күту: Σ үлес / λ;</li><li><code>cond_wait(groups, s, t)</code> — s сағат күткен клиенттің тағы t сағаттан артық күту ықтималдығы: P(T &gt; s + t) / P(T &gt; s).</li></ul><p>Бір топта <code>cond_wait</code> жадысыздық бойынша e^(−λt)-ға тең. Екі топ араласқанда олай емес: көп күткендер көбіне баяу топқа түскендер.</p>",
+   "starter": "import math\n\ndef p_wait_mix(groups, t):\n    pass\n\ndef mean_wait_mix(groups):\n    pass\n\ndef cond_wait(groups, s, t):\n    pass\n",
+   "solution": "import math\n\ndef p_wait_mix(groups, t):\n    return sum(share * math.exp(-lam * t) for share, lam in groups.values())\n\ndef mean_wait_mix(groups):\n    return sum(share / lam for share, lam in groups.values())\n\ndef cond_wait(groups, s, t):\n    return p_wait_mix(groups, s + t) / p_wait_mix(groups, s)\n",
+   "hints": [
+    "Әр топ үшін P(T &gt; t | топ) = e^(−λt), сосын үлестермен салмақтап қосыңыз.",
+    "Шартты ықтималдық: <code>p_wait_mix(groups, s + t) / p_wait_mix(groups, s)</code>."
+   ],
+   "check": {
+    "tests": "import math as _m\n_g = {\"A\": (0.6, 4), \"B\": (0.4, 2)}\nassert p_wait_mix(_g, 0.5) is not None, \"p_wait_mix мән қайтаруы керек\"\n_p = 0.6 * _m.exp(-2) + 0.4 * _m.exp(-1)\nassert abs(p_wait_mix(_g, 0.5) - _p) < 1e-9, f\"0.6 × e^(−2) + 0.4 × e^(−1) ≈ 0.2284 болуы керек, сізде {p_wait_mix(_g, 0.5):.4f}\"\nassert abs(p_wait_mix(_g, 0) - 1) < 1e-12, \"t = 0 болса, ықтималдық 1 (үлестер қосындысы)\"\nassert mean_wait_mix(_g) is not None and abs(mean_wait_mix(_g) - 0.35) < 1e-9, \"Орташа күту: 0.6 / 4 + 0.4 / 2 = 0.35 сағат\"\nassert abs(cond_wait({\"A\": (1.0, 3)}, 0.7, 0.5) - _m.exp(-1.5)) < 1e-9, \"Бір топта жадысыздық: cond_wait = e^(−3 × 0.5)\"\n_c = cond_wait(_g, 0.5, 0.5)\nassert _c is not None and abs(_c - (0.6 * _m.exp(-4) + 0.4 * _m.exp(-2)) / _p) < 1e-9, f\"cond_wait(_g, 0.5, 0.5) = P(T > 1) / P(T > 0.5) ≈ 0.285 болуы керек, сізде {_c:.4f}\"\nassert _c > p_wait_mix(_g, 0.5), \"Қоспада көп күткендер баяу топта жиірек: шартты ықтималдық үлкенірек\"",
+    "mustInclude": [
+     "def p_wait_mix",
+     "def mean_wait_mix",
+     "def cond_wait"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Көп шаманың қосындысы",
+   "prompt": "<p>Var(X + Y) = Var(X) + Var(Y) + 2 × Cov(X, Y) формуласы көп шамаға да жалғасады: қосындының дисперсиясы — барлық жұптардың ковариацияларының қосындысы.</p><pre><code>Var(X₁ + … + Xₙ) = Σᵢ Σⱼ corr[i][j] × sd[i] × sd[j]</code></pre><p><code>var_of_sum(sds, corr)</code> функциясын жазыңыз: <code>sds</code> — SD тізімі, <code>corr</code> — корреляция матрицасы (тізімдер тізімі, диагоналында 1). Қосындының дисперсиясын қайтарсын.</p><p>Мысалы, <code>var_of_sum([2, 3], [[1, 0.5], [0.5, 1]])</code> → 4 + 9 + 2 × 0.5 × 6 = <code>19.0</code>.</p>",
+   "starter": "def var_of_sum(sds, corr):\n    pass\n",
+   "solution": "def var_of_sum(sds, corr):\n    n = len(sds)\n    total = 0\n    for i in range(n):\n        for j in range(n):\n            total += corr[i][j] * sds[i] * sds[j]\n    return total\n",
+   "hints": [
+    "Екі цикл: <code>for i in range(n)</code> және <code>for j in range(n)</code>. i = j болғанда мүше — дисперсия sd[i]².",
+    "Әр жұп (i, j) және (j, i) екі рет кіреді: бұл 2 × Cov мүшесі."
+   ],
+   "check": {
+    "tests": "def _eye(n, r=0.0):\n    return [[1.0 if i == j else r for j in range(n)] for i in range(n)]\nassert var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) is not None, \"var_of_sum мән қайтаруы керек\"\nassert abs(var_of_sum([2, 3], [[1, 0.5], [0.5, 1]]) - 19) < 1e-9, \"4 + 9 + 2 × 0.5 × 2 × 3 = 19\"\nassert abs(var_of_sum([1, 2, 3], _eye(3)) - 14) < 1e-9, \"Тәуелсіз шамаларда дисперсиялар жай қосылады: 1 + 4 + 9 = 14\"\nassert abs(var_of_sum([1, 2, 3], _eye(3, 1.0)) - 36) < 1e-9, \"Толық корреляцияда SD-лар қосылады: (1 + 2 + 3)² = 36\"\n_sd = var_of_sum([10000] * 30, _eye(30)) ** 0.5\nassert abs(_sd - 10000 * 30 ** 0.5) < 1e-6, f\"30 тәуелсіз күн: SD = 10 000 × √30 ≈ 54 772 болуы керек, сізде {_sd:.0f}\"\n_sd3 = var_of_sum([10000] * 30, _eye(30, 0.3)) ** 0.5\nassert abs(_sd3 - (291e8) ** 0.5) < 1e-3, f\"Күндер арасында корреляция 0.3 болса, SD ≈ 170 587: тәуекел үш есеге жуық өседі, сізде {_sd3:.0f}\"",
+    "mustInclude": [
+     "def var_of_sum"
+    ]
+   }
+  }
  ]
 });

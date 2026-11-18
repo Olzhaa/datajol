@@ -1510,5 +1510,163 @@ DJ.addPractice('m4-3', {
     ]
    }
   }
+ ],
+ "mm-log": [
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Логит: ықтималдықтан log-odds-қа",
+   "prompt": "<p>Сигмоидке кері функция — логит: z = ln(p / (1 − p)). <code>logit(p)</code> функциясын жазыңыз (<code>math.log</code> — натурал логарифм).</p><p>Мысалы, <code>logit(0.5)</code> → <code>0.0</code>, <code>logit(0.8)</code> = ln(4) ≈ <code>1.386</code>.</p>",
+   "starter": "import math\n\ndef logit(p):\n    pass\n",
+   "solution": "import math\n\ndef logit(p):\n    return math.log(p / (1 - p))\n",
+   "hints": [
+    "Odds = <code>p / (1 - p)</code>, сосын <code>math.log</code>."
+   ],
+   "check": {
+    "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert logit(0.5) is not None and abs(logit(0.5)) < 1e-12, \"logit(0.5) = ln(1) = 0\"\nassert abs(logit(0.8) - _m.log(4)) < 1e-9, f\"logit(0.8) = ln(0.8 / 0.2) = ln(4) ≈ 1.386 болуы керек, сізде {logit(0.8)}\"\nassert abs(logit(0.2) + logit(0.8)) < 1e-9, \"Симметрия: logit(1 − p) = −logit(p)\"\nfor _p in (0.01, 0.3, 0.77, 0.999):\n    assert abs(_sg(logit(_p)) - _p) < 1e-9, f\"sigmoid(logit({_p})) = {_p} болуы керек: логит сигмоидке кері\"",
+    "mustInclude": [
+     "def logit"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Log-өсімдер",
+   "prompt": "<p>Айлық табыс тізімі <code>values</code> берілген. <code>log_returns(values)</code> функциясын жазыңыз: көршілес айлар үшін ln(vᵢ / vᵢ₋₁) тізімін қайтарсын (ұзындығы бір кем).</p><p>log айырмасы ≈ салыстырмалы өзгеріс, ал барлық log-өсімдердің қосындысы ln(соңғы / бірінші) береді. Мысалы, <code>log_returns([100, 110, 121])</code> → <code>[0.0953, 0.0953]</code>.</p>",
+   "starter": "import math\n\ndef log_returns(values):\n    pass\n",
+   "solution": "import math\n\ndef log_returns(values):\n    return [math.log(values[i] / values[i - 1]) for i in range(1, len(values))]\n",
+   "hints": [
+    "<code>for i in range(1, len(values))</code> және <code>math.log(values[i] / values[i - 1])</code>."
+   ],
+   "check": {
+    "tests": "import math as _m\n_r = log_returns([100, 110, 121])\nassert _r is not None and len(_r) == 2, \"3 мәннен 2 log-өсім шығуы керек\"\nassert all(abs(_x - _m.log(1.1)) < 1e-9 for _x in _r), f\"Әр өсім ln(1.1) ≈ 0.0953 болуы керек, сізде {_r}\"\n_v = [250, 300, 270, 400, 380]\nassert abs(sum(log_returns(_v)) - _m.log(380 / 250)) < 1e-9, \"log-өсімдер қосындысы = ln(соңғы / бірінші)\"\nassert log_returns([5]) == [], \"Бір мән болса, бос тізім\"\nassert log_returns([200, 100])[0] < 0, \"Төмендеу теріс log-өсім береді\"",
+    "mustInclude": [
+     "def log_returns"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "easy",
+   "xp": 10,
+   "title": "Log-likelihood",
+   "prompt": "<p><code>log_likelihood(probs)</code> функциясын жазыңыз: тәуелсіз бақылаулардың ықтималдықтары <code>probs</code> берілген, олардың көбейтіндісінің логарифмін ln(p₁ × p₂ × …) = Σ ln(pᵢ) қайтарсын.</p><p>Көбейтіндіні тікелей есептемеңіз: 2 000 рет 0.3-ті көбейтсек, нәтиже 0-ге дөңгелектеледі (underflow), ал ln(0) қате береді.</p>",
+   "starter": "import math\n\ndef log_likelihood(probs):\n    pass\n",
+   "solution": "import math\n\ndef log_likelihood(probs):\n    return sum(math.log(p) for p in probs)\n",
+   "hints": [
+    "Көбейтіндінің логарифмі — логарифмдер қосындысы: <code>sum(math.log(p) for p in probs)</code>."
+   ],
+   "check": {
+    "tests": "import math as _m\nassert log_likelihood([0.5, 0.5]) is not None, \"log_likelihood мән қайтаруы керек\"\nassert abs(log_likelihood([0.5, 0.5]) - 2 * _m.log(0.5)) < 1e-12, \"ln(0.5 × 0.5) = 2 × ln(0.5) ≈ −1.386\"\nassert abs(log_likelihood([0.2, 0.5, 0.9]) - _m.log(0.09)) < 1e-12, \"ln(0.2 × 0.5 × 0.9) = ln(0.09)\"\n_ll = log_likelihood([0.3] * 2000)\nassert abs(_ll - 2000 * _m.log(0.3)) < 1e-6, f\"2000 × ln(0.3) ≈ −2408 болуы керек, сізде {_ll}\"\nassert log_likelihood([1.0, 1.0]) == 0, \"Ықтималдықтар 1 болса, log-likelihood 0\"",
+    "mustInclude": [
+     "def log_likelihood"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Қауіпсіз log-loss",
+   "prompt": "<p>Модель кейде дәл 0 не 1 ықтималдық береді, сонда <code>math.log(0)</code> қате шығарады. <code>safe_log_loss(y, p, eps=1e-15)</code> функциясын жазыңыз: әр pᵢ-ді [eps, 1 − eps] аралығына қысып (<code>min</code>/<code>max</code>), орташа log-loss қайтарсын.</p><pre><code>loss = −[ y × ln(p) + (1 − y) × ln(1 − p) ]</code></pre><p>Мысалы, <code>safe_log_loss([1], [0.0])</code> = −ln(1e-15) ≈ <code>34.54</code>.</p>",
+   "starter": "import math\n\ndef safe_log_loss(y, p, eps=1e-15):\n    pass\n",
+   "solution": "import math\n\ndef safe_log_loss(y, p, eps=1e-15):\n    total = 0\n    for yi, pi in zip(y, p):\n        pi = min(max(pi, eps), 1 - eps)\n        total += -(yi * math.log(pi) + (1 - yi) * math.log(1 - pi))\n    return total / len(y)\n",
+   "hints": [
+    "Қысу: <code>pi = min(max(pi, eps), 1 - eps)</code>.",
+    "Қалғаны — сабақтағы <code>log_loss</code>: қосынды, сосын <code>len(y)</code>-ке бөлу."
+   ],
+   "check": {
+    "tests": "import math as _m\nassert safe_log_loss([1], [0.0]) is not None, \"safe_log_loss мән қайтаруы керек\"\nassert abs(safe_log_loss([1], [0.0]) + _m.log(1e-15)) < 1e-6, f\"y = 1, p = 0: −ln(1e-15) ≈ 34.54 болуы керек, сізде {safe_log_loss([1], [0.0])}\"\nassert abs(safe_log_loss([0], [1.0]) + _m.log(1e-15)) < 1e-3, \"y = 0, p = 1: p-ны 1 − eps-ке дейін қысыңыз\"\nassert safe_log_loss([1, 0], [1.0, 0.0]) < 1e-12, \"Сенімді әрі дұрыс болжамдарда loss ≈ 0\"\nassert abs(safe_log_loss([1, 0, 1], [0.9, 0.2, 0.6]) - 0.2797765635793423) < 1e-9, \"Қалыпты ықтималдықтарда нәтиже сабақтағыдай ≈ 0.280\"\nassert abs(safe_log_loss([1], [0.0], eps=0.01) + _m.log(0.01)) < 1e-9, \"eps параметрін қолданыңыз: eps = 0.01 болса, −ln(0.01) ≈ 4.605\"",
+    "mustInclude": [
+     "def safe_log_loss"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Тізбек ережесі: екі функция",
+   "prompt": "<p>Тізбек ережесімен туындыларды жазыңыз:</p><ul><li><code>d_power(a, b, n, x)</code> — y = (a × x + b)ⁿ функциясының x нүктесіндегі туындысы: n × (a × x + b)^(n − 1) × a;</li><li><code>d_log_sq(x)</code> — y = ln(x² + 1) туындысы: сыртқы ln(g)-ның туындысы 1 / g, ішкі g = x² + 1-дің туындысы 2x.</li></ul><p>Мысалы, <code>d_power(3, 1, 2, 1)</code> → <code>24</code>, <code>d_log_sq(1)</code> → <code>1.0</code>.</p>",
+   "starter": "def d_power(a, b, n, x):\n    pass\n\ndef d_log_sq(x):\n    pass\n",
+   "solution": "def d_power(a, b, n, x):\n    return n * (a * x + b) ** (n - 1) * a\n\ndef d_log_sq(x):\n    return 2 * x / (x ** 2 + 1)\n",
+   "hints": [
+    "Ішкі функцияның туындысын ұмытпаңыз: <code>* a</code>.",
+    "<code>d_log_sq</code>: (1 / g) × g′ = <code>2 * x / (x ** 2 + 1)</code>."
+   ],
+   "check": {
+    "tests": "import math as _m\nassert d_power(3, 1, 2, 1) is not None and abs(d_power(3, 1, 2, 1) - 24) < 1e-9, \"d_power(3, 1, 2, 1) = 2 × 4 × 3 = 24\"\nassert abs(d_power(2, -1, 4, 2) - 216) < 1e-9, f\"d_power(2, −1, 4, 2) = 4 × 3³ × 2 = 216 болуы керек, сізде {d_power(2, -1, 4, 2)}\"\nfor _a, _b, _n, _x in [(0.5, 2, 3, 1.5), (-1, 4, 2, 0.3), (1.2, 0.1, 5, 0.7)]:\n    _f = lambda t: (_a * t + _b) ** _n\n    _num = (_f(_x + 1e-6) - _f(_x - 1e-6)) / 2e-6\n    assert abs(d_power(_a, _b, _n, _x) - _num) < 1e-4 * max(1, abs(_num)), f\"a={_a}, b={_b}, n={_n}, x={_x}: сандық туынды ≈ {_num:.4f}, сізде {d_power(_a, _b, _n, _x):.4f}\"\nassert d_log_sq(1) is not None and abs(d_log_sq(1) - 1) < 1e-12, \"d_log_sq(1) = 2 / 2 = 1\"\nfor _x in (-2.0, 0.0, 0.5, 3.0):\n    _num = (_m.log((_x + 1e-6) ** 2 + 1) - _m.log((_x - 1e-6) ** 2 + 1)) / 2e-6\n    assert abs(d_log_sq(_x) - _num) < 1e-6, f\"x = {_x}: сандық туынды ≈ {_num:.4f}, сізде {d_log_sq(_x):.4f}\"",
+    "mustInclude": [
+     "def d_power",
+     "def d_log_sq"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "medium",
+   "xp": 15,
+   "title": "Сигмоид туындысы",
+   "prompt": "<p>σ′(z) = σ(z) × (1 − σ(z)). Екі функция жазыңыз:</p><ul><li><code>sigmoid_prime(z)</code> — σ′(z);</li><li><code>d_sigmoid_w(w, x)</code> — p = σ(w × x) функциясының <b>w</b> бойынша туындысы (тізбек ережесі: σ′(w × x) × x).</li></ul><p>Мысалы, <code>sigmoid_prime(0)</code> → <code>0.25</code>: бұл туындының ең үлкен мәні.</p>",
+   "starter": "import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\ndef sigmoid_prime(z):\n    pass\n\ndef d_sigmoid_w(w, x):\n    pass\n",
+   "solution": "import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\ndef sigmoid_prime(z):\n    s = sigmoid(z)\n    return s * (1 - s)\n\ndef d_sigmoid_w(w, x):\n    return sigmoid_prime(w * x) * x\n",
+   "hints": [
+    "<code>s = sigmoid(z)</code>, сосын <code>s * (1 - s)</code>.",
+    "Ішкі функция z = w × x, оның w бойынша туындысы — x."
+   ],
+   "check": {
+    "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert sigmoid_prime(0) is not None and abs(sigmoid_prime(0) - 0.25) < 1e-12, \"σ′(0) = 0.5 × 0.5 = 0.25\"\nassert abs(sigmoid_prime(3) - sigmoid_prime(-3)) < 1e-12, \"σ′ симметриялы: σ′(3) = σ′(−3)\"\nassert all(sigmoid_prime(_z) < 0.25 for _z in (-2, -0.5, 0.5, 4)), \"0.25 — ең үлкен мән, басқа нүктелерде кішірек\"\nfor _z in (-3.0, -0.4, 1.7):\n    _num = (_sg(_z + 1e-6) - _sg(_z - 1e-6)) / 2e-6\n    assert abs(sigmoid_prime(_z) - _num) < 1e-8, f\"z = {_z}: сандық туынды ≈ {_num:.6f}, сізде {sigmoid_prime(_z):.6f}\"\nassert d_sigmoid_w(0.5, 2) is not None, \"d_sigmoid_w мән қайтаруы керек\"\nfor _w, _x in [(0.5, 2), (-1.0, 3), (0.2, -1.5)]:\n    _num = (_sg((_w + 1e-6) * _x) - _sg((_w - 1e-6) * _x)) / 2e-6\n    assert abs(d_sigmoid_w(_w, _x) - _num) < 1e-8, f\"w = {_w}, x = {_x}: сандық туынды ≈ {_num:.6f}, сізде {d_sigmoid_w(_w, _x):.6f}. Ішкі туынды x-ті ұмытпаңыз\"",
+    "mustInclude": [
+     "def sigmoid_prime",
+     "def d_sigmoid_w"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Логистикалық регрессия нөлден",
+   "prompt": "<p>NumPy арқылы логистикалық регрессияны gradient descent-пен үйретіңіз. Үш функция:</p><ul><li><code>mean_log_loss(X, y, w, b)</code> — p = σ(X @ w + b), орташа log-loss;</li><li><code>gradients(X, y, w, b)</code> — <code>(grad_w, grad_b)</code>: тізбек ережесінен grad_w = Xᵀ(p − y) / n, grad_b = mean(p − y);</li><li><code>fit(X, y, lr=0.5, steps=500)</code> — w = 0, b = 0-ден бастап, <code>steps</code> қадам жасап, <code>(w, b)</code> қайтарсын.</li></ul><p>Бір мысалдағы формула (p − y) × x еді (сабақ), мұнда ол барлық мысал бойынша орташаланады.</p>",
+   "starter": "import numpy as np\n\ndef sigmoid(z):\n    return 1 / (1 + np.exp(-z))\n\ndef mean_log_loss(X, y, w, b):\n    pass\n\ndef gradients(X, y, w, b):\n    pass\n\ndef fit(X, y, lr=0.5, steps=500):\n    pass\n",
+   "solution": "import numpy as np\n\ndef sigmoid(z):\n    return 1 / (1 + np.exp(-z))\n\ndef mean_log_loss(X, y, w, b):\n    p = sigmoid(X @ w + b)\n    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))\n\ndef gradients(X, y, w, b):\n    p = sigmoid(X @ w + b)\n    return X.T @ (p - y) / len(y), float(np.mean(p - y))\n\ndef fit(X, y, lr=0.5, steps=500):\n    w = np.zeros(X.shape[1])\n    b = 0.0\n    for _ in range(steps):\n        gw, gb = gradients(X, y, w, b)\n        w = w - lr * gw\n        b = b - lr * gb\n    return w, b\n",
+   "hints": [
+    "Ықтималдықтар бірден барлық мысал үшін: <code>p = sigmoid(X @ w + b)</code>.",
+    "<code>grad_w = X.T @ (p - y) / len(y)</code>, <code>grad_b = np.mean(p - y)</code>.",
+    "<code>fit</code>: <code>w = np.zeros(X.shape[1])</code>, циклда <code>w = w - lr * gw</code>, <code>b = b - lr * gb</code>."
+   ],
+   "check": {
+    "tests": "import numpy as _np\n_g = _np.random.default_rng(9)\n_X = _g.normal(0, 1, (400, 2))\n_y = (_g.random(400) < 1 / (1 + _np.exp(-(1.5 * _X[:, 0] - 2.0 * _X[:, 1] + 0.5)))).astype(float)\nassert mean_log_loss(_X, _y, _np.zeros(2), 0.0) is not None, \"mean_log_loss мән қайтаруы керек\"\nassert abs(mean_log_loss(_X, _y, _np.zeros(2), 0.0) - _np.log(2)) < 1e-9, \"w = 0, b = 0 болса, p = 0.5 және loss = ln(2) ≈ 0.693\"\n_w0 = _np.array([0.3, -0.2]); _b0 = 0.1\n_gw, _gb = gradients(_X, _y, _w0, _b0)\nfor _j in range(2):\n    _e = _np.zeros(2); _e[_j] = 1e-6\n    _num = (mean_log_loss(_X, _y, _w0 + _e, _b0) - mean_log_loss(_X, _y, _w0 - _e, _b0)) / 2e-6\n    assert abs(float(_gw[_j]) - _num) < 1e-6, f\"grad_w[{_j}] ≈ {_num:.5f} болуы керек (сандық туынды), сізде {float(_gw[_j]):.5f}. X.T @ (p − y) / n\"\n_numb = (mean_log_loss(_X, _y, _w0, _b0 + 1e-6) - mean_log_loss(_X, _y, _w0, _b0 - 1e-6)) / 2e-6\nassert abs(float(_gb) - _numb) < 1e-6, f\"grad_b ≈ {_numb:.5f} болуы керек, сізде {float(_gb):.5f}: mean(p − y)\"\n_w, _b = fit(_X, _y)\n_l = mean_log_loss(_X, _y, _w, _b)\nassert _l < 0.5, f\"Үйретуден кейін loss 0.5-тен кіші болуы керек, сізде {_l:.3f}\"\nassert float(_w[0]) > 0.8 and float(_w[1]) < -1.0, f\"Салмақтар шын мәндерге (1.5, −2.0) жақындауы керек, сізде {_w}\"\n_w2, _b2 = fit(_X, _y, lr=0.1, steps=10)\nassert abs(float(_w2[0]) - float(_w[0])) > 0.3, \"lr мен steps параметрлерін қолданыңыз\"",
+    "mustInclude": [
+     "def mean_log_loss",
+     "def gradients",
+     "def fit"
+    ]
+   }
+  },
+  {
+   "type": "python",
+   "level": "hard",
+   "xp": 20,
+   "title": "Логиттен тікелей log-loss",
+   "prompt": "<p>Модель z (логит) береді. Әдеттегі жол p = σ(z), сосын −ln(1 − p) z = 40 кезінде құлайды: σ(40) float-та дәл 1.0, ал ln(0) қате. <code>loss_from_logit(y, z)</code> функциясын жазыңыз: бір мысалдың log-loss-ын σ-сыз, тікелей z арқылы есептесін.</p><p>Сабақтағы ережелерден шығады: −ln σ(z) = ln(1 + e^(−z)) және 1 − σ(z) = σ(−z), сондықтан −ln(1 − σ(z)) = ln(1 + e^z). <code>math.log1p</code> қолданыңыз. z мәндері [−50, 50] аралығында.</p><p>Сосын <code>mean_loss_from_logits(y, z)</code> — тізімдер бойынша орташа.</p>",
+   "starter": "import math\n\ndef loss_from_logit(y, z):\n    pass\n\ndef mean_loss_from_logits(y, z):\n    pass\n",
+   "solution": "import math\n\ndef loss_from_logit(y, z):\n    return y * math.log1p(math.exp(-z)) + (1 - y) * math.log1p(math.exp(z))\n\ndef mean_loss_from_logits(y, z):\n    return sum(loss_from_logit(yi, zi) for yi, zi in zip(y, z)) / len(y)\n",
+   "hints": [
+    "y = 1 болса, loss = ln(1 + e^(−z)) = <code>math.log1p(math.exp(-z))</code>.",
+    "y = 0 болса, loss = ln(1 + e^z). Екеуін y және (1 − y) салмағымен біріктіріңіз."
+   ],
+   "check": {
+    "tests": "import math as _m\n_sg = lambda z: 1 / (1 + _m.exp(-z))\nassert loss_from_logit(1, 0) is not None, \"loss_from_logit мән қайтаруы керек\"\nassert abs(loss_from_logit(1, 0) - _m.log(2)) < 1e-12 and abs(loss_from_logit(0, 0) - _m.log(2)) < 1e-12, \"z = 0 болса, p = 0.5 және loss = ln(2) екі класта да\"\nfor _y, _z in [(1, 2.0), (0, 2.0), (1, -1.3), (0, 0.7)]:\n    _naive = -(_y * _m.log(_sg(_z)) + (1 - _y) * _m.log(1 - _sg(_z)))\n    assert abs(loss_from_logit(_y, _z) - _naive) < 1e-9, f\"y = {_y}, z = {_z}: σ арқылы есептелген {_naive:.6f}-пен бірдей болуы керек, сізде {loss_from_logit(_y, _z):.6f}\"\n_big = loss_from_logit(0, 40)\nassert abs(_big - 40) < 1e-9, f\"y = 0, z = 40: loss = ln(1 + e^40) ≈ 40 болуы керек, сізде {_big}\"\nassert abs(loss_from_logit(1, -40) - 40) < 1e-9, \"y = 1, z = −40: сенімді қате, loss ≈ 40\"\nassert loss_from_logit(1, 40) < 1e-15, \"y = 1, z = 40: сенімді әрі дұрыс, loss ≈ 0\"\nassert abs(mean_loss_from_logits([1, 0, 1], [0.0, 40.0, -40.0]) - (_m.log(2) + 80) / 3) < 1e-9, \"Орташа: (ln 2 + 40 + 40) / 3\"",
+    "mustInclude": [
+     "def loss_from_logit",
+     "def mean_loss_from_logits",
+     "log1p"
+    ]
+   }
+  }
  ]
 });

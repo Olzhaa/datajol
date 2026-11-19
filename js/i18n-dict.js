@@ -404,6 +404,7 @@ DJ.I18N_UI = {
   'Формулалар, XLOOKUP, pivot table, диаграммалар': ['Формулы, XLOOKUP, сводные таблицы, диаграммы', 'Formulas, XLOOKUP, pivot tables, charts'],
   'Функция атауы қате.': ['Неверное имя функции.', 'Wrong function name.'],
   'Хат жіберу шегіне жеттік. Бір сағаттан кейін қайталаңыз немесе аккаунтсыз жалғастырыңыз.': ['Достигнут лимит писем. Повторите через час или продолжите без аккаунта.', 'The email limit is reached. Try again in an hour or continue without an account.'],
+  'Қазір кіру мен тіркелу тым көп. Бір минуттан кейін қайталаңыз: прогресіңіз сақталып тұр.': ['Сейчас слишком много входов и регистраций. Повторите через минуту: ваш прогресс сохранён.', 'Too many sign-ins and sign-ups right now. Try again in a minute: your progress is saved.'],
   'Шартты ықтималдық, Bayes, таралулар': ['Условная вероятность, Байес, распределения', 'Conditional probability, Bayes, distributions'],
   'Шешу жолы:': ['Решение:', 'How to solve it:'],
   'Шешім редакторға қойылды. Оны оқып, іске қосып, түсінгеннен кейін тексеріңіз. XP жартысы беріледі.': ['Решение вставлено в редактор. Прочитайте, запустите и проверьте, когда поймёте. Даётся половина XP.', 'The solution is in the editor. Read it, run it, and check it once you understand it. You get half the XP.'],

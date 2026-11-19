@@ -115,7 +115,8 @@
       if (/already registered|already been registered/i.test(m)) return 'Бұл email тіркелген. «Кіру» батырмасын басыңыз немесе парольді қалпына келтіріңіз.';
       if (/Password should|weak password|weak_password/i.test(m)) return 'Пароль тым әлсіз: кемінде 8 таңба, әріп пен сан араластырыңыз.';
       if (/should be different|same_password/i.test(m)) return 'Жаңа пароль бұрынғысынан өзгеше болсын.';
-      if (/rate limit/i.test(m)) return 'Хат жіберу шегіне жеттік. Бір сағаттан кейін қайталаңыз немесе аккаунтсыз жалғастырыңыз.';
+      if (/email rate limit/i.test(m)) return 'Хат жіберу шегіне жеттік. Бір сағаттан кейін қайталаңыз немесе аккаунтсыз жалғастырыңыз.';
+      if (/rate limit|too many requests/i.test(m)) return 'Қазір кіру мен тіркелу тым көп. Бір минуттан кейін қайталаңыз: прогресіңіз сақталып тұр.';
       if (/expired|invalid/i.test(m)) return 'Сілтеменің мерзімі өтіп кеткен немесе ол бұрын қолданылған. Жаңа сілтеме сұраңыз.';
       if (/not authorized|Email address .* is invalid/i.test(m)) return 'Бұл адреске хат жіберу мүмкін болмады. Басқа email-ді байқап көріңіз.';
       if (/Failed to fetch|NetworkError/i.test(m)) return 'Серверге қосыла алмадық. Интернетті тексеріңіз.';
@@ -124,8 +125,21 @@
     async google() { return (await this.need()).auth.signInWithOAuth({ provider: 'google', options: { redirectTo: this.redirect() } }); },
     async email(address) { return (await this.need()).auth.signInWithOtp({ email: address, options: { emailRedirectTo: this.redirect() } }); },
     // Email + password. Only sign-up sends a confirmation email (once); later sign-ins need no email at all.
+    // Supabase бір IP-ден келетін кіру мен тіркелуді шектейді (429). Бір колледж желісінен бір сыныптың оқушылары
+    // бірге кірсе, бұл шекке тиюі мүмкін: сондықтан 429 келсе, оқушыға қате көрсетпес бұрын 2 рет қайталаймыз.
+    async withRetry(call) {
+      let r;
+      for (let i = 0; i < 3; i++) {
+        r = await call();
+        const e = r && r.error;
+        if (!e || !(e.status === 429 || /too many requests|request rate limit/i.test(e.message || ''))) return r;
+        if (i < 2) await new Promise(ok => setTimeout(ok, (i ? 6000 : 2000) + Math.random() * 2000));
+      }
+      return r;
+    },
     async password(address, pw) {
-      const r = await (await this.need()).auth.signInWithPassword({ email: address, password: pw });
+      const c = await this.need();
+      const r = await this.withRetry(() => c.auth.signInWithPassword({ email: address, password: pw }));
       if (!r.error && r.data && r.data.session) { this.adopt(r.data.session.user); this.sync(true); }
       return r;
     },
@@ -134,7 +148,8 @@
       const options = { emailRedirectTo: this.redirect() };
       options.data = Object.assign({}, extra || {});
       if (name) options.data.full_name = String(name).slice(0, 40);
-      const r = await (await this.need()).auth.signUp({ email: address, password: pw, options });
+      const c = await this.need();
+      const r = await this.withRetry(() => c.auth.signUp({ email: address, password: pw, options }));
       if (r.error) return r;
       // Supabase answers a sign-up for an existing email with a user that has no identities (and sends nothing).
       if (r.data && r.data.user && Array.isArray(r.data.user.identities) && !r.data.user.identities.length) return { error: { message: 'User already registered' } };
